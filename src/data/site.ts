@@ -1,15 +1,18 @@
 /**
  * Single source of truth for the event.
  *
- * A second city ships its own copy of this file plus a `[data-tenant]` block in
- * `src/styles/tokens.css` — nothing else in the site is city-specific.
+ * A second city ships its own copy of this file and picks one of the four
+ * themes — nothing else in the site is city-specific.
  */
 
-export type Tenant = 'kansai' | 'tokyo' | 'shikoku' | 'kyushu';
+import type { Theme } from './themes';
 
 export const site = {
-  /** Selects the token block in tokens.css. 'kansai' is the :root default. */
-  tenant: 'kansai' as Tenant,
+  /** Slug for this city. Selects content and build output. */
+  tenant: 'kansai',
+
+  /** One of the four DevFest core colours. See src/data/themes.ts. */
+  theme: 'blue' as Theme,
 
   lang: 'ja',
   locale: 'ja_JP',

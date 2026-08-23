@@ -2,6 +2,7 @@
 import '../styles/tokens.css';
 import '../styles/base.css';
 import { site } from '../data/site';
+import { themeColor } from '../data/themes';
 
 interface Props {
   title?: string;
@@ -14,8 +15,6 @@ const { event, links } = site;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 const ogImage = Astro.site ? new URL('og.png', Astro.site).href : undefined;
 
-// :root already carries the Kansai palette, so only other cities need the hook.
-const tenant = site.tenant === 'kansai' ? undefined : site.tenant;
 
 const eventSchema = {
   '@context': 'https://schema.org',
@@ -56,7 +55,7 @@ const eventSchema = {
 ---
 
 <!doctype html>
-<html lang={site.lang} data-tenant={tenant}>
+<html lang={site.lang} data-theme={site.theme}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -65,7 +64,7 @@ const eventSchema = {
     {canonical && <link rel="canonical" href={canonical} />}
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#4285f4" />
+    <meta name="theme-color" content={themeColor(site.theme)} />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={site.title} />
