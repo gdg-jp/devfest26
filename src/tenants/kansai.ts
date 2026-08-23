@@ -27,6 +27,8 @@ export const kansai = {
       name: '大阪国際工科専門職大学',
       area: '大阪府大阪市',
       cityEn: 'Osaka, Japan',
+      city: '大阪',
+      region: '関西',
       addressLocality: '大阪市北区',
       addressRegion: '大阪府',
       streetAddress: '梅田3-3-1',

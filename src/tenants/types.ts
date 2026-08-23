@@ -44,6 +44,10 @@ export interface Venue {
   name: string;
   area: string;
   cityEn: string;
+  /** 大阪 — the city, as it reads mid-sentence ("10月18日に大阪で"). */
+  city: string;
+  /** 関西 — the wider area, for talking about the local community. */
+  region: string;
   /** Postal fields are optional: a city announces the venue after the date.
       When `streetAddress` is missing the JSON-LD omits the address entirely
       rather than publishing a half-filled one. */

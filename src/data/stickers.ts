@@ -25,11 +25,3 @@ export const stickers: Record<StickerName, string> = {
   cross: '1192 982 331 331', //    ×    pink
   braces: '1752 127 415 420', //   { }  pale green
 };
-
-/** The mark each tenant leads with in the hero. */
-export const tenantGlyph = {
-  kansai: 'slashes',
-  tokyo: 'cross',
-  shikoku: 'braces',
-  kyushu: 'semicolon',
-} as const satisfies Record<string, StickerName>;

@@ -1,5 +1,8 @@
 ---
-import { timetable } from '../data/tracks';
+import { timetable, tracks } from '../data/tracks';
+
+// "3 トラック" is a fact about this city's configuration, not a constant.
+const trackCount = tracks.filter((t) => !t.pending).length;
 ---
 
 <section class="sec" id="timetable">
@@ -7,7 +10,7 @@ import { timetable } from '../data/tracks';
     <p class="eyebrow" data-reveal="up">Timetable</p>
     <h2 class="sec-h" data-reveal="up">タイムテーブル</h2>
     <p class="sec-lede" data-reveal="up">
-      現在 3 トラックでの開催を予定しています。各セッションの時間割は調整中です。
+      現在 {trackCount} トラックでの開催を予定しています。各セッションの時間割は調整中です。
     </p>
 
     <div class="tt" data-stagger>

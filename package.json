@@ -19,7 +19,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "check:all": "astro check && cross-env TENANT=tokyo astro check"
+    "check:all": "astro check && cross-env TENANT=tokyo astro check",
+    "og": "node --experimental-strip-types scripts/make-og.mjs"
   },
   "dependencies": {
     "astro": "^7.2.4",

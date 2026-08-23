@@ -82,6 +82,30 @@ const meetups = defineCollection({
   }),
 });
 
+/**
+ * One entry per city (`about.md`). This is the only long-form prose that is
+ * genuinely editorial rather than boilerplate — a city's own pitch for its own
+ * year — so it lives in Markdown next to the rest of the content instead of in
+ * the tenant config. A city without one simply does not render the section.
+ */
+const about = defineCollection({
+  loader: glob({ base: dir('about'), pattern: '**/*.md' }),
+  schema: z.object({
+    /** Opening line, set larger than the body. */
+    lead: z.string(),
+    /** Bracketed aside under the body. Plain text. */
+    callout: z.string().optional(),
+    /** Side panel. Items may use **bold** for the highlighted phrase. */
+    audience: z
+      .object({
+        eyebrow: z.string().optional(),
+        heading: z.string(),
+        items: z.array(z.string()).min(1),
+      })
+      .optional(),
+  }),
+});
+
 const partners = defineCollection({
   loader: glob({ base: dir('partners'), pattern: '**/*.md' }),
   schema: z.object({
@@ -93,4 +117,4 @@ const partners = defineCollection({
   }),
 });
 
-export const collections = { speakers, sessions, meetups, partners };
+export const collections = { speakers, sessions, meetups, partners, about };

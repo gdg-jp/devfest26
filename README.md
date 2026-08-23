@@ -55,6 +55,7 @@ CI（`.github/workflows/build.yml`）は都市ごとに 1 ジョブを回し、`
 | セッション                                        | `src/content/<tenant>/sessions/*.md`    |
 | プレイベント（DevFest Meetup）                    | `src/content/<tenant>/meetups/*.md`     |
 | 共催・協力団体                                    | `src/content/<tenant>/partners/*.md`    |
+| 「イベントについて」の本文                        | `src/content/<tenant>/about/about.md`   |
 
 日付のラベルは `startsAt` / `endsAt` から自動生成されます（`2026年10月18日`、`10/18`、`SUN`、`11:00 – 18:00` など）。都市が書くのは ISO 形式のタイムスタンプ 2 つだけで、表示用の文字列を手で持つ必要はありません。整形は Asia/Tokyo 固定なので、ビルドマシンのタイムゾーンに依存しません。
 
@@ -89,6 +90,26 @@ initial: "山"              # photo がないときのフォールバック
 プロフィール文。省略可。
 ```
 
+### 「イベントについて」を書き換える
+
+`src/content/<tenant>/about/about.md` の 1 ファイルだけです。frontmatter が見出し・囲み・右パネル、本文（Markdown）がリード下の段落になります。
+
+```markdown
+---
+lead: リード文。本文より大きく表示されます。
+callout: 囲みで見せたい一言。省略可
+audience:
+  eyebrow: Good fit for
+  heading: こんな方におすすめ
+  items:
+    - "**強調したい語**を ** で囲めます"
+---
+
+本文の段落。**強調**が使えます。
+```
+
+**`items` の各行は必ず引用符で囲んでください。** `**` で始まる行を裸で書くと、YAML がエイリアス参照とみなしてパースエラーになります。
+
 ### プレイベントを追加する
 
 `status` で表示が変わります。`open`（受付中）/ `closed`（受付終了）/ `done`（開催済み）/ `planned`（日程未定・破線のプレースホルダー）。
@@ -99,12 +120,28 @@ initial: "山"              # photo がないときのフォールバック
 1. `src/tenants/ids.ts` の `TENANT_IDS` に slug を足す
 2. `src/tenants/<slug>.ts` を作る（`kansai.ts` をコピーするのが早い）。`satisfies TenantConfig` が付いているので、埋め忘れは型エラーになります
 3. `src/tenants/index.ts` の `registry` に登録する
-4. `src/content/<slug>/{speakers,sessions,meetups,partners}/` を作る
+4. `src/content/<slug>/{speakers,sessions,meetups,partners,about}/` を作る
 5. `.github/workflows/build.yml` の matrix に 1 行足す
+6. `pnpm og <slug>` で OG 画像を生成する
 
 コンポーネント・CSS・スクリプトは触りません。テーマは `blue` / `green` / `yellow` / `red` から選ぶだけです。
 
 コンテンツが空のセクション（プレイベント・共催団体・セッション）は**丸ごと描画されません**。都市は何もない状態から始められます。ナビゲーションの項目は都市ごとに書くので、まだ無いセクションへのリンクは載せないでください。
+
+## OG 画像
+
+`public/og/<tenant>.png`（1200×630）を都市ごとに持ちます。
+
+```bash
+pnpm og            # 全都市
+pnpm og kansai     # 1 都市だけ
+```
+
+カード自体は `src/pages/og-preview/[variant].astro` で、サイト本体と同じテナント設定を読みます。**画像とページの内容がずれません。** このルートは `OG_PREVIEW` が立っているときだけ生成されるので、通常のビルド成果物には含まれません。
+
+Chrome が必要です（`CHROME_PATH` で上書き可）。Google Fonts を読むのでネットワークも必要です。ビルドには組み込んでいません — タイトル・日付・会場・テーマが変わったときだけ実行してください。
+
+ファビコンは `/favicon.svg` のエンドポイント（`src/pages/favicon.svg.ts`）で、テナントのテーマ色で生成されます。`public/` は全都市で共有されるため、静的ファイルではなくエンドポイントにしています。
 
 ## 設計上の決めごと
 

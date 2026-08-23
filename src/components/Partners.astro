@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { site } from '../data/site';
 
 const partners = (await getCollection('partners')).sort((a, b) => a.data.order - b.data.order);
 const rendered = await Promise.all(
@@ -14,7 +15,9 @@ const rendered = await Promise.all(
     <div class="wrap">
       <p class="eyebrow" data-reveal="up">Partners</p>
       <h2 class="sec-h" data-reveal="up">共催・協力団体</h2>
-      <p class="sec-lede" data-reveal="up">関西のコミュニティと一緒につくります。</p>
+        <p class="sec-lede" data-reveal="up">
+        {site.event.venue.region}のコミュニティと一緒につくります。
+      </p>
 
       <div class="orgs" data-stagger>
         {

@@ -41,6 +41,8 @@ export const tokyo = {
       name: '会場調整中',
       area: '東京都',
       cityEn: 'Tokyo, Japan',
+      city: '東京',
+      region: '東京',
     },
 
     format: '現地開催・オンライン配信',

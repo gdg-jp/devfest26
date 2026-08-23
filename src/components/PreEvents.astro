@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { site } from '../data/site';
 import MeetupCard from './MeetupCard.astro';
 import Props from './Props.astro';
 import Sticker from './Sticker.astro';
@@ -25,7 +26,8 @@ const meetups = (await getCollection('meetups')).sort((a, b) => a.data.no - b.da
       <p class="eyebrow" data-reveal="up">Road to DevFest</p>
       <h2 class="sec-h" data-reveal="up">本編の前に、何度か集まります。</h2>
       <p class="sec-lede" data-reveal="up">
-        10月18日に向けて、プレイベント「DevFest Meetup」を開催します。当日のテーマを、もう少し小さな輪で先に話しておく回です。DevFest
+        {site.event.monthDay}に向けて、プレイベント「DevFest
+      Meetup」を開催します。当日のテーマを、もう少し小さな輪で先に話しておく回です。DevFest
         本編とは別に、それぞれお申し込みが必要です。
       </p>
 

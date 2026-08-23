@@ -1,57 +1,59 @@
 ---
+import { getEntry, render } from 'astro:content';
 import Props from './Props.astro';
 import Sticker from './Sticker.astro';
+import { inlineMarkdown } from '../lib/inlineMarkdown';
+
+const entry = await getEntry('about', 'about');
+const Content = entry ? (await render(entry)).Content : null;
 ---
 
-<section class="sec tint bordered" id="about">
-  <Props>
-    <Sticker name="cross" width={70} top="9%" right="2.5%" rotate={-12} speed={0.9} />
-    <Sticker name="braces" width={88} bottom="8%" left="1.5%" rotate={8} speed={-0.8} />
-  </Props>
+{
+  /* A city that has not written its About copy yet renders nothing here. */
+  entry && Content && (
+    <section class="sec tint bordered" id="about">
+      <Props>
+        <Sticker name="cross" width={70} top="9%" right="2.5%" rotate={-12} speed={0.9} />
+        <Sticker name="braces" width={88} bottom="8%" left="1.5%" rotate={8} speed={-0.8} />
+      </Props>
 
-  <div class="wrap">
-    <p class="eyebrow" data-reveal="up">About</p>
-    <h2 class="sec-h" data-reveal="up">イベントについて</h2>
+      <div class="wrap">
+        <p class="eyebrow" data-reveal="up">About</p>
+        <h2 class="sec-h" data-reveal="up">イベントについて</h2>
 
-    <div class="split">
-      <div data-reveal="up">
-        <p class="lead">
-          つくる人と、課題を知る人。Google AI とともに、課題の発見からプロトタイプの実現まで。
-        </p>
-        <p>
-          Google Developer Group（GDG）が世界中で展開する人気技術イベント「DevFest」を、今年も大阪で開催します。Google
-          AI
-          をはじめとする最新技術と、ファッション・ものづくり・ビジネスなどの異なる専門性が交わるデベロッパーイベントです。
-        </p>
-        <p>
-          AI を単なる便利な道具ではなく、問いを深め、アイデアをカタチにし、<strong
-            >人間の創造性を広げる共創パートナー</strong
-          >として捉え直します。技術セッション、ハンズオン、異分野との対話を通じて、課題の発見からプロトタイプの実現までを体験するスペシャルな一日です。
-        </p>
-        <p class="callout"><i>{'{'}</i> 初心者から経験豊富なエンジニアまで、どなたでも大歓迎です！ <i>{'}'}</i></p>
+        <div class="split">
+          <div data-reveal="up">
+            <p class="lead">{entry.data.lead}</p>
+
+            <div class="body">
+              <Content />
+            </div>
+
+            {entry.data.callout && (
+              <p class="callout">
+                <i>{'{'}</i> {entry.data.callout} <i>{'}'}</i>
+              </p>
+            )}
+          </div>
+
+          {entry.data.audience && (
+            <div class="panel fit" data-reveal="up">
+              {entry.data.audience.eyebrow && (
+                <p class="eyebrow tight">{entry.data.audience.eyebrow}</p>
+              )}
+              <h3>{entry.data.audience.heading}</h3>
+              <ul>
+                {entry.data.audience.items.map((item) => (
+                  <li set:html={inlineMarkdown(item)} />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
-
-      <div class="panel fit" data-reveal="up">
-        <p class="eyebrow tight">Good fit for</p>
-        <h3>こんな方におすすめ</h3>
-        <ul>
-          <li>
-            Google AI や生成AIを、<strong>実際の開発やプロトタイピングで活用してみたい</strong>方
-          </li>
-          <li>
-            ファッションやものづくりなど、<strong>異分野との共創</strong>や<strong
-              >人間の創造性</strong
-            >に関心がある方
-          </li>
-          <li>
-            学生・初学者から経験豊富なエンジニアまで、<strong>新しい技術やコミュニティ</strong
-            >に出会いたい方
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
+  )
+}
 
 <style>
   .bordered {
@@ -97,8 +99,12 @@ import Sticker from './Sticker.astro';
     color: var(--green);
   }
 
+  .body :global(p + p) {
+    margin-top: 1.05em;
+  }
+
   .fit {
-    background: var(--pa-blue);
+    background: var(--t-pa);
   }
 
   .eyebrow.tight {
@@ -121,7 +127,9 @@ import Sticker from './Sticker.astro';
     color: var(--t);
   }
 
-  strong {
+  /* Emphasis arrives from Markdown and from set:html, so it is out of scope. */
+  .body :global(strong),
+  .fit li :global(strong) {
     background: linear-gradient(transparent 62%, var(--ht-yellow) 62%);
   }
 </style>

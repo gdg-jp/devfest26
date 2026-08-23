@@ -21,7 +21,10 @@ export default defineConfig({
   // second site contaminated with the first one's sessions and speakers.
   cacheDir: `./node_modules/.astro/${activeTenant}`,
   build: {
-    inlineStylesheets: 'auto',
+    // The OG card is screenshotted straight off disk, where a `/_astro/...`
+    // stylesheet href resolves to nothing. Inlining makes that build
+    // self-contained; normal builds keep the default split.
+    inlineStylesheets: process.env.OG_PREVIEW ? 'always' : 'auto',
   },
   vite: {
     build: {

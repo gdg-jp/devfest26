@@ -1,0 +1,178 @@
+---
+import Sprite from '../../components/Sprite.astro';
+import Logo from '../../components/Logo.astro';
+import { site } from '../../data/site';
+import { stickers } from '../../data/stickers';
+import '../../styles/tokens.css';
+// base.css carries the reset and the rule that hides the inline sprite.
+import '../../styles/base.css';
+
+/**
+ * The source artwork for `public/og/<tenant>.png`, rendered from the same
+ * tenant config as the site so the card can never drift from the page.
+ *
+ * Not part of a normal build: `getStaticPaths` returns nothing unless
+ * OG_PREVIEW is set, so production output contains no such route. Screenshot it
+ * with `pnpm og` — see scripts/make-og.mjs.
+ */
+export function getStaticPaths() {
+  return process.env.OG_PREVIEW ? [{ params: { variant: 'card' } }] : [];
+}
+
+const { event, links: _links, tagline } = site;
+const glyphs = [
+  { name: 'slashes', style: 'width:150px;top:52px;right:96px;transform:rotate(-8deg)' },
+  { name: 'ellipsis', style: 'width:250px;bottom:78px;right:60px;transform:rotate(6deg)' },
+  { name: 'plus', style: 'width:84px;top:270px;right:300px;transform:rotate(12deg)' },
+  { name: 'dot', style: 'width:44px;top:196px;right:44px' },
+] as const;
+---
+
+<!doctype html>
+<html lang={site.lang} data-theme={site.theme}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{site.title} — OG</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Code:wght@700&family=Noto+Sans+JP:wght@500;700&display=swap"
+    />
+  </head>
+
+  <body>
+    <Sprite />
+
+    <div class="card">
+      {
+        glyphs.map((g) => (
+          <svg class="glyph" viewBox={stickers[g.name]} style={g.style} aria-hidden="true">
+            <use href="#stickersheet" />
+          </svg>
+        ))
+      }
+
+      <div class="inner">
+        <Logo variant="brackets" class="mark" />
+
+        <div>
+          <h1>{site.titleEn}</h1>
+          <p class="pitch">{tagline.lead}{tagline.accent}</p>
+        </div>
+
+        <div>
+          <div class="meta">
+            <span class="pill hi">
+              {event.isoDate.replace(/-/g, '.')} {event.dayOfWeekEn.toUpperCase()}
+            </span>
+            <span class="pill">{event.venue.name}</span>
+            <span class="pill">参加費{event.fee}</span>
+          </div>
+          <p class="host">HOSTED BY {event.host.toUpperCase()}</p>
+        </div>
+      </div>
+
+      <div class="hem"></div>
+    </div>
+  </body>
+</html>
+
+<style>
+  .card {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--t);
+    color: var(--t-on);
+    font-family: var(--f-display);
+    --brand-ink: var(--t-on);
+  }
+
+  .glyph {
+    position: absolute;
+    display: block;
+    height: auto;
+    overflow: hidden;
+  }
+
+  .inner {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    padding: 70px 78px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Astro does not scope a class passed to a component as a prop. */
+  .card :global(.mark) {
+    width: 330px;
+    display: block;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 78px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  .pitch {
+    margin: 16px 0 0;
+    font-family: var(--f-body);
+    font-size: 31px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: color-mix(in srgb, currentcolor 95%, transparent);
+  }
+
+  .meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    background: var(--surface);
+    color: var(--ink);
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    padding: 9px 26px;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  /* The one warm accent, unless the theme itself is already yellow. */
+  .pill.hi {
+    background: var(--yellow);
+  }
+
+  [data-theme="yellow"] .pill.hi {
+    background: var(--surface);
+  }
+
+  .host {
+    margin: 22px 0 0;
+    font-family: var(--f-mono);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: color-mix(in srgb, currentcolor 90%, transparent);
+  }
+
+  .hem {
+    position: absolute;
+    inset: auto 0 0;
+    height: 26px;
+    z-index: 3;
+    background: radial-gradient(circle at 22px 26px, #fff 20px, transparent 21px) repeat-x;
+    background-size: 44px 26px;
+  }
+</style>
