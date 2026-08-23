@@ -1,0 +1,127 @@
+---
+import Logo from './Logo.astro';
+import { site } from '../data/site';
+
+const { event } = site;
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <Logo variant="primary" class="foot-mark" />
+        <p class="foot-title">{site.title}</p>
+        <p class="foot-sub">
+          {event.isoDate.replace(/-/g, '.')} {event.dayOfWeekEn.toUpperCase()} ／ {event.venue.name}
+        </p>
+      </div>
+      <div>
+        <nav class="foot-nav" aria-label="フッターナビゲーション">
+          {site.footerNav.map((item) => <a href={item.href}>{item.label}</a>)}
+        </nav>
+        <div class="tags">
+          <span class="tag" style="background:var(--pa-blue)">Hosted by {event.host}</span>
+          <a class="tag link" href={site.links.connpass} target="_blank" rel="noopener">
+            connpass
+          </a>
+          <a class="tag link" href={site.links.community} target="_blank" rel="noopener">
+            GDG Chapter
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <p class="colophon">
+      DevFest および Google Developer Groups のロゴ・配色・シェイプ言語は、DevFest 2026 Brand Guide
+      に基づいて使用しています。書体は Google Sans / Google Sans Text / Google Sans Code、和文は
+      Noto Sans JP。<br />
+      掲載内容には企画中のものが含まれます。タイムテーブルとセッション情報は調整中で、確定しだい順次更新します。
+    </p>
+    <p class="copy">© {year} {event.host}</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    border-top: var(--bw) solid var(--stroke);
+    background: var(--surface);
+    padding: clamp(34px, 4.4vw, 52px) 0 28px;
+  }
+
+  .foot-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 26px 40px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .foot-top :global(.foot-mark) {
+    width: min(280px, 70vw);
+  }
+
+  .foot-title {
+    margin: 14px 0 0;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .foot-sub {
+    font-size: 14px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .foot-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+    font-family: var(--f-display);
+    font-size: 14.5px;
+  }
+
+  .foot-nav a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .foot-nav a:hover {
+    text-decoration: underline;
+  }
+
+  .tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  .tag.link {
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 0.15s var(--ease-spring);
+  }
+
+  .tag.link:hover {
+    transform: translateY(-2px);
+    background: var(--t-pa);
+  }
+
+  .colophon {
+    margin: 28px 0 0;
+    padding-top: 18px;
+    border-top: 1.5px solid var(--rule);
+    font-size: 12.6px;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+
+  .copy {
+    margin: 10px 0 0;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>

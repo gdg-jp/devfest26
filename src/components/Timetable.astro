@@ -1,0 +1,132 @@
+---
+import { timetable } from '../data/tracks';
+---
+
+<section class="sec" id="timetable">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">Timetable</p>
+    <h2 class="sec-h" data-reveal="up">タイムテーブル</h2>
+    <p class="sec-lede" data-reveal="up">
+      現在 3 トラックでの開催を予定しています。各セッションの時間割は調整中です。
+    </p>
+
+    <div class="tt" data-stagger>
+      {
+        timetable.map((row) => (
+          <div class="tt-row" data-reveal="up">
+            <div class="tt-time">
+              <b>{row.start}</b>
+              <span>{row.end}</span>
+            </div>
+            <div class="tt-body">
+              {row.lines.map((line) => (
+                <div class="tt-line" style={`--rail:${line.rail}`}>
+                  <b>{line.label}</b>
+                  <span>{line.note}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <p class="note">※ セッション単位の時間割は確定後に掲載します。</p>
+  </div>
+</section>
+
+<style>
+  .tt {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tt-row {
+    display: grid;
+    grid-template-columns: 168px 1fr;
+    align-items: stretch;
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  @media (width <= 720px) {
+    .tt-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .tt-time {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    border: var(--bw) solid var(--stroke);
+    border-right: 0;
+    border-radius: var(--r-md) 0 0 var(--r-md);
+    padding: 16px 18px;
+    background: var(--surface);
+  }
+
+  @media (width <= 720px) {
+    .tt-time {
+      border-right: var(--bw) solid var(--stroke);
+      border-bottom: 0;
+      border-radius: var(--r-md) var(--r-md) 0 0;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
+    }
+  }
+
+  .tt-time b {
+    font-family: var(--f-mono);
+    font-weight: 700;
+    font-size: clamp(20px, 2.6vw, 26px);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  .tt-time span {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tt-body {
+    border: var(--bw) solid var(--stroke);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    background: var(--surface);
+    padding: 8px 0;
+  }
+
+  @media (width <= 720px) {
+    .tt-body {
+      border-radius: 0 0 var(--r-md) var(--r-md);
+    }
+  }
+
+  .tt-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    align-items: baseline;
+    padding: 11px 20px;
+    border-bottom: 1.5px solid var(--rule);
+    border-left: 7px solid var(--rail, var(--t));
+  }
+
+  .tt-line:last-child {
+    border-bottom: 0;
+  }
+
+  .tt-line b {
+    font-family: var(--f-display);
+    font-size: 15.5px;
+  }
+
+  .tt-line span {
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+</style>

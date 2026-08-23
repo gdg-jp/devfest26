@@ -1,0 +1,95 @@
+---
+import { site } from '../data/site';
+
+const cells = [
+  { key: 'd', label: 'Days' },
+  { key: 'h', label: 'Hours' },
+  { key: 'm', label: 'Minutes' },
+  { key: 's', label: 'Seconds' },
+];
+---
+
+<div class="band pa">
+  <div class="countdown wrap">
+    <div class="cd-head">
+      <h2>開催まで</h2>
+      <span class="when">{site.event.countdownLabel}</span>
+    </div>
+    <div
+      class="cd-grid"
+      role="timer"
+      aria-live="off"
+      data-countdown={site.event.startsAt}
+    >
+      {
+        cells.map((c) => (
+          <div class="cd-cell" data-reveal="scale">
+            <div class="cd-num" data-cd={c.key}>
+              —
+            </div>
+            <div class="cd-lab">{c.label}</div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .countdown {
+    padding: clamp(28px, 3.6vw, 40px) 0;
+  }
+
+  .cd-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 16px;
+    margin-bottom: 18px;
+  }
+
+  .cd-head h2 {
+    font-size: clamp(19px, 2.4vw, 25px);
+  }
+
+  .when {
+    font-family: var(--f-mono);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .cd-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(8px, 1.4vw, 16px);
+  }
+
+  .cd-cell {
+    background: var(--surface);
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    padding: clamp(12px, 1.8vw, 20px) 8px;
+    text-align: center;
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  .cd-num {
+    font-family: var(--f-mono);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(30px, 6vw, 58px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .cd-lab {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+</style>

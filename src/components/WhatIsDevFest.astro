@@ -1,0 +1,68 @@
+---
+import Logo from './Logo.astro';
+import Props from './Props.astro';
+import Sticker from './Sticker.astro';
+---
+
+<section class="sec" id="what">
+  <Props>
+    <Sticker name="braces" width={80} top="18%" right="2%" rotate={-6} speed={0.85} />
+    <Sticker name="ellipsis" width={150} bottom="12%" left="1%" rotate={-8} speed={-0.75} />
+  </Props>
+
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">What is DevFest</p>
+    <h2 class="sec-h" data-reveal="up">DevFest とは</h2>
+
+    <div class="split">
+      <div class="panel" data-reveal="up">
+        <p>
+          DevFest は、世界各地の Google Developer Groups（GDG）が、それぞれの地域で開催するコミュニティ主導のテクノロジーカンファレンスです。
+        </p>
+        <p>
+          Google
+          のテクノロジーや業界の動向を学べるセッション、実際に手を動かすワークショップ、参加者同士のネットワーキングなどを通じて、技術とコミュニティに出会える場をつくります。
+        </p>
+        <p>
+          開発者だけでなく、プロダクトマネージャー、デザイナー、学生、AI
+          を使ってアプリケーション開発や課題解決に取り組みたい方など、さまざまな方が参加できます。
+        </p>
+      </div>
+      <div class="panel mark-panel" data-reveal="scale">
+        <Logo variant="brackets" class="big-mark" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(18px, 2.6vw, 30px);
+    align-items: stretch;
+  }
+
+  @media (width <= 880px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel {
+    transition:
+      opacity 0.55s var(--ease-out),
+      transform 0.55s var(--ease-out);
+  }
+
+  .mark-panel {
+    background: var(--t-pa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mark-panel :global(.big-mark) {
+    width: min(320px, 80%);
+  }
+</style>

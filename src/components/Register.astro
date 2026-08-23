@@ -1,0 +1,112 @@
+---
+import { site } from '../data/site';
+
+const { event, links } = site;
+---
+
+<section class="register" id="register">
+  <div class="wrap">
+    <p class="eyebrow mid" data-reveal="up">Join us</p>
+    <h2 data-reveal="up">
+      それぞれの専門を持ち寄って、<br />{event.monthDay}に大阪で。
+    </h2>
+    <p data-reveal="up">
+      技術を深めたい方も、新しい分野の視点に触れたい方も、これから AI
+      を使って何かをつくりたい方も歓迎します。AI と人がともにつくる未来を、{site.title} で一緒に考えてみませんか。
+    </p>
+    <div class="cta-row" data-reveal="up">
+      <a class="btn" href={links.register} target="_blank" rel="noopener">
+        connpass で参加登録する
+      </a>
+      <a class="btn ghost" href={links.community} target="_blank" rel="noopener">
+        {event.host} について
+      </a>
+    </div>
+    <p class="reg-note" data-reveal="up">
+      現地参加・オンライン参加ともに{event.fee}です。お申し込みは connpass から。
+    </p>
+  </div>
+</section>
+
+<style>
+  /* The loudest surface on the page, and it belongs to the main event. */
+  .register {
+    position: relative;
+    background: var(--t);
+    color: var(--t-on);
+    border-top: var(--bw) solid var(--stroke);
+    padding: clamp(52px, 6.6vw, 84px) 0 clamp(62px, 7.6vw, 92px);
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .register::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 20px;
+    background: var(--scallop) repeat-x bottom;
+  }
+
+  h2 {
+    font-size: clamp(26px, 4.2vw, 42px);
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  p {
+    max-width: 60ch;
+    margin-inline: auto;
+    font-size: clamp(15px, 1.7vw, 17px);
+  }
+
+  .register :global(.eyebrow) {
+    /* Not `opacity` — that belongs to the scroll reveal on this element. */
+    color: color-mix(in srgb, currentcolor 85%, transparent);
+  }
+
+  .register :global(.eyebrow::before) {
+    background: var(--surface);
+    border-color: var(--ink);
+  }
+
+  .register :global(.cta-row) {
+    justify-content: center;
+    margin-top: 26px;
+  }
+
+  /* On a solid tenant ground the primary action inverts to white. */
+  .register :global(.btn) {
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .register :global(.btn.ghost) {
+    background: transparent;
+    color: inherit;
+    border-color: currentcolor;
+    box-shadow: 0 4px 0 currentcolor;
+  }
+
+  .register :global(.btn.ghost:hover) {
+    box-shadow: 0 6px 0 currentcolor;
+  }
+
+  .register :global(.btn.ghost:active) {
+    box-shadow: 0 2px 0 currentcolor;
+  }
+
+  .reg-note {
+    margin-top: 20px;
+    font-size: 13px;
+    color: color-mix(in srgb, currentcolor 82%, transparent);
+  }
+
+  [data-reveal] {
+    transition:
+      opacity 0.55s var(--ease-out),
+      transform 0.55s var(--ease-out);
+  }
+</style>

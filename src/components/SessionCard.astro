@@ -1,0 +1,193 @@
+---
+import { Image } from 'astro:assets';
+import { render, type CollectionEntry } from 'astro:content';
+import { speakerPhoto } from '../data/photos';
+
+interface Props {
+  session: CollectionEntry<'sessions'>;
+  speakers: CollectionEntry<'speakers'>[];
+  /** Session number shown above the title, or "Unscheduled". */
+  label: string;
+  /** Pastel token suffix for the speaker block. */
+  pastel: 'blue' | 'green' | 'yellow' | 'red';
+}
+
+const { session, speakers, label, pastel } = Astro.props;
+const { Content } = await render(session);
+
+const hasTitle = Boolean(session.data.title);
+const hasAbstract = session.body != null && session.body.trim().length > 0;
+---
+
+<article class="card" data-reveal="up">
+  <div class="card-top">
+    <p class="no">{label}</p>
+    <h4 class:list={{ tbd: !hasTitle }}>{session.data.title ?? 'TBD'}</h4>
+    {
+      hasAbstract ? (
+        <div class="abst">
+          <Content />
+        </div>
+      ) : (
+        <p class="abst tbd">セッション概要は調整中です。</p>
+      )
+    }
+  </div>
+
+  <div class:list={['spk', { multi: speakers.length > 1 }]} style={`--pa:var(--pa-${pastel})`}>
+    {
+      speakers.map((s) => (
+        <div class="one">
+          {s.data.photo ? (
+            <Image
+              class="av"
+              src={speakerPhoto(s.data.photo)}
+              alt=""
+              width={112}
+              height={112}
+              densities={[1, 2]}
+              loading="lazy"
+            />
+          ) : (
+            <span class="av" aria-hidden="true">
+              {s.data.initial ?? s.data.name.slice(0, 1)}
+            </span>
+          )}
+          <div class="who">
+            <div class="nm">{s.data.name}</div>
+            <div class="rl">{s.data.role}</div>
+            {s.body && s.body.trim().length > 0 && <p class="bio">{s.body.trim()}</p>}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    overflow: hidden;
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.28s var(--ease-out),
+      box-shadow 0.28s var(--ease-out);
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 0 -2px var(--stroke);
+  }
+
+  /* While the reveal is still running, the hover lift must not fight it. */
+  .card:not(:global(.is-revealed)):hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .card-top {
+    padding: 18px 20px 0;
+  }
+
+  .no {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--trk, var(--t-deep));
+    margin: 0;
+  }
+
+  h4 {
+    font-size: 17.5px;
+    margin: 6px 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  h4.tbd {
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .abst {
+    font-size: 14.2px;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+
+  .abst.tbd {
+    color: var(--muted);
+  }
+
+  .abst :global(p) {
+    margin: 0 0 0.7em;
+  }
+
+  .abst :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .spk {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+    padding: 15px 20px;
+    border-top: 1.5px solid var(--rule);
+    background: var(--pa, var(--t-pa));
+  }
+
+  .one {
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+  }
+
+  .spk :global(.av) {
+    width: 56px;
+    height: 56px;
+    flex: none;
+    border-radius: 50%;
+    border: 2.5px solid var(--stroke);
+    background: var(--surface);
+    object-fit: cover;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--ink);
+  }
+
+  .who {
+    min-width: 0;
+  }
+
+  .nm {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .rl {
+    font-size: 12.6px;
+    line-height: 1.6;
+    color: #3c4043;
+  }
+
+  .bio {
+    font-size: 12.6px;
+    line-height: 1.75;
+    color: #3c4043;
+    margin: 7px 0 0;
+  }
+</style>

@@ -1,0 +1,161 @@
+---
+import '../styles/tokens.css';
+import '../styles/base.css';
+import { site } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = site.title, description = site.description } = Astro.props;
+const { event, links } = site;
+
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const ogImage = Astro.site ? new URL('og.png', Astro.site).href : undefined;
+
+// :root already carries the Kansai palette, so only other cities need the hook.
+const tenant = site.tenant === 'kansai' ? undefined : site.tenant;
+
+const eventSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: site.title,
+  description: site.description,
+  startDate: event.startsAt,
+  endDate: event.endsAt,
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
+  location: {
+    '@type': 'Place',
+    name: event.venue.name,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: event.venue.streetAddress,
+      addressLocality: event.venue.addressLocality,
+      addressRegion: event.venue.addressRegion,
+      postalCode: event.venue.postalCode,
+      addressCountry: 'JP',
+    },
+  },
+  organizer: {
+    '@type': 'Organization',
+    name: event.host,
+    url: links.community,
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'JPY',
+    availability: 'https://schema.org/InStock',
+    url: links.register,
+  },
+  ...(ogImage ? { image: [ogImage] } : {}),
+  ...(canonical ? { url: canonical } : {}),
+};
+---
+
+<!doctype html>
+<html lang={site.lang} data-tenant={tenant}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#4285f4" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content={site.locale} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && <meta property="og:image:width" content="1200" />}
+    {ogImage && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&family=Google+Sans+Code:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    />
+
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(eventSchema)}
+    />
+
+    {/* Runs before first paint: marks that JS is live, and decides whether the
+        intro curtain plays at all.
+
+        Both timeouts are safety nets. Marking `.js` is what hides the hero and
+        every scroll-reveal, so a bundle that never arrives would otherwise
+        leave the page blank behind a curtain that never lifts. main.ts clears
+        the fallback as soon as it has actually taken over. */}
+    <script is:inline>
+      (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
+
+        var reduced = false;
+        var seen = false;
+        try {
+          reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        } catch (e) {}
+        try {
+          seen = sessionStorage.getItem('df26-intro-seen') === '1';
+        } catch (e) {}
+
+        if (!reduced && !seen) {
+          d.classList.add('is-loading');
+          setTimeout(function () {
+            d.classList.remove('is-loading');
+          }, 3000);
+        }
+
+        window.__dfMotionFallback = setTimeout(function () {
+          d.classList.add('no-motion');
+        }, 2500);
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#top">本文へスキップ</a>
+    <slot />
+    <script>
+      import '../scripts/main';
+    </script>
+    <style is:global>
+      .skip {
+        position: absolute;
+        left: 12px;
+        top: -60px;
+        z-index: 200;
+        background: var(--surface);
+        color: var(--ink);
+        border: var(--bw) solid var(--stroke);
+        border-radius: 999px;
+        padding: 9px 20px;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        transition: top 0.18s var(--ease-out);
+      }
+
+      .skip:focus {
+        top: 12px;
+      }
+    </style>
+  </body>
+</html>

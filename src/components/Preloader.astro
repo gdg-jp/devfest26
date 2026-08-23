@@ -1,0 +1,128 @@
+---
+import Logo from './Logo.astro';
+
+/**
+ * First-paint curtain. The DevFest mark is a pair of braces, so the intro is
+ * that gesture: the braces clamp in from the edges, the wordmark opens out from
+ * the centre, then the curtain lifts on a scalloped edge.
+ *
+ * Visible only when <html> carries `.is-loading`, which the inline script in
+ * Base.astro sets — and only for a first visit, with motion allowed. That same
+ * script arms a timeout so a script that never loads cannot trap the page.
+ */
+---
+
+<div class="preloader" role="presentation" aria-hidden="true">
+  <div class="pl-stack">
+    <div class="pl-mark">
+      <Logo variant="brackets" class="pl-brace pl-brace-l" label="" />
+      <Logo variant="brackets" class="pl-word" label="" />
+      <Logo variant="brackets" class="pl-brace pl-brace-r" label="" />
+    </div>
+    <div class="pl-dots">
+      <i style="--c:var(--blue);--i:0"></i>
+      <i style="--c:var(--green);--i:1"></i>
+      <i style="--c:var(--yellow);--i:2"></i>
+      <i style="--c:var(--red);--i:3"></i>
+    </div>
+  </div>
+</div>
+
+<style>
+  .preloader {
+    display: none;
+  }
+
+  :global(html.is-loading) .preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: var(--t);
+    /* the wordmark inside the lockup paints itself with --brand-ink */
+    --brand-ink: var(--t-on);
+    will-change: transform;
+  }
+
+  /* Scalloped hem, so the curtain leaves on the shape language it arrived in. */
+  :global(html.is-loading) .preloader::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background:
+      radial-gradient(circle at 22px 0, var(--t) 21px, transparent 22px) repeat-x;
+    background-size: 44px 30px;
+  }
+
+  .pl-stack {
+    display: grid;
+    justify-items: center;
+    gap: clamp(26px, 4vw, 38px);
+    padding: 24px;
+  }
+
+  /* The three copies of the lockup are stacked and each one is clipped to a
+     different slice: two braces and the word between them. */
+  .pl-mark {
+    position: relative;
+    width: min(340px, 68vw);
+    aspect-ratio: 2532.7334 / 645.47467;
+  }
+
+  .pl-mark :global(svg) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .pl-mark :global(.pl-brace-l) {
+    clip-path: inset(0 88% 0 0);
+  }
+
+  .pl-mark :global(.pl-brace-r) {
+    clip-path: inset(0 0 0 88%);
+  }
+
+  .pl-mark :global(.pl-word) {
+    clip-path: inset(0 12% 0 12%);
+  }
+
+  .pl-dots {
+    display: flex;
+    gap: 11px;
+  }
+
+  .pl-dots i {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--c);
+    border: 2px solid var(--stroke);
+    animation: pl-bounce 1.05s var(--ease-out) infinite;
+    animation-delay: calc(var(--i) * 0.11s);
+  }
+
+  @keyframes pl-bounce {
+    0%,
+    62%,
+    100% {
+      transform: translateY(0);
+    }
+
+    28% {
+      transform: translateY(-11px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preloader,
+    :global(html.is-loading) .preloader {
+      display: none;
+    }
+  }
+</style>

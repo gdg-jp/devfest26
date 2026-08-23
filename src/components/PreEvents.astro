@@ -1,0 +1,46 @@
+---
+import { getCollection } from 'astro:content';
+import MeetupCard from './MeetupCard.astro';
+import Props from './Props.astro';
+import Sticker from './Sticker.astro';
+
+/**
+ * Deliberately quiet: plain ground, no colour band, running order folded away.
+ * The loudest surface on the page belongs to the main event's own CTA, and a
+ * pre-event that is four days out earns position — not visual weight.
+ */
+const meetups = (await getCollection('meetups')).sort((a, b) => a.data.no - b.data.no);
+---
+
+<section class="sec" id="preevent">
+  <Props>
+    <Sticker name="plus" width={66} top="12%" right="2.5%" rotate={-12} speed={0.8} />
+    <Sticker name="dot" width={34} bottom="16%" left="2%" speed={-1.2} />
+  </Props>
+
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">Road to DevFest</p>
+    <h2 class="sec-h" data-reveal="up">本編の前に、何度か集まります。</h2>
+    <p class="sec-lede" data-reveal="up">
+      10月18日に向けて、プレイベント「DevFest Meetup」を開催します。当日のテーマを、もう少し小さな輪で先に話しておく回です。DevFest
+      本編とは別に、それぞれお申し込みが必要です。
+    </p>
+
+    <div class="meets" data-stagger>
+      {meetups.map((m) => <MeetupCard meetup={m} />)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .sec {
+    padding-top: clamp(46px, 5.8vw, 74px);
+    padding-bottom: clamp(46px, 5.8vw, 74px);
+    border-bottom: var(--bw) solid var(--stroke);
+  }
+
+  .meets {
+    display: grid;
+    gap: 14px;
+  }
+</style>

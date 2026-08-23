@@ -1,5 +1,5 @@
 {
-  "name": "better-bar",
+  "name": "devfest-2026-kansai",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -9,9 +9,20 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check"
   },
   "dependencies": {
-    "astro": "^7.2.4"
-  }
+    "astro": "^7.2.4",
+    "motion": "^13.1.1",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.2.0",
+    "typescript": "^6.0.3"
+  },
+  "description": "DevFest 2026 in Kansai の公式イベントページ",
+  "private": true,
+  "license": "MIT"
 }

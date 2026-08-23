@@ -1,0 +1,20 @@
+---
+/**
+ * Every vector on the page in one hidden sprite: the two DevFest lockups and
+ * the whole sticker sheet. Sections reference them with <use href="#id">, so
+ * the artwork is downloaded and parsed exactly once.
+ *
+ * The lockups paint themselves with var(--brand-ink), so they follow the theme.
+ */
+import logoPrimary from '../assets/brand/logo-primary.svg?raw';
+import logoBrackets from '../assets/brand/logo-brackets.svg?raw';
+import stickerSheet from '../assets/brand/stickers.svg?raw';
+---
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="mk-primary" set:html={logoPrimary} />
+    <g id="mk-brackets" set:html={logoBrackets} />
+    <g id="stickersheet" set:html={stickerSheet} />
+  </defs>
+</svg>

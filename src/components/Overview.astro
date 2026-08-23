@@ -1,0 +1,163 @@
+---
+import Props from './Props.astro';
+import Sticker from './Sticker.astro';
+import { site } from '../data/site';
+
+const { event, stats } = site;
+
+const rows = [
+  { rail: 'blue', dt: '開催日', dd: `${event.dateLabel}（${event.dayOfWeek}）` },
+  { rail: 'green', dt: '開催時間', dd: event.hours, note: `${event.social.hours} に${event.social.label}を予定` },
+  { rail: 'red', dt: '会場', dd: event.venue.name, note: event.venue.area },
+  { rail: 'yellow', dt: '開催形式', dd: event.format },
+  { rail: 'blue', dt: '参加費', dd: event.fee },
+  { rail: 'green', dt: '主催', dd: event.host, note: `共催・協力：${event.coHosts}` },
+];
+---
+
+<section class="sec" id="overview">
+  <Props>
+    <Sticker name="semicolon" width={44} top="16%" left="1.5%" rotate={-10} speed={0.7} />
+  </Props>
+
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">Overview</p>
+    <h2 class="sec-h" data-reveal="up">開催概要</h2>
+    <p class="sec-lede" data-reveal="up">
+      関西で開催する DevFest 2026 の基本情報です。詳細が固まりしだい順次更新します。
+    </p>
+
+    <div class="split">
+      <div class="panel spec-panel" data-reveal="up">
+        <dl class="spec">
+          {
+            rows.map((r) => (
+              <div class="spec-row" style={`--rail:var(--${r.rail})`}>
+                <dt>{r.dt}</dt>
+                <dd>
+                  {r.dd}
+                  {r.note && <small>{r.note}</small>}
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+
+      <div class="stats" data-stagger>
+        {
+          stats.map((s) => (
+            <div class="stat" style={`background:var(--pa-${s.tone})`} data-reveal="scale">
+              <b>{s.value}</b>
+              <span>{s.label}</span>
+            </div>
+          ))
+        }
+        <p class="disclaimer">※イベント内容や開催時間は、今後変更となる場合があります。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .split {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: clamp(18px, 2.6vw, 30px);
+    align-items: start;
+  }
+
+  @media (width <= 880px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .spec-panel {
+    padding: 8px 0;
+  }
+
+  .spec {
+    display: grid;
+    gap: 0;
+    margin: 0;
+  }
+
+  .spec-row {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 14px 16px;
+    border-bottom: 1.5px solid var(--rule);
+    border-left: 7px solid var(--rail, var(--t));
+  }
+
+  .spec-row:last-child {
+    border-bottom: 0;
+  }
+
+  .spec-row dt {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+
+  .spec-row dd {
+    margin: 0;
+    font-size: 15.5px;
+  }
+
+  .spec-row dd small {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  @media (width <= 520px) {
+    .spec-row {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat {
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    padding: 16px 18px;
+    background: var(--surface);
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  .stat b {
+    display: block;
+    font-family: var(--f-display);
+    font-size: clamp(24px, 3.4vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .stat span {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-family: var(--f-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .disclaimer {
+    grid-column: span 2;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 2px 0 0;
+  }
+</style>

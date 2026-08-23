@@ -1,0 +1,42 @@
+---
+import { stickers, type StickerName } from '../data/stickers';
+
+interface Props {
+  name: StickerName;
+  /** Rendered width in px. */
+  width: number;
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
+  /** Resting tilt in degrees. */
+  rotate?: number;
+  /**
+   * Parallax factor. The sticker travels `speed * 100`px against the scroll
+   * across the height of its section. 0 pins it.
+   */
+  speed?: number;
+}
+
+const { name, width, top, right, bottom, left, rotate = 0, speed = 0.5 } = Astro.props;
+
+const style = [
+  `width:${width}px`,
+  top && `top:${top}`,
+  right && `right:${right}`,
+  bottom && `bottom:${bottom}`,
+  left && `left:${left}`,
+  rotate !== 0 && `--rot:${rotate}deg`,
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<svg
+  class="glyph"
+  viewBox={stickers[name]}
+  style={style}
+  data-parallax={speed || undefined}
+  aria-hidden="true"
+  focusable="false"><use href="#stickersheet" /></svg
+>

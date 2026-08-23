@@ -1,0 +1,421 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+
+interface Props {
+  meetup: CollectionEntry<'meetups'>;
+}
+
+const { meetup } = Astro.props;
+const d = meetup.data;
+const { Content } = await render(meetup);
+
+const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+const dated = d.date
+  ? {
+      md: `${d.date.getMonth() + 1}/${d.date.getDate()}`,
+      dow: `${d.date.getFullYear()} ${DOW[d.date.getDay()]}`,
+      iso: d.date.toISOString().slice(0, 10),
+    }
+  : null;
+
+const span = d.startsAt && d.endsAt ? `${d.startsAt}–${d.endsAt}` : null;
+
+const STATUS: Record<string, string | null> = {
+  open: '受付中',
+  closed: '受付終了',
+  done: '開催済み',
+  planned: null,
+};
+const status = STATUS[d.status];
+
+const facts = [
+  d.venue && { k: '会場', v: d.venue },
+  d.capacity && { k: '定員', v: d.capacity },
+  d.fee && { k: '参加費', v: d.fee },
+].filter(Boolean) as { k: string; v: string }[];
+
+const isPlanned = d.status === 'planned';
+const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
+---
+
+<article class:list={['meet', { next: isPlanned }]} data-reveal="up">
+  <div class="meet-when">
+    <span class="meet-no">Meetup #{d.no}{isPlanned ? ' →' : ''}</span>
+    {
+      dated ? (
+        <>
+          <time class="meet-date" datetime={dated.iso}>
+            {dated.md.split('/')[0]}
+            <span class="sl">/</span>
+            {dated.md.split('/')[1]}
+          </time>
+          <span class="meet-dow">{dated.dow}</span>
+          {span && <span class="meet-time">{span}</span>}
+        </>
+      ) : (
+        <span class="meet-date">TBD</span>
+      )
+    }
+  </div>
+
+  <div class="meet-body">
+    {status && <span class="meet-status">{status}</span>}
+
+    <h3>
+      {d.title}
+      {d.subtitle && <small>{d.subtitle}</small>}
+    </h3>
+
+    <div class="meet-lede"><Content /></div>
+
+    {
+      facts.length > 0 && (
+        <ul class="meet-facts">
+          {facts.map((f) => (
+            <li>
+              <span>{f.k}</span>
+              {f.v}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      d.program && d.program.length > 0 && (
+        <details class="lt-wrap">
+          <summary>
+            当日のタイムテーブル{talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+          </summary>
+          <ol class="lt">
+            {d.program.map((p) => (
+              <li class:list={{ brk: p.break }}>
+                <span class="t">{p.at}</span>
+                <div>
+                  <b>{p.what}</b>
+                  {p.who && <i>{p.who}</i>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )
+    }
+
+    {
+      d.url && (
+        <div class="cta-row">
+          <a
+            class:list={['btn', { ghost: isPlanned }]}
+            href={d.url}
+            target="_blank"
+            rel="noopener"
+          >
+            {d.cta ?? 'connpass で申し込む'}
+          </a>
+        </div>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .meet {
+    display: grid;
+    grid-template-columns: 172px 1fr;
+    background: var(--surface);
+    color: var(--ink);
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    transition:
+      opacity 0.55s var(--ease-out),
+      transform 0.55s var(--ease-out);
+  }
+
+  .meet-when {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 3px;
+    padding: 24px 20px;
+    background: var(--t-pa);
+    border-right: var(--bw) solid var(--stroke);
+  }
+
+  .meet-no {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--t-deep);
+  }
+
+  .meet-date {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 46px;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sl {
+    color: var(--t);
+  }
+
+  .meet-dow {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+  .meet-time {
+    margin-top: 10px;
+    font-family: var(--f-mono);
+    font-size: 13.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .meet-body {
+    padding: 22px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    align-items: flex-start;
+  }
+
+  .meet-body h3 {
+    font-size: clamp(19px, 2.3vw, 25px);
+    letter-spacing: -0.015em;
+    line-height: 1.42;
+  }
+
+  .meet-body h3 small {
+    display: block;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0;
+    margin-top: 5px;
+  }
+
+  .meet-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--t);
+    color: var(--t-on);
+    border: 2px solid var(--stroke);
+    border-radius: 999px;
+    padding: 4px 13px;
+  }
+
+  .meet-lede {
+    font-size: 14.6px;
+    line-height: 1.85;
+    max-width: 60ch;
+  }
+
+  .meet-facts {
+    list-style: none;
+    display: grid;
+    gap: 7px;
+    width: 100%;
+    margin: 0;
+    padding: 2px 0 0;
+  }
+
+  .meet-facts li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 12px;
+    align-items: baseline;
+    font-size: 13.6px;
+    line-height: 1.72;
+  }
+
+  .meet-facts li > span {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  /* The running order is folded away: nine rows of LT titles outweigh anything
+     the main event can show while its own timetable is still provisional. */
+  .lt-wrap {
+    width: 100%;
+    border-top: 1.5px solid var(--rule);
+    padding-top: 9px;
+  }
+
+  .lt-wrap > summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--t-deep);
+    padding: 3px 0;
+  }
+
+  .lt-wrap > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .lt-wrap > summary::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-right: 2px solid currentcolor;
+    border-bottom: 2px solid currentcolor;
+    transform: translateY(-2.5px) rotate(45deg);
+    transition: transform 0.15s ease;
+  }
+
+  .lt-wrap[open] > summary::after {
+    transform: translateY(1.5px) rotate(225deg);
+  }
+
+  .lt {
+    list-style: none;
+    width: 100%;
+    margin: 0;
+    padding: 8px 0 2px;
+  }
+
+  .lt li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1.5px solid var(--rule);
+    align-items: baseline;
+  }
+
+  .lt li:last-child {
+    border-bottom: 0;
+  }
+
+  .lt .t {
+    font-family: var(--f-mono);
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--t-deep);
+  }
+
+  .lt b {
+    font-weight: 700;
+    font-size: 14.2px;
+    line-height: 1.62;
+  }
+
+  .lt i {
+    display: block;
+    font-style: normal;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .lt li.brk .t {
+    color: var(--muted);
+  }
+
+  .lt li.brk b {
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  /* Placeholder for a round that has no date yet. */
+  .meet.next {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--dash);
+  }
+
+  .meet.next .meet-when {
+    background: transparent;
+    justify-content: center;
+    border-right-color: var(--dash);
+    border-right-style: dashed;
+  }
+
+  .meet.next .meet-no {
+    color: var(--muted);
+  }
+
+  .meet.next .meet-date {
+    font-size: 30px;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+  }
+
+  .meet.next .meet-body h3 {
+    font-size: clamp(17px, 2vw, 21px);
+  }
+
+  .meet.next .meet-lede {
+    color: var(--muted);
+  }
+
+  @media (width <= 760px) {
+    .meet {
+      grid-template-columns: 1fr;
+    }
+
+    .meet-when {
+      flex-direction: row;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      padding: 15px 20px;
+      border-right: 0;
+      border-bottom: var(--bw) solid var(--stroke);
+    }
+
+    .meet.next .meet-when {
+      justify-content: flex-start;
+      border-right: 0;
+      border-bottom-color: var(--dash);
+      border-bottom-style: dashed;
+    }
+
+    .meet-date {
+      font-size: 32px;
+    }
+
+    .meet-time {
+      margin-top: 0;
+    }
+
+    .meet-body {
+      padding: 18px 20px 22px;
+    }
+
+    .lt li,
+    .meet-facts li {
+      grid-template-columns: 50px 1fr;
+      gap: 10px;
+    }
+  }
+</style>

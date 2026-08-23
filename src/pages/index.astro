@@ -1,11 +1,39 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Base from '../layouts/Base.astro';
+import Sprite from '../components/Sprite.astro';
+import Preloader from '../components/Preloader.astro';
+import TopBar from '../components/TopBar.astro';
+import Hero from '../components/Hero.astro';
+import Countdown from '../components/Countdown.astro';
+import PreEvents from '../components/PreEvents.astro';
+import Overview from '../components/Overview.astro';
+import About from '../components/About.astro';
+import Timetable from '../components/Timetable.astro';
+import Sessions from '../components/Sessions.astro';
+import WhatIsDevFest from '../components/WhatIsDevFest.astro';
+import Partners from '../components/Partners.astro';
+import CodeOfConduct from '../components/CodeOfConduct.astro';
+import Register from '../components/Register.astro';
+import Footer from '../components/Footer.astro';
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<Base>
+  <Sprite />
+  <Preloader />
+
+  <TopBar />
+  <main>
+    <Hero />
+    <Countdown />
+    <PreEvents />
+    <Overview />
+    <About />
+    <Timetable />
+    <Sessions />
+    <WhatIsDevFest />
+    <Partners />
+    <CodeOfConduct />
+    <Register />
+  </main>
+  <Footer />
+</Base>

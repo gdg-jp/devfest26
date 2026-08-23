@@ -1,0 +1,24 @@
+---
+interface Props {
+  /** `primary` is the full lockup with GDG; `brackets` is the { DevFest } mark. */
+  variant?: 'primary' | 'brackets';
+  class?: string;
+  label?: string;
+  style?: string;
+}
+
+const {
+  variant = 'primary',
+  class: className,
+  label = variant === 'primary' ? 'DevFest — Google Developer Groups' : 'DevFest',
+  style,
+} = Astro.props;
+
+const viewBox =
+  variant === 'primary' ? '0 0 2532.7334 376.36267' : '0 0 2532.7334 645.47467';
+const href = variant === 'primary' ? '#mk-primary' : '#mk-brackets';
+---
+
+<svg class={className} viewBox={viewBox} role="img" aria-label={label} style={style}>
+  <use href={href} />
+</svg>

@@ -1,0 +1,93 @@
+/* ============================================================================
+   DevFest 2026 — design tokens
+   Light theme only. Colour, type and shape language from the DevFest 2026
+   Brand Guide.
+
+   The tenant layer (--t-*) is the only part a second city needs to override.
+   Everything above it is a brand constant and stays fixed everywhere.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Brand constants — never overridden per tenant ---------------- */
+  --blue: #4285f4;
+  --green: #34a853;
+  --yellow: #f9ab00;
+  --red: #ea4335;
+
+  --ht-blue: #57caff;
+  --ht-green: #5cdb6d;
+  --ht-yellow: #ffd427;
+  --ht-red: #ff7daf;
+
+  --pa-blue: #c3ecf6;
+  --pa-green: #ccf6c5;
+  --pa-yellow: #ffe7a5;
+  --pa-red: #f8d8d8;
+
+  --ground: #f0f0f0; /* Off White */
+  --surface: #ffffff;
+  --ink: #1e1e1e; /* Black 02 */
+  --brand-ink: #1e1e1e; /* drives the wordmark inside the inline SVG */
+  --muted: #5f6368;
+  --stroke: #1e1e1e;
+  --rule: rgb(30 30 30 / 14%);
+  --dash: rgb(30 30 30 / 32%);
+
+  /* ---- Tenant layer — default is Kansai (Blue) ----------------------
+     --t       accent, solid fills and rules
+     --t-ht    halftone, decorative only
+     --t-pa    pastel, large calm areas
+     --t-deep  the accent as readable text on a light ground
+     --t-on    ink placed on top of a solid --t area
+     ------------------------------------------------------------------ */
+  --t: #4285f4;
+  --t-ht: #57caff;
+  --t-pa: #c3ecf6;
+  --t-deep: #174ea6;
+  --t-on: #ffffff;
+
+  /* ---- Type ---------------------------------------------------------- */
+  --f-display: "Google Sans", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  --f-body: "Google Sans Text", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  --f-mono: "Google Sans Code", "Roboto Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* ---- Metrics ------------------------------------------------------- */
+  --w: 1120px;
+  --bw: 2.5px;
+  --r-lg: 30px;
+  --r-md: 20px;
+  --r-sm: 12px;
+
+  /* ---- Motion -------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --scallop: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cpath d='M0 20 A20 20 0 0 1 40 20' fill='none' stroke='%231e1e1e' stroke-width='2.6'/%3E%3C/svg%3E");
+}
+
+/* --- Alternate tenants. A second city ships one block like these. ------ */
+[data-tenant="tokyo"] {
+  --t: #ea4335;
+  --t-ht: #ff7daf;
+  --t-pa: #f8d8d8;
+  --t-deep: #a50e0e;
+  --t-on: #ffffff;
+}
+
+[data-tenant="shikoku"] {
+  --t: #34a853;
+  --t-ht: #5cdb6d;
+  --t-pa: #ccf6c5;
+  --t-deep: #0d652d;
+  --t-on: #ffffff;
+}
+
+[data-tenant="kyushu"] {
+  --t: #f9ab00;
+  --t-ht: #ffd427;
+  --t-pa: #ffe7a5;
+  --t-deep: #7a5300;
+  --t-on: #1e1e1e; /* yellow needs dark ink */
+}
