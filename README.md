@@ -126,7 +126,47 @@ audience:
 
 コンポーネント・CSS・スクリプトは触りません。テーマは `blue` / `green` / `yellow` / `red` から選ぶだけです。
 
+Sanity を使っている場合は 1〜4 が不要になり、**Studio で `event` ドキュメントを 1 件作るだけ**になります（`TENANT` の値は `ids.ts` ではなく Sanity の slug と照合されます）。
+
 コンテンツが空のセクション（プレイベント・共催団体・セッション）は**丸ごと描画されません**。都市は何もない状態から始められます。ナビゲーションの項目は都市ごとに書くので、まだ無いセクションへのリンクは載せないでください。
+
+## コンテンツを Sanity で管理する（任意）
+
+**既定では OFF です。** 環境変数 `SANITY_PROJECT_ID` が無ければ、これまでどおり `src/content/<tenant>/` の Markdown からビルドします。
+
+```bash
+SANITY_PROJECT_ID=xxxxxxxx SANITY_DATASET=production TENANT=kansai pnpm exec astro build
+```
+
+| 変数 | 必須 | 内容 |
+| :--- | :--- | :--- |
+| `SANITY_PROJECT_ID` | — | **設定した時点で Sanity 経由に切り替わります** |
+| `SANITY_DATASET` | | 既定 `production` |
+| `SANITY_API_VERSION` | | 既定 `2026-01-01` |
+| `SANITY_READ_TOKEN` | | 下書きを含めて読む場合のみ |
+
+### 何が変わって、何が変わらないか
+
+変わるのはローダーだけです。**コンポーネントは 1 つも変わりません。**
+
+- スキーマは共通（`src/content.config.ts`）。Studio で項目を空のまま保存すると、frontmatter の記入漏れと同じようにビルドが落ちます
+- 本文は Portable Text で書き、ローダー内で HTML に変換して `rendered.html` に入れます。だから `<Content />` はそのまま動きます
+- 登壇者写真は Sanity の CDN から配信します。**Studio で設定したホットスポットが効くので、丸いアバターで顔が切れる写真を編集画面で直せます**
+- テナント設定（日時・会場・テーマ・トラック・ナビ）も `event` ドキュメント 1 件から読みます。`src/tenants/*.ts` は Sanity が有効なときは使われません
+
+都市のスコープは、Markdown ではディレクトリ、Sanity では `event` リファレンスで担保します。Sanity 側は**リファレンス未設定のドキュメントがどの都市にも出ない**ので、Studio では都市を選んでからコンテンツを作る導線にしてあります（新規作成時に `event` が自動で入ります）。
+
+### 壊れ方
+
+設定ミスは黙って通しません。プロジェクト ID が違う、`event` ドキュメントが無い、必須項目が空 — いずれもビルドが非ゼロで落ち、成果物は出ません。Markdown へ勝手にフォールバックすることもありません。
+
+### Studio
+
+`studio/` にあります。公開サイトを完全な静的のまま保つため、Studio は同居させず `*.sanity.studio` に別途デプロイします（`studio/README.md`）。
+
+### 公開フロー
+
+Sanity で publish → webhook → デプロイフック → 再ビルド。静的サイトなので、**コンテンツの変更は再ビルドしないと反映されません。** 当日にタイムテーブルを即時更新したい場合は別の作りが必要です。
 
 ## OG 画像
 

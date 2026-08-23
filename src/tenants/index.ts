@@ -1,5 +1,6 @@
 import { activeTenant } from './active';
 import { eventDates } from './eventDates';
+import { fromSanityIfEnabled } from './source';
 import type { TenantId } from './ids';
 import { kansai } from './kansai';
 import { tokyo } from './tokyo';
@@ -24,7 +25,14 @@ function resolve(config: TenantConfig) {
   };
 }
 
-export const tenant = resolve(registry[activeTenant]);
+/**
+ * Top-level await: with Sanity on, the config is a network read, and every
+ * component reads `site` synchronously. Awaiting once here keeps all of them
+ * unchanged.
+ */
+export const tenant = resolve(
+  (await fromSanityIfEnabled(activeTenant)) ?? registry[activeTenant as TenantId],
+);
 
 export type ResolvedTenant = typeof tenant;
 export { activeTenant };

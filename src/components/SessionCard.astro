@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import { render, type CollectionEntry } from 'astro:content';
+import { AVATAR_SIZE, isRemotePhoto } from '../lib/photo';
 
 interface Props {
   session: CollectionEntry<'sessions'>;
@@ -38,15 +39,27 @@ const hasAbstract = session.body != null && session.body.trim().length > 0;
       speakers.map((s) => (
         <div class="one">
           {s.data.photo ? (
-            <Image
-              class="av"
-              src={s.data.photo}
-              alt=""
-              width={112}
-              height={112}
-              densities={[1, 2]}
-              loading="lazy"
-            />
+            isRemotePhoto(s.data.photo) ? (
+              /* Sanity's CDN already cropped this to the hotspot at 2x. */
+              <img
+                class="av"
+                src={s.data.photo.src}
+                alt=""
+                width={AVATAR_SIZE}
+                height={AVATAR_SIZE}
+                loading="lazy"
+              />
+            ) : (
+              <Image
+                class="av"
+                src={s.data.photo}
+                alt=""
+                width={AVATAR_SIZE}
+                height={AVATAR_SIZE}
+                densities={[1, 2]}
+                loading="lazy"
+              />
+            )
           ) : (
             <span class="av" aria-hidden="true">
               {s.data.initial ?? s.data.name.slice(0, 1)}

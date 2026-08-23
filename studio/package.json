@@ -1,0 +1,21 @@
+{
+  "name": "devfest-2026-studio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build",
+    "deploy": "sanity deploy"
+  },
+  "dependencies": {
+    "@sanity/vision": "^4.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sanity": "^4.10.1",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.0.0"
+  }
+}

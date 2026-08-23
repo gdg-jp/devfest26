@@ -1,3 +1,4 @@
+import { sanityEnabled } from '../lib/sanity/env';
 import { DEFAULT_TENANT, TENANT_IDS, type TenantId } from './ids';
 
 /**
@@ -15,7 +16,9 @@ function resolve(): TenantId {
   const requested = process.env.TENANT?.trim();
   if (!requested) return DEFAULT_TENANT;
 
-  if (!(TENANT_IDS as readonly string[]).includes(requested)) {
+  // With Sanity on, the list of cities lives in the CMS, so the slug is only
+  // checked there — a missing `event` document fails the build just as loudly.
+  if (!sanityEnabled && !(TENANT_IDS as readonly string[]).includes(requested)) {
     throw new Error(
       `Unknown TENANT "${requested}". Known tenants: ${TENANT_IDS.join(', ')}.`,
     );
