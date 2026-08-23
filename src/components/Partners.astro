@@ -7,31 +7,36 @@ const rendered = await Promise.all(
 );
 ---
 
-<section class="sec tint bordered" id="partners">
-  <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Partners</p>
-    <h2 class="sec-h" data-reveal="up">共催・協力団体</h2>
-    <p class="sec-lede" data-reveal="up">関西のコミュニティと一緒につくります。</p>
+{
+  /* Hidden until at least one partner is confirmed. */
+  rendered.length > 0 && (
+  <section class="sec tint bordered" id="partners">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal="up">Partners</p>
+      <h2 class="sec-h" data-reveal="up">共催・協力団体</h2>
+      <p class="sec-lede" data-reveal="up">関西のコミュニティと一緒につくります。</p>
 
-    <div class="orgs" data-stagger>
-      {
-        rendered.map(({ data, Content }) => (
-          <div class="org" style={`--rail:var(--${data.rail})`} data-reveal="up">
-            <h3>
-              <a href={data.url} target="_blank" rel="noopener">
-                {data.name}
-              </a>
-            </h3>
-            <p class="handle">{data.handle}</p>
-            <div class="body">
-              <Content />
+      <div class="orgs" data-stagger>
+        {
+          rendered.map(({ data, Content }) => (
+            <div class="org" style={`--rail:var(--${data.rail})`} data-reveal="up">
+              <h3>
+                <a href={data.url} target="_blank" rel="noopener">
+                  {data.name}
+                </a>
+              </h3>
+              <p class="handle">{data.handle}</p>
+              <div class="body">
+                <Content />
+              </div>
             </div>
-          </div>
-        ))
-      }
+          ))
+        }
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+  )
+}
 
 <style>
   .bordered {

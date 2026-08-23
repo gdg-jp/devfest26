@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# One job per city. They are independent builds of the same commit, so a
+# failure in one does not hide the other's result.
+jobs:
+  build:
+    name: build (${{ matrix.tenant }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tenant: kansai
+            site_url_var: SITE_URL_KANSAI
+          - tenant: tokyo
+            site_url_var: SITE_URL_TOKYO
+
+    env:
+      TENANT: ${{ matrix.tenant }}
+      # Repository variable, e.g. SITE_URL_KANSAI. Unset is not an error:
+      # canonical/OG/JSON-LD absolute URLs are omitted rather than wrong.
+      SITE_URL: ${{ vars[matrix.site_url_var] }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Types and content-collection schemas, scoped to this city's content.
+      - run: pnpm exec astro check
+
+      - run: pnpm exec astro build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-${{ matrix.tenant }}
+          path: dist/${{ matrix.tenant }}
+          if-no-files-found: error
+
+      # Deployment is intentionally not wired up here: the two cities publish to
+      # different targets under different owners. Add a deploy step per tenant
+      # once those are decided.

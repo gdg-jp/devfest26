@@ -1,16 +1,25 @@
 {
-  "name": "devfest-2026-kansai",
+  "name": "devfest-2026",
   "type": "module",
   "version": "0.0.1",
+  "description": "DevFest 2026 のイベントページ（マルチテナント：関西・東京）",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.22.0",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:tokyo": "cross-env TENANT=tokyo astro dev",
     "build": "astro build",
+    "build:kansai": "cross-env TENANT=kansai astro build",
+    "build:tokyo": "cross-env TENANT=tokyo astro build",
+    "build:all": "pnpm build:kansai && pnpm build:tokyo",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check"
+    "check": "astro check",
+    "check:all": "astro check && cross-env TENANT=tokyo astro check"
   },
   "dependencies": {
     "astro": "^7.2.4",
@@ -20,9 +29,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.2.0",
+    "cross-env": "^10.1.0",
     "typescript": "^6.0.3"
-  },
-  "description": "DevFest 2026 in Kansai の公式イベントページ",
-  "private": true,
-  "license": "MIT"
+  }
 }

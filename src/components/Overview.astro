@@ -7,7 +7,13 @@ const { event, stats } = site;
 
 const rows = [
   { rail: 'blue', dt: '開催日', dd: `${event.dateLabel}（${event.dayOfWeek}）` },
-  { rail: 'green', dt: '開催時間', dd: event.hours, note: `${event.social.hours} に${event.social.label}を予定` },
+  {
+    rail: 'green',
+    dt: '開催時間',
+    dd: event.hours,
+    // A city that runs no after-party simply omits `social` in its config.
+    note: event.social && `${event.social.hours} に${event.social.label}を予定`,
+  },
   { rail: 'red', dt: '会場', dd: event.venue.name, note: event.venue.area },
   { rail: 'yellow', dt: '開催形式', dd: event.format },
   { rail: 'blue', dt: '参加費', dd: event.fee },

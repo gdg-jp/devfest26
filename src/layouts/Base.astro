@@ -28,14 +28,20 @@ const eventSchema = {
   location: {
     '@type': 'Place',
     name: event.venue.name,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: event.venue.streetAddress,
-      addressLocality: event.venue.addressLocality,
-      addressRegion: event.venue.addressRegion,
-      postalCode: event.venue.postalCode,
-      addressCountry: 'JP',
-    },
+    // Announced later than the date, so publish the address only once it is
+    // actually complete rather than emitting a stub.
+    ...(event.venue.streetAddress
+      ? {
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: event.venue.streetAddress,
+            addressLocality: event.venue.addressLocality,
+            addressRegion: event.venue.addressRegion,
+            postalCode: event.venue.postalCode,
+            addressCountry: 'JP',
+          },
+        }
+      : {}),
   },
   organizer: {
     '@type': 'Organization',

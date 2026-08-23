@@ -1,7 +1,7 @@
 ---
 name: "竹内 郁雄 氏"
 role: "東京大学名誉教授／未踏事業統括PM"
-photo: ikuo-takeuchi
+photo: ./ikuo-takeuchi.jpg
 ---
 
 東京大学理学部数学科卒業後、NTT研究所、電気通信大学、東京大学、早稲田大学などで活動。Lispマシンの開発、RoboCup、IT防災の研究などに携わる。「サイボウズ式」にて「ハッカーの遺言状」を49回連載。

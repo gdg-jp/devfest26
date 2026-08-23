@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import { render, type CollectionEntry } from 'astro:content';
-import { speakerPhoto } from '../data/photos';
 
 interface Props {
   session: CollectionEntry<'sessions'>;
@@ -41,7 +40,7 @@ const hasAbstract = session.body != null && session.body.trim().length > 0;
           {s.data.photo ? (
             <Image
               class="av"
-              src={speakerPhoto(s.data.photo)}
+              src={s.data.photo}
               alt=""
               width={112}
               height={112}
