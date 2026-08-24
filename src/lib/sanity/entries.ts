@@ -1,7 +1,7 @@
-import { AVATAR_SIZE } from '../photo';
-import { portableTextToHtml, portableTextToPlain } from './portableText';
-import { speakerPhotoUrl } from './image';
-import type { SanityEntry } from '../../loaders/sanity';
+import { AVATAR_SIZE } from "../photo";
+import { portableTextToHtml, portableTextToPlain } from "./portableText";
+import { speakerPhotoUrl } from "./image";
+import type { SanityEntry } from "../../loaders/sanity";
 
 /**
  * Sanity document → content-collection entry.
@@ -25,7 +25,12 @@ export function speakerEntry(doc: Doc): SanityEntry {
       role: doc.role,
       initial: doc.initial ?? undefined,
       photo: doc.photo
-        ? { src: speakerPhotoUrl(doc.photo, size), width: size, height: size, remote: true }
+        ? {
+            src: speakerPhotoUrl(doc.photo, size),
+            width: size,
+            height: size,
+            remote: true,
+          }
         : undefined,
     },
     html: portableTextToHtml(doc.bio),
@@ -98,7 +103,7 @@ export function aboutEntry(doc: Doc): SanityEntry {
   // The component looks this up by a fixed id, so the Studio's document id is
   // not used here — there is only ever one About page per city.
   return {
-    id: 'about',
+    id: "about",
     data: {
       lead: doc.lead,
       callout: doc.callout ?? undefined,

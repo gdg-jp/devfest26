@@ -1,11 +1,11 @@
 ---
-import Sprite from '../../components/Sprite.astro';
-import Logo from '../../components/Logo.astro';
-import { site } from '../../data/site';
-import { stickers } from '../../data/stickers';
-import '../../styles/tokens.css';
+import Sprite from "../../components/Sprite.astro";
+import Logo from "../../components/Logo.astro";
+import { site } from "../../data/site";
+import { stickers } from "../../data/stickers";
+import "../../styles/tokens.css";
 // base.css carries the reset and the rule that hides the inline sprite.
-import '../../styles/base.css';
+import "../../styles/base.css";
 
 /**
  * The source artwork for `public/og/<tenant>.png`, rendered from the same
@@ -16,15 +16,24 @@ import '../../styles/base.css';
  * with `pnpm og` — see scripts/make-og.mjs.
  */
 export function getStaticPaths() {
-  return process.env.OG_PREVIEW ? [{ params: { variant: 'card' } }] : [];
+  return process.env.OG_PREVIEW ? [{ params: { variant: "card" } }] : [];
 }
 
 const { event, links: _links, tagline } = site;
 const glyphs = [
-  { name: 'slashes', style: 'width:150px;top:52px;right:96px;transform:rotate(-8deg)' },
-  { name: 'ellipsis', style: 'width:250px;bottom:78px;right:60px;transform:rotate(6deg)' },
-  { name: 'plus', style: 'width:84px;top:270px;right:300px;transform:rotate(12deg)' },
-  { name: 'dot', style: 'width:44px;top:196px;right:44px' },
+  {
+    name: "slashes",
+    style: "width:150px;top:52px;right:96px;transform:rotate(-8deg)",
+  },
+  {
+    name: "ellipsis",
+    style: "width:250px;bottom:78px;right:60px;transform:rotate(6deg)",
+  },
+  {
+    name: "plus",
+    style: "width:84px;top:270px;right:300px;transform:rotate(12deg)",
+  },
+  { name: "dot", style: "width:44px;top:196px;right:44px" },
 ] as const;
 ---
 
@@ -48,7 +57,12 @@ const glyphs = [
     <div class="card">
       {
         glyphs.map((g) => (
-          <svg class="glyph" viewBox={stickers[g.name]} style={g.style} aria-hidden="true">
+          <svg
+            class="glyph"
+            viewBox={stickers[g.name]}
+            style={g.style}
+            aria-hidden="true"
+          >
             <use href="#stickersheet" />
           </svg>
         ))
@@ -65,7 +79,8 @@ const glyphs = [
         <div>
           <div class="meta">
             <span class="pill hi">
-              {event.isoDate.replace(/-/g, '.')} {event.dayOfWeekEn.toUpperCase()}
+              {event.isoDate.replace(/-/g, ".")}
+              {event.dayOfWeekEn.toUpperCase()}
             </span>
             <span class="pill">{event.venue.name}</span>
             <span class="pill">参加費{event.fee}</span>
@@ -172,7 +187,12 @@ const glyphs = [
     inset: auto 0 0;
     height: 26px;
     z-index: 3;
-    background: radial-gradient(circle at 22px 26px, #fff 20px, transparent 21px) repeat-x;
+    background: radial-gradient(
+        circle at 22px 26px,
+        #fff 20px,
+        transparent 21px
+      )
+      repeat-x;
     background-size: 44px 26px;
   }
 </style>

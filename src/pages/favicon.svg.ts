@@ -1,6 +1,6 @@
-import type { APIRoute } from 'astro';
-import { faviconSvg } from '../lib/favicon';
-import { site } from '../data/site';
+import type { APIRoute } from "astro";
+import { faviconSvg } from "../lib/favicon";
+import { site } from "../data/site";
 
 /**
  * Served at /favicon.svg. An endpoint rather than a file in public/, because
@@ -9,5 +9,5 @@ import { site } from '../data/site';
  */
 export const GET: APIRoute = () =>
   new Response(faviconSvg(site.theme), {
-    headers: { 'Content-Type': 'image/svg+xml' },
+    headers: { "Content-Type": "image/svg+xml" },
   });

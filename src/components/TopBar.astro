@@ -1,17 +1,26 @@
 ---
-import Logo from './Logo.astro';
-import { site } from '../data/site';
+import Logo from "./Logo.astro";
+import { site } from "../data/site";
 ---
 
 <header class="topbar" data-topbar>
   <div class="wrap">
     <a class="home" href="#top" aria-label={`${site.title} — ページ先頭へ`}>
       <Logo variant="primary" class="mark" />
+      <span class="edition">{site.editionEn}</span>
     </a>
     <nav aria-label="セクションナビゲーション">
-      {site.nav.map((item) => <a href={item.href} data-spy={item.href.slice(1)}>{item.label}</a>)}
+      {
+        site.nav.map((item) => (
+          <a href={item.href} data-spy={item.href.slice(1)}>
+            {item.label}
+          </a>
+        ))
+      }
     </nav>
-    <a class="btn sm" href={site.links.register} target="_blank" rel="noopener">参加登録</a>
+    <a class="btn sm" href={site.links.register} target="_blank" rel="noopener"
+      >参加登録</a
+    >
   </div>
   <div class="progress" aria-hidden="true"><span data-progress></span></div>
 </header>
@@ -44,10 +53,17 @@ import { site } from '../data/site';
     padding: 6px 0;
   }
 
+  /* Shrinkable, so a long city name gives way to the register button on a
+     narrow phone rather than pushing the bar into a horizontal scroll. The
+     lockup itself never shrinks. */
   .home {
-    display: block;
-    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
     line-height: 0;
+    color: var(--ink);
+    text-decoration: none;
   }
 
   .home:hover :global(.mark) {
@@ -55,8 +71,28 @@ import { site } from '../data/site';
   }
 
   .home :global(.mark) {
+    flex: none;
     width: 150px;
     transition: transform 0.2s var(--ease-spring);
+  }
+
+  /* The city sits beside the lockup behind a hairline, so it reads as an
+     edition of DevFest rather than as part of the wordmark itself. */
+  .edition {
+    padding-left: 10px;
+    border-left: var(--bw) solid var(--stroke);
+    font-family: var(--f-display);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: font-size 0.25s var(--ease-out);
+  }
+
+  .topbar:global(.is-stuck) .edition {
+    font-size: 15px;
   }
 
   nav {
@@ -127,6 +163,24 @@ import { site } from '../data/site';
 
     .topbar :global(.btn.sm) {
       margin-left: auto;
+    }
+  }
+
+  /* Narrow phones: the lockup, the city and the register button have to share
+     one line, so both halves of the lockup give up a little width. */
+  @media (width <= 480px) {
+    .home {
+      gap: 7px;
+    }
+
+    .home :global(.mark) {
+      width: 118px;
+    }
+
+    .edition,
+    .topbar:global(.is-stuck) .edition {
+      padding-left: 7px;
+      font-size: 13.5px;
     }
   }
 </style>

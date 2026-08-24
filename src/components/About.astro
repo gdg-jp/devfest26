@@ -1,10 +1,10 @@
 ---
-import { getEntry, render } from 'astro:content';
-import Props from './Props.astro';
-import Sticker from './Sticker.astro';
-import { inlineMarkdown } from '../lib/inlineMarkdown';
+import { getEntry, render } from "astro:content";
+import Props from "./Props.astro";
+import Sticker from "./Sticker.astro";
+import { inlineMarkdown } from "../lib/inlineMarkdown";
 
-const entry = await getEntry('about', 'about');
+const entry = await getEntry("about", "about");
 const Content = entry ? (await render(entry)).Content : null;
 ---
 
@@ -13,13 +13,31 @@ const Content = entry ? (await render(entry)).Content : null;
   entry && Content && (
     <section class="sec tint bordered" id="about">
       <Props>
-        <Sticker name="cross" width={70} top="9%" right="2.5%" rotate={-12} speed={0.9} />
-        <Sticker name="braces" width={88} bottom="8%" left="1.5%" rotate={8} speed={-0.8} />
+        <Sticker
+          name="cross"
+          width={70}
+          top="9%"
+          right="2.5%"
+          rotate={-12}
+          speed={0.9}
+        />
+        <Sticker
+          name="braces"
+          width={88}
+          bottom="8%"
+          left="1.5%"
+          rotate={8}
+          speed={-0.8}
+        />
       </Props>
 
       <div class="wrap">
-        <p class="eyebrow" data-reveal="up">About</p>
-        <h2 class="sec-h" data-reveal="up">イベントについて</h2>
+        <p class="eyebrow" data-reveal="up">
+          About
+        </p>
+        <h2 class="sec-h" data-reveal="up">
+          イベントについて
+        </h2>
 
         <div class="split">
           <div data-reveal="up">
@@ -31,7 +49,7 @@ const Content = entry ? (await render(entry)).Content : null;
 
             {entry.data.callout && (
               <p class="callout">
-                <i>{'{'}</i> {entry.data.callout} <i>{'}'}</i>
+                <i>{"{"}</i> {entry.data.callout} <i>{"}"}</i>
               </p>
             )}
           </div>
@@ -83,7 +101,7 @@ const Content = entry ? (await render(entry)).Content : null;
   }
 
   .callout {
-    border: var(--bw) solid var(--green);
+    border: var(--bw) solid var(--t);
     border-radius: var(--r-md);
     padding: 16px 20px;
     font-family: var(--f-display);
@@ -96,7 +114,7 @@ const Content = entry ? (await render(entry)).Content : null;
 
   .callout i {
     font-style: normal;
-    color: var(--green);
+    color: var(--t);
   }
 
   .body :global(p + p) {

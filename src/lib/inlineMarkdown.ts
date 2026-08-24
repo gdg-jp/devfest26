@@ -8,15 +8,24 @@
  */
 
 const ESCAPES: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
 };
 
+/**
+ * The `**emphasis**` half on its own, for callers whose input is already HTML
+ * and must not be escaped again — see src/lib/sanity/portableText.ts.
+ *
+ * The run may not contain a tag, so a stray `**` cannot swallow the markup
+ * between two paragraphs; in escaped plain text `<` never appears anyway.
+ */
+export function emphasis(html: string): string {
+  return html.replace(/\*\*([^*<]+)\*\*/g, "<strong>$1</strong>");
+}
+
 export function inlineMarkdown(source: string): string {
-  return source
-    .replace(/[&<>"']/g, (c) => ESCAPES[c])
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return emphasis(source.replace(/[&<>"']/g, (c) => ESCAPES[c]));
 }

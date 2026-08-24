@@ -1,39 +1,62 @@
 ---
-import Logo from './Logo.astro';
-import Props from './Props.astro';
-import Sticker from './Sticker.astro';
-import { site } from '../data/site';
-import { getCollection } from 'astro:content';
+import Logo from "./Logo.astro";
+import Props from "./Props.astro";
+import Sticker from "./Sticker.astro";
+import { site } from "../data/site";
+import { getCollection } from "astro:content";
 
 const { event, links, tagline } = site;
 
 // The hero only advertises a pre-event while one is actually taking bookings.
-const meetups = await getCollection('meetups');
+const meetups = await getCollection("meetups");
 const openMeetup = meetups
-  .filter((m) => m.data.status === 'open' && m.data.date)
+  .filter((m) => m.data.status === "open" && m.data.date)
   .sort((a, b) => a.data.no - b.data.no)[0];
 
 const meetupDate = openMeetup?.data.date
   ? `${openMeetup.data.date.getMonth() + 1}/${openMeetup.data.date.getDate()}`
   : null;
 const meetupDow = openMeetup?.data.date
-  ? ['日', '月', '火', '水', '木', '金', '土'][openMeetup.data.date.getDay()]
+  ? ["日", "月", "火", "水", "木", "金", "土"][openMeetup.data.date.getDay()]
   : null;
 ---
 
 <section class="hero" id="top">
   <Props>
-    <Sticker name="slashes" width={104} top="34px" right="6%" rotate={-8} speed={0.9} />
-    <Sticker name="ellipsis" width={190} bottom="12%" right="2%" rotate={6} speed={-0.7} />
+    <Sticker
+      name="slashes"
+      width={104}
+      top="34px"
+      right="6%"
+      rotate={-8}
+      speed={0.9}
+    />
+    <Sticker
+      name="ellipsis"
+      width={190}
+      bottom="12%"
+      right="2%"
+      rotate={6}
+      speed={-0.7}
+    />
     <Sticker name="dot" width={38} top="46%" right="14%" speed={1.5} />
-    <Sticker name="plus" width={62} bottom="16%" left="2.5%" rotate={12} speed={-1.1} />
+    <Sticker
+      name="plus"
+      width={62}
+      bottom="16%"
+      left="2.5%"
+      rotate={12}
+      speed={-1.1}
+    />
   </Props>
 
   <div class="wrap">
     <div class="lockup" data-intro="1">
       <Logo variant="brackets" class="brackets" />
       <span class="yr">{event.isoDate.slice(0, 4)}</span>
-      <span class="where">{event.dateShort} ({event.dayOfWeekEn}) {event.venue.cityEn}</span>
+      <span class="where"
+        >{event.dateShort} ({event.dayOfWeekEn}) {event.venue.cityEn}</span
+      >
     </div>
 
     <h1 data-intro="2">{site.title}</h1>
@@ -43,28 +66,37 @@ const meetupDow = openMeetup?.data.date
 
     <div class="metas" data-intro="4">
       <span class="pill"
-        ><span class="dot" style="background:var(--blue)"></span><b>{event.dateLabel}</b>（{
-          event.dayOfWeek
-        }）{event.hoursCompact}</span
+        ><span class="dot" style="background:var(--blue)"></span><b
+          >{event.dateLabel}</b
+        >（{event.dayOfWeek}）{event.hoursCompact}</span
       >
       <span class="pill"
-        ><span class="dot" style="background:var(--green)"></span>{event.venue.name}</span
+        ><span class="dot" style="background:var(--green)"></span>{
+          event.venue.name
+        }</span
       >
       <span class="pill"
-        ><span class="dot" style="background:var(--red)"></span>{event.formatShort}</span
+        ><span class="dot" style="background:var(--red)"></span>{
+          event.formatShort
+        }</span
       >
       <span class="pill"
-        ><span class="dot" style="background:var(--yellow)"></span>参加費 <b>{event.fee}</b></span
+        ><span class="dot" style="background:var(--yellow)"></span>参加費 <b
+          >{event.fee}</b
+        ></span
       >
     </div>
 
     <div class="cta-row" data-intro="5">
-      <a class="btn" href={links.register} target="_blank" rel="noopener">connpass で参加登録</a>
+      <a class="btn" href={links.register} target="_blank" rel="noopener"
+        >connpass で参加登録</a
+      >
       <a class="btn ghost" href="#sessions">セッションを見る</a>
       {
         openMeetup && (
           <span class="cta-note">
-            プレイベント <a href="#preevent">DevFest Meetup #{openMeetup.data.no}</a> は{' '}
+            プレイベント{" "}
+            <a href="#preevent">DevFest Meetup #{openMeetup.data.no}</a> は{" "}
             {meetupDate}（{meetupDow}）開催、受付中です
           </span>
         )

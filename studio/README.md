@@ -27,6 +27,7 @@ SANITY_STUDIO_DATASET=production
 ```bash
 pnpm dev
 ```
+
 ブラウザで表示される URL（通常は `http://localhost:3333`）にアクセスし、コンテンツの編集・プレビューを行えます。
 
 ## デプロイ

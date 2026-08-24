@@ -1,5 +1,5 @@
-import type { Theme } from '../data/themes';
-import type { TenantId } from './ids';
+import type { Theme } from "../data/themes";
+import type { TenantId } from "./ids";
 
 /**
  * The shape a city has to fill in. One file per city, and nothing outside
@@ -7,7 +7,7 @@ import type { TenantId } from './ids';
  */
 
 /** Fixed vocabulary. A two-track city simply leaves `c` unused. */
-export type TrackId = 'a' | 'b' | 'c' | 'unscheduled';
+export type TrackId = "a" | "b" | "c" | "unscheduled";
 
 export interface Track {
   id: TrackId;
@@ -37,7 +37,7 @@ export interface NavItem {
 export interface Stat {
   value: string;
   label: string;
-  tone: 'blue' | 'green' | 'yellow' | 'red';
+  tone: "blue" | "green" | "yellow" | "red";
 }
 
 export interface Venue {

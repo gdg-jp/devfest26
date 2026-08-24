@@ -1,5 +1,5 @@
 ---
-import { stickers, type StickerName } from '../data/stickers';
+import { stickers, type StickerName } from "../data/stickers";
 
 interface Props {
   name: StickerName;
@@ -18,7 +18,16 @@ interface Props {
   speed?: number;
 }
 
-const { name, width, top, right, bottom, left, rotate = 0, speed = 0.5 } = Astro.props;
+const {
+  name,
+  width,
+  top,
+  right,
+  bottom,
+  left,
+  rotate = 0,
+  speed = 0.5,
+} = Astro.props;
 
 const style = [
   `width:${width}px`,
@@ -29,7 +38,7 @@ const style = [
   rotate !== 0 && `--rot:${rotate}deg`,
 ]
   .filter(Boolean)
-  .join(';');
+  .join(";");
 ---
 
 <svg
@@ -38,5 +47,5 @@ const style = [
   style={style}
   data-parallax={speed || undefined}
   aria-hidden="true"
-  focusable="false"><use href="#stickersheet" /></svg
+  focusable="false"><use href="#stickersheet"></use></svg
 >

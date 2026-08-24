@@ -6,7 +6,7 @@
  * variable at build time — see `src/tenants/active.ts`.
  */
 
-import { tenant } from '../tenants';
+import { tenant } from "../tenants";
 
 export const site = tenant;
 

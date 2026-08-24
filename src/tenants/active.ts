@@ -1,5 +1,5 @@
-import { sanityEnabled } from '../lib/sanity/env';
-import { DEFAULT_TENANT, TENANT_IDS, type TenantId } from './ids';
+import { sanityEnabled } from "../lib/sanity/env";
+import { DEFAULT_TENANT, TENANT_IDS, type TenantId } from "./ids";
 
 /**
  * Which city this build is for. Set `TENANT` in the build environment:
@@ -18,9 +18,12 @@ function resolve(): TenantId {
 
   // With Sanity on, the list of cities lives in the CMS, so the slug is only
   // checked there — a missing `event` document fails the build just as loudly.
-  if (!sanityEnabled && !(TENANT_IDS as readonly string[]).includes(requested)) {
+  if (
+    !sanityEnabled &&
+    !(TENANT_IDS as readonly string[]).includes(requested)
+  ) {
     throw new Error(
-      `Unknown TENANT "${requested}". Known tenants: ${TENANT_IDS.join(', ')}.`,
+      `Unknown TENANT "${requested}". Known tenants: ${TENANT_IDS.join(", ")}.`,
     );
   }
 

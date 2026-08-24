@@ -6,8 +6,8 @@
  * the tenant configs themselves.
  */
 
-export const TENANT_IDS = ['kansai', 'tokyo'] as const;
+export const TENANT_IDS = ["kansai", "tokyo"] as const;
 
 export type TenantId = (typeof TENANT_IDS)[number];
 
-export const DEFAULT_TENANT: TenantId = 'kansai';
+export const DEFAULT_TENANT: TenantId = "kansai";

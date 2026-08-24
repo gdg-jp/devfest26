@@ -1,13 +1,27 @@
 ---
-import Logo from './Logo.astro';
-import Props from './Props.astro';
-import Sticker from './Sticker.astro';
+import Logo from "./Logo.astro";
+import Props from "./Props.astro";
+import Sticker from "./Sticker.astro";
 ---
 
 <section class="sec" id="what">
   <Props>
-    <Sticker name="braces" width={80} top="18%" right="2%" rotate={-6} speed={0.85} />
-    <Sticker name="ellipsis" width={150} bottom="12%" left="1%" rotate={-8} speed={-0.75} />
+    <Sticker
+      name="braces"
+      width={80}
+      top="18%"
+      right="2%"
+      rotate={-6}
+      speed={0.85}
+    />
+    <Sticker
+      name="ellipsis"
+      width={150}
+      bottom="12%"
+      left="1%"
+      rotate={-8}
+      speed={-0.75}
+    />
   </Props>
 
   <div class="wrap">
@@ -17,7 +31,8 @@ import Sticker from './Sticker.astro';
     <div class="split">
       <div class="panel" data-reveal="up">
         <p>
-          DevFest は、世界各地の Google Developer Groups（GDG）が、それぞれの地域で開催するコミュニティ主導のテクノロジーカンファレンスです。
+          DevFest は、世界各地の Google Developer
+          Groups（GDG）が、それぞれの地域で開催するコミュニティ主導のテクノロジーカンファレンスです。
         </p>
         <p>
           Google
@@ -28,9 +43,13 @@ import Sticker from './Sticker.astro';
           を使ってアプリケーション開発や課題解決に取り組みたい方など、さまざまな方が参加できます。
         </p>
       </div>
-      <div class="panel mark-panel" data-reveal="scale">
+      <a
+        href="https://developers.google.com/community/devfest"
+        class="panel mark-panel"
+        data-reveal="scale"
+      >
         <Logo variant="brackets" class="big-mark" />
-      </div>
+      </a>
     </div>
   </div>
 </section>
@@ -64,5 +83,13 @@ import Sticker from './Sticker.astro';
 
   .mark-panel :global(.big-mark) {
     width: min(320px, 80%);
+  }
+
+  .mark-panel:hover :global(.big-mark) {
+    transform: rotate(1.5deg) scale(1.02);
+  }
+
+  :global(.big-mark) {
+    transition: transform 0.2s var(--ease-spring);
   }
 </style>

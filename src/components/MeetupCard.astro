@@ -1,15 +1,15 @@
 ---
-import { render, type CollectionEntry } from 'astro:content';
+import { render, type CollectionEntry } from "astro:content";
 
 interface Props {
-  meetup: CollectionEntry<'meetups'>;
+  meetup: CollectionEntry<"meetups">;
 }
 
 const { meetup } = Astro.props;
 const d = meetup.data;
 const { Content } = await render(meetup);
 
-const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 const dated = d.date
   ? {
@@ -22,33 +22,33 @@ const dated = d.date
 const span = d.startsAt && d.endsAt ? `${d.startsAt}–${d.endsAt}` : null;
 
 const STATUS: Record<string, string | null> = {
-  open: '受付中',
-  closed: '受付終了',
-  done: '開催済み',
+  open: "受付中",
+  closed: "受付終了",
+  done: "開催済み",
   planned: null,
 };
 const status = STATUS[d.status];
 
 const facts = [
-  d.venue && { k: '会場', v: d.venue },
-  d.capacity && { k: '定員', v: d.capacity },
-  d.fee && { k: '参加費', v: d.fee },
+  d.venue && { k: "会場", v: d.venue },
+  d.capacity && { k: "定員", v: d.capacity },
+  d.fee && { k: "参加費", v: d.fee },
 ].filter(Boolean) as { k: string; v: string }[];
 
-const isPlanned = d.status === 'planned';
+const isPlanned = d.status === "planned";
 const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
 ---
 
-<article class:list={['meet', { next: isPlanned }]} data-reveal="up">
+<article class:list={["meet", { next: isPlanned }]} data-reveal="up">
   <div class="meet-when">
-    <span class="meet-no">Meetup #{d.no}{isPlanned ? ' →' : ''}</span>
+    <span class="meet-no">Meetup #{d.no}{isPlanned ? " →" : ""}</span>
     {
       dated ? (
         <>
           <time class="meet-date" datetime={dated.iso}>
-            {dated.md.split('/')[0]}
+            {dated.md.split("/")[0]}
             <span class="sl">/</span>
-            {dated.md.split('/')[1]}
+            {dated.md.split("/")[1]}
           </time>
           <span class="meet-dow">{dated.dow}</span>
           {span && <span class="meet-time">{span}</span>}
@@ -86,7 +86,8 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
       d.program && d.program.length > 0 && (
         <details class="lt-wrap">
           <summary>
-            当日のタイムテーブル{talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+            当日のタイムテーブル
+            {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
           </summary>
           <ol class="lt">
             {d.program.map((p) => (
@@ -107,12 +108,12 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
       d.url && (
         <div class="cta-row">
           <a
-            class:list={['btn', { ghost: isPlanned }]}
+            class:list={["btn", { ghost: isPlanned }]}
             href={d.url}
             target="_blank"
             rel="noopener"
           >
-            {d.cta ?? 'connpass で申し込む'}
+            {d.cta ?? "connpass で申し込む"}
           </a>
         </div>
       )

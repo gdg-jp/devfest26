@@ -8,9 +8,9 @@
  * of ids is fixed (see `TrackId`) so the content schema can validate against it.
  */
 
-import { tenant } from '../tenants';
+import { tenant } from "../tenants";
 
-export type { Track, TrackId, TimetableRow } from '../tenants/types';
+export type { Track, TrackId, TimetableRow } from "../tenants/types";
 
 export const tracks = tenant.tracks;
 
@@ -18,4 +18,4 @@ export const tracks = tenant.tracks;
 export const timetable = tenant.timetable;
 
 /** Pastel rotation used to keep adjacent speaker blocks from matching. */
-export const pastelCycle = ['blue', 'green', 'yellow', 'red'] as const;
+export const pastelCycle = ["blue", "green", "yellow", "red"] as const;

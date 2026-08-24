@@ -1,5 +1,5 @@
-import { defineConfig } from 'astro/config';
-import { activeTenant } from './src/tenants/active';
+import { defineConfig } from "astro/config";
+import { activeTenant } from "./src/tenants/active";
 
 /**
  * Absolute URLs (canonical, Open Graph, JSON-LD) need the production origin.
@@ -11,7 +11,7 @@ const site = process.env.SITE_URL;
 // https://astro.build/config
 export default defineConfig({
   site,
-  trailingSlash: 'never',
+  trailingSlash: "never",
   // One directory per city, so building a second tenant locally does not
   // silently overwrite the first one's output.
   outDir: `./dist/${activeTenant}`,
@@ -24,11 +24,11 @@ export default defineConfig({
     // The OG card is screenshotted straight off disk, where a `/_astro/...`
     // stylesheet href resolves to nothing. Inlining makes that build
     // self-contained; normal builds keep the default split.
-    inlineStylesheets: process.env.OG_PREVIEW ? 'always' : 'auto',
+    inlineStylesheets: process.env.OG_PREVIEW ? "always" : "auto",
   },
   vite: {
     build: {
-      cssMinify: 'lightningcss',
+      cssMinify: "lightningcss",
     },
   },
 });

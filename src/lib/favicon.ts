@@ -1,4 +1,4 @@
-import { themes, type Theme } from '../data/themes';
+import { themes, type Theme } from "../data/themes";
 
 /**
  * The favicon is the DevFest `//` on a rounded square in the city's theme
@@ -7,7 +7,7 @@ import { themes, type Theme } from '../data/themes';
  */
 export function faviconSvg(theme: Theme): string {
   const ground = themes[theme].accent;
-  const ink = theme === 'yellow' ? '#1e1e1e' : '#ffffff';
+  const ink = theme === "yellow" ? "#1e1e1e" : "#ffffff";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DevFest">
   <rect x="2" y="2" width="60" height="60" rx="15" fill="${ground}" stroke="#1e1e1e" stroke-width="4"/>

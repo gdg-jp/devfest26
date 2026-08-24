@@ -1,8 +1,8 @@
 ---
-import '../styles/tokens.css';
-import '../styles/base.css';
-import { site } from '../data/site';
-import { themeColor } from '../data/themes';
+import "../styles/tokens.css";
+import "../styles/base.css";
+import { site } from "../data/site";
+import { themeColor } from "../data/themes";
 
 interface Props {
   title?: string;
@@ -12,49 +12,50 @@ interface Props {
 const { title = site.title, description = site.description } = Astro.props;
 const { event, links } = site;
 
-const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
 const ogImage = Astro.site
   ? new URL(`og/${site.tenant}.png`, Astro.site).href
   : undefined;
 
-
 const eventSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Event',
+  "@context": "https://schema.org",
+  "@type": "Event",
   name: site.title,
   description: site.description,
   startDate: event.startsAt,
   endDate: event.endsAt,
-  eventStatus: 'https://schema.org/EventScheduled',
-  eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
+  eventStatus: "https://schema.org/EventScheduled",
+  eventAttendanceMode: "https://schema.org/MixedEventAttendanceMode",
   location: {
-    '@type': 'Place',
+    "@type": "Place",
     name: event.venue.name,
     // Announced later than the date, so publish the address only once it is
     // actually complete rather than emitting a stub.
     ...(event.venue.streetAddress
       ? {
           address: {
-            '@type': 'PostalAddress',
+            "@type": "PostalAddress",
             streetAddress: event.venue.streetAddress,
             addressLocality: event.venue.addressLocality,
             addressRegion: event.venue.addressRegion,
             postalCode: event.venue.postalCode,
-            addressCountry: 'JP',
+            addressCountry: "JP",
           },
         }
       : {}),
   },
   organizer: {
-    '@type': 'Organization',
+    "@type": "Organization",
     name: event.host,
     url: links.community,
   },
   offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'JPY',
-    availability: 'https://schema.org/InStock',
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "JPY",
+    availability: "https://schema.org/InStock",
     url: links.register,
   },
   ...(ogImage ? { image: [ogImage] } : {}),
@@ -71,8 +72,10 @@ const eventSchema = {
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}
 
-    {/* /favicon.svg is an endpoint, generated in this city's theme colour.
-        The .ico is only there for browsers that ignore SVG icons. */}
+    {
+      /* /favicon.svg is an endpoint, generated in this city's theme colour.
+        The .ico is only there for browsers that ignore SVG icons. */
+    }
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href={`/favicon/${site.theme}.ico`} sizes="48x48" />
     <meta name="theme-color" content={themeColor(site.theme)} />
@@ -104,36 +107,40 @@ const eventSchema = {
       set:html={JSON.stringify(eventSchema)}
     />
 
-    {/* Runs before first paint: marks that JS is live, and decides whether the
+    {
+      /* Runs before first paint: marks that JS is live, and decides whether the
         intro curtain plays at all.
 
         Both timeouts are safety nets. Marking `.js` is what hides the hero and
         every scroll-reveal, so a bundle that never arrives would otherwise
         leave the page blank behind a curtain that never lifts. main.ts clears
-        the fallback as soon as it has actually taken over. */}
+        the fallback as soon as it has actually taken over. */
+    }
     <script is:inline>
       (function () {
         var d = document.documentElement;
-        d.classList.add('js');
+        d.classList.add("js");
 
         var reduced = false;
         var seen = false;
         try {
-          reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          reduced = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+          ).matches;
         } catch (e) {}
         try {
-          seen = sessionStorage.getItem('df26-intro-seen') === '1';
+          seen = sessionStorage.getItem("df26-intro-seen") === "1";
         } catch (e) {}
 
         if (!reduced && !seen) {
-          d.classList.add('is-loading');
+          d.classList.add("is-loading");
           setTimeout(function () {
-            d.classList.remove('is-loading');
+            d.classList.remove("is-loading");
           }, 3000);
         }
 
         window.__dfMotionFallback = setTimeout(function () {
-          d.classList.add('no-motion');
+          d.classList.add("no-motion");
         }, 2500);
       })();
     </script>
@@ -143,7 +150,7 @@ const eventSchema = {
     <a class="skip" href="#top">本文へスキップ</a>
     <slot />
     <script>
-      import '../scripts/main';
+      import "../scripts/main";
     </script>
     <style is:global>
       .skip {

@@ -1,15 +1,15 @@
 ---
-import { Image } from 'astro:assets';
-import { render, type CollectionEntry } from 'astro:content';
-import { AVATAR_SIZE, isRemotePhoto } from '../lib/photo';
+import { Image } from "astro:assets";
+import { render, type CollectionEntry } from "astro:content";
+import { AVATAR_SIZE, isRemotePhoto } from "../lib/photo";
 
 interface Props {
-  session: CollectionEntry<'sessions'>;
-  speakers: CollectionEntry<'speakers'>[];
+  session: CollectionEntry<"sessions">;
+  speakers: CollectionEntry<"speakers">[];
   /** Session number shown above the title, or "Unscheduled". */
   label: string;
   /** Pastel token suffix for the speaker block. */
-  pastel: 'blue' | 'green' | 'yellow' | 'red';
+  pastel: "blue" | "green" | "yellow" | "red";
 }
 
 const { session, speakers, label, pastel } = Astro.props;
@@ -22,7 +22,7 @@ const hasAbstract = session.body != null && session.body.trim().length > 0;
 <article class="card" data-reveal="up">
   <div class="card-top">
     <p class="no">{label}</p>
-    <h4 class:list={{ tbd: !hasTitle }}>{session.data.title ?? 'TBD'}</h4>
+    <h4 class:list={{ tbd: !hasTitle }}>{session.data.title ?? "TBD"}</h4>
     {
       hasAbstract ? (
         <div class="abst">
@@ -34,7 +34,10 @@ const hasAbstract = session.body != null && session.body.trim().length > 0;
     }
   </div>
 
-  <div class:list={['spk', { multi: speakers.length > 1 }]} style={`--pa:var(--pa-${pastel})`}>
+  <div
+    class:list={["spk", { multi: speakers.length > 1 }]}
+    style={`--pa:var(--pa-${pastel})`}
+  >
     {
       speakers.map((s) => (
         <div class="one">
@@ -68,7 +71,9 @@ const hasAbstract = session.body != null && session.body.trim().length > 0;
           <div class="who">
             <div class="nm">{s.data.name}</div>
             <div class="rl">{s.data.role}</div>
-            {s.body && s.body.trim().length > 0 && <p class="bio">{s.body.trim()}</p>}
+            {s.body && s.body.trim().length > 0 && (
+              <p class="bio">{s.body.trim()}</p>
+            )}
           </div>
         </div>
       ))

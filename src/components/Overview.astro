@@ -1,29 +1,45 @@
 ---
-import Props from './Props.astro';
-import Sticker from './Sticker.astro';
-import { site } from '../data/site';
+import Props from "./Props.astro";
+import Sticker from "./Sticker.astro";
+import { site } from "../data/site";
 
 const { event, stats } = site;
 
 const rows = [
-  { rail: 'blue', dt: '開催日', dd: `${event.dateLabel}（${event.dayOfWeek}）` },
   {
-    rail: 'green',
-    dt: '開催時間',
+    rail: "blue",
+    dt: "開催日",
+    dd: `${event.dateLabel}（${event.dayOfWeek}）`,
+  },
+  {
+    rail: "green",
+    dt: "開催時間",
     dd: event.hours,
     // A city that runs no after-party simply omits `social` in its config.
     note: event.social && `${event.social.hours} に${event.social.label}を予定`,
   },
-  { rail: 'red', dt: '会場', dd: event.venue.name, note: event.venue.area },
-  { rail: 'yellow', dt: '開催形式', dd: event.format },
-  { rail: 'blue', dt: '参加費', dd: event.fee },
-  { rail: 'green', dt: '主催', dd: event.host, note: `共催・協力：${event.coHosts}` },
+  { rail: "red", dt: "会場", dd: event.venue.name, note: event.venue.area },
+  { rail: "yellow", dt: "開催形式", dd: event.format },
+  { rail: "blue", dt: "参加費", dd: event.fee },
+  {
+    rail: "green",
+    dt: "主催",
+    dd: event.host,
+    note: `共催・協力：${event.coHosts}`,
+  },
 ];
 ---
 
 <section class="sec" id="overview">
   <Props>
-    <Sticker name="semicolon" width={44} top="16%" left="1.5%" rotate={-10} speed={0.7} />
+    <Sticker
+      name="semicolon"
+      width={44}
+      top="16%"
+      left="1.5%"
+      rotate={-10}
+      speed={0.7}
+    />
   </Props>
 
   <div class="wrap">
@@ -54,13 +70,19 @@ const rows = [
       <div class="stats" data-stagger>
         {
           stats.map((s) => (
-            <div class="stat" style={`background:var(--pa-${s.tone})`} data-reveal="scale">
+            <div
+              class="stat"
+              style={`background:var(--pa-${s.tone})`}
+              data-reveal="scale"
+            >
               <b>{s.value}</b>
               <span>{s.label}</span>
             </div>
           ))
         }
-        <p class="disclaimer">※イベント内容や開催時間は、今後変更となる場合があります。</p>
+        <p class="disclaimer">
+          ※イベント内容や開催時間は、今後変更となる場合があります。
+        </p>
       </div>
     </div>
   </div>
@@ -82,6 +104,7 @@ const rows = [
 
   .spec-panel {
     padding: 8px 0;
+    overflow: hidden;
   }
 
   .spec {

@@ -7,7 +7,7 @@
  * call site.
  */
 
-const SCOPE = 'event->slug.current == $tenant';
+const SCOPE = "event->slug.current == $tenant";
 
 export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
   _id, name, role, initial, photo, bio

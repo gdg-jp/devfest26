@@ -76,7 +76,7 @@ p:last-child {
   margin-inline: auto;
 }
 
-@media (width <= 560px) {
+@media (width <=560px) {
   .wrap {
     width: calc(100% - 28px);
   }
@@ -133,7 +133,7 @@ p:last-child {
   z-index: 1;
 }
 
-@media (width <= 1240px) {
+@media (width <=1240px) {
   .props {
     display: none;
   }

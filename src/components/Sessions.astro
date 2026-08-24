@@ -1,58 +1,82 @@
 ---
-import { getCollection } from 'astro:content';
-import Props from './Props.astro';
-import Sticker from './Sticker.astro';
-import SessionCard from './SessionCard.astro';
-import { tracks, pastelCycle } from '../data/tracks';
+import { getCollection } from "astro:content";
+import Props from "./Props.astro";
+import Sticker from "./Sticker.astro";
+import SessionCard from "./SessionCard.astro";
+import { tracks, pastelCycle } from "../data/tracks";
 
-const allSessions = await getCollection('sessions');
-const allSpeakers = await getCollection('speakers');
+const allSessions = await getCollection("sessions");
+const allSpeakers = await getCollection("speakers");
 const speakerById = new Map(allSpeakers.map((s) => [s.id, s]));
 
 // One pastel rotation running through the whole section, so no two adjacent
 // speaker blocks land on the same colour regardless of how tracks are filled.
 let pastelIndex = 0;
 
-const grouped = tracks.map((track) => {
-  const sessions = allSessions
-    .filter((s) => s.data.track === track.id)
-    .sort((a, b) => a.data.order - b.data.order)
-    .map((session) => {
-      const speakers = session.data.speakers.map((ref) => {
-        const speaker = speakerById.get(ref.id);
-        if (!speaker) throw new Error(`Session ${session.id} references unknown speaker "${ref.id}"`);
-        return speaker;
+const grouped = tracks
+  .map((track) => {
+    const sessions = allSessions
+      .filter((s) => s.data.track === track.id)
+      .sort((a, b) => a.data.order - b.data.order)
+      .map((session) => {
+        const speakers = session.data.speakers.map((ref) => {
+          const speaker = speakerById.get(ref.id);
+          if (!speaker)
+            throw new Error(
+              `Session ${session.id} references unknown speaker "${ref.id}"`,
+            );
+          return speaker;
+        });
+        return {
+          session,
+          speakers,
+          label: track.pending
+            ? "Unscheduled"
+            : `Session ${String(session.data.order).padStart(2, "0")}`,
+          pastel: pastelCycle[pastelIndex++ % pastelCycle.length],
+        };
       });
-      return {
-        session,
-        speakers,
-        label: track.pending ? 'Unscheduled' : `Session ${String(session.data.order).padStart(2, '0')}`,
-        pastel: pastelCycle[pastelIndex++ % pastelCycle.length],
-      };
-    });
-  return { track, sessions };
-}).filter((g) => g.sessions.length > 0);
+    return { track, sessions };
+  })
+  .filter((g) => g.sessions.length > 0);
 ---
 
 <section class="sec tint" id="sessions">
   <Props>
     <Sticker name="dot" width={34} top="5%" right="5%" speed={1.3} />
-    <Sticker name="slashes" width={76} top="44%" left="1.5%" rotate={10} speed={-0.9} />
-    <Sticker name="plus" width={52} bottom="6%" right="3%" rotate={-14} speed={0.8} />
+    <Sticker
+      name="slashes"
+      width={76}
+      top="44%"
+      left="1.5%"
+      rotate={10}
+      speed={-0.9}
+    />
+    <Sticker
+      name="plus"
+      width={52}
+      bottom="6%"
+      right="3%"
+      rotate={-14}
+      speed={0.8}
+    />
   </Props>
 
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Sessions &amp; Speakers</p>
     <h2 class="sec-h" data-reveal="up">セッション</h2>
     <p class="sec-lede" data-reveal="up">
-      現在公開できる、登壇が確定したセッションをご紹介します。未確定のタイトル・内容・登壇者情報は「TBD」として掲載しています。
+      登壇が確定したセッションをご紹介します。
     </p>
 
     {
       grouped.map(({ track, sessions }) => (
         <>
           <div
-            class:list={['track-head', { ink: track.darkInk, plain: track.pending }]}
+            class:list={[
+              "track-head",
+              { ink: track.darkInk, plain: track.pending },
+            ]}
             style={`--trk:${track.color}`}
             data-reveal="up"
           >

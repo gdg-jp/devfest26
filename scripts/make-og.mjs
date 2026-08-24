@@ -15,12 +15,12 @@
  * the title, date, venue or theme changes.
  */
 
-import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import sharp from 'sharp';
-import { TENANT_IDS } from '../src/tenants/ids.ts';
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import sharp from "sharp";
+import { TENANT_IDS } from "../src/tenants/ids.ts";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -31,39 +31,43 @@ const FRAME = [WIDTH + 200, HEIGHT + 270];
 
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/usr/bin/google-chrome',
-  '/usr/bin/chromium',
+  "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium",
 ].filter(Boolean);
 
 const chrome = CHROME_CANDIDATES.find((p) => existsSync(p));
 if (!chrome) {
-  console.error('Chrome not found. Set CHROME_PATH to the executable.');
+  console.error("Chrome not found. Set CHROME_PATH to the executable.");
   process.exit(1);
 }
 
 const requested = process.argv.slice(2);
 for (const t of requested) {
   if (!TENANT_IDS.includes(t)) {
-    console.error(`Unknown tenant "${t}". Known: ${TENANT_IDS.join(', ')}`);
+    console.error(`Unknown tenant "${t}". Known: ${TENANT_IDS.join(", ")}`);
     process.exit(1);
   }
 }
 const targets = requested.length ? requested : [...TENANT_IDS];
 
-mkdirSync('public/og', { recursive: true });
-const shots = resolve('node_modules/.cache/og');
+mkdirSync("public/og", { recursive: true });
+const shots = resolve("node_modules/.cache/og");
 mkdirSync(shots, { recursive: true });
 
 for (const tenant of targets) {
   console.log(`\n── ${tenant} ─────────────────────────────`);
 
-  execFileSync(process.execPath, ['node_modules/astro/bin/astro.mjs', 'build'], {
-    stdio: 'inherit',
-    env: { ...process.env, TENANT: tenant, OG_PREVIEW: '1' },
-  });
+  execFileSync(
+    process.execPath,
+    ["node_modules/astro/bin/astro.mjs", "build"],
+    {
+      stdio: "inherit",
+      env: { ...process.env, TENANT: tenant, OG_PREVIEW: "1" },
+    },
+  );
 
   const page = resolve(`dist/${tenant}/og-preview/card/index.html`);
   if (!existsSync(page)) throw new Error(`Card was not built for ${tenant}`);
@@ -74,18 +78,18 @@ for (const tenant of targets) {
   execFileSync(
     chrome,
     [
-      '--headless',
-      '--disable-gpu',
-      '--no-sandbox',
-      '--hide-scrollbars',
-      '--force-device-scale-factor=1',
-      `--window-size=${FRAME.join(',')}`,
-      '--virtual-time-budget=8000',
-      `--user-data-dir=${resolve('node_modules/.cache/og-chrome')}`,
+      "--headless",
+      "--disable-gpu",
+      "--no-sandbox",
+      "--hide-scrollbars",
+      "--force-device-scale-factor=1",
+      `--window-size=${FRAME.join(",")}`,
+      "--virtual-time-budget=8000",
+      `--user-data-dir=${resolve("node_modules/.cache/og-chrome")}`,
       `--screenshot=${raw}`,
       pathToFileURL(page).href,
     ],
-    { stdio: 'inherit' },
+    { stdio: "inherit" },
   );
 
   if (!existsSync(raw)) throw new Error(`Chrome wrote no file for ${tenant}`);
@@ -99,4 +103,6 @@ for (const tenant of targets) {
   console.log(`wrote public/og/${tenant}.png`);
 }
 
-console.log('\nRebuild normally before deploying — these builds included the OG route.');
+console.log(
+  "\nRebuild normally before deploying — these builds included the OG route.",
+);

@@ -7,21 +7,15 @@
  */
 
 export type StickerName =
-  | 'slashes'
-  | 'ellipsis'
-  | 'dot'
-  | 'plus'
-  | 'semicolon'
-  | 'cross'
-  | 'braces';
+  "slashes" | "ellipsis" | "dot" | "plus" | "semicolon" | "cross" | "braces";
 
 /** viewBox window into `src/assets/brand/stickers.svg`. */
 export const stickers: Record<StickerName, string> = {
-  slashes: '1032 127 415 420', //  //   blue
-  ellipsis: '632 622 775 285', //  ...  pale pink
-  dot: '552 408 143 143', //       .    red
-  plus: '112 982 335 330', //      +    red
-  semicolon: '1512 172 131 375', //;    yellow
-  cross: '1192 982 331 331', //    ×    pink
-  braces: '1752 127 415 420', //   { }  pale green
+  slashes: "1032 127 415 420", //  //   blue
+  ellipsis: "632 622 775 285", //  ...  pale pink
+  dot: "552 408 143 143", //       .    red
+  plus: "112 982 335 330", //      +    red
+  semicolon: "1512 172 131 375", //;    yellow
+  cross: "1192 982 331 331", //    ×    pink
+  braces: "1752 127 415 420", //   { }  pale green
 };

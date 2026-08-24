@@ -17,7 +17,7 @@ export interface RemotePhoto {
 export type SpeakerPhoto = ImageMetadata | RemotePhoto;
 
 export function isRemotePhoto(photo: SpeakerPhoto): photo is RemotePhoto {
-  return 'remote' in photo;
+  return "remote" in photo;
 }
 
 /** Rendered size of the circular avatar, in CSS px. */

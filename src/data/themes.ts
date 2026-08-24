@@ -8,10 +8,10 @@
  */
 
 export const themes = {
-  blue: { accent: '#4285f4', label: 'Blue' },
-  green: { accent: '#34a853', label: 'Green' },
-  yellow: { accent: '#f9ab00', label: 'Yellow' },
-  red: { accent: '#ea4335', label: 'Red' },
+  blue: { accent: "#4285f4", label: "Blue" },
+  green: { accent: "#34a853", label: "Green" },
+  yellow: { accent: "#f9ab00", label: "Yellow" },
+  red: { accent: "#ea4335", label: "Red" },
 } as const;
 
 export type Theme = keyof typeof themes;

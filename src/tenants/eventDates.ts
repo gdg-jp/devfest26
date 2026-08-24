@@ -7,9 +7,9 @@
  * output does not depend on the build machine's timezone.
  */
 
-const JST = 'Asia/Tokyo';
-const DOW_JA = ['日', '月', '火', '水', '木', '金', '土'];
-const DOW_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const JST = "Asia/Tokyo";
+const DOW_JA = ["日", "月", "火", "水", "木", "金", "土"];
+const DOW_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface Parts {
   year: string;
@@ -26,29 +26,29 @@ function partsInJst(iso: string): Parts {
     throw new Error(`Invalid event timestamp: "${iso}"`);
   }
 
-  const formatted = new Intl.DateTimeFormat('en-US', {
+  const formatted = new Intl.DateTimeFormat("en-US", {
     timeZone: JST,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    weekday: 'short',
-    hourCycle: 'h23',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    weekday: "short",
+    hourCycle: "h23",
   }).formatToParts(date);
 
   const get = (type: Intl.DateTimeFormatPartTypes) =>
-    formatted.find((p) => p.type === type)?.value ?? '';
+    formatted.find((p) => p.type === type)?.value ?? "";
 
-  const dow = DOW_EN.indexOf(get('weekday'));
+  const dow = DOW_EN.indexOf(get("weekday"));
   if (dow < 0) throw new Error(`Could not read weekday for "${iso}"`);
 
   return {
-    year: get('year'),
-    month: get('month'),
-    day: get('day'),
-    hour: get('hour'),
-    minute: get('minute'),
+    year: get("year"),
+    month: get("month"),
+    day: get("day"),
+    hour: get("hour"),
+    minute: get("minute"),
     dow,
   };
 }

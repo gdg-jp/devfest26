@@ -1,5 +1,5 @@
-import type { Loader } from 'astro/loaders';
-import { sanityClient } from '../lib/sanity/client';
+import type { Loader } from "astro/loaders";
+import { sanityClient } from "../lib/sanity/client";
 
 export interface SanityEntry {
   /** Unique within the collection. Sessions reference speakers by this. */
@@ -30,7 +30,12 @@ interface Options {
  * `rendered.html` is populated here, which is what lets `render(entry)` and
  * `<Content />` keep working without any component knowing about Sanity.
  */
-export function sanityLoader({ label, query, tenant, toEntry }: Options): Loader {
+export function sanityLoader({
+  label,
+  query,
+  tenant,
+  toEntry,
+}: Options): Loader {
   return {
     name: `sanity:${label}`,
 

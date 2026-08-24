@@ -20,7 +20,11 @@
     "astro": "astro",
     "check": "astro check",
     "check:all": "astro check && cross-env TENANT=tokyo astro check",
-    "og": "node --experimental-strip-types scripts/make-og.mjs"
+    "og": "node --experimental-strip-types scripts/make-og.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier .",
+    "format:fix": "prettier --write ."
   },
   "dependencies": {
     "@portabletext/to-html": "^6.0.0",
@@ -32,9 +36,20 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@eslint/css": "^1.4.0",
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^2.0.1",
+    "@eslint/markdown": "^8.0.3",
     "@types/node": "^26.2.0",
     "cross-env": "^10.1.0",
     "dotenv-cli": "^11.0.0",
-    "typescript": "^6.0.3"
+    "eslint": "^10.9.0",
+    "eslint-plugin-astro": "^3.1.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "globals": "^17.11.0",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "0.14.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
   }
 }

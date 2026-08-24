@@ -1,8 +1,8 @@
-import { initCountdown } from './countdown';
-import { initIntro } from './intro';
-import { initNav } from './nav';
-import { initParallax } from './parallax';
-import { initReveal } from './reveal';
+import { initCountdown } from "./countdown";
+import { initIntro } from "./intro";
+import { initNav } from "./nav";
+import { initParallax } from "./parallax";
+import { initReveal } from "./reveal";
 
 declare global {
   interface Window {

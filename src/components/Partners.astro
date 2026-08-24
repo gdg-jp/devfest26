@@ -1,28 +1,40 @@
 ---
-import { getCollection, render } from 'astro:content';
-import { site } from '../data/site';
+import { getCollection, render } from "astro:content";
+import { site } from "../data/site";
 
-const partners = (await getCollection('partners')).sort((a, b) => a.data.order - b.data.order);
+const partners = (await getCollection("partners")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
 const rendered = await Promise.all(
-  partners.map(async (p) => ({ data: p.data, Content: (await render(p)).Content })),
+  partners.map(async (p) => ({
+    data: p.data,
+    Content: (await render(p)).Content,
+  })),
 );
 ---
 
 {
   /* Hidden until at least one partner is confirmed. */
   rendered.length > 0 && (
-  <section class="sec tint bordered" id="partners">
-    <div class="wrap">
-      <p class="eyebrow" data-reveal="up">Partners</p>
-      <h2 class="sec-h" data-reveal="up">共催・協力団体</h2>
+    <section class="sec tint bordered" id="partners">
+      <div class="wrap">
+        <p class="eyebrow" data-reveal="up">
+          Partners
+        </p>
+        <h2 class="sec-h" data-reveal="up">
+          共催・協力団体
+        </h2>
         <p class="sec-lede" data-reveal="up">
-        {site.event.venue.region}のコミュニティと一緒につくります。
-      </p>
+          {site.event.venue.region}のコミュニティと一緒につくります。
+        </p>
 
-      <div class="orgs" data-stagger>
-        {
-          rendered.map(({ data, Content }) => (
-            <div class="org" style={`--rail:var(--${data.rail})`} data-reveal="up">
+        <div class="orgs" data-stagger>
+          {rendered.map(({ data, Content }) => (
+            <div
+              class="org"
+              style={`--rail:var(--${data.rail})`}
+              data-reveal="up"
+            >
               <h3>
                 <a href={data.url} target="_blank" rel="noopener">
                   {data.name}
@@ -33,11 +45,10 @@ const rendered = await Promise.all(
                 <Content />
               </div>
             </div>
-          ))
-        }
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
   )
 }
 

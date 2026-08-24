@@ -1,9 +1,9 @@
-import { scroll } from 'motion';
+import { scroll } from "motion";
 
 /** Topbar condense, read-progress rail, and which nav item is lit. */
 export function initNav() {
-  const bar = document.querySelector<HTMLElement>('[data-topbar]');
-  const progress = document.querySelector<HTMLElement>('[data-progress]');
+  const bar = document.querySelector<HTMLElement>("[data-topbar]");
+  const progress = document.querySelector<HTMLElement>("[data-progress]");
 
   if (progress) {
     scroll((p: number) => {
@@ -12,13 +12,13 @@ export function initNav() {
   }
 
   if (bar) {
-    const sync = () => bar.classList.toggle('is-stuck', window.scrollY > 60);
+    const sync = () => bar.classList.toggle("is-stuck", window.scrollY > 60);
     sync();
-    addEventListener('scroll', sync, { passive: true });
+    addEventListener("scroll", sync, { passive: true });
   }
 
-  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-spy]')];
-  if (!links.length || !('IntersectionObserver' in window)) return;
+  const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-spy]")];
+  if (!links.length || !("IntersectionObserver" in window)) return;
 
   const sections = links
     .map((a) => document.getElementById(a.dataset.spy!))
@@ -31,10 +31,12 @@ export function initNav() {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         const id = entry.target.id;
-        links.forEach((a) => a.classList.toggle('is-current', a.dataset.spy === id));
+        links.forEach((a) =>
+          a.classList.toggle("is-current", a.dataset.spy === id),
+        );
       }
     },
-    { rootMargin: '-46% 0px -50% 0px', threshold: 0 },
+    { rootMargin: "-46% 0px -50% 0px", threshold: 0 },
   );
 
   sections.forEach((section) => observer.observe(section));

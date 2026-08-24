@@ -1,21 +1,18 @@
-import { defineConfig } from 'sanity';
-import { structureTool } from 'sanity/structure';
-import { visionTool } from '@sanity/vision';
-import { schemaTypes } from './schemas';
-import { structure } from './structure';
-import { CITY_SCOPED_TYPES } from './structure';
+import { defineConfig } from "sanity";
+import { structureTool } from "sanity/structure";
+import { visionTool } from "@sanity/vision";
+import { schemaTypes } from "./schemas";
+import { structure } from "./structure";
+import { CITY_SCOPED_TYPES } from "./structure";
 
 export default defineConfig({
-  name: 'default',
-  title: 'DevFest 2026',
+  name: "default",
+  title: "DevFest 2026",
 
   projectId: process.env.SANITY_STUDIO_PROJECT_ID as string,
-  dataset: process.env.SANITY_STUDIO_DATASET || 'production',
+  dataset: process.env.SANITY_STUDIO_DATASET || "production",
 
-  plugins: [
-    structureTool({ structure }),
-    visionTool(),
-  ],
+  plugins: [structureTool({ structure }), visionTool()],
 
   schema: {
     types: schemaTypes,
@@ -32,9 +29,9 @@ export default defineConfig({
         id: `${schemaType}-by-event`,
         title: `${schemaType} (city pre-filled)`,
         schemaType,
-        parameters: [{ name: 'eventId', type: 'string' }],
+        parameters: [{ name: "eventId", type: "string" }],
         value: ({ eventId }: { eventId: string }) => ({
-          event: { _type: 'reference', _ref: eventId },
+          event: { _type: "reference", _ref: eventId },
         }),
       })),
     ],

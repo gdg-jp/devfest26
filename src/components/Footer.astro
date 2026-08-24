@@ -1,6 +1,6 @@
 ---
-import Logo from './Logo.astro';
-import { site } from '../data/site';
+import Logo from "./Logo.astro";
+import { site } from "../data/site";
 
 const { event } = site;
 const year = new Date().getFullYear();
@@ -13,7 +13,8 @@ const year = new Date().getFullYear();
         <Logo variant="primary" class="foot-mark" />
         <p class="foot-title">{site.title}</p>
         <p class="foot-sub">
-          {event.isoDate.replace(/-/g, '.')} {event.dayOfWeekEn.toUpperCase()} ／ {event.venue.name}
+          {event.isoDate.replace(/-/g, ".")}
+          {event.dayOfWeekEn.toUpperCase()} ／ {event.venue.name}
         </p>
       </div>
       <div>
@@ -21,24 +22,30 @@ const year = new Date().getFullYear();
           {site.footerNav.map((item) => <a href={item.href}>{item.label}</a>)}
         </nav>
         <div class="tags">
-          <span class="tag" style="background:var(--t-pa)">Hosted by {event.host}</span>
-          <a class="tag link" href={site.links.connpass} target="_blank" rel="noopener">
+          <span class="tag" style="background:var(--t-pa)"
+            >Hosted by {event.host}</span
+          >
+          <a
+            class="tag link"
+            href={site.links.connpass}
+            target="_blank"
+            rel="noopener"
+          >
             connpass
           </a>
-          <a class="tag link" href={site.links.community} target="_blank" rel="noopener">
+          <a
+            class="tag link"
+            href={site.links.community}
+            target="_blank"
+            rel="noopener"
+          >
             GDG Chapter
           </a>
         </div>
       </div>
     </div>
 
-    <p class="colophon">
-      DevFest および Google Developer Groups のロゴ・配色・シェイプ言語は、DevFest 2026 Brand Guide
-      に基づいて使用しています。書体は Google Sans / Google Sans Text / Google Sans Code、和文は
-      Noto Sans JP。<br />
-      掲載内容には企画中のものが含まれます。タイムテーブルとセッション情報は調整中で、確定しだい順次更新します。
-    </p>
-    <p class="copy">© {year} {event.host}</p>
+    <p class="copy colophon">© {year} {event.host}</p>
   </div>
 </footer>
 

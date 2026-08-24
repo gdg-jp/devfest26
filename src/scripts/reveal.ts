@@ -1,4 +1,4 @@
-import { inView } from 'motion';
+import { inView } from "motion";
 
 /**
  * Scroll reveals run on a CSS class, not on inline styles, so that hover
@@ -8,16 +8,16 @@ import { inView } from 'motion';
  * order; everything else reveals on its own.
  */
 export function initReveal() {
-  const all = [...document.querySelectorAll<HTMLElement>('[data-reveal]')];
+  const all = [...document.querySelectorAll<HTMLElement>("[data-reveal]")];
   if (!all.length) return;
 
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    all.forEach((el) => el.classList.add('is-revealed'));
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    all.forEach((el) => el.classList.add("is-revealed"));
     return;
   }
 
-  document.querySelectorAll<HTMLElement>('[data-stagger]').forEach((group) => {
-    const children = [...group.querySelectorAll<HTMLElement>('[data-reveal]')];
+  document.querySelectorAll<HTMLElement>("[data-stagger]").forEach((group) => {
+    const children = [...group.querySelectorAll<HTMLElement>("[data-reveal]")];
     if (!children.length) return;
 
     inView(
@@ -26,7 +26,7 @@ export function initReveal() {
         children.forEach((el, i) => {
           // Cap the ramp so a long grid does not leave the last card waiting.
           el.style.transitionDelay = `${Math.min(i, 7) * 65}ms`;
-          el.classList.add('is-revealed');
+          el.classList.add("is-revealed");
         });
       },
       { amount: 0.1 },
@@ -34,8 +34,8 @@ export function initReveal() {
   });
 
   all
-    .filter((el) => !el.closest('[data-stagger]'))
+    .filter((el) => !el.closest("[data-stagger]"))
     .forEach((el) => {
-      inView(el, () => el.classList.add('is-revealed'), { amount: 0.3 });
+      inView(el, () => el.classList.add("is-revealed"), { amount: 0.3 });
     });
 }

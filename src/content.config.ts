@@ -1,17 +1,17 @@
-import { defineCollection, reference } from 'astro:content';
-import { glob } from 'astro/loaders';
-import { z } from 'astro/zod';
-import { activeTenant } from './tenants/active';
-import { sanityEnabled } from './lib/sanity/env';
-import { sanityLoader } from './loaders/sanity';
-import * as Q from './lib/sanity/queries';
+import { defineCollection, reference } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
+import { activeTenant } from "./tenants/active";
+import { sanityEnabled } from "./lib/sanity/env";
+import { sanityLoader } from "./loaders/sanity";
+import * as Q from "./lib/sanity/queries";
 import {
   aboutEntry,
   meetupEntry,
   partnerEntry,
   sessionEntry,
   speakerEntry,
-} from './lib/sanity/entries';
+} from "./lib/sanity/entries";
 
 /**
  * Content has two possible sources and one set of schemas.
@@ -28,10 +28,14 @@ import {
  * `event` reference, which is the only handle a shared dataset gives us.
  */
 
-const dir = (collection: string) => `./src/content/${activeTenant}/${collection}`;
+const dir = (collection: string) =>
+  `./src/content/${activeTenant}/${collection}`;
 
-const sanity = (label: string, query: string, toEntry: Parameters<typeof sanityLoader>[0]['toEntry']) =>
-  sanityLoader({ label, query, tenant: activeTenant, toEntry });
+const sanity = (
+  label: string,
+  query: string,
+  toEntry: Parameters<typeof sanityLoader>[0]["toEntry"],
+) => sanityLoader({ label, query, tenant: activeTenant, toEntry });
 
 /** A Sanity asset, already cropped and sized by its CDN. See src/lib/photo.ts. */
 const remotePhoto = z.object({
@@ -51,8 +55,8 @@ const speakerFields = {
 
 const speakers = defineCollection({
   loader: sanityEnabled
-    ? sanity('speakers', Q.SPEAKERS, speakerEntry)
-    : glob({ base: dir('speakers'), pattern: '**/*.md' }),
+    ? sanity("speakers", Q.SPEAKERS, speakerEntry)
+    : glob({ base: dir("speakers"), pattern: "**/*.md" }),
   schema: ({ image }) =>
     z.object({
       ...speakerFields,
@@ -68,28 +72,28 @@ const speakers = defineCollection({
 
 const sessions = defineCollection({
   loader: sanityEnabled
-    ? sanity('sessions', Q.SESSIONS, sessionEntry)
-    : glob({ base: dir('sessions'), pattern: '**/*.md' }),
+    ? sanity("sessions", Q.SESSIONS, sessionEntry)
+    : glob({ base: dir("sessions"), pattern: "**/*.md" }),
   schema: z.object({
-    track: z.enum(['a', 'b', 'c', 'unscheduled']),
+    track: z.enum(["a", "b", "c", "unscheduled"]),
     /** Position within the track. */
     order: z.number().int().positive(),
     /** Omit while the talk is still TBD. */
     title: z.string().optional(),
-    speakers: z.array(reference('speakers')).min(1),
+    speakers: z.array(reference("speakers")).min(1),
   }),
 });
 
 const meetups = defineCollection({
   loader: sanityEnabled
-    ? sanity('meetups', Q.MEETUPS, meetupEntry)
-    : glob({ base: dir('meetups'), pattern: '**/*.md' }),
+    ? sanity("meetups", Q.MEETUPS, meetupEntry)
+    : glob({ base: dir("meetups"), pattern: "**/*.md" }),
   schema: z.object({
     /** Meetup number — also the sort key. */
     no: z.number().int().positive(),
     title: z.string(),
     subtitle: z.string().optional(),
-    status: z.enum(['open', 'closed', 'done', 'planned']),
+    status: z.enum(["open", "closed", "done", "planned"]),
     /** Omit on a `planned` meetup whose date is not set. */
     date: z.coerce.date().optional(),
     doorsAt: z.string().optional(),
@@ -119,14 +123,14 @@ const meetups = defineCollection({
 
 const partners = defineCollection({
   loader: sanityEnabled
-    ? sanity('partners', Q.PARTNERS, partnerEntry)
-    : glob({ base: dir('partners'), pattern: '**/*.md' }),
+    ? sanity("partners", Q.PARTNERS, partnerEntry)
+    : glob({ base: dir("partners"), pattern: "**/*.md" }),
   schema: z.object({
     name: z.string(),
     url: z.url(),
     handle: z.string(),
     order: z.number().int().positive(),
-    rail: z.enum(['blue', 'green', 'yellow', 'red']),
+    rail: z.enum(["blue", "green", "yellow", "red"]),
   }),
 });
 
@@ -138,8 +142,8 @@ const partners = defineCollection({
  */
 const about = defineCollection({
   loader: sanityEnabled
-    ? sanity('about', Q.ABOUT, aboutEntry)
-    : glob({ base: dir('about'), pattern: '**/*.md' }),
+    ? sanity("about", Q.ABOUT, aboutEntry)
+    : glob({ base: dir("about"), pattern: "**/*.md" }),
   schema: z.object({
     /** Opening line, set larger than the body. */
     lead: z.string(),

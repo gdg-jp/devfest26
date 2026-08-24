@@ -1,7 +1,7 @@
-import { z } from 'astro/zod';
-import { sanityClient } from '../lib/sanity/client';
-import { EVENT } from '../lib/sanity/queries';
-import type { TenantConfig } from './types';
+import { z } from "astro/zod";
+import { sanityClient } from "../lib/sanity/client";
+import { EVENT } from "../lib/sanity/queries";
+import type { TenantConfig } from "./types";
 
 /**
  * The tenant config, read from the single `event` document for this city.
@@ -14,14 +14,14 @@ import type { TenantConfig } from './types';
  */
 
 const nonEmpty = z.string().min(1);
-const tone = z.enum(['blue', 'green', 'yellow', 'red']);
+const tone = z.enum(["blue", "green", "yellow", "red"]);
 
 const eventDoc = z.object({
   tenant: nonEmpty,
   theme: tone,
 
-  lang: nonEmpty.default('ja'),
-  locale: nonEmpty.default('ja_JP'),
+  lang: nonEmpty.default("ja"),
+  locale: nonEmpty.default("ja_JP"),
   title: nonEmpty,
   titleEn: nonEmpty,
   description: nonEmpty,
@@ -54,7 +54,9 @@ const eventDoc = z.object({
   host: nonEmpty,
   coHosts: nonEmpty,
 
-  stats: z.array(z.object({ value: nonEmpty, label: nonEmpty, tone })).length(4),
+  stats: z
+    .array(z.object({ value: nonEmpty, label: nonEmpty, tone }))
+    .length(4),
 
   links: z.object({
     register: z.url(),
@@ -70,7 +72,7 @@ const eventDoc = z.object({
   tracks: z
     .array(
       z.object({
-        id: z.enum(['a', 'b', 'c', 'unscheduled']),
+        id: z.enum(["a", "b", "c", "unscheduled"]),
         label: nonEmpty,
         sub: nonEmpty,
         color: nonEmpty,
@@ -85,13 +87,16 @@ const eventDoc = z.object({
     z.object({
       start: nonEmpty,
       end: nonEmpty,
-      lines: z.array(z.object({ label: nonEmpty, note: z.string(), rail: nonEmpty })).min(1),
+      lines: z
+        .array(z.object({ label: nonEmpty, note: z.string(), rail: nonEmpty }))
+        .min(1),
     }),
   ),
 });
 
 /** Sanity returns null for a blank field; the config wants it absent. */
-const clean = <T>(value: T | null | undefined): T | undefined => value ?? undefined;
+const clean = <T>(value: T | null | undefined): T | undefined =>
+  value ?? undefined;
 
 export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
   const raw = await sanityClient().fetch(EVENT, { tenant: slug });
@@ -99,22 +104,24 @@ export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
   if (!raw) {
     throw new Error(
       `No published "event" document with slug "${slug}" in Sanity. ` +
-        'Create one in the Studio, or unset SANITY_PROJECT_ID to build from src/content/.',
+        "Create one in the Studio, or unset SANITY_PROJECT_ID to build from src/content/.",
     );
   }
 
   const parsed = eventDoc.safeParse(raw);
   if (!parsed.success) {
     const problems = parsed.error.issues
-      .map((i) => `  ${i.path.join('.') || '(root)'}: ${i.message}`)
-      .join('\n');
-    throw new Error(`The "event" document for "${slug}" is incomplete:\n${problems}`);
+      .map((i) => `  ${i.path.join(".") || "(root)"}: ${i.message}`)
+      .join("\n");
+    throw new Error(
+      `The "event" document for "${slug}" is incomplete:\n${problems}`,
+    );
   }
 
   const d = parsed.data;
 
   return {
-    tenant: d.tenant as TenantConfig['tenant'],
+    tenant: d.tenant as TenantConfig["tenant"],
     theme: d.theme,
     lang: d.lang,
     locale: d.locale,

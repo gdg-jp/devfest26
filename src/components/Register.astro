@@ -1,5 +1,5 @@
 ---
-import { site } from '../data/site';
+import { site } from "../data/site";
 
 const { event, links } = site;
 ---
@@ -12,18 +12,26 @@ const { event, links } = site;
     </h2>
     <p data-reveal="up">
       技術を深めたい方も、新しい分野の視点に触れたい方も、これから AI
-      を使って何かをつくりたい方も歓迎します。AI と人がともにつくる未来を、{site.title} で一緒に考えてみませんか。
+      を使って何かをつくりたい方も歓迎します。AI と人がともにつくる未来を、{
+        site.title
+      } で一緒に考えてみませんか。
     </p>
     <div class="cta-row" data-reveal="up">
       <a class="btn" href={links.register} target="_blank" rel="noopener">
         connpass で参加登録する
       </a>
-      <a class="btn ghost" href={links.community} target="_blank" rel="noopener">
+      <a
+        class="btn ghost"
+        href={links.community}
+        target="_blank"
+        rel="noopener"
+      >
         {event.host} について
       </a>
     </div>
     <p class="reg-note" data-reveal="up">
-      現地参加・オンライン参加ともに{event.fee}です。お申し込みは connpass から。
+      現地参加・オンライン参加ともに{event.fee}です。お申し込みは connpass
+      から。
     </p>
   </div>
 </section>
