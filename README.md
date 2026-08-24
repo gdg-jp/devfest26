@@ -135,8 +135,11 @@ Sanity を使っている場合は 1〜4 が不要になり、**Studio で `even
 **既定では OFF です。** 環境変数 `SANITY_PROJECT_ID` が無ければ、これまでどおり `src/content/<tenant>/` の Markdown からビルドします。
 
 ```bash
-SANITY_PROJECT_ID=xxxxxxxx SANITY_DATASET=production TENANT=kansai pnpm exec astro build
+pnpm dev
+pnpm build
 ```
+
+以下の内容を `.env` に設定してください。
 
 | 変数 | 必須 | 内容 |
 | :--- | :--- | :--- |
