@@ -5,6 +5,22 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Sanity (or any other CMS) triggers a rebuild by POSTing to
+  # /repos/gdg-jp/devfest26/dispatches with a token and
+  # {"event_type": "content-published"}. GitHub Actions cannot receive an
+  # arbitrary webhook directly, so this is the entry point for one.
+  repository_dispatch:
+    types: [content-published]
+
+# A burst of CMS publishes should collapse into a single deploy of the latest
+# content rather than queueing one build per edit. Pull requests are keyed by
+# their own ref so they only ever cancel themselves.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 # One job per city. They are independent builds of the same commit, so a
 # failure in one does not hide the other's result.
@@ -27,6 +43,13 @@ jobs:
       # Repository variable, e.g. SITE_URL_KANSAI. Unset is not an error:
       # canonical/OG/JSON-LD absolute URLs are omitted rather than wrong.
       SITE_URL: ${{ vars[matrix.site_url_var] }}
+      # Also repository variables, not secrets: the project id and dataset name
+      # are public information, and `src/lib/sanity/env.ts` falls back to the
+      # Markdown in `src/content/` when the project id is absent. Deliberately
+      # no SANITY_READ_TOKEN — that one reads drafts, which must never reach a
+      # published build.
+      SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+      SANITY_DATASET: ${{ vars.SANITY_DATASET }}
 
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +74,33 @@ jobs:
           path: dist/${{ matrix.tenant }}
           if-no-files-found: error
 
-      # Deployment is intentionally not wired up here: the two cities publish to
-      # different targets under different owners. Add a deploy step per tenant
-      # once those are decided.
+      # Only Kansai is published from this repository — Tokyo has its own
+      # target under a different owner and is built here for validation only.
+      # Pages takes exactly one artifact, under the fixed name `github-pages`.
+      - name: Package Kansai for Pages
+        if: matrix.tenant == 'kansai' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/kansai
+
+  deploy:
+    name: deploy (kansai)
+    needs: build
+    # `!cancelled()` rather than plain success(): a broken Tokyo build must not
+    # hold back the site that is actually live. A broken Kansai build leaves no
+    # `github-pages` artifact, so this job then fails here instead of shipping
+    # stale output.
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
