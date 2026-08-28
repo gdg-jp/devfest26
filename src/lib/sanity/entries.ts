@@ -1,6 +1,12 @@
-import { AVATAR_SIZE } from "../photo";
+import {
+  AVATAR_SIZE,
+  BACKDROP_WIDTH,
+  COUNTDOWN_BACKDROP_RATIO,
+  PROP_SIZE,
+  REGISTER_BACKDROP_RATIO,
+} from "../photo";
 import { portableTextToHtml, portableTextToPlain } from "./portableText";
-import { speakerPhotoUrl } from "./image";
+import { backdropUrl, propPhotoUrl, speakerPhotoUrl } from "./image";
 import type { SanityEntry } from "../../loaders/sanity";
 
 /**
@@ -117,5 +123,54 @@ export function aboutEntry(doc: Doc): SanityEntry {
     },
     html: portableTextToHtml(doc.body),
     body: portableTextToPlain(doc.body),
+  };
+}
+
+/**
+ * One photo set per city, looked up by a fixed id like the About page.
+ *
+ * Positions are not editable here on purpose: where a prop sits in the gutter
+ * is a layout decision that lives with the layout, so the Studio supplies an
+ * ordered list and each section picks the index it wants.
+ */
+export function photoSetEntry(doc: Doc): SanityEntry {
+  const backdrop = (image: Doc | undefined, credit: unknown, ratio: number) =>
+    image
+      ? {
+          image: {
+            src: backdropUrl(image, BACKDROP_WIDTH, ratio),
+            width: BACKDROP_WIDTH,
+            height: Math.round(BACKDROP_WIDTH * ratio),
+            remote: true,
+          },
+          credit: (credit as string | null) ?? undefined,
+        }
+      : undefined;
+
+  return {
+    id: "photos",
+    data: {
+      registerBackdrop: backdrop(
+        doc.registerBackdrop,
+        doc.registerBackdropCredit,
+        REGISTER_BACKDROP_RATIO,
+      ),
+      countdownBackdrop: backdrop(
+        doc.countdownBackdrop,
+        doc.countdownBackdropCredit,
+        COUNTDOWN_BACKDROP_RATIO,
+      ),
+      props: doc.props?.map((p: Doc) => ({
+        // Twice the rendered size, so a tilted prop stays sharp on a 2x display.
+        image: {
+          src: propPhotoUrl(p, PROP_SIZE * 2),
+          width: PROP_SIZE * 2,
+          height: PROP_SIZE * 2,
+          remote: true,
+        },
+      })),
+    },
+    html: "",
+    body: "",
   };
 }

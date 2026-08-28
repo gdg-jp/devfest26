@@ -1,0 +1,113 @@
+---
+import { getImage } from "astro:assets";
+import { PROP_SIZE, isRemotePhoto } from "../lib/photo";
+import { propPhoto } from "../lib/photos";
+
+/**
+ * A photo in the gutter, wearing the same clothes as the drawn stickers: a
+ * black stroke, a resting tilt, and the parallax drift. It renders nothing
+ * when the city has no photo at this index, so a section can ask for one
+ * before anybody has taken it.
+ */
+interface Props {
+  /** Which prop in the city's ordered list to claim. */
+  index: number;
+  /** Rendered width in px. Defaults to the shared prop size. */
+  width?: number;
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
+  /** Resting tilt in degrees. */
+  rotate?: number;
+  /** Parallax factor, as on Sticker. 0 pins it. */
+  speed?: number;
+}
+
+const {
+  index,
+  width = PROP_SIZE,
+  top,
+  right,
+  bottom,
+  left,
+  rotate = 0,
+  speed = 0.5,
+} = Astro.props;
+
+const photo = await propPhoto(index);
+
+/*
+  A CSS background rather than an <img>, which is the whole point: the
+  declaration lives inside the min-width query below, so a phone never requests
+  the file. `loading="lazy"` does not give that guarantee — an <img> inside a
+  display:none container is still fetched — and these are decoration nobody
+  below 1500px will ever see.
+
+  Local files still go through `astro:assets`; getImage is the same pipeline
+  <Image> uses, just without the element. Squared at 2x for retina, since one
+  fixed URL cannot carry a srcset.
+*/
+const src = photo
+  ? isRemotePhoto(photo)
+    ? photo.src
+    : (
+        await getImage({
+          src: photo,
+          width: width * 2,
+          height: width * 2,
+          format: "webp",
+        })
+      ).src
+  : undefined;
+
+const style = [
+  `width:${width}px`,
+  `--photo:url("${src}")`,
+  top && `top:${top}`,
+  right && `right:${right}`,
+  bottom && `bottom:${bottom}`,
+  left && `left:${left}`,
+  rotate !== 0 && `--rot:${rotate}deg`,
+]
+  .filter(Boolean)
+  .join(";");
+---
+
+{
+  photo && (
+    <div class="glyph photo" style={style} data-parallax={speed || undefined} />
+  )
+}
+
+<style>
+  /*
+    A photo needs more gutter than a drawn glyph does.
+
+    `.props` uncovers at 1241px, where the gutter is only (1241 - 1120) / 2 =
+    60px a side. The drawn stickers cope because they are abstract and read
+    fine clipped or bleeding; a photo that crosses the text does not. 1500px is
+    the first width with a 190px gutter, which fits a 160px prop plus the extra
+    its tilt sweeps out — so photos wait for it, and the glyphs carry the
+    smaller screens on their own.
+
+    Everything that costs bytes is inside the query, so below it the file is
+    never requested at all.
+  */
+  .photo {
+    display: none;
+  }
+
+  @media (width >= 1500px) {
+    .photo {
+      display: block;
+      aspect-ratio: 1;
+      background-image: var(--photo);
+      background-size: cover;
+      background-position: center;
+      border: var(--bw) solid var(--stroke);
+      border-radius: var(--r-md);
+      box-shadow: 0 6px 0 var(--stroke);
+    }
+  }
+</style>

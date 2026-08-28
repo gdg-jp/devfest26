@@ -31,6 +31,13 @@ export const ABOUT = `*[_type == "aboutPage" && ${SCOPE}]{
   _id, lead, body, callout, audienceEyebrow, audienceHeading, audienceItems
 }`;
 
+export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
+  _id,
+  registerBackdrop, registerBackdropCredit,
+  countdownBackdrop, countdownBackdropCredit,
+  props
+}`;
+
 /** The tenant document itself — matched on its own slug, not a reference. */
 export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
   "tenant": slug.current,

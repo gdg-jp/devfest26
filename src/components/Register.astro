@@ -1,10 +1,39 @@
 ---
+import { Image } from "astro:assets";
 import { site } from "../data/site";
+import { BACKDROP_QUALITY, BACKDROP_WIDTH, isRemotePhoto } from "../lib/photo";
+import { registerBackdrop } from "../lib/photos";
 
 const { event, links } = site;
+
+const backdrop = await registerBackdrop();
 ---
 
 <section class="register" id="register">
+  {
+    backdrop && (
+      <div class="bd" aria-hidden="true">
+        {isRemotePhoto(backdrop.image) ? (
+          <img
+            src={backdrop.image.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <Image
+            src={backdrop.image}
+            alt=""
+            width={BACKDROP_WIDTH}
+            quality={BACKDROP_QUALITY}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+      </div>
+    )
+  }
+
   <div class="wrap">
     <p class="eyebrow mid" data-reveal="up">Join us</p>
     <h2 data-reveal="up">
@@ -40,12 +69,67 @@ const { event, links } = site;
   /* The loudest surface on the page, and it belongs to the main event. */
   .register {
     position: relative;
+    /* Makes this the blend boundary, so .bd multiplies with --t and not with
+       whatever the page happens to be painting behind the section. */
+    isolation: isolate;
     background: var(--t);
     color: var(--t-on);
     border-top: var(--bw) solid var(--stroke);
     padding: clamp(52px, 6.6vw, 84px) 0 clamp(62px, 7.6vw, 92px);
     text-align: center;
     overflow: hidden;
+  }
+
+  /*
+    `multiply` rather than a plain alpha wash, which is what lets this be a
+    photograph instead of a smudge.
+
+    Multiplying can only ever darken --t: white areas of the photo leave the
+    blue untouched, and everything else prints into it. So the copy's
+    background is never lighter than the flat colour, and white text can only
+    gain contrast as the photo gets stronger -- the opposite of an alpha
+    overlay, where every highlight eats into it. Measured over the text column,
+    blurred to text scale:
+
+      alpha 0.15 (what this was)  3.07 : 1
+      flat --t, no photo          3.56 : 1
+      multiply 0.62               4.11 : 1
+
+    That is also why there is no mask any more. The old ellipse existed to keep
+    the copy off the highlights; multiply removes the highlights, so the
+    picture can run edge to edge and read as one image.
+  */
+  .bd {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 0.62;
+    mix-blend-mode: multiply;
+  }
+
+  /*
+    Narrow screens get less of it. Not for contrast -- multiply cannot hurt
+    that -- but because the copy stops being a centred column with clear photo
+    around it and starts covering the whole section, so every line lands on
+    the picture's detail rather than beside it.
+  */
+  @media (width < 1100px) {
+    .bd {
+      opacity: 0.45;
+    }
+  }
+
+  .bd :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .register .wrap {
+    position: relative;
+    z-index: 1;
   }
 
   .register::after {

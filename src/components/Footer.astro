@@ -1,9 +1,13 @@
 ---
 import Logo from "./Logo.astro";
 import { site } from "../data/site";
+import { photoCredits } from "../lib/photos";
 
 const { event } = site;
 const year = new Date().getFullYear();
+
+// Decorative use does not waive the photographer's credit.
+const credits = await photoCredits();
 ---
 
 <footer>
@@ -45,7 +49,10 @@ const year = new Date().getFullYear();
       </div>
     </div>
 
-    <p class="copy colophon">© {year} {event.host}</p>
+    <p class="copy colophon">
+      © {year}
+      {event.host}{credits.length > 0 && <> ／ Photos: {credits.join("、")}</>}
+    </p>
   </div>
 </footer>
 

@@ -9,6 +9,7 @@ import {
   aboutEntry,
   meetupEntry,
   partnerEntry,
+  photoSetEntry,
   sessionEntry,
   speakerEntry,
 } from "./lib/sanity/entries";
@@ -160,4 +161,50 @@ const about = defineCollection({
   }),
 });
 
-export const collections = { speakers, sessions, meetups, partners, about };
+/**
+ * One entry per city, and every field optional: photos arrive as an event is
+ * photographed, not before it. A city with no set — or a set with no backdrop
+ * — simply renders no photo, the same way About and Partners disappear when
+ * they are empty.
+ *
+ * Placement is deliberately absent. Where a prop sits in the gutter is a
+ * layout decision, so the list is ordered and each section picks an index.
+ */
+const photos = defineCollection({
+  loader: sanityEnabled
+    ? sanity("photos", Q.PHOTOS, photoSetEntry)
+    : glob({ base: dir("photos"), pattern: "**/*.md" }),
+  schema: ({ image }) => {
+    /*
+      Backdrops are named, not numbered, because each surface treats its photo
+      differently — see the blend modes in Register.astro and Countdown.astro.
+      The gutter props stay an ordered list: those are interchangeable, and
+      sections claim them by position.
+    */
+    const backdrop = z.object({
+      image: z.union([remotePhoto, image()]),
+      /** Photographer, shown once in the footer colophon. */
+      credit: z.string().optional(),
+    });
+
+    return z.object({
+      /** Under the closing call to action, printed into the tenant colour. */
+      registerBackdrop: backdrop.optional(),
+      /** Behind the countdown band, under the opaque digit cards. */
+      countdownBackdrop: backdrop.optional(),
+      /** Gutter props, in the order sections claim them. */
+      props: z
+        .array(z.object({ image: z.union([remotePhoto, image()]) }))
+        .optional(),
+    });
+  },
+});
+
+export const collections = {
+  speakers,
+  sessions,
+  meetups,
+  partners,
+  about,
+  photos,
+};

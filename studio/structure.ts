@@ -7,6 +7,7 @@ export const CITY_SCOPED_TYPES = [
   "meetup",
   "partner",
   "aboutPage",
+  "photoSet",
 ] as const;
 
 export const structure: StructureResolver = (S) =>
@@ -98,6 +99,20 @@ export const structure: StructureResolver = (S) =>
                         .params({ eventId })
                         .initialValueTemplates([
                           S.initialValueTemplateItem("aboutPage-by-event", {
+                            eventId,
+                          }),
+                        ]),
+                    ),
+                  S.listItem()
+                    .title("Photos")
+                    .child(
+                      S.documentList()
+                        .title("Photos")
+                        .schemaType("photoSet")
+                        .filter('_type == "photoSet" && event._ref == $eventId')
+                        .params({ eventId })
+                        .initialValueTemplates([
+                          S.initialValueTemplateItem("photoSet-by-event", {
                             eventId,
                           }),
                         ]),

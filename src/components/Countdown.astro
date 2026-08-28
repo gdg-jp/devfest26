@@ -1,5 +1,16 @@
 ---
+import { Image } from "astro:assets";
 import { site } from "../data/site";
+import {
+  BACKDROP_QUALITY,
+  BACKDROP_WIDTH,
+  COUNTDOWN_BACKDROP_RATIO,
+  isRemotePhoto,
+} from "../lib/photo";
+import { countdownBackdrop } from "../lib/photos";
+
+const backdrop = await countdownBackdrop();
+const backdropHeight = Math.round(BACKDROP_WIDTH * COUNTDOWN_BACKDROP_RATIO);
 
 const cells = [
   { key: "d", label: "Days" },
@@ -9,7 +20,32 @@ const cells = [
 ];
 ---
 
-<div class="band pa">
+<div class="band pa cd-band">
+  {
+    backdrop && (
+      <div class="bd" aria-hidden="true">
+        {isRemotePhoto(backdrop.image) ? (
+          <img
+            src={backdrop.image.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <Image
+            src={backdrop.image}
+            alt=""
+            width={BACKDROP_WIDTH}
+            height={backdropHeight}
+            quality={BACKDROP_QUALITY}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+      </div>
+    )
+  }
+
   <div class="countdown wrap">
     <div class="cd-head">
       <h2>開催まで</h2>
@@ -36,6 +72,45 @@ const cells = [
 </div>
 
 <style>
+  .cd-band {
+    position: relative;
+    /* Makes this the blend boundary, so .bd multiplies with --t-pa. */
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  /*
+    The same trick as the register panel, upside down.
+
+    There the ground is a saturated --t under white text, so `multiply` can
+    only help. Here the ground is a pale --t-pa under dark ink, so multiply
+    costs contrast instead of buying it — which is why this one has a ceiling
+    the other does not. Measured over the header strip, blurred to text scale,
+    across all four city palettes:
+
+      flat --t-pa, no photo   12.5 - 13.9 : 1
+      multiply 0.45           5.5 - 6.0 : 1
+      multiply 0.6            3.9 - 4.2 : 1   (below AA, not used)
+
+    The digits themselves never enter into it: they sit on opaque white cards,
+    so the photo shows in the strip above them and the margins around them and
+    touches nothing that has to be read.
+  */
+  .bd {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.45;
+    mix-blend-mode: multiply;
+  }
+
+  .bd :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
   .countdown {
     padding: clamp(28px, 3.6vw, 40px) 0;
   }

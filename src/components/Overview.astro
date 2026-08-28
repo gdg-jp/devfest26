@@ -1,4 +1,5 @@
 ---
+import PhotoSticker from "./PhotoSticker.astro";
 import Props from "./Props.astro";
 import Sticker from "./Sticker.astro";
 import { site } from "../data/site";
@@ -40,6 +41,8 @@ const rows = [
       rotate={-10}
       speed={0.7}
     />
+    <PhotoSticker index={0} top="30%" right="16px" rotate={-5} speed={-0.6} />
+    <PhotoSticker index={2} top="40%" left="16px" rotate={7} speed={0.55} />
   </Props>
 
   <div class="wrap">

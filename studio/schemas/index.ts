@@ -4,6 +4,7 @@ import { session } from "./session";
 import { meetup } from "./meetup";
 import { partner } from "./partner";
 import { aboutPage } from "./aboutPage";
+import { photoSet } from "./photoSet";
 
 export const schemaTypes = [
   event,
@@ -12,4 +13,5 @@ export const schemaTypes = [
   meetup,
   partner,
   aboutPage,
+  photoSet,
 ];
