@@ -3,8 +3,9 @@ import { getCollection } from "astro:content";
 import Props from "./Props.astro";
 import Sticker from "./Sticker.astro";
 import SessionCard from "./SessionCard.astro";
-import { tracks, pastelCycle } from "../data/tracks";
+import { getTracks, pastelCycle } from "../data/tracks";
 
+const tracks = await getTracks();
 const allSessions = await getCollection("sessions");
 const allSpeakers = await getCollection("speakers");
 const speakerById = new Map(allSpeakers.map((s) => [s.id, s]));
@@ -16,7 +17,7 @@ let pastelIndex = 0;
 const grouped = tracks
   .map((track) => {
     const sessions = allSessions
-      .filter((s) => s.data.track === track.id)
+      .filter((s) => s.data.track.id === track.id)
       .sort((a, b) => a.data.order - b.data.order)
       .map((session) => {
         const speakers = session.data.speakers.map((ref) => {
@@ -30,9 +31,9 @@ const grouped = tracks
         return {
           session,
           speakers,
-          label: track.pending
-            ? "Unscheduled"
-            : `Session ${String(session.data.order).padStart(2, "0")}`,
+          label:
+            track.data.cardLabel ??
+            `Session ${String(session.data.order).padStart(2, "0")}`,
           pastel: pastelCycle[pastelIndex++ % pastelCycle.length],
         };
       });
@@ -75,16 +76,20 @@ const grouped = tracks
           <div
             class:list={[
               "track-head",
-              { ink: track.darkInk, plain: track.pending },
+              { ink: track.data.darkInk, plain: track.data.pending },
             ]}
-            style={`--trk:${track.color}`}
+            style={`--trk:${track.data.color}`}
             data-reveal="up"
           >
-            <h3>{track.label}</h3>
-            <span class="sub">{track.sub}</span>
+            <h3>{track.data.label}</h3>
+            <span class="sub">{track.data.sub}</span>
             <span class="count">{sessions.length} sessions</span>
           </div>
-          <div class="cards" style={`--trk:${track.textColor}`} data-stagger>
+          <div
+            class="cards"
+            style={`--trk:${track.data.textColor}`}
+            data-stagger
+          >
             {sessions.map((s) => (
               <SessionCard
                 session={s.session}

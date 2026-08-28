@@ -1,8 +1,8 @@
 ---
-import { timetable, tracks } from "../data/tracks";
+import { timetable, getTracks } from "../data/tracks";
 
 // "3 トラック" is a fact about this city's configuration, not a constant.
-const trackCount = tracks.filter((t) => !t.pending).length;
+const trackCount = (await getTracks()).filter((t) => !t.data.pending).length;
 ---
 
 <section class="sec" id="timetable">

@@ -87,32 +87,6 @@ export const tokyo = {
     { href: "#register", label: "参加登録" },
   ],
 
-  // Two tracks plus the holding pen — tracks are per-city, not a fixed three.
-  tracks: [
-    {
-      id: "a",
-      label: "Track A｜メイン・トーク",
-      sub: "技術セッション",
-      color: "var(--red)",
-      textColor: "var(--red)",
-    },
-    {
-      id: "b",
-      label: "Track B｜ハンズオン",
-      sub: "ワークショップ・ハンズオン",
-      color: "var(--blue)",
-      textColor: "var(--blue)",
-    },
-    {
-      id: "unscheduled",
-      label: "Track・時間調整中",
-      sub: "トラックと時間が決まりしだい移動します",
-      color: "var(--surface)",
-      textColor: "var(--muted)",
-      pending: true,
-    },
-  ],
-
   timetable: [
     {
       start: "11:00",

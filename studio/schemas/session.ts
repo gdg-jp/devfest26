@@ -15,14 +15,18 @@ export const session = defineType({
     defineField({
       name: "track",
       title: "Track",
-      type: "string",
+      type: "reference",
+      to: [{ type: "track" }],
+      // The dropdown offers only the tracks belonging to the city this session
+      // is already attached to, so a Kansai session cannot land on a Tokyo
+      // track. Pick the event first and the list fills itself in.
       options: {
-        list: [
-          { title: "Track A", value: "a" },
-          { title: "Track B", value: "b" },
-          { title: "Track C", value: "c" },
-          { title: "Unscheduled", value: "unscheduled" },
-        ],
+        filter: ({ document }) => ({
+          filter: "event._ref == $eventId",
+          params: {
+            eventId: (document.event as { _ref?: string } | undefined)?._ref,
+          },
+        }),
       },
       validation: (Rule) => Rule.required(),
     }),
@@ -54,13 +58,13 @@ export const session = defineType({
   preview: {
     select: {
       title: "title",
-      track: "track",
+      track: "track.label",
       order: "order",
     },
     prepare({ title, track, order }) {
       return {
         title: title || "TBD",
-        subtitle: `${track} - ${order}`,
+        subtitle: `${track ?? "No track"} - ${order}`,
       };
     },
   },

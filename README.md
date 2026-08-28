@@ -48,24 +48,42 @@ CI（`.github/workflows/build.yml`）は都市ごとに 1 ジョブを回し、`
 
 サイトに出る情報はすべて `src/` の下にあります。HTML を触る必要はありません。`<tenant>` は `kansai` または `tokyo` です。
 
-| 編集したいもの                                     | ファイル                              |
-| :------------------------------------------------- | :------------------------------------ |
-| 日時・会場・申込 URL・ナビ・meta・トラック・テーマ | `src/tenants/<tenant>.ts`             |
-| 登壇者                                             | `src/content/<tenant>/speakers/*.md`  |
-| セッション                                         | `src/content/<tenant>/sessions/*.md`  |
-| プレイベント（DevFest Meetup）                     | `src/content/<tenant>/meetups/*.md`   |
-| 共催・協力団体                                     | `src/content/<tenant>/partners/*.md`  |
-| 「イベントについて」の本文                         | `src/content/<tenant>/about/about.md` |
+| 編集したいもの                                           | ファイル                              |
+| :------------------------------------------------------- | :------------------------------------ |
+| 日時・会場・申込 URL・ナビ・meta・タイムテーブル・テーマ | `src/tenants/<tenant>.ts`             |
+| トラック                                                 | `src/content/<tenant>/tracks/*.md`    |
+| 登壇者                                                   | `src/content/<tenant>/speakers/*.md`  |
+| セッション                                               | `src/content/<tenant>/sessions/*.md`  |
+| プレイベント（DevFest Meetup）                           | `src/content/<tenant>/meetups/*.md`   |
+| 共催・協力団体                                           | `src/content/<tenant>/partners/*.md`  |
+| 「イベントについて」の本文                               | `src/content/<tenant>/about/about.md` |
 
 日付のラベルは `startsAt` / `endsAt` から自動生成されます（`2026年10月18日`、`10/18`、`SUN`、`11:00 – 18:00` など）。都市が書くのは ISO 形式のタイムスタンプ 2 つだけで、表示用の文字列を手で持つ必要はありません。整形は Asia/Tokyo 固定なので、ビルドマシンのタイムゾーンに依存しません。
 
 frontmatter が構造化データ、本文（Markdown）がプロフィールやセッション概要などの散文です。スキーマは `src/content.config.ts` にあります。
 
+### トラックを追加する
+
+トラックは何本あってもよく、id（ファイル名）も自由です。ファイルを 1 つ足せば、セッション側から `track: <ファイル名>` で指せるようになります。
+
+```markdown
+---
+order: 4 # 表示順
+label: "Track D｜ワークショップ"
+sub: "ラベルの下に出る一行説明"
+color: "var(--red)" # 見出しピルの塗り
+textColor: "var(--red)" # 白地の小さな文字に載せる色
+darkInk: true # 省略可。見出しの文字を黒にする（黄色など）
+pending: true # 省略可。破線表示にし、トラック数から除外する
+cardLabel: "Unscheduled" # 省略可。カード上部をセッション番号の代わりにこの文字列にする
+---
+```
+
 ### セッションを追加する
 
 ```markdown
 ---
-track: a # a | b | c | unscheduled
+track: a # src/content/<tenant>/tracks/<id>.md
 order: 7 # トラック内の並び順
 title: "セッションタイトル" # 未定なら省略 → 自動で「TBD」表記
 speakers:

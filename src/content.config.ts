@@ -12,6 +12,7 @@ import {
   photoSetEntry,
   sessionEntry,
   speakerEntry,
+  trackEntry,
 } from "./lib/sanity/entries";
 
 /**
@@ -71,12 +72,46 @@ const speakers = defineCollection({
     }),
 });
 
+/**
+ * How many tracks a DevFest runs, what they are called and what colour they
+ * are is a local decision, so tracks are content rather than code: a city adds
+ * one by adding a file (or a Studio document), not by widening a union type.
+ *
+ * The entry id is the handle a session points at — `a.md` is what makes
+ * `track: a` resolve — so a city is free to name its tracks `main` and
+ * `workshop` instead, as long as its sessions agree.
+ */
+const tracks = defineCollection({
+  loader: sanityEnabled
+    ? sanity("tracks", Q.TRACKS, trackEntry)
+    : glob({ base: dir("tracks"), pattern: "**/*.md" }),
+  schema: z.object({
+    /** Display order, on the page and in the track headers. */
+    order: z.number().int().positive(),
+    label: z.string(),
+    /** One line under the label, describing what the track is for. */
+    sub: z.string(),
+    /** Solid fill for the track header pill. */
+    color: z.string(),
+    /** Readable version of `color` for small text on white. */
+    textColor: z.string(),
+    /** Header needs dark text (yellow fails white). */
+    darkInk: z.boolean().optional(),
+    /** Not yet a real track — rendered dashed and outlined, and left out of
+        the "n トラック" count in the timetable. */
+    pending: z.boolean().optional(),
+    /** Printed above each card in place of the session number. A holding pen
+        has no running order to show, so it labels its cards some other way. */
+    cardLabel: z.string().optional(),
+  }),
+});
+
 const sessions = defineCollection({
   loader: sanityEnabled
     ? sanity("sessions", Q.SESSIONS, sessionEntry)
     : glob({ base: dir("sessions"), pattern: "**/*.md" }),
   schema: z.object({
-    track: z.enum(["a", "b", "c", "unscheduled"]),
+    track: reference("tracks"),
     /** Position within the track. */
     order: z.number().int().positive(),
     /** Omit while the talk is still TBD. */
@@ -202,6 +237,7 @@ const photos = defineCollection({
 
 export const collections = {
   speakers,
+  tracks,
   sessions,
   meetups,
   partners,

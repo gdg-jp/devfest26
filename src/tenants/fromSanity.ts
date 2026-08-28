@@ -69,20 +69,6 @@ const eventDoc = z.object({
   nav: z.array(z.object({ href: nonEmpty, label: nonEmpty })).min(1),
   footerNav: z.array(z.object({ href: nonEmpty, label: nonEmpty })).min(1),
 
-  tracks: z
-    .array(
-      z.object({
-        id: z.enum(["a", "b", "c", "unscheduled"]),
-        label: nonEmpty,
-        sub: nonEmpty,
-        color: nonEmpty,
-        textColor: nonEmpty,
-        darkInk: z.boolean().nullish(),
-        pending: z.boolean().nullish(),
-      }),
-    )
-    .min(1),
-
   timetable: z.array(
     z.object({
       start: nonEmpty,
@@ -161,11 +147,6 @@ export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
     nav: d.nav,
     footerNav: d.footerNav,
 
-    tracks: d.tracks.map((t) => ({
-      ...t,
-      darkInk: clean(t.darkInk),
-      pending: clean(t.pending),
-    })),
     timetable: d.timetable,
   };
 }

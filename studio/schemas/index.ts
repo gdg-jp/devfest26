@@ -1,5 +1,6 @@
 import { event } from "./event";
 import { speaker } from "./speaker";
+import { track } from "./track";
 import { session } from "./session";
 import { meetup } from "./meetup";
 import { partner } from "./partner";
@@ -9,6 +10,7 @@ import { photoSet } from "./photoSet";
 export const schemaTypes = [
   event,
   speaker,
+  track,
   session,
   meetup,
   partner,

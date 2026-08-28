@@ -2,6 +2,7 @@ import type { StructureResolver } from "sanity/structure";
 
 /** Every type that belongs to exactly one city. */
 export const CITY_SCOPED_TYPES = [
+  "track",
   "session",
   "speaker",
   "meetup",
@@ -24,6 +25,23 @@ export const structure: StructureResolver = (S) =>
                 .title("City Content")
                 .items([
                   S.listItem()
+                    .title("Tracks")
+                    .child(
+                      S.documentList()
+                        .title("Tracks")
+                        .schemaType("track")
+                        .filter('_type == "track" && event._ref == $eventId')
+                        .params({ eventId })
+                        .initialValueTemplates([
+                          S.initialValueTemplateItem("track-by-event", {
+                            eventId,
+                          }),
+                        ])
+                        .defaultOrdering([
+                          { field: "order", direction: "asc" },
+                        ]),
+                    ),
+                  S.listItem()
                     .title("Sessions")
                     .child(
                       S.documentList()
@@ -36,8 +54,10 @@ export const structure: StructureResolver = (S) =>
                             eventId,
                           }),
                         ])
+                        // GROQ cannot sort through a reference, so this groups
+                        // by track id rather than by the track's own order.
                         .defaultOrdering([
-                          { field: "track", direction: "asc" },
+                          { field: "track._ref", direction: "asc" },
                           { field: "order", direction: "asc" },
                         ]),
                     ),

@@ -77,39 +77,6 @@ export const kansai = {
     { href: "#register", label: "参加登録" },
   ],
 
-  tracks: [
-    {
-      id: "a",
-      label: "Track A｜メイン・トーク",
-      sub: "技術セッション・パネルディスカッション",
-      color: "var(--blue)",
-      textColor: "var(--blue)",
-    },
-    {
-      id: "b",
-      label: "Track B｜ハンズオン・トーク",
-      sub: "Google AI・生成AI ハンズオン",
-      color: "var(--green)",
-      textColor: "var(--green)",
-    },
-    {
-      id: "c",
-      label: "Track C｜ハンズオン・トーク",
-      sub: "LT・コミュニティセッション",
-      color: "var(--yellow)",
-      textColor: "#8a5a00",
-      darkInk: true,
-    },
-    {
-      id: "unscheduled",
-      label: "Track・時間調整中",
-      sub: "トラックと時間が決まりしだい移動します",
-      color: "var(--surface)",
-      textColor: "var(--muted)",
-      pending: true,
-    },
-  ],
-
   timetable: [
     {
       start: "11:00",

@@ -13,8 +13,13 @@ export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
   _id, name, role, initial, photo, bio
 }`;
 
+export const TRACKS = `*[_type == "track" && ${SCOPE}]{
+  _id, order, label, sub, color, textColor, darkInk, pending, cardLabel
+}`;
+
 export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
-  _id, track, order, title, abstract,
+  _id, order, title, abstract,
+  "track": track->_id,
   "speakers": speakers[]->_id
 }`;
 
@@ -46,5 +51,5 @@ export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
   startsAt, endsAt,
   socialLabel, socialStart, socialEnd,
   venue, format, formatShort, fee, host, coHosts,
-  stats, links, nav, footerNav, tracks, timetable
+  stats, links, nav, footerNav, timetable
 }`;

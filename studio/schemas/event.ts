@@ -280,53 +280,6 @@ export const event = defineType({
       ],
     }),
     defineField({
-      name: "tracks",
-      title: "Tracks",
-      type: "array",
-      of: [
-        defineArrayMember({
-          type: "object",
-          fields: [
-            defineField({
-              name: "id",
-              type: "string",
-              options: {
-                list: [
-                  { title: "A", value: "a" },
-                  { title: "B", value: "b" },
-                  { title: "C", value: "c" },
-                  { title: "Unscheduled", value: "unscheduled" },
-                ],
-              },
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: "label",
-              type: "string",
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: "sub",
-              type: "string",
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: "color",
-              type: "string",
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: "textColor",
-              type: "string",
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({ name: "darkInk", type: "boolean" }),
-            defineField({ name: "pending", type: "boolean" }),
-          ],
-        }),
-      ],
-    }),
-    defineField({
       name: "timetable",
       title: "Timetable",
       type: "array",

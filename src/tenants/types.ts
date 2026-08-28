@@ -6,23 +6,10 @@ import type { TenantId } from "./ids";
  * `src/tenants/` and `src/content/<tenant>/` is city-specific.
  */
 
-/** Fixed vocabulary. A two-track city simply leaves `c` unused. */
-export type TrackId = "a" | "b" | "c" | "unscheduled";
-
-export interface Track {
-  id: TrackId;
-  label: string;
-  sub: string;
-  /** Solid fill for the track header pill. */
-  color: string;
-  /** Readable version of `color` for small text on white. */
-  textColor: string;
-  /** Header needs dark text (yellow fails white). */
-  darkInk?: boolean;
-  /** Not yet a real track — rendered dashed and outlined. */
-  pending?: boolean;
-}
-
+/**
+ * Tracks are not here: they are a content collection, so a city adds one
+ * without touching this file. See `src/content.config.ts`.
+ */
 export interface TimetableRow {
   start: string;
   end: string;
@@ -100,6 +87,5 @@ export interface TenantConfig {
   nav: readonly NavItem[];
   footerNav: readonly NavItem[];
 
-  tracks: Track[];
   timetable: TimetableRow[];
 }

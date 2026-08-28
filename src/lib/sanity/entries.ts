@@ -44,15 +44,33 @@ export function speakerEntry(doc: Doc): SanityEntry {
   };
 }
 
+export function trackEntry(doc: Doc): SanityEntry {
+  return {
+    id: doc._id,
+    data: {
+      order: doc.order,
+      label: doc.label,
+      sub: doc.sub,
+      color: doc.color,
+      textColor: doc.textColor,
+      darkInk: doc.darkInk ?? undefined,
+      pending: doc.pending ?? undefined,
+      cardLabel: doc.cardLabel ?? undefined,
+    },
+    html: "",
+    body: "",
+  };
+}
+
 export function sessionEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
+    // GROQ dereferenced `track` and `speakers` to plain `_id` strings;
+    // `reference()` turns them back into collection references when it parses.
     data: {
       track: doc.track,
       order: doc.order,
       title: doc.title ?? undefined,
-      // GROQ dereferenced these to plain _id strings; `reference()` turns them
-      // back into collection references when it parses.
       speakers: doc.speakers ?? [],
     },
     html: portableTextToHtml(doc.abstract),
