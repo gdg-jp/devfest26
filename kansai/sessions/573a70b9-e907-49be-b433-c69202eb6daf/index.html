@@ -1,18 +1,22 @@
 <!DOCTYPE html><html lang="ja" data-theme="blue"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>生成AIを「なんとなく改善」するのをやめる｜DevFest 2026 in Kansai</title><meta name="description" content="生成AIを「なんとなく改善」するのをやめる／登壇：太田 満久 氏"><link rel="canonical" href="https://df26.gdgs.jp/kansai/sessions/573a70b9-e907-49be-b433-c69202eb6daf"><link rel="icon" href="/kansai/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon/blue.ico" sizes="48x48"><meta name="theme-color" content="#4285f4"><meta property="og:type" content="website"><meta property="og:site_name" content="DevFest 2026 in Kansai"><meta property="og:title" content="生成AIを「なんとなく改善」するのをやめる｜DevFest 2026 in Kansai"><meta property="og:description" content="生成AIを「なんとなく改善」するのをやめる／登壇：太田 満久 氏"><meta property="og:locale" content="ja_JP"><meta property="og:url" content="https://df26.gdgs.jp/kansai/sessions/573a70b9-e907-49be-b433-c69202eb6daf"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="生成AIを「なんとなく改善」するのをやめる｜DevFest 2026 in Kansai"><meta name="twitter:description" content="生成AIを「なんとなく改善」するのをやめる／登壇：太田 満久 氏"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&family=Google+Sans+Code:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Event","name":"DevFest 2026 in Kansai","description":"2026年10月18日（日）、大阪国際工科専門職大学で開催。Google AI をはじめとする最新技術と、ファッション・ものづくり・ビジネスなどの異なる専門性が交わるデベロッパーイベントです。参加費無料、現地開催とオンライン配信。","startDate":"2026-10-18T02:00:00.000Z","endDate":"2026-10-18T09:00:00.000Z","eventStatus":"https://schema.org/EventScheduled","eventAttendanceMode":"https://schema.org/MixedEventAttendanceMode","location":{"@type":"Place","name":"国際工科専門職大学 大阪キャンパス","address":{"@type":"PostalAddress","streetAddress":"梅田3-3-1","addressLocality":"大阪市北区","addressRegion":"大阪府","postalCode":"530-0001","addressCountry":"JP"}},"organizer":{"@type":"Organization","name":"GDG Greater Kwansai","url":"https://gdg.community.dev/gdg-greater-kwansai/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY","availability":"https://schema.org/InStock","url":"https://gdgkwansai.connpass.com/event/388434/"},"url":"https://df26.gdgs.jp/kansai/sessions/573a70b9-e907-49be-b433-c69202eb6daf"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Event","name":"生成AIを「なんとなく改善」するのをやめる","url":"https://df26.gdgs.jp/kansai/sessions/573a70b9-e907-49be-b433-c69202eb6daf","location":{"@type":"Place","name":"国際工科専門職大学 大阪キャンパス"},"performer":[{"@type":"Person","name":"太田 満久 氏","jobTitle":"ユビー株式会社 Ubie Lab 所長／Google Developers Expert（AI・Cloud AI）"}],"superEvent":{"@type":"Event","name":"DevFest 2026 in Kansai","startDate":"2026-10-18T02:00:00.000Z"}}</script><script>
       (function () {
-        var d = document.documentElement;
+        const d = document.documentElement;
         d.classList.add("js");
 
-        var reduced = false;
-        var seen = false;
+        let reduced = false;
+        let seen = false;
         try {
           reduced = window.matchMedia(
             "(prefers-reduced-motion: reduce)",
           ).matches;
-        } catch (e) {}
+        } catch {
+          /* No matchMedia to ask: assume motion is welcome. */
+        }
         try {
           seen = sessionStorage.getItem("df26-intro-seen") === "1";
-        } catch (e) {}
+        } catch {
+          /* Storage walled off: treat the visit as the first one. */
+        }
 
         if (!reduced && !seen) {
           d.classList.add("is-loading");
