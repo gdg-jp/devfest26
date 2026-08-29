@@ -1,0 +1,114 @@
+name: CI
+
+# Three projects live in this repository and they do not share an install:
+# the site at the root, the Sanity Studio in `studio/`, and the access-control
+# Worker in `preview/`. What they *do* share is one Prettier config and one
+# ESLint config, both at the root — so formatting and linting are one pass over
+# the whole tree, while type checking has to be one job per project.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Prettier and ESLint walk down from the repository root, so `studio/` and
+  # `preview/` are covered here without installing a second copy of either
+  # tool inside them — which would only buy config drift. The two sub-projects
+  # keep their generated files out of the way through their own .gitignore
+  # (read by eslint.config.js) and through .prettierignore.
+  format_lint:
+    name: format & lint
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+
+      - name: Install node modules
+        run: pnpm install --frozen-lockfile
+
+      # Both are checks, not fixes: `format:fix` and `lint:fix` are the local
+      # counterparts. CI reports, the developer rewrites.
+      - name: Run Format
+        run: pnpm format
+
+      - name: Run Lint
+        run: pnpm lint
+
+  # The part that cannot be shared. Each project has its own tsconfig and its
+  # own dependency tree — Astro here, React and Sanity in `studio/`,
+  # workers-types in `preview/` — so each needs its own install to type check
+  # against. `fail-fast: false` for the same reason `build.yml` uses it: one
+  # project's type error should not cancel another's job and hide a second one.
+  type_check:
+    name: type-check (${{ matrix.name }})
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # `pnpm type-check` at the root is `astro check` — types *and* the
+          # content collection schemas — followed by `tsc --noEmit` for what
+          # Astro does not look at: astro.config.ts, scripts/.
+          #
+          # No environment variables are set for it on purpose. `dotenv` is
+          # fine without a `.env`, and `src/lib/sanity/env.ts` falls back to
+          # the Markdown in `src/content/` when the Sanity project id is
+          # absent, so this checks types against the fallback content rather
+          # than reaching for the CMS.
+          - name: site
+            dir: .
+            lockfile: pnpm-lock.yaml
+          - name: studio
+            dir: studio
+            lockfile: studio/pnpm-lock.yaml
+          - name: preview
+            dir: preview
+            lockfile: preview/pnpm-lock.yaml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          # Keyed on the lockfile of the project being checked. `studio/` and
+          # `preview/` sit outside the site's pnpm workspace and carry
+          # lockfiles of their own; pointing the cache at the root one would
+          # restore the wrong `node_modules` for them.
+          cache-dependency-path: ${{ matrix.lockfile }}
+
+      - name: Install node modules
+        working-directory: ${{ matrix.dir }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Type Check
+        working-directory: ${{ matrix.dir }}
+        run: pnpm type-check

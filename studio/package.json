@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "sanity dev",
     "build": "sanity build",
-    "deploy": "sanity deploy"
+    "deploy": "sanity deploy",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@sanity/vision": "^6.11.0",

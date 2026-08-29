@@ -30,7 +30,7 @@ pnpm dev
 | `pnpm build`        | 全部を `./dist/all/` にビルド                               |
 | `pnpm build:portal` | トップページだけを `./dist/portal/` にビルド                |
 | `pnpm preview`      | ビルド結果をローカルで確認                                  |
-| `pnpm check`        | 型・コンテンツスキーマの検証                                |
+| `pnpm type-check`   | 型・コンテンツスキーマの検証                                |
 | `pnpm targets`      | いま存在する都市の一覧（CI の matrix と同じもの）           |
 
 **何を作るかは `TARGETS` で決めます。** カンマ区切りで `portal` と都市の slug を並べます。未指定なら全部です。

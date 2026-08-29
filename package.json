@@ -16,13 +16,13 @@
     "build:portal": "cross-env TARGETS=portal dotenv -- astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "dotenv -- astro check",
+    "type-check": "dotenv -- astro check && tsc --noEmit",
     "check:portal": "cross-env TARGETS=portal dotenv -- astro check",
     "targets": "dotenv -- node --experimental-strip-types scripts/discover-targets.mjs",
     "og": "dotenv -- node --experimental-strip-types scripts/make-og.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "format": "prettier .",
+    "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
   "dependencies": {
