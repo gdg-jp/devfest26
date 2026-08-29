@@ -9,7 +9,16 @@ import eslintPluginAstro from "eslint-plugin-astro"
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import { fileURLToPath } from "node:url";
 
-const gitignorePath = fileURLToPath(new URL(".gitignore", import.meta.url));
+// `studio/` and `preview/` install separately but are linted from here, so
+// their .gitignore files have to be read as well: ESLint only knows what this
+// config hands it, and `studio/.sanity/` — the runtime Sanity generates — is
+// listed in the Studio's file, not in the root one. `gitignoreResolution`
+// resolves each file's patterns against its own directory.
+const gitignorePaths = [
+  ".gitignore",
+  "studio/.gitignore",
+  "preview/.gitignore",
+].map((p) => fileURLToPath(new URL(p, import.meta.url)));
 
 export default defineConfig([
   includeIgnoreFile(gitignorePath),
