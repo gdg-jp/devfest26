@@ -37,4 +37,8 @@ export default defineCliConfig({
       tsconfigPaths: false,
     },
   }),
+
+  deployment: {
+    appId: "raw8pg2trn5iphtz0rpkbdrr",
+  },
 });
