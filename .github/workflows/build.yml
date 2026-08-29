@@ -52,9 +52,9 @@ jobs:
       targets: ${{ steps.list.outputs.targets }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
@@ -81,11 +81,11 @@ jobs:
       STRICT_TENANTS: "1"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -99,7 +99,7 @@ jobs:
 
       # A failed job uploads nothing, and that absence is how `publish` tells
       # the two apart. Nothing else reports per-target success.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: site-${{ matrix.target }}
           path: dist/${{ matrix.target }}
@@ -125,7 +125,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: site
           # Every branch, so `origin/gh-pages` is there to switch to.
@@ -142,7 +142,7 @@ jobs:
             git rm -rf . > /dev/null
           fi
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
 
