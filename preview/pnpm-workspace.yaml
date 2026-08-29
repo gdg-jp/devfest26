@@ -1,0 +1,11 @@
+# The preview Worker is its own install, not a package of the site's workspace.
+#
+# Without this file pnpm walks up to the repository root's pnpm-workspace.yaml
+# and resolves *that* project as the current one, so `pnpm install` here
+# installs the site's dependencies and leaves `preview/node_modules` empty —
+# `wrangler` never lands on PATH. Finding a workspace file stops the walk at
+# this directory. Same reason `studio/` has one.
+
+allowBuilds:
+  esbuild: true
+  workerd: true

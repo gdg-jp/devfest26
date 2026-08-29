@@ -1,0 +1,102 @@
+name: Preview
+
+# The draft preview: the same commit as production, built with a Sanity read
+# token so it renders unpublished content, and served from a Cloudflare Worker
+# that lets nobody past who is not a GDG member.
+#
+# A separate workflow from `build.yml` on purpose. That one carries no
+# SANITY_READ_TOKEN and must not gain one — GitHub Pages serves whatever it is
+# handed, to whoever asks. This one is the only place the token belongs, and
+# the Worker in `preview/` is what makes that safe.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  # Step 2, once a Sanity webhook is pointed at
+  # /repos/gdg-jp/devfest26/dispatches with {"event_type": "content-draft"}:
+  # saving a draft in the Studio reaches the preview without a push. The
+  # trigger is here already so that wiring is a Sanity-side change only.
+  repository_dispatch:
+    types: [content-draft]
+
+# A burst of draft saves should collapse into one deploy of the latest content.
+concurrency:
+  group: preview
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+
+    # Scopes the read token and the Cloudflare credentials to this one job, and
+    # is where a required reviewer would go if the preview ever needs one.
+    environment:
+      name: preview
+      url: ${{ vars.PREVIEW_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # A missing token is not a smaller preview, it is a silent copy of
+      # production wearing a preview URL — the one outcome that would make an
+      # editor trust "my draft is not in there yet".
+      - name: Refuse to deploy a preview that cannot read drafts
+        env:
+          SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SANITY_READ_TOKEN:-}" ]; then
+            echo "::error::SANITY_READ_TOKEN is not set on the 'preview' environment; this build would render published content only"
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+
+      # No TARGETS: one build, one tree, the front page and every city in it.
+      # `astro check` is deliberately skipped — `build.yml` already ran it on
+      # this commit, and what differs here is the content, which `astro build`
+      # validates against the collection schemas anyway.
+      #
+      # No STRICT_TENANTS either, and that is the difference that matters: a
+      # city whose draft `event` document is half-written is skipped with a
+      # warning rather than taking the whole preview down. In `build.yml` a red
+      # job is a signal the publish step reads; here there is no publish step
+      # to read it, and one editor mid-sentence should not blank the preview
+      # for everyone else.
+      - name: Build the site from drafts
+        env:
+          SITE_URL: ${{ vars.PREVIEW_URL }}
+          SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+          SANITY_DATASET: ${{ vars.SANITY_DATASET }}
+          SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
+        run: pnpm exec astro build
+
+      # Its own install with its own lockfile, like `studio/`. Wrangler and the
+      # OIDC client have nothing to do with the site's dependency tree.
+      - run: pnpm install --frozen-lockfile
+        working-directory: preview
+
+      # Uploads `dist/all` as the Worker's assets. The two Worker secrets
+      # (IDP_CLIENT_SECRET, SESSION_SECRET) are set once by hand with
+      # `wrangler secret put` and survive every deploy, so CI never sees them.
+      #
+      # A build that failed above never reaches this step, which leaves the
+      # previous deployment answering — the same "leave the last good copy in
+      # place" the publish job gives GitHub Pages.
+      - name: Deploy the Worker
+        working-directory: preview
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy

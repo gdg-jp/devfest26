@@ -6,6 +6,13 @@
       "options": {
         "parser": "astro"
       }
+    },
+    {
+      "comment": "eslint's jsonc language rejects the trailing commas prettier's jsonc parser adds by default. preview/wrangler.jsonc is the file caught in between.",
+      "files": "*.jsonc",
+      "options": {
+        "trailingComma": "none"
+      }
     }
   ]
 }

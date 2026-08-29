@@ -1,0 +1,10 @@
+# Copy to .dev.vars for `pnpm dev`. The deployed Worker reads the same names
+# from `wrangler secret put`, never from this file.
+
+# From the OIDC client registered for this Worker in GDG Accounts.
+IDP_CLIENT_SECRET=replace-with-the-client-secret
+
+# Encrypts the session cookie. At least 32 random bytes:
+#   openssl rand -base64 32
+# Changing it signs everyone out, which is the emergency lever.
+SESSION_SECRET=replace-with-a-long-random-secret

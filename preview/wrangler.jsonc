@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "devfest26-preview",
+  "main": "./src/index.ts",
+  // Not "today": workerd only knows dates up to the release it ships in, and a
+  // date past that is a hard error rather than a warning.
+  "compatibility_date": "2026-07-25",
+  // openid-client reaches for a few Node built-ins.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The site itself, uploaded with the Worker. `pnpm build` at the repository
+  // root with no TARGETS writes exactly one tree containing the front page and
+  // every city, which is the shape this wants — the per-city split in
+  // `.github/workflows/build.yml` exists so one city's failure cannot take
+  // another off GitHub Pages, and there is nothing to graft here.
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "../dist/all",
+    // `astro.config.ts` sets `trailingSlash: "never"`, so `/kansai/` is not a
+    // second URL for the same page — it is redirected to `/kansai`.
+    "html_handling": "drop-trailing-slash",
+    // The whole point. Without this Cloudflare answers asset requests before
+    // the Worker ever runs, and the gate would only cover the paths that do
+    // not match a file — which is none of them.
+    "run_worker_first": true
+  },
+
+  "vars": {
+    "IDP_ISSUER": "https://accounts.gdgs.jp",
+    // Fill in after registering this Worker as a client in GDG Accounts. A
+    // client id is public — it is in the authorization URL every visitor
+    // follows — so it belongs here rather than in a secret. Until it is set
+    // the Worker serves the setup page instead of the site, and that page
+    // prints the URLs to register.
+    "IDP_CLIENT_ID": ""
+  },
+
+  // Per-version preview URLs would be gated by this same Worker, but their
+  // hostname is not the registered redirect URI, so signing in from one fails
+  // with a mismatch. One URL, which is the one people are given.
+  "preview_urls": false,
+
+  "observability": { "enabled": true }
+}
