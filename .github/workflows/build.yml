@@ -200,7 +200,7 @@ jobs:
           # directories, the git metadata and the two markers are what survive.
           if [ -d artifacts/site-portal ]; then
             echo "replacing the front page and the shared assets"
-            prune=(! -name .git ! -name .nojekyll ! -name .cities)
+            prune=(! -name .git ! -name .nojekyll ! -name .cities ! -name CNAME)
             for slug in "${cities[@]}"; do prune+=(! -name "$slug"); done
             find site -mindepth 1 -maxdepth 1 "${prune[@]}" -exec rm -rf {} +
             cp -r artifacts/site-portal/. site/
