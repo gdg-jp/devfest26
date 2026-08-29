@@ -1,0 +1,69 @@
+name: Studio
+
+# The Studio is not part of the site. `sanity deploy` publishes it to
+# <studioHost>.sanity.studio, which is Sanity's own hosting — SPA routing,
+# TLS and CORS come with it, so none of that has to be reproduced on GitHub
+# Pages. It therefore moves on its own schedule: only when its own source
+# changes. A content publish rebuilds the site (`build.yml`), never this.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/**"
+      - ".github/workflows/studio.yml"
+  workflow_dispatch:
+
+# Path filters do not apply to pull_request here on purpose: a PR build would
+# have to deploy to the one live hostname to prove anything, and that would put
+# unreviewed schema in front of the editors.
+
+# A push touching several Studio files is still one deploy of one commit.
+# Unlike the site build this does not cancel in progress: the upload is a
+# tarball swap, and killing it halfway is worse than a redundant deploy.
+concurrency:
+  group: studio
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+
+    environment:
+      name: sanity-studio
+      url: https://devfest26.sanity.studio
+
+    env:
+      # Inlined into the browser bundle at build time, so everything under this
+      # prefix must be public information. Same repository variables the site
+      # build reads.
+      SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+      SANITY_STUDIO_DATASET: ${{ vars.SANITY_DATASET }}
+      # Deliberately *not* SANITY_STUDIO_*: that prefix would ship the token to
+      # every visitor. A robot token with the "Deploy Studio" role — the CLI
+      # otherwise looks for a local `sanity login` session, which no runner has.
+      SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          # `studio/` sits outside the pnpm workspace with a lockfile of its
+          # own: React and Sanity belong to the Studio, not to the site.
+          cache-dependency-path: studio/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: studio
+
+      # Build and upload in one command. `--yes` is the unattended flag; the
+      # `studioHost` in sanity.cli.ts is what leaves it with nothing to ask.
+      - run: pnpm exec sanity deploy --yes
+        working-directory: studio
