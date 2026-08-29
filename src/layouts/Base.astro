@@ -161,19 +161,23 @@ const eventSchema = {
     }
     <script is:inline>
       (function () {
-        var d = document.documentElement;
+        const d = document.documentElement;
         d.classList.add("js");
 
-        var reduced = false;
-        var seen = false;
+        let reduced = false;
+        let seen = false;
         try {
           reduced = window.matchMedia(
             "(prefers-reduced-motion: reduce)",
           ).matches;
-        } catch (e) {}
+        } catch {
+          /* No matchMedia to ask: assume motion is welcome. */
+        }
         try {
           seen = sessionStorage.getItem("df26-intro-seen") === "1";
-        } catch (e) {}
+        } catch {
+          /* Storage walled off: treat the visit as the first one. */
+        }
 
         if (!reduced && !seen) {
           d.classList.add("is-loading");
