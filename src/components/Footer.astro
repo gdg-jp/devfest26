@@ -2,13 +2,14 @@
 import Logo from "./Logo.astro";
 import { site } from "../data/site";
 import { photoCredits } from "../lib/photos";
+import { home, isHome } from "../lib/url";
 
 const { event } = site;
 const year = new Date().getFullYear();
 
 // Same as the topbar: these are anchors into the home page, so a detail page
 // has to send them there rather than to a section it does not have.
-const base = Astro.url.pathname === "/" ? "" : "/";
+const prefix = isHome(Astro.url) ? "" : home;
 
 // Decorative use does not waive the photographer's credit.
 const credits = await photoCredits();
@@ -29,7 +30,7 @@ const credits = await photoCredits();
         <nav class="foot-nav" aria-label="フッターナビゲーション">
           {
             site.footerNav.map((item) => (
-              <a href={base + item.href}>{item.label}</a>
+              <a href={prefix + item.href}>{item.label}</a>
             ))
           }
         </nav>

@@ -1,12 +1,10 @@
 import { activeTenant } from "./active";
 import { eventDates } from "./eventDates";
 import { fromSanityIfEnabled } from "./source";
+import { isPortal } from "../portal/active";
 import type { TenantId } from "./ids";
-import { kansai } from "./kansai";
-import { tokyo } from "./tokyo";
+import { registry } from "./registry";
 import type { TenantConfig } from "./types";
-
-const registry: Record<TenantId, TenantConfig> = { kansai, tokyo };
 
 /**
  * "DevFest 2026 in Kansai" → "Kansai". The top bar sets the city name beside
@@ -43,9 +41,12 @@ function resolve(config: TenantConfig) {
  * Top-level await: with Sanity on, the config is a network read, and every
  * component reads `site` synchronously. Awaiting once here keeps all of them
  * unchanged.
+ *
+ * The portal build renders no city, so it does not go asking the CMS for one —
+ * it would otherwise fail a deploy over a city it never puts on a page.
  */
 export const tenant = resolve(
-  (await fromSanityIfEnabled(activeTenant)) ??
+  (isPortal ? undefined : await fromSanityIfEnabled(activeTenant)) ??
     registry[activeTenant as TenantId],
 );
 

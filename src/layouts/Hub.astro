@@ -1,0 +1,105 @@
+---
+import "../styles/tokens.css";
+import "../styles/base.css";
+import { themeColor } from "../data/themes";
+
+/**
+ * The shell for the front page.
+ *
+ * Deliberately not `Base.astro`: that layout is built around `site`, a single
+ * city's language, theme, Open Graph card and Event schema. The front page
+ * belongs to no city, so it would have to pick one arbitrarily. This is the
+ * smaller thing it actually needs — the same tokens and the same base
+ * stylesheet, and nothing that assumes a tenant.
+ *
+ * No `og:image`: there is one card per city in `public/og/`, and none of them
+ * speaks for all of them. See the README.
+ */
+
+interface Props {
+  title: string;
+  description: string;
+  /** Structured data for the list of events. */
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, jsonLd } = Astro.props;
+
+const canonical = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+
+// The four core colours belong to the cities. The hub takes the DevFest
+// primary rather than borrowing whichever city happens to be first.
+const theme = "blue";
+---
+
+<!doctype html>
+<html lang="ja" data-theme={theme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={`/favicon/${theme}.ico`} sizes="48x48" />
+    <meta name="theme-color" content={themeColor(theme)} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="ja_JP" />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&family=Google+Sans+Code:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    />
+
+    {
+      jsonLd && (
+        <script
+          type="application/ld+json"
+          is:inline
+          set:html={JSON.stringify(jsonLd)}
+        />
+      )
+    }
+  </head>
+
+  <body>
+    <a class="skip" href="#top">本文へスキップ</a>
+    <slot />
+    <style is:global>
+      /* The city sites get this from Base.astro; the hub carries its own copy
+         rather than pulling that layout's tenant dependencies along with it. */
+      .skip {
+        position: absolute;
+        left: 12px;
+        top: -60px;
+        z-index: 200;
+        background: var(--surface);
+        color: var(--ink);
+        border: var(--bw) solid var(--stroke);
+        border-radius: 999px;
+        padding: 9px 20px;
+        font-family: var(--f-display);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        transition: top 0.18s var(--ease-out);
+      }
+
+      .skip:focus {
+        top: 12px;
+      }
+    </style>
+  </body>
+</html>

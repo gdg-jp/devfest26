@@ -21,6 +21,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import { getTracks, type Track } from "./tracks";
 import { site } from "./site";
+import { withBase } from "../lib/url";
 
 export type Session = CollectionEntry<"sessions">;
 export type Talk = CollectionEntry<"talks">;
@@ -88,7 +89,8 @@ const byOrder = (a: Ordered, b: Ordered) => a.data.order - b.data.order;
  */
 export const slugOf = (entry: Sluggable) => entry.data.slug ?? entry.id;
 
-export const speakerHref = (speaker: Speaker) => `/speakers/${slugOf(speaker)}`;
+export const speakerHref = (speaker: Speaker) =>
+  withBase(`/speakers/${slugOf(speaker)}`);
 
 /**
  * A "13:00" written on a session or talk, as a schema.org timestamp.
@@ -135,7 +137,7 @@ export async function getProgram(): Promise<ProgramTrack[]> {
 
   const toProgramSession = (session: Session, track: Track): ProgramSession => {
     const slug = slugOf(session);
-    const href = `/sessions/${slug}`;
+    const href = withBase(`/sessions/${slug}`);
     const own = talksBySession.get(session.id) ?? [];
 
     // Speakers on the session are what a one-talk-per-slot city writes; talks
@@ -151,7 +153,7 @@ export async function getProgram(): Promise<ProgramTrack[]> {
     const talks: ProgramTalk[] = own.length
       ? own.map((talk) => ({
           slug: slugOf(talk),
-          href: `/talks/${slugOf(talk)}`,
+          href: withBase(`/talks/${slugOf(talk)}`),
           standalone: true,
           title: talk.data.title ?? session.data.title,
           start: talk.data.start,

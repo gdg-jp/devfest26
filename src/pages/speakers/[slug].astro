@@ -3,6 +3,8 @@ import { render } from "astro:content";
 import Page from "../../layouts/Page.astro";
 import SpeakerAvatar from "../../components/SpeakerAvatar.astro";
 import { site } from "../../data/site";
+import { home } from "../../lib/url";
+import { isPortal } from "../../portal/active";
 import { getProgramSpeakers, type SpeakerProgram } from "../../data/program";
 
 /**
@@ -13,6 +15,9 @@ import { getProgramSpeakers, type SpeakerProgram } from "../../data/program";
  * not been announced.
  */
 export async function getStaticPaths() {
+  // The portal build publishes only the root list, not a city programme.
+  if (isPortal) return [];
+
   const speakers = await getProgramSpeakers();
   return speakers.map((entry) => ({
     params: { slug: entry.slug },
@@ -52,7 +57,7 @@ const jsonLd = {
   title={name}
   description={description}
   jsonLd={jsonLd}
-  back={{ href: "/#sessions", label: "← セッション一覧" }}
+  back={{ href: `${home}#sessions`, label: "← セッション一覧" }}
 >
   <div class="head">
     <SpeakerAvatar speaker={speaker} size={112} />

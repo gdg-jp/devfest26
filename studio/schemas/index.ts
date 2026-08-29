@@ -7,6 +7,7 @@ import { meetup } from "./meetup";
 import { partner } from "./partner";
 import { aboutPage } from "./aboutPage";
 import { photoSet } from "./photoSet";
+import { externalEvent } from "./externalEvent";
 
 export const schemaTypes = [
   event,
@@ -18,4 +19,5 @@ export const schemaTypes = [
   partner,
   aboutPage,
   photoSet,
+  externalEvent,
 ];

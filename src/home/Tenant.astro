@@ -15,6 +15,14 @@ import Partners from "../components/Partners.astro";
 import CodeOfConduct from "../components/CodeOfConduct.astro";
 import Register from "../components/Register.astro";
 import Footer from "../components/Footer.astro";
+
+/**
+ * A city's home page — the long scrolling one, at `/kansai`.
+ *
+ * It lives outside `src/pages/` because the root route serves two different
+ * pages — this one in a city build, `src/portal/Home.astro` in the portal
+ * build — and `astro.config.ts` injects whichever one this build is for.
+ */
 ---
 
 <Base>

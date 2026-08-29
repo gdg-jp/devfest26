@@ -1,0 +1,187 @@
+---
+import Logo from "../components/Logo.astro";
+import Sprite from "../components/Sprite.astro";
+import Hub from "../layouts/Hub.astro";
+import EventCard from "./EventCard.astro";
+import { getPortalEvents } from "./events";
+
+/**
+ * The front page: every DevFest this site knows about, in time order.
+ *
+ * It is not a city's page and does not pretend to be one — no countdown, no
+ * programme, no register button. Its whole job is to get someone to the right
+ * city, whether that city is hosted here or somewhere else entirely.
+ */
+
+const { upcoming, past } = await getPortalEvents();
+
+const title = "DevFest 開催地一覧";
+const description =
+  "各地の Google Developer Groups が開催する DevFest の一覧です。開催地ごとのページで、セッション・登壇者・タイムテーブルを見られます。";
+
+/** A card's link as an absolute URL. External ones already are. */
+const absolute = (href: string) =>
+  href.startsWith("http")
+    ? href
+    : Astro.site
+      ? new URL(href, Astro.site).href
+      : undefined;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: title,
+  itemListElement: [...upcoming, ...past].map((event, index) => {
+    const url = absolute(event.href);
+    return {
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Event",
+        name: event.title,
+        startDate: event.startsAt,
+        ...(event.venue
+          ? { location: { "@type": "Place", name: event.venue } }
+          : {}),
+        ...(url ? { url } : {}),
+      },
+    };
+  }),
+};
+---
+
+<Hub title={title} description={description} jsonLd={jsonLd}>
+  <Sprite stickers={false} />
+
+  <header class="bar">
+    <div class="wrap">
+      <Logo variant="primary" class="mark" />
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="sec intro">
+      <div class="wrap">
+        <p class="eyebrow">Google Developer Groups</p>
+        <h1 class="sec-h">DevFest</h1>
+        <p class="sec-lede">
+          DevFest は、世界各地の Google Developer Groups
+          がそれぞれの地域で開催する、コミュニティ主導のテクノロジーカンファレンスです。開催地を選ぶと、その年のセッションと登壇者を見られます。
+        </p>
+      </div>
+    </section>
+
+    {
+      upcoming.length > 0 && (
+        <section class="sec tint band" aria-labelledby="upcoming">
+          <div class="wrap">
+            <h2 class="sec-h sub" id="upcoming">
+              開催予定
+            </h2>
+            <ul class="list">
+              {upcoming.map((event) => (
+                <EventCard event={event} />
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      past.length > 0 && (
+        <section class="sec" aria-labelledby="past">
+          <div class="wrap">
+            <h2 class="sec-h sub" id="past">
+              終了したイベント
+            </h2>
+            <ul class="list">
+              {past.map((event) => (
+                <EventCard event={event} past />
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      upcoming.length === 0 && past.length === 0 && (
+        <section class="sec">
+          <div class="wrap">
+            <p class="empty">開催予定の DevFest はまだ公開されていません。</p>
+          </div>
+        </section>
+      )
+    }
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>
+        DevFest は Google Developer Groups
+        によるコミュニティイベントです。ブランドとプログラムについては
+        <a
+          href="https://developers.google.com/community/devfest"
+          target="_blank"
+          rel="noopener">developers.google.com</a
+        > をご覧ください。
+      </p>
+    </div>
+  </footer>
+</Hub>
+
+<style>
+  .bar {
+    border-bottom: var(--bw) solid var(--stroke);
+    background: var(--surface);
+  }
+
+  .bar :global(.wrap) {
+    padding: 14px 0;
+  }
+
+  .bar :global(.mark) {
+    width: 170px;
+  }
+
+  .intro {
+    padding-bottom: clamp(34px, 4vw, 52px);
+  }
+
+  .intro :global(.sec-h) {
+    font-size: clamp(40px, 7vw, 76px);
+    letter-spacing: -0.03em;
+  }
+
+  /* Section headings sit below the page title, so they do not take its size. */
+  .sub {
+    font-size: clamp(22px, 3vw, 30px);
+    margin-bottom: 22px;
+  }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  .empty {
+    color: var(--muted);
+  }
+
+  footer {
+    border-top: var(--bw) solid var(--stroke);
+    background: var(--surface);
+    padding: 30px 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  footer a {
+    color: var(--t-deep);
+  }
+</style>

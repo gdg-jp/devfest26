@@ -1,19 +1,21 @@
 ---
 import Logo from "./Logo.astro";
 import { site } from "../data/site";
+import { home, isHome } from "../lib/url";
 
 // The nav is a set of page anchors, which only resolve on the page that has
 // the sections. From a session or speaker page they have to travel home first;
 // the scroll-spy simply finds nothing to observe there.
-const onHome = Astro.url.pathname === "/";
-const base = onHome ? "" : "/";
+// `home` is `/kansai` here, not `/` — this site is mounted on a path.
+const onHome = isHome(Astro.url);
+const prefix = onHome ? "" : home;
 ---
 
 <header class="topbar" data-topbar>
   <div class="wrap">
     <a
       class="home"
-      href={onHome ? "#top" : "/"}
+      href={onHome ? "#top" : home}
       aria-label={`${site.title} — ${onHome ? "ページ先頭へ" : "トップページへ"}`}
     >
       <Logo variant="primary" class="mark" />
@@ -22,7 +24,7 @@ const base = onHome ? "" : "/";
     <nav aria-label="セクションナビゲーション">
       {
         site.nav.map((item) => (
-          <a href={base + item.href} data-spy={item.href.slice(1)}>
+          <a href={prefix + item.href} data-spy={item.href.slice(1)}>
             {item.label}
           </a>
         ))
@@ -84,6 +86,18 @@ const base = onHome ? "" : "/";
     flex: none;
     width: 150px;
     transition: transform 0.2s var(--ease-spring);
+  }
+
+  /* The lockup is a ~17x reduction of outlines that carry no hinting, so at 1x
+     coverage antialiasing spreads every stem across two pixel columns and the
+     mark reads as grey mush. Dropping antialiasing snaps the stems to whole
+     pixels instead — the closest a path gets to what the type beside it
+     receives for free. A 2x display has the pixels to draw it properly, and
+     there the stair-stepping would be the worse trade. */
+  @media (resolution: 1x) {
+    .home :global(.mark) {
+      shape-rendering: crispEdges;
+    }
   }
 
   /* The city sits beside the lockup behind a hairline, so it reads as an

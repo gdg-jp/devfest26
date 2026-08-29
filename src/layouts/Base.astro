@@ -3,6 +3,7 @@ import "../styles/tokens.css";
 import "../styles/base.css";
 import { site } from "../data/site";
 import { themeColor } from "../data/themes";
+import { withBase } from "../lib/url";
 
 interface Props {
   title?: string;
@@ -26,7 +27,7 @@ const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
 const ogImage = Astro.site
-  ? new URL(`og/${site.tenant}.png`, Astro.site).href
+  ? new URL(withBase(`/og/${site.tenant}.png`), Astro.site).href
   : undefined;
 
 const eventSchema = {
@@ -86,8 +87,12 @@ const eventSchema = {
       /* /favicon.svg is an endpoint, generated in this city's theme colour.
         The .ico is only there for browsers that ignore SVG icons. */
     }
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href={`/favicon/${site.theme}.ico`} sizes="48x48" />
+    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
+    <link
+      rel="icon"
+      href={withBase(`/favicon/${site.theme}.ico`)}
+      sizes="48x48"
+    />
     <meta name="theme-color" content={themeColor(site.theme)} />
 
     <meta property="og:type" content="website" />

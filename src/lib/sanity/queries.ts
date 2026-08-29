@@ -1,10 +1,13 @@
 /**
- * Every content query is scoped by `event->slug.current == $tenant`.
+ * Every city-scoped query is scoped by `event->slug.current == $tenant`.
  *
  * With the Markdown loaders the scoping is structural — a city's content is in
  * its own directory and cannot leak. Sanity has no such guarantee, so the
  * filter is the guarantee, and it is written once here rather than at each
  * call site.
+ *
+ * The two portal queries at the bottom are the deliberate exceptions: the
+ * portal is the page that is about every city at once.
  */
 
 const SCOPE = "event->slug.current == $tenant";
@@ -66,4 +69,23 @@ export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
   socialLabel, socialStart, socialEnd,
   venue, format, formatShort, fee, host, coHosts,
   stats, links, nav, footerNav, timetable
+}`;
+
+/**
+ * Every city, for the portal's list. Unscoped on purpose: this is the one
+ * query that is about all of them at once.
+ */
+export const EVENTS = `*[_type == "event"] | order(startsAt asc){
+  "slug": slug.current,
+  title, theme, startsAt, endsAt, venue
+}`;
+
+/**
+ * DevFests the portal links to but does not host — another chapter's event, a
+ * past edition, anything with a page of its own somewhere else. These belong
+ * to no city, so they carry no `event` reference and no scope filter.
+ */
+export const EXTERNAL_EVENTS = `*[_type == "externalEvent"]{
+  _id, title, region, startsAt, endsAt, city, venue, theme, url, note,
+  "slug": slug.current
 }`;

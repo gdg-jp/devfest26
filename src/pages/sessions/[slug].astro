@@ -3,6 +3,8 @@ import { render } from "astro:content";
 import Page from "../../layouts/Page.astro";
 import SpeakerRow from "../../components/SpeakerRow.astro";
 import { site } from "../../data/site";
+import { home } from "../../lib/url";
+import { isPortal } from "../../portal/active";
 import { pastelCycle } from "../../data/tracks";
 import {
   getProgramSessions,
@@ -17,6 +19,9 @@ import {
  * talks, or the people on stage.
  */
 export async function getStaticPaths() {
+  // The portal build publishes only the root list, not a city programme.
+  if (isPortal) return [];
+
   const sessions = await getProgramSessions();
   return sessions.map((session) => ({
     params: { slug: session.slug },
@@ -87,7 +92,7 @@ const jsonLd = title
   title={title ?? label}
   description={description}
   jsonLd={jsonLd}
-  back={{ href: "/#sessions", label: "← セッション一覧" }}
+  back={{ href: `${home}#sessions`, label: "← セッション一覧" }}
 >
   <p class="d-meta">
     <span

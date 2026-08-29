@@ -2,11 +2,13 @@ import { defineCollection, reference } from "astro:content";
 import { glob, type Loader } from "astro/loaders";
 import { z } from "astro/zod";
 import { activeTenant } from "./tenants/active";
+import { isPortal } from "./portal/active";
 import { sanityEnabled } from "./lib/sanity/env";
 import { sanityLoader } from "./loaders/sanity";
 import * as Q from "./lib/sanity/queries";
 import {
   aboutEntry,
+  externalEventEntry,
   meetupEntry,
   partnerEntry,
   photoSetEntry,
@@ -29,16 +31,12 @@ import {
  * the Markdown loaders read a per-city directory, so one city's content cannot
  * physically appear in another's build; the Sanity queries filter on the
  * `event` reference, which is the only handle a shared dataset gives us.
+ *
+ * There are three builds, not two: the two cities and the portal that lists
+ * them. Every collection is defined here for all of them, so `getCollection`
+ * has one set of types, but each is loaded only where it is read — see `city`
+ * and `frontPage` below.
  */
-
-const dir = (collection: string) =>
-  `./src/content/${activeTenant}/${collection}`;
-
-const sanity = (
-  label: string,
-  query: string,
-  toEntry: Parameters<typeof sanityLoader>[0]["toEntry"],
-) => sanityLoader({ label, query, tenant: activeTenant, toEntry });
 
 /**
  * Wraps a loader for a collection a city may correctly never use.
@@ -64,6 +62,49 @@ const optional = (loader: Loader): Loader => ({
     context.store.delete(marker);
   },
 });
+
+/** Registers a collection and leaves it empty. */
+const nothing = optional({
+  name: "empty",
+  load: async ({ store }) => {
+    store.clear();
+  },
+});
+
+type ToEntry = Parameters<typeof sanityLoader>[0]["toEntry"];
+
+/**
+ * The loader for one city-scoped collection: the CMS when it is configured,
+ * this city's own directory when it is not. The name is both the Sanity label
+ * and the directory, so the two sources can never drift apart.
+ *
+ * The portal build reads no city. It still *registers* every collection —
+ * these definitions are where `getCollection` gets its types, and one shape
+ * across all three builds is what keeps them honest — but actually loading a
+ * city there would resolve its speaker photos and emit every one of them into
+ * the front page's output for nothing.
+ */
+const city = (name: string, query: string, toEntry: ToEntry): Loader =>
+  isPortal
+    ? nothing
+    : sanityEnabled
+      ? sanityLoader({ label: name, query, tenant: activeTenant, toEntry })
+      : glob({
+          base: `./src/content/${activeTenant}/${name}`,
+          pattern: "**/*.md",
+        });
+
+/**
+ * The mirror of `city`, for content that belongs to the front page rather than
+ * to any city: loaded in the portal build and nowhere else. No `$tenant` is
+ * bound, because there is no city to scope to.
+ */
+const frontPage = (name: string, query: string, toEntry: ToEntry): Loader =>
+  !isPortal
+    ? nothing
+    : sanityEnabled
+      ? sanityLoader({ label: name, query, toEntry })
+      : glob({ base: `./src/content/portal/${name}`, pattern: "**/*.md" });
 
 /** A Sanity asset, already cropped and sized by its CDN. See src/lib/photo.ts. */
 const remotePhoto = z.object({
@@ -93,9 +134,7 @@ const speakerFields = {
 };
 
 const speakers = defineCollection({
-  loader: sanityEnabled
-    ? sanity("speakers", Q.SPEAKERS, speakerEntry)
-    : glob({ base: dir("speakers"), pattern: "**/*.md" }),
+  loader: city("speakers", Q.SPEAKERS, speakerEntry),
   schema: ({ image }) =>
     z.object({
       ...speakerFields,
@@ -119,9 +158,7 @@ const speakers = defineCollection({
  * `workshop` instead, as long as its sessions agree.
  */
 const tracks = defineCollection({
-  loader: sanityEnabled
-    ? sanity("tracks", Q.TRACKS, trackEntry)
-    : glob({ base: dir("tracks"), pattern: "**/*.md" }),
+  loader: city("tracks", Q.TRACKS, trackEntry),
   schema: z.object({
     /** Display order, on the page and in the track headers. */
     order: z.number().int().positive(),
@@ -156,9 +193,7 @@ const tracks = defineCollection({
  * exists rather than a flag anyone has to set.
  */
 const sessions = defineCollection({
-  loader: sanityEnabled
-    ? sanity("sessions", Q.SESSIONS, sessionEntry)
-    : glob({ base: dir("sessions"), pattern: "**/*.md" }),
+  loader: city("sessions", Q.SESSIONS, sessionEntry),
   schema: z.object({
     track: reference("tracks"),
     /** Position within the track. */
@@ -185,11 +220,7 @@ const sessions = defineCollection({
  * slot city reads today; no `/talks/` page is published at all.
  */
 const talks = defineCollection({
-  loader: optional(
-    sanityEnabled
-      ? sanity("talks", Q.TALKS, talkEntry)
-      : glob({ base: dir("talks"), pattern: "**/*.md" }),
-  ),
+  loader: optional(city("talks", Q.TALKS, talkEntry)),
   schema: z.object({
     session: reference("sessions"),
     /** Position within the session. */
@@ -204,9 +235,7 @@ const talks = defineCollection({
 });
 
 const meetups = defineCollection({
-  loader: sanityEnabled
-    ? sanity("meetups", Q.MEETUPS, meetupEntry)
-    : glob({ base: dir("meetups"), pattern: "**/*.md" }),
+  loader: city("meetups", Q.MEETUPS, meetupEntry),
   schema: z.object({
     /** Meetup number — also the sort key. */
     no: z.number().int().positive(),
@@ -241,9 +270,7 @@ const meetups = defineCollection({
 });
 
 const partners = defineCollection({
-  loader: sanityEnabled
-    ? sanity("partners", Q.PARTNERS, partnerEntry)
-    : glob({ base: dir("partners"), pattern: "**/*.md" }),
+  loader: city("partners", Q.PARTNERS, partnerEntry),
   schema: z.object({
     name: z.string(),
     url: z.url(),
@@ -260,9 +287,7 @@ const partners = defineCollection({
  * the section.
  */
 const about = defineCollection({
-  loader: sanityEnabled
-    ? sanity("about", Q.ABOUT, aboutEntry)
-    : glob({ base: dir("about"), pattern: "**/*.md" }),
+  loader: city("about", Q.ABOUT, aboutEntry),
   schema: z.object({
     /** Opening line, set larger than the body. */
     lead: z.string(),
@@ -289,9 +314,7 @@ const about = defineCollection({
  * layout decision, so the list is ordered and each section picks an index.
  */
 const photos = defineCollection({
-  loader: sanityEnabled
-    ? sanity("photos", Q.PHOTOS, photoSetEntry)
-    : glob({ base: dir("photos"), pattern: "**/*.md" }),
+  loader: city("photos", Q.PHOTOS, photoSetEntry),
   schema: ({ image }) => {
     /*
       Backdrops are named, not numbered, because each surface treats its photo
@@ -318,6 +341,40 @@ const photos = defineCollection({
   },
 });
 
+/**
+ * DevFests the portal lists but does not host: another chapter's event, a past
+ * edition, anything whose page lives somewhere else.
+ *
+ * The one collection that is not city-scoped. It belongs to the root page
+ * rather than to any city, so its Markdown sits in `src/content/portal/`
+ * instead of under a city directory, and its query carries no `event` filter.
+ * `optional` because a front page listing only this codebase's own cities is a
+ * perfectly good front page.
+ */
+const externalEvents = defineCollection({
+  loader: optional(
+    frontPage("external-events", Q.EXTERNAL_EVENTS, externalEventEntry),
+  ),
+  schema: z.object({
+    title: z.string(),
+    /** 関西 / 東京 / 福岡 — what the card is filed under. */
+    region: z.string(),
+    /** Full ISO timestamp with offset: 2026-10-18T11:00:00+09:00. */
+    startsAt: z.coerce.date(),
+    /** Omit for a single-day event. */
+    endsAt: z.coerce.date().optional(),
+    city: z.string().optional(),
+    venue: z.string().optional(),
+    /** Picks the card's accent from the four core colours. */
+    theme: z.enum(["blue", "green", "yellow", "red"]),
+    /** Where the card leads. This event has no page on this site. */
+    url: z.url(),
+    /** One line under the venue, for what the other fields do not cover. */
+    note: z.string().optional(),
+    slug,
+  }),
+});
+
 export const collections = {
   speakers,
   tracks,
@@ -327,4 +384,5 @@ export const collections = {
   partners,
   about,
   photos,
+  externalEvents,
 };

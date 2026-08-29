@@ -214,3 +214,28 @@ export function photoSetEntry(doc: Doc): SanityEntry {
     body: "",
   };
 }
+
+/**
+ * A DevFest the portal links to but does not host. It belongs to no city, so
+ * unlike every mapper above there is no `event` reference behind it — the
+ * fields here are the whole of what the portal card shows.
+ */
+export function externalEventEntry(doc: Doc): SanityEntry {
+  return {
+    id: doc._id,
+    data: {
+      title: doc.title,
+      region: doc.region,
+      startsAt: doc.startsAt,
+      endsAt: doc.endsAt ?? undefined,
+      city: doc.city ?? undefined,
+      venue: doc.venue ?? undefined,
+      theme: doc.theme,
+      url: doc.url,
+      note: doc.note ?? undefined,
+      slug: doc.slug ?? undefined,
+    },
+    html: "",
+    body: "",
+  };
+}

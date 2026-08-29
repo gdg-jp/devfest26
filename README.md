@@ -4,10 +4,12 @@ DevFest 2026 のイベントページ。Astro 製の静的サイトで、デザ�
 
 **1 つのコードベースで複数の都市を作ります。** 都市（テナント）ごとに設定ファイル 1 つとコンテンツディレクトリ 1 つを持ち、コンポーネント・CSS・スクリプトは全都市で共通です。
 
-| テナント | 都市                                                                                           | テーマ | 状態                                       |
-| :------- | :--------------------------------------------------------------------------------------------- | :----- | :----------------------------------------- |
-| `kansai` | [DevFest 2026 in Kansai](https://gdgkwansai.connpass.com/event/388434/)（GDG Greater Kwansai） | Blue   | 公開準備中                                 |
-| `tokyo`  | DevFest 2026 in Tokyo（GDG Tokyo）                                                             | Red    | **ひな形。日付・会場・URL はすべて暫定値** |
+| テナント | 公開 URL  | 都市                                                                                           | テーマ | 状態                                       |
+| :------- | :-------- | :--------------------------------------------------------------------------------------------- | :----- | :----------------------------------------- |
+| `kansai` | `/kansai` | [DevFest 2026 in Kansai](https://gdgkwansai.connpass.com/event/388434/)（GDG Greater Kwansai） | Blue   | 公開準備中                                 |
+| `tokyo`  | `/tokyo`  | DevFest 2026 in Tokyo（GDG Tokyo）                                                             | Red    | **ひな形。日付・会場・URL はすべて暫定値** |
+
+ルート `/` は**開催地の一覧ページ（portal）**です。都市のカードは上の表から自動で作られるので、都市を足せばここにも載ります。この repo でビルドしないイベント（他チャプターの DevFest、過去回など）も並べられます — [トップページ（開催地一覧）](#トップページ開催地一覧)を参照してください。
 
 ## 開発
 
@@ -19,20 +21,24 @@ pnpm install
 pnpm dev
 ```
 
-| コマンド           | 内容                                        |
-| :----------------- | :------------------------------------------ |
-| `pnpm dev`         | 開発サーバー（関西・http://localhost:4321） |
-| `pnpm dev:tokyo`   | 開発サーバー（東京）                        |
-| `pnpm build`       | 関西版を `./dist/kansai/` にビルド          |
-| `pnpm build:tokyo` | 東京版を `./dist/tokyo/` にビルド           |
-| `pnpm build:all`   | 全都市をビルド                              |
-| `pnpm preview`     | ビルド結果をローカルで確認                  |
-| `pnpm check`       | 型・コンテンツスキーマの検証（関西）        |
-| `pnpm check:all`   | 全都市を検証                                |
+| コマンド            | 内容                                               |
+| :------------------ | :------------------------------------------------- |
+| `pnpm dev`          | 開発サーバー（関西・http://localhost:4321/kansai） |
+| `pnpm dev:tokyo`    | 開発サーバー（東京・`/tokyo`）                     |
+| `pnpm dev:portal`   | 開発サーバー（トップページ・`/`）                  |
+| `pnpm build`        | 関西版を `./dist/kansai/` にビルド                 |
+| `pnpm build:tokyo`  | 東京版を `./dist/tokyo/` にビルド                  |
+| `pnpm build:portal` | トップページを `./dist/portal/` にビルド           |
+| `pnpm build:all`    | 3 つすべてをビルド                                 |
+| `pnpm preview`      | ビルド結果をローカルで確認                         |
+| `pnpm check`        | 型・コンテンツスキーマの検証（関西）               |
+| `pnpm check:all`    | 3 つすべてを検証                                   |
 
-どのコマンドも `TENANT` 環境変数で都市を選びます。未指定なら `kansai` です。**知らない値を渡すとビルドが失敗します** — デプロイパイプラインのタイプミスで別の都市のサイトが公開されるのを防ぐためです。
+**ビルドは 3 本あります。** 都市を選ぶのは `TENANT` 環境変数（未指定なら `kansai`）、トップページを選ぶのは `PORTAL` です。**知らない `TENANT` を渡すとビルドが失敗します** — デプロイパイプラインのタイプミスで別の都市のサイトが公開されるのを防ぐためです。
 
-出力とキャッシュは都市ごとに分かれます（`dist/<tenant>/`, `node_modules/.astro/<tenant>/`）。コンテンツストアはコレクション名でキーされていて都市を区別しないので、キャッシュを共有すると前の都市のセッションが混ざります。
+都市のビルドは自分のパスに載ります（Astro の `base` が `/kansai` になります）。開発サーバーも同じで、`pnpm dev` は `http://localhost:4321/kansai` を開きます。**本番と同じ形で確認できます。**
+
+出力とキャッシュはビルドごとに分かれます（`dist/<target>/`, `node_modules/.astro/<target>/`）。コンテンツストアはコレクション名でキーされていて都市を区別しないので、キャッシュを共有すると前の都市のセッションが混ざります。
 
 ## デプロイ前に必要な設定
 
@@ -42,22 +48,43 @@ pnpm dev
 TENANT=kansai SITE_URL=https://example.org pnpm exec astro build
 ```
 
-CI（`.github/workflows/build.yml`）は都市ごとに 1 ジョブを回し、`SITE_URL_KANSAI` / `SITE_URL_TOKYO` というリポジトリ変数を読みます。デプロイ先は都市ごとに主催者が異なるため、ワークフローには意図的に含めていません。
+3 つのビルドはすべて同じオリジンに載るので、`SITE_URL` は 1 つです（リポジトリ変数 `SITE_URL`）。
+
+### 3 つのビルドを 1 つのサイトに組み立てる
+
+CI（`.github/workflows/build.yml`）は 3 ジョブを並列に回したあと、成果物をこう並べ替えて GitHub Pages に 1 回だけデプロイします。
+
+```text
+_site/            ← dist/portal（トップページ）をルートに展開
+_site/kansai/     ← dist/kansai
+_site/tokyo/      ← dist/tokyo
+```
+
+**このディレクトリ名は飾りではありません。** 各都市のビルドは `base: /<tenant>` で内部リンクを書き出しているので、置き場所を変えるとその都市のリンクが全部壊れます。
+
+ローカルで同じ形を作るには:
+
+```bash
+pnpm build:all && mkdir -p _site && cp -r dist/portal/. _site/ && cp -r dist/kansai _site/kansai && cp -r dist/tokyo _site/tokyo
+```
+
+**都市はすべてこのリポジトリから公開されます。** 以前は関西のみを publish し東京は検証ビルドだけでしたが、1 サイトに統合したのでどれか 1 つでもビルドが落ちればデプロイ全体が止まります — 同じサイトの一部だからです。
 
 ## コンテンツの編集
 
 サイトに出る情報はすべて `src/` の下にあります。HTML を触る必要はありません。`<tenant>` は `kansai` または `tokyo` です。
 
-| 編集したいもの                                           | ファイル                              |
-| :------------------------------------------------------- | :------------------------------------ |
-| 日時・会場・申込 URL・ナビ・meta・タイムテーブル・テーマ | `src/tenants/<tenant>.ts`             |
-| トラック                                                 | `src/content/<tenant>/tracks/*.md`    |
-| 登壇者                                                   | `src/content/<tenant>/speakers/*.md`  |
-| セッション                                               | `src/content/<tenant>/sessions/*.md`  |
-| セッション内のトーク（任意）                             | `src/content/<tenant>/talks/*.md`     |
-| プレイベント（DevFest Meetup）                           | `src/content/<tenant>/meetups/*.md`   |
-| 共催・協力団体                                           | `src/content/<tenant>/partners/*.md`  |
-| 「イベントについて」の本文                               | `src/content/<tenant>/about/about.md` |
+| 編集したいもの                                           | ファイル                                  |
+| :------------------------------------------------------- | :---------------------------------------- |
+| 日時・会場・申込 URL・ナビ・meta・タイムテーブル・テーマ | `src/tenants/<tenant>.ts`                 |
+| トラック                                                 | `src/content/<tenant>/tracks/*.md`        |
+| 登壇者                                                   | `src/content/<tenant>/speakers/*.md`      |
+| セッション                                               | `src/content/<tenant>/sessions/*.md`      |
+| セッション内のトーク（任意）                             | `src/content/<tenant>/talks/*.md`         |
+| プレイベント（DevFest Meetup）                           | `src/content/<tenant>/meetups/*.md`       |
+| 共催・協力団体                                           | `src/content/<tenant>/partners/*.md`      |
+| 「イベントについて」の本文                               | `src/content/<tenant>/about/about.md`     |
+| トップページに載せる外部イベント                         | `src/content/portal/external-events/*.md` |
 
 日付のラベルは `startsAt` / `endsAt` から自動生成されます（`2026年10月18日`、`10/18`、`SUN`、`11:00 – 18:00` など）。都市が書くのは ISO 形式のタイムスタンプ 2 つだけで、表示用の文字列を手で持つ必要はありません。整形は Asia/Tokyo 固定なので、ビルドマシンのタイムゾーンに依存しません。
 
@@ -170,16 +197,51 @@ audience:
 
 1. `src/tenants/ids.ts` の `TENANT_IDS` に slug を足す
 2. `src/tenants/<slug>.ts` を作る（`kansai.ts` をコピーするのが早い）。`satisfies TenantConfig` が付いているので、埋め忘れは型エラーになります
-3. `src/tenants/index.ts` の `registry` に登録する
+3. `src/tenants/registry.ts` に登録する
 4. `src/content/<slug>/{speakers,sessions,talks,meetups,partners,about}/` を作る（`talks/` は空のままで構いません）
 5. `.github/workflows/build.yml` の matrix に 1 行足す
 6. `pnpm og <slug>` で OG 画像を生成する
+
+公開 URL は `/<slug>` になり、**トップページの一覧にも自動で載ります**（`src/tenants/registry.ts` から日付・会場・テーマを読むので、一覧用に書き足すものはありません）。matrix に足し忘れるとページが生成されないので、トップページはそのカードを出さずにビルドログへ理由を書きます。
 
 コンポーネント・CSS・スクリプトは触りません。テーマは `blue` / `green` / `yellow` / `red` から選ぶだけです。
 
 Sanity を使っている場合は 1〜4 が不要になり、**Studio で `event` ドキュメントを 1 件作るだけ**になります（`TENANT` の値は `ids.ts` ではなく Sanity の slug と照合されます）。
 
 コンテンツが空のセクション（プレイベント・共催団体・セッション）は**丸ごと描画されません**。都市は何もない状態から始められます。ナビゲーションの項目は都市ごとに書くので、まだ無いセクションへのリンクは載せないでください。
+
+## トップページ（開催地一覧）
+
+ルート `/` は、この repo が知っているすべての DevFest を時系列に並べたページです（`src/portal/`）。カードは 2 種類あります。
+
+| 種類         | どこから来るか                                                           | リンク先         |
+| :----------- | :----------------------------------------------------------------------- | :--------------- |
+| 都市         | `src/tenants/*.ts`（Sanity なら `event` ドキュメント）                   | `/kansai` など   |
+| 外部イベント | `src/content/portal/external-events/*.md`（Sanity なら `externalEvent`） | 外部サイトの URL |
+
+**都市のカードに書くことは何もありません。** タイトル・日付・会場・テーマはすでにテナント設定にあるので、そこから作られます。二重管理は起きません。
+
+外部イベントは、この repo でビルドしないものを載せるための入口です — 他チャプターの DevFest、過去回、サイトが別にあるイベントなど。
+
+```markdown
+---
+title: DevFest 2025 in Kansai
+region: 関西
+startsAt: 2025-11-08T11:00:00+09:00
+endsAt: 2025-11-09T18:00:00+09:00 # 2 日以上のときだけ
+city: 大阪
+venue: 会場名
+theme: yellow # blue / green / yellow / red
+url: https://example.org/devfest-2025
+note: 会場の下に出る 1 行（任意）
+---
+```
+
+Sanity を使っている場合は、Studio の **External Events**（`externalEvent`）に同じ項目を書きます。都市のリストの外にあるのは意図的で、外部イベントはどの都市にも属さないからです（`event` リファレンスを持ちません）。
+
+**「開催予定」と「終了」の境目はビルド時刻です。** 静的サイトなので、当日を過ぎたイベントが下段に移るのは次のビルドのときです。
+
+トップページには OG 画像がありません。`public/og/` にあるのは都市ごとのカードで、そのどれも全体を代表しないためです。
 
 ## コンテンツを Sanity で管理する（任意）
 
@@ -211,6 +273,8 @@ pnpm build
 
 都市のスコープは、Markdown ではディレクトリ、Sanity では `event` リファレンスで担保します。Sanity 側は**リファレンス未設定のドキュメントがどの都市にも出ない**ので、Studio では都市を選んでからコンテンツを作る導線にしてあります（新規作成時に `event` が自動で入ります）。
 
+例外は `externalEvent` の 1 つだけです。これはトップページに属していて都市には属さないので、`event` リファレンスを持たず、クエリにも都市のフィルタが付きません。Studio でも「Cities」の外に置いてあります。
+
 ### 壊れ方
 
 設定ミスは黙って通しません。プロジェクト ID が違う、`event` ドキュメントが無い、必須項目が空 — いずれもビルドが非ゼロで落ち、成果物は出ません。Markdown へ勝手にフォールバックすることもありません。
@@ -236,7 +300,9 @@ pnpm og kansai     # 1 都市だけ
 
 Chrome が必要です（`CHROME_PATH` で上書き可）。Google Fonts を読むのでネットワークも必要です。ビルドには組み込んでいません — タイトル・日付・会場・テーマが変わったときだけ実行してください。
 
-ファビコンは `/favicon.svg` のエンドポイント（`src/pages/favicon.svg.ts`）で、テナントのテーマ色で生成されます。`public/` は全都市で共有されるため、静的ファイルではなくエンドポイントにしています。
+トップページには OG 画像がありません（`pnpm og portal` もありません）。ここにあるのは都市ごとのカードで、そのどれも一覧ページを代表しないためです。
+
+ファビコンは `/favicon.svg` のエンドポイント（`src/pages/favicon.svg.ts`）で、テナントのテーマ色で生成されます。`public/` は全都市で共有されるため、静的ファイルではなくエンドポイントにしています。トップページは都市ではないので、DevFest のプライマリ（blue）を使います。
 
 ## 設計上の決めごと
 
@@ -245,6 +311,14 @@ Chrome が必要です（`CHROME_PATH` で上書き可）。Google Fonts を読�
 コンテンツの都市スコープは、各エントリの `tenant` フィールドを `getCollection` でフィルタするのではなく、**ローダーが読むディレクトリ自体**を切り替えて実現しています（`src/content.config.ts`）。フィルタ方式は 1 箇所書き忘れるだけで別の都市のセッションが混入し、しかもその失敗は無言です。ディレクトリ分離なら構造上起こりません。
 
 同じ理由で、コンテンツストアのキャッシュも都市ごとに分けています（`astro.config.ts` の `cacheDir`）。
+
+### URL は分けるが、ビルドは分けたままにする
+
+`/kansai` と `/tokyo` は同じサイトの一部ですが、**1 回のビルドでは作りません。** 都市ごとに別ビルドを回し、それぞれに `base` を与えて、デプロイのときに 1 つのディレクトリへ組み立てます。
+
+1 ビルドで `[tenant]` 動的ルートにする道もありましたが、それは上のディレクトリ分離を捨てることになります。`src/data/site.ts` の `site` はモジュール 1 つに 1 都市というシングルトンで、10 以上のコンポーネントがそれを直接 import しています。1 ビルドで 2 都市を扱うには、これを全部プロップ経由に書き換えたうえで、コンテンツも「全都市を読んでからフィルタする」方式に変えなければなりません。**URL の形のために、混入が構造上起こらないという保証を手放す取引**になります。
+
+代わりに、リンクだけを base 対応にしました（`src/lib/url.ts` の `withBase`）。Astro は href を書き換えないので、ルート絶対パスは必ずここを通します。ルートページも 2 種類あり — 都市の長いホームか、開催地一覧か — `astro.config.ts` がビルドごとにどちらか一方だけを `injectRoute` します。条件分岐で両方 import すると、**トップページに全都市の CSS と登壇者写真が載ってしまう**ためです（実測 285 KB → 1.3 MB）。
 
 ### セッションとトークを 1 つの形にそろえる
 

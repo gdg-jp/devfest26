@@ -1,0 +1,141 @@
+---
+import type { PortalEvent } from "./events";
+
+/**
+ * One DevFest in the front-page list.
+ *
+ * `data-theme` is set on the card itself, not just on <html>: the theme layer
+ * in tokens.css is an attribute selector, so each card carries its own city's
+ * accent while the page around it stays on the hub's.
+ */
+
+interface Props {
+  event: PortalEvent;
+  /** Already over. Drawn back, and never the loudest thing on the page. */
+  past?: boolean;
+}
+
+const { event, past = false } = Astro.props;
+---
+
+<li
+  class:list={["card", "panel", "linkbox", { past }]}
+  data-theme={event.theme}
+>
+  <p class="when">
+    <time datetime={event.isoDate}>{event.dateLabel}</time>
+    <span class="region">{event.region}</span>
+  </p>
+
+  <h3 class="title">
+    <a
+      class="stretch"
+      href={event.href}
+      {...event.external ? { target: "_blank", rel: "noopener" } : {}}
+    >
+      {event.title}{
+        event.external && (
+          <>
+            <span aria-hidden="true"> ↗</span>
+            <span class="visually-hidden">（外部サイト）</span>
+          </>
+        )
+      }
+    </a>
+  </h3>
+
+  {
+    (event.venue || event.city) && (
+      <p class="where">
+        {[event.city, event.venue].filter(Boolean).join(" ／ ")}
+      </p>
+    )
+  }
+
+  {event.note && <p class="note">{event.note}</p>}
+</li>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: clamp(18px, 2.4vw, 26px);
+    border-radius: var(--r-md);
+    /* The accent reads as a spine down the left edge, so a list of cards is
+       scannable by colour before any of it is read. */
+    border-left-width: 10px;
+    border-left-color: var(--t);
+    transition:
+      transform 0.18s var(--ease-spring),
+      box-shadow 0.18s var(--ease-out);
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--stroke);
+  }
+
+  .when {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin: 0;
+    font-family: var(--f-mono);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .region {
+    color: var(--t-deep);
+  }
+
+  .title {
+    margin: 0;
+    font-size: clamp(19px, 2.2vw, 24px);
+  }
+
+  .title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .title a:hover {
+    color: var(--t-deep);
+  }
+
+  .where {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+
+  .note {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  /* Still legible, still linked — just no longer competing with what is next.
+     Weight is the only thing dialled back; what actually separates these from
+     the ones ahead is the heading they sit under, not their colour. */
+  .past {
+    border-color: var(--dash);
+    border-left-color: color-mix(in srgb, var(--t) 55%, transparent);
+  }
+
+  .past .title a {
+    color: var(--muted);
+  }
+
+  .past .title a:hover {
+    color: var(--t-deep);
+  }
+
+  .past:hover {
+    box-shadow: 0 6px 0 var(--dash);
+  }
+</style>

@@ -22,27 +22,38 @@ concurrency:
 permissions:
   contents: read
 
-# One job per city. They are independent builds of the same commit, so a
-# failure in one does not hide the other's result.
+# One job per build target: each city, plus the portal that lists them. They
+# are independent builds of the same commit, so a failure in one does not hide
+# another's result — but all three make up one site, and `assemble` waits for
+# every one of them.
 jobs:
   build:
-    name: build (${{ matrix.tenant }})
+    name: build (${{ matrix.target }})
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - tenant: kansai
-            site_url_var: SITE_URL_KANSAI
-          - tenant: tokyo
-            site_url_var: SITE_URL_TOKYO
+          - target: kansai
+            tenant: kansai
+            portal: ""
+          - target: tokyo
+            tenant: tokyo
+            portal: ""
+          # No tenant: the portal is the root page and belongs to no city.
+          - target: portal
+            tenant: ""
+            portal: "1"
 
     env:
       TENANT: ${{ matrix.tenant }}
-      # Repository variable, e.g. SITE_URL_KANSAI. Unset is not an error:
-      # canonical/OG/JSON-LD absolute URLs are omitted rather than wrong.
-      SITE_URL: ${{ vars[matrix.site_url_var] }}
+      PORTAL: ${{ matrix.portal }}
+      # Repository variable. One origin now covers every target: the cities are
+      # mounted under /kansai and /tokyo on the same host as the portal. Unset
+      # is not an error — canonical/OG/JSON-LD absolute URLs are omitted rather
+      # than wrong.
+      SITE_URL: ${{ vars.SITE_URL }}
       # Also repository variables, not secrets: the project id and dataset name
       # are public information, and `src/lib/sanity/env.ts` falls back to the
       # Markdown in `src/content/` when the project id is absent. Deliberately
@@ -63,34 +74,49 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Types and content-collection schemas, scoped to this city's content.
+      # Types and content-collection schemas, scoped to this target.
       - run: pnpm exec astro check
 
       - run: pnpm exec astro build
 
       - uses: actions/upload-artifact@v4
         with:
-          name: site-${{ matrix.tenant }}
-          path: dist/${{ matrix.tenant }}
+          name: site-${{ matrix.target }}
+          path: dist/${{ matrix.target }}
           if-no-files-found: error
 
-      # Only Kansai is published from this repository — Tokyo has its own
-      # target under a different owner and is built here for validation only.
-      # Pages takes exactly one artifact, under the fixed name `github-pages`.
-      - name: Package Kansai for Pages
-        if: matrix.tenant == 'kansai' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+  # The three builds are three separate sites on disk. This is where they
+  # become one: the portal at the root, each city on its own path. Astro's
+  # `base` already wrote every internal link to match this layout, so the
+  # directory names here are not cosmetic — renaming one breaks that city's
+  # links.
+  assemble:
+    name: assemble
+    needs: build
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
         with:
-          path: dist/kansai
+          path: artifacts
+
+      - name: Lay the three builds out as one site
+        run: |
+          mkdir -p _site
+          cp -r artifacts/site-portal/. _site/
+          cp -r artifacts/site-kansai _site/kansai
+          cp -r artifacts/site-tokyo _site/tokyo
+          find _site -maxdepth 2 -name index.html
+
+      # Pages takes exactly one artifact, under the fixed name `github-pages`.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
 
   deploy:
-    name: deploy (kansai)
-    needs: build
-    # `!cancelled()` rather than plain success(): a broken Tokyo build must not
-    # hold back the site that is actually live. A broken Kansai build leaves no
-    # `github-pages` artifact, so this job then fails here instead of shipping
-    # stale output.
-    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+    name: deploy
+    needs: assemble
     runs-on: ubuntu-latest
 
     permissions:

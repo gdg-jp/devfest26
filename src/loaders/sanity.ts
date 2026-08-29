@@ -14,9 +14,13 @@ export interface SanityEntry {
 interface Options {
   /** Appears in build logs, e.g. "sanity:sessions". */
   label: string;
-  /** GROQ returning an array of documents. `$tenant` is bound for you. */
+  /**
+   * GROQ returning an array of documents. `$tenant` is bound for you when the
+   * collection is city-scoped.
+   */
   query: string;
-  tenant: string;
+  /** Omit for a collection that belongs to no city — see EXTERNAL_EVENTS. */
+  tenant?: string;
   toEntry: (doc: never) => SanityEntry;
 }
 
@@ -40,7 +44,10 @@ export function sanityLoader({
     name: `sanity:${label}`,
 
     load: async ({ store, parseData, generateDigest, logger }) => {
-      const docs = await sanityClient().fetch<never[]>(query, { tenant });
+      const docs = await sanityClient().fetch<never[]>(
+        query,
+        tenant ? { tenant } : {},
+      );
 
       // A full replace: entries deleted in the Studio have to disappear here
       // too, and there is no cheap way to diff against the previous run.
@@ -57,7 +64,11 @@ export function sanityLoader({
         });
       }
 
-      logger.info(`${docs.length} ${label} for "${tenant}"`);
+      logger.info(
+        tenant
+          ? `${docs.length} ${label} for "${tenant}"`
+          : `${docs.length} ${label}`,
+      );
     },
   };
 }

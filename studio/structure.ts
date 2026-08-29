@@ -168,4 +168,14 @@ export const structure: StructureResolver = (S) =>
       S.listItem()
         .title("Events (Tenant config)")
         .child(S.documentTypeList("event").title("Events")),
+      // Deliberately outside "Cities": an external event belongs to none of
+      // them. It carries no `event` reference, so nesting it under a city
+      // would promise a link that does not exist.
+      S.listItem()
+        .title("External Events")
+        .child(
+          S.documentTypeList("externalEvent")
+            .title("External Events")
+            .defaultOrdering([{ field: "startsAt", direction: "desc" }]),
+        ),
     ]);

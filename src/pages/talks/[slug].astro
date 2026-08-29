@@ -3,6 +3,7 @@ import { render } from "astro:content";
 import Page from "../../layouts/Page.astro";
 import SpeakerRow from "../../components/SpeakerRow.astro";
 import { site } from "../../data/site";
+import { isPortal } from "../../portal/active";
 import {
   getStandaloneTalks,
   jstTimestamp,
@@ -18,6 +19,9 @@ import {
  * a second URL for the same prose would only compete with it.
  */
 export async function getStaticPaths() {
+  // The portal build publishes only the root list, not a city programme.
+  if (isPortal) return [];
+
   const talks = await getStandaloneTalks();
   return talks.map(({ session, talk }) => ({
     params: { slug: talk.slug },
