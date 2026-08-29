@@ -32,7 +32,7 @@
     // follows — so it belongs here rather than in a secret. Until it is set
     // the Worker serves the setup page instead of the site, and that page
     // prints the URLs to register.
-    "IDP_CLIENT_ID": ""
+    "IDP_CLIENT_ID": "26f52d5a-2dbe-4962-8f2e-9b75e23c3986"
   },
 
   // Per-version preview URLs would be gated by this same Worker, but their
