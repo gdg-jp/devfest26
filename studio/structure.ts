@@ -55,10 +55,11 @@ export const structure: StructureResolver = (S) =>
                             eventId,
                           }),
                         ])
-                        // GROQ cannot sort through a reference, so this groups
-                        // by track id rather than by the track's own order.
+                        // "track.order" is compiled to the GROQ dereference
+                        // "track->order", so the list runs in the order the
+                        // site prints: track by track, session by session.
                         .defaultOrdering([
-                          { field: "track._ref", direction: "asc" },
+                          { field: "track.order", direction: "asc" },
                           { field: "order", direction: "asc" },
                         ]),
                     ),
@@ -77,11 +78,13 @@ export const structure: StructureResolver = (S) =>
                             eventId,
                           }),
                         ])
-                        // Same as sessions: GROQ cannot sort through a
-                        // reference, so this groups by session id rather than
-                        // by the session's own running order.
+                        // Same as sessions, one reference deeper: this is
+                        // compiled to "session->track->order" and
+                        // "session->order", so the talks of a city read in
+                        // their running order rather than grouped by id.
                         .defaultOrdering([
-                          { field: "session._ref", direction: "asc" },
+                          { field: "session.track.order", direction: "asc" },
+                          { field: "session.order", direction: "asc" },
                           { field: "order", direction: "asc" },
                         ]),
                     ),
