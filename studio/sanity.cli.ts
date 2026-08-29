@@ -15,4 +15,26 @@ export default defineCliConfig({
    * yet and is created; every deploy after that overwrites it.
    */
   studioHost: "devfest26",
+
+  vite: (config) => ({
+    ...config,
+
+    resolve: {
+      ...config.resolve,
+
+      /**
+       * Sanity turns Vite's `resolve.tsconfigPaths` on for the Studio build.
+       * Its resolver walks *up* from this directory for a tsconfig, so it
+       * reaches the site's `tsconfig.json` at the repository root — whose
+       * `extends: "astro/tsconfigs/strict"` only resolves when the site's
+       * `node_modules` is installed. The Studio's deploy job installs only
+       * `studio/`, so on CI the build died with "Tsconfig not found
+       * astro/tsconfigs/strict" before it compiled a single file.
+       *
+       * Nothing here needs the feature: this Studio imports by relative path
+       * and its own tsconfig declares no `paths`.
+       */
+      tsconfigPaths: false,
+    },
+  }),
 });
