@@ -7,9 +7,19 @@ import { themeColor } from "../data/themes";
 interface Props {
   title?: string;
   description?: string;
+  /**
+   * Structured data for what this particular page is about, emitted alongside
+   * the event schema below. A session page describes itself as an Event inside
+   * the event; a speaker page describes a Person.
+   */
+  jsonLd?: Record<string, unknown>;
 }
 
-const { title = site.title, description = site.description } = Astro.props;
+const {
+  title = site.title,
+  description = site.description,
+  jsonLd,
+} = Astro.props;
 const { event, links } = site;
 
 const canonical = Astro.site
@@ -106,6 +116,15 @@ const eventSchema = {
       is:inline
       set:html={JSON.stringify(eventSchema)}
     />
+    {
+      jsonLd && (
+        <script
+          type="application/ld+json"
+          is:inline
+          set:html={JSON.stringify(jsonLd)}
+        />
+      )
+    }
 
     {
       /* Runs before first paint: marks that JS is live, and decides whether the

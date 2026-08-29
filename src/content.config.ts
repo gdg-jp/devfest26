@@ -1,5 +1,5 @@
 import { defineCollection, reference } from "astro:content";
-import { glob } from "astro/loaders";
+import { glob, type Loader } from "astro/loaders";
 import { z } from "astro/zod";
 import { activeTenant } from "./tenants/active";
 import { sanityEnabled } from "./lib/sanity/env";
@@ -12,6 +12,7 @@ import {
   photoSetEntry,
   sessionEntry,
   speakerEntry,
+  talkEntry,
   trackEntry,
 } from "./lib/sanity/entries";
 
@@ -39,6 +40,31 @@ const sanity = (
   toEntry: Parameters<typeof sanityLoader>[0]["toEntry"],
 ) => sanityLoader({ label, query, tenant: activeTenant, toEntry });
 
+/**
+ * Wraps a loader for a collection a city may correctly never use.
+ *
+ * `getCollection` warns about a collection the store has never heard of,
+ * assuming an empty one means a broken config. That is fair for most of these
+ * — an empty `partners` only means a city has not signed any yet — but talks
+ * are empty for the entire lifetime of a city that runs one presentation per
+ * session, and telling its organisers to go looking for an error every build
+ * is telling them the wrong thing. Registering the collection empty says what
+ * is true: it exists, and there is nothing in it.
+ */
+const optional = (loader: Loader): Loader => ({
+  ...loader,
+  load: async (context) => {
+    await loader.load(context);
+    if (context.store.keys().length > 0) return;
+
+    // Setting then deleting is what leaves the collection behind: `set`
+    // creates it, and `delete` only removes the entry.
+    const marker = "__registers_the_collection__";
+    context.store.set({ id: marker, data: {} });
+    context.store.delete(marker);
+  },
+});
+
 /** A Sanity asset, already cropped and sized by its CDN. See src/lib/photo.ts. */
 const remotePhoto = z.object({
   src: z.url(),
@@ -47,12 +73,23 @@ const remotePhoto = z.object({
   remote: z.literal(true),
 });
 
+/**
+ * The URL segment for an entry that gets a page of its own.
+ *
+ * Optional because from Markdown the entry id is already the file name, which
+ * is a perfectly good segment. Sanity ids are opaque uuids, so a Studio
+ * document has to say what it wants to be called. See `slugOf` in
+ * `src/data/program.ts`.
+ */
+const slug = z.string().optional();
+
 const speakerFields = {
   name: z.string(),
   /** Job title / affiliation. Shown under the name. */
   role: z.string(),
   /** Single character shown when there is no photo. */
   initial: z.string().max(2).optional(),
+  slug,
 };
 
 const speakers = defineCollection({
@@ -106,6 +143,18 @@ const tracks = defineCollection({
   }),
 });
 
+/**
+ * A session is a slot in a track. What fills the slot is a local decision:
+ * Kansai runs one presentation per session, while Tokyo — like I/O Extended —
+ * runs several, so the two levels have to be tellable apart.
+ *
+ * They are the same collection either way. A city with one presentation per
+ * slot writes its speakers and its abstract here and no `talks` at all; a city
+ * with several writes `talks` pointing back at the session, and this entry
+ * carries what the slot as a whole is called. `src/data/program.ts` normalises
+ * the two into one shape, so the difference between cities is whether content
+ * exists rather than a flag anyone has to set.
+ */
 const sessions = defineCollection({
   loader: sanityEnabled
     ? sanity("sessions", Q.SESSIONS, sessionEntry)
@@ -114,9 +163,43 @@ const sessions = defineCollection({
     track: reference("tracks"),
     /** Position within the track. */
     order: z.number().int().positive(),
-    /** Omit while the talk is still TBD. */
+    /** Omit while the session is still TBD. */
+    title: z.string().optional(),
+    /** The people on stage for the whole slot. Omit only when the session's
+        own talks name them instead — a session that names neither fails the
+        build rather than publishing an empty card. */
+    speakers: z.array(reference("speakers")).min(1).optional(),
+    slug,
+    /** "13:00". The timetable stays hand-written per city, so these are just
+        for the session's own page and may be left out entirely. */
+    start: z.string().optional(),
+    end: z.string().optional(),
+  }),
+});
+
+/**
+ * One presentation inside a session — the level I/O Extended calls a talk.
+ *
+ * A city only writes these if it needs them. Leave the directory empty and
+ * every session is its own single talk, which is exactly how a one-talk-per-
+ * slot city reads today; no `/talks/` page is published at all.
+ */
+const talks = defineCollection({
+  loader: optional(
+    sanityEnabled
+      ? sanity("talks", Q.TALKS, talkEntry)
+      : glob({ base: dir("talks"), pattern: "**/*.md" }),
+  ),
+  schema: z.object({
+    session: reference("sessions"),
+    /** Position within the session. */
+    order: z.number().int().positive(),
+    /** Omit to inherit the session's title — a slot holding a single talk
+        rarely has a second name for it. */
     title: z.string().optional(),
     speakers: z.array(reference("speakers")).min(1),
+    slug,
+    start: z.string().optional(),
   }),
 });
 
@@ -239,6 +322,7 @@ export const collections = {
   speakers,
   tracks,
   sessions,
+  talks,
   meetups,
   partners,
   about,

@@ -10,16 +10,30 @@
 const SCOPE = "event->slug.current == $tenant";
 
 export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
-  _id, name, role, initial, photo, bio
+  _id, name, role, initial, photo, bio,
+  "slug": slug.current
 }`;
 
 export const TRACKS = `*[_type == "track" && ${SCOPE}]{
   _id, order, label, sub, color, textColor, darkInk, pending, cardLabel
 }`;
 
+/**
+ * References stay as raw `_id`s: that is the handle the content collections
+ * use for an entry, so `reference()` resolves them without a second lookup.
+ * `slug` is separate and only ever a URL segment.
+ */
 export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
-  _id, order, title, abstract,
+  _id, order, title, abstract, start, end,
+  "slug": slug.current,
   "track": track->_id,
+  "speakers": speakers[]->_id
+}`;
+
+export const TALKS = `*[_type == "talk" && ${SCOPE}]{
+  _id, order, title, abstract, start,
+  "slug": slug.current,
+  "session": session->_id,
   "speakers": speakers[]->_id
 }`;
 

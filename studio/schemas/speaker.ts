@@ -25,6 +25,14 @@ export const speaker = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "slug",
+      title: "Slug",
+      type: "slug",
+      description: "The URL: /speakers/<slug>.",
+      options: { source: "name", maxLength: 96 },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: "photo",
       title: "Photo",
       type: "image",

@@ -1,8 +1,15 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
 
-export const session = defineType({
-  name: "session",
-  title: "Session",
+/**
+ * One presentation inside a session.
+ *
+ * A city only creates these if it runs several talks in one slot. Leave the
+ * type unused and every session is a single talk in its own right, which is
+ * how a one-talk-per-slot city reads.
+ */
+export const talk = defineType({
+  name: "talk",
+  title: "Talk",
   type: "document",
   fields: [
     defineField({
@@ -13,13 +20,13 @@ export const session = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "track",
-      title: "Track",
+      name: "session",
+      title: "Session",
       type: "reference",
-      to: [{ type: "track" }],
-      // The dropdown offers only the tracks belonging to the city this session
-      // is already attached to, so a Kansai session cannot land on a Tokyo
-      // track. Pick the event first and the list fills itself in.
+      to: [{ type: "session" }],
+      // Only the sessions of the city this talk is already attached to, so a
+      // Tokyo talk cannot land inside a Kansai session. Pick the event first
+      // and the list fills itself in.
       options: {
         filter: ({ document }) => ({
           filter: "event._ref == $eventId",
@@ -34,18 +41,20 @@ export const session = defineType({
       name: "order",
       title: "Order",
       type: "number",
+      description: "Position within the session.",
       validation: (Rule) => Rule.required().integer().positive(),
     }),
     defineField({
       name: "title",
       title: "Title",
       type: "string",
+      description: "Leave empty to inherit the session's title.",
     }),
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
-      description: "The URL: /sessions/<slug>.",
+      description: "The URL: /talks/<slug>.",
       options: { source: "title", maxLength: 96 },
       validation: (Rule) => Rule.required(),
     }),
@@ -53,21 +62,14 @@ export const session = defineType({
       name: "start",
       title: "Start",
       type: "string",
-      description: 'Wall clock on the day of the event, e.g. "13:00".',
-    }),
-    defineField({
-      name: "end",
-      title: "End",
-      type: "string",
+      description: 'Wall clock on the day of the event, e.g. "13:20".',
     }),
     defineField({
       name: "speakers",
       title: "Speakers",
       type: "array",
       of: [defineArrayMember({ type: "reference", to: [{ type: "speaker" }] })],
-      // Not required: a session that is split into talks names its speakers
-      // there instead. The build fails if neither names anyone.
-      description: "Leave empty when this session's talks name the speakers.",
+      validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
       name: "abstract",
@@ -79,13 +81,13 @@ export const session = defineType({
   preview: {
     select: {
       title: "title",
-      track: "track.label",
+      session: "session.title",
       order: "order",
     },
-    prepare({ title, track, order }) {
+    prepare({ title, session, order }) {
       return {
         title: title || "TBD",
-        subtitle: `${track ?? "No track"} - ${order}`,
+        subtitle: `${session ?? "No session"} - ${order}`,
       };
     },
   },

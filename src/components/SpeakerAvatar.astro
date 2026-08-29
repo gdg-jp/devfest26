@@ -1,0 +1,54 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+import { AVATAR_SIZE, isRemotePhoto } from "../lib/photo";
+
+/**
+ * The circular portrait, wherever a speaker is shown.
+ *
+ * The source is always AVATAR_SIZE wide — twice the largest place it is drawn
+ * — and `--av` sets the drawn diameter. Styling lives in base.css rather than
+ * here because `<Image>` renders the tag, and a scoped rule cannot reach it.
+ */
+interface Props {
+  speaker: CollectionEntry<"speakers">;
+  /** Drawn diameter in CSS px. */
+  size?: number;
+}
+
+const { speaker, size = 56 } = Astro.props;
+const { photo, initial, name } = speaker.data;
+const style = `--av:${size}px`;
+---
+
+{
+  photo ? (
+    isRemotePhoto(photo) ? (
+      /* Sanity's CDN already cropped this to the hotspot at 2x. */
+      <img
+        class="av"
+        style={style}
+        src={photo.src}
+        alt=""
+        width={AVATAR_SIZE}
+        height={AVATAR_SIZE}
+        loading="lazy"
+      />
+    ) : (
+      <Image
+        class="av"
+        style={style}
+        src={photo}
+        alt=""
+        width={AVATAR_SIZE}
+        height={AVATAR_SIZE}
+        densities={[1, 2]}
+        loading="lazy"
+      />
+    )
+  ) : (
+    <span class="av" style={style} aria-hidden="true">
+      {initial ?? name.slice(0, 1)}
+    </span>
+  )
+}

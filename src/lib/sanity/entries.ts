@@ -30,6 +30,7 @@ export function speakerEntry(doc: Doc): SanityEntry {
       name: doc.name,
       role: doc.role,
       initial: doc.initial ?? undefined,
+      slug: doc.slug ?? undefined,
       photo: doc.photo
         ? {
             src: speakerPhotoUrl(doc.photo, size),
@@ -71,7 +72,28 @@ export function sessionEntry(doc: Doc): SanityEntry {
       track: doc.track,
       order: doc.order,
       title: doc.title ?? undefined,
+      // Empty in the Studio means "the talks name them", not "nobody", so it
+      // has to reach the schema as absent rather than as an empty array.
+      speakers: doc.speakers?.length ? doc.speakers : undefined,
+      slug: doc.slug ?? undefined,
+      start: doc.start ?? undefined,
+      end: doc.end ?? undefined,
+    },
+    html: portableTextToHtml(doc.abstract),
+    body: portableTextToPlain(doc.abstract),
+  };
+}
+
+export function talkEntry(doc: Doc): SanityEntry {
+  return {
+    id: doc._id,
+    data: {
+      session: doc.session,
+      order: doc.order,
+      title: doc.title ?? undefined,
       speakers: doc.speakers ?? [],
+      slug: doc.slug ?? undefined,
+      start: doc.start ?? undefined,
     },
     html: portableTextToHtml(doc.abstract),
     body: portableTextToPlain(doc.abstract),

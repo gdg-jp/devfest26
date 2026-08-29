@@ -54,6 +54,7 @@ CI（`.github/workflows/build.yml`）は都市ごとに 1 ジョブを回し、`
 | トラック                                                 | `src/content/<tenant>/tracks/*.md`    |
 | 登壇者                                                   | `src/content/<tenant>/speakers/*.md`  |
 | セッション                                               | `src/content/<tenant>/sessions/*.md`  |
+| セッション内のトーク（任意）                             | `src/content/<tenant>/talks/*.md`     |
 | プレイベント（DevFest Meetup）                           | `src/content/<tenant>/meetups/*.md`   |
 | 共催・協力団体                                           | `src/content/<tenant>/partners/*.md`  |
 | 「イベントについて」の本文                               | `src/content/<tenant>/about/about.md` |
@@ -88,10 +89,37 @@ order: 7 # トラック内の並び順
 title: "セッションタイトル" # 未定なら省略 → 自動で「TBD」表記
 speakers:
   - speaker-slug # src/content/speakers/<slug>.md
+slug: "session-slug" # 省略可。既定はファイル名（URL に出ます）
+start: "13:00" # 省略可。このセッションのページにだけ出ます
+end: "13:40" # 省略可
 ---
 
 セッション概要。本文が空なら「セッション概要は調整中です。」と表示されます。
 ```
+
+ファイル 1 つにつき `/sessions/<slug>` が 1 ページ生成されます。`slug` を省略するとファイル名がそのまま URL になるので、**公開後にファイル名を変えると URL が変わります。** 並び順由来の名前（`a-01`）を使っている場合は、公開前に内容由来の `slug` を書いておくとトラック移動で URL が動きません。
+
+### トークを追加する（1 セッションに複数の発表がある都市向け）
+
+関西のように「1 セッション＝ 1 発表」の都市は、このディレクトリを空のままにしてください。**空であることが既定の状態です**（ビルド時に glob-loader が「No files found」と 1 行出しますが、想定どおりです）。東京のように 1 つの枠で複数の発表を行う都市だけがファイルを置きます。
+
+```markdown
+---
+session: tmp-multi # src/content/<tenant>/sessions/<id>.md
+order: 1 # セッション内の並び順
+title: "トークのタイトル" # 省略するとセッション名を引き継ぎます
+speakers:
+  - speaker-slug
+slug: "talk-slug" # 省略可。既定はファイル名
+start: "13:20" # 省略可
+---
+
+トークの概要。
+```
+
+トークを持つセッションでは、**登壇者はトーク側に書きます**（セッション側の `speakers` は省略できます）。逆に、セッションにも `speakers` が無く、そのセッションを指すトークも 1 本も無い場合は**ビルドが落ちます**。
+
+トークファイルがあるときだけ `/talks/<slug>` が生成されます。トークを使わない都市では `/talks/` は 1 ページも作られません — セッションのページがそのまま発表のページだからです。
 
 ### 登壇者を追加する
 
@@ -103,10 +131,15 @@ name: "山田 太郎 氏"
 role: "所属／肩書き"
 photo: ./taro-yamada.jpg # 省略可。同じディレクトリに置く
 initial: "山" # photo がないときのフォールバック
+slug: "taro-yamada" # 省略可。既定はファイル名
 ---
 
 プロフィール文。省略可。
 ```
+
+本文が出るのは登壇者ページだけです。トップページのセッションカードは一覧なので、写真・氏名・肩書だけを載せ、氏名から登壇者ページに送ります。
+
+ページ（`/speakers/<slug>`）が作られるのは、**セッションかトークから参照されている登壇者だけ**です。まだどこにも紐づいていないファイルを置いても、URL を先に取ってしまうことはありません。
 
 ### 「イベントについて」を書き換える
 
@@ -138,7 +171,7 @@ audience:
 1. `src/tenants/ids.ts` の `TENANT_IDS` に slug を足す
 2. `src/tenants/<slug>.ts` を作る（`kansai.ts` をコピーするのが早い）。`satisfies TenantConfig` が付いているので、埋め忘れは型エラーになります
 3. `src/tenants/index.ts` の `registry` に登録する
-4. `src/content/<slug>/{speakers,sessions,meetups,partners,about}/` を作る
+4. `src/content/<slug>/{speakers,sessions,talks,meetups,partners,about}/` を作る（`talks/` は空のままで構いません）
 5. `.github/workflows/build.yml` の matrix に 1 行足す
 6. `pnpm og <slug>` で OG 画像を生成する
 
@@ -174,6 +207,7 @@ pnpm build
 - 本文は Portable Text で書き、ローダー内で HTML に変換して `rendered.html` に入れます。だから `<Content />` はそのまま動きます
 - 登壇者写真は Sanity の CDN から配信します。**Studio で設定したホットスポットが効くので、丸いアバターで顔が切れる写真を編集画面で直せます**
 - テナント設定（日時・会場・テーマ・トラック・ナビ）も `event` ドキュメント 1 件から読みます。`src/tenants/*.ts` は Sanity が有効なときは使われません
+- **`session` / `talk` / `speaker` には `slug` が必須です。** Markdown ならファイル名がそのまま URL になりますが、Sanity のドキュメント ID は uuid なので、そのままでは `/speakers/6f2c…` になってしまいます。Studio 側で必須にしてあるので、書き忘れは publish 時に止まります
 
 都市のスコープは、Markdown ではディレクトリ、Sanity では `event` リファレンスで担保します。Sanity 側は**リファレンス未設定のドキュメントがどの都市にも出ない**ので、Studio では都市を選んでからコンテンツを作る導線にしてあります（新規作成時に `event` が自動で入ります）。
 
@@ -211,6 +245,18 @@ Chrome が必要です（`CHROME_PATH` で上書き可）。Google Fonts を読�
 コンテンツの都市スコープは、各エントリの `tenant` フィールドを `getCollection` でフィルタするのではなく、**ローダーが読むディレクトリ自体**を切り替えて実現しています（`src/content.config.ts`）。フィルタ方式は 1 箇所書き忘れるだけで別の都市のセッションが混入し、しかもその失敗は無言です。ディレクトリ分離なら構造上起こりません。
 
 同じ理由で、コンテンツストアのキャッシュも都市ごとに分けています（`astro.config.ts` の `cacheDir`）。
+
+### セッションとトークを 1 つの形にそろえる
+
+「1 セッションに発表が何本あるか」は都市によって違います。関西は 1 本、東京は複数です。ここで分岐を都市の判定にしてしまうと、コンポーネントのあちこちに「東京なら」が生えます。
+
+そうする代わりに、**トークを持たないセッションは、自分自身を唯一のトークとして持つセッションに正規化**します（`src/data/program.ts`）。結果として
+
+- コンポーネントは常に `session.talks[]` を読み、都市を一度も判定しません
+- 都市の違いは「トークのファイルが在るか無いか」だけで表現されます。フラグも設定項目もありません
+- 関西は `src/content/kansai/` を 1 文字も変えずに、これまでどおりの見た目のままです
+
+URL も同じ規則から出ます。**セッションのページは常に在り、トークのページは実体のあるトークにだけ在ります。** トークを使わない都市では `/talks/` が 1 ページも生成されません。同じ原稿に 2 つの URL を与えて競合させないためです。リンク先は `talk.href` が吸収するので、カードもページもどちらを指しているか気にしません。
 
 ### ライトテーマ固定・テーマ切り替え
 

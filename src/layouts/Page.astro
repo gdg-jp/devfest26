@@ -1,0 +1,240 @@
+---
+import Base from "./Base.astro";
+import Sprite from "../components/Sprite.astro";
+import TopBar from "../components/TopBar.astro";
+import Footer from "../components/Footer.astro";
+import { site } from "../data/site";
+
+/**
+ * The shell for the pages behind the programme: one session, one talk, one
+ * speaker.
+ *
+ * The home page is a single long scroll that builds its own chrome out of
+ * sections. These are short documents instead, read one at a time and usually
+ * arrived at from a card or a search result, so they share a narrower reading
+ * column and a way back to where they came from.
+ */
+interface Props {
+  /** Page title. The event name is appended here, not by the caller. */
+  title: string;
+  description?: string;
+  jsonLd?: Record<string, unknown>;
+  back: { href: string; label: string };
+}
+
+const { title, description, jsonLd, back } = Astro.props;
+---
+
+<Base
+  title={`${title}｜${site.title}`}
+  description={description}
+  jsonLd={jsonLd}
+>
+  {/* The lockup in the top bar and the footer is drawn from here. */}
+  <Sprite stickers={false} />
+
+  <TopBar />
+  <main id="top" class="detail">
+    <div class="wrap">
+      <a class="back" href={back.href}>{back.label}</a>
+      <slot />
+    </div>
+  </main>
+  <Footer />
+</Base>
+
+<style is:global>
+  /*
+    Global rather than scoped: every rule here dresses slotted content, which
+    carries the calling page's scope and not this layout's. Only pages that use
+    this layout load the stylesheet, so the home page pays nothing for it.
+  */
+
+  .detail {
+    padding: clamp(26px, 4.2vw, 48px) 0 clamp(52px, 7vw, 92px);
+  }
+
+  /* Narrower than the home page: this is prose, and prose has a comfortable
+     measure. */
+  .detail > .wrap {
+    width: min(100% - 40px, 880px);
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 26px;
+    padding: 7px 17px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.16s var(--ease-out);
+  }
+
+  .back:hover {
+    background: var(--t-pa);
+  }
+
+  /* ---- head block --------------------------------------------------- */
+
+  .d-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+    margin: 0 0 15px;
+  }
+
+  .d-trk {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 15px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: 999px;
+    background: var(--trk, var(--t));
+    color: #fff;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* Same two exceptions the track headers make: yellow needs dark text, and a
+     track that is not real yet is outlined rather than filled. */
+  .d-trk.ink {
+    color: var(--ink);
+  }
+
+  .d-trk.plain {
+    background: var(--surface);
+    color: var(--ink);
+    border-style: dashed;
+  }
+
+  .d-no,
+  .d-time {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .d-title {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(25px, 3.8vw, 38px);
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 10px;
+  }
+
+  .d-title.tbd {
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .d-sub {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 28px;
+  }
+
+  /* ---- prose -------------------------------------------------------- */
+
+  .prose {
+    font-size: 16.5px;
+    line-height: 1.95;
+    margin-bottom: 36px;
+  }
+
+  .prose > :last-child {
+    margin-bottom: 0;
+  }
+
+  .prose h2 {
+    font-size: 21px;
+    margin: 1.7em 0 0.6em;
+  }
+
+  .prose h3 {
+    font-size: 18px;
+    margin: 1.5em 0 0.5em;
+  }
+
+  .prose ul,
+  .prose ol {
+    margin: 0 0 1.05em;
+    padding-left: 1.35em;
+  }
+
+  .prose code {
+    font-family: var(--f-mono);
+    font-size: 0.92em;
+    background: var(--ground);
+    border-radius: 6px;
+    padding: 0.15em 0.4em;
+  }
+
+  .prose blockquote {
+    margin: 0 0 1.05em;
+    padding-left: 16px;
+    border-left: 3px solid var(--rule);
+    color: var(--muted);
+  }
+
+  /* ---- sections within a detail page -------------------------------- */
+
+  .d-h {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    margin: 0 0 13px;
+  }
+
+  .d-list {
+    display: grid;
+    gap: 12px;
+    margin: 0 0 36px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .d-list:last-child {
+    margin-bottom: 0;
+  }
+
+  .d-card {
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    padding: 16px 20px;
+  }
+
+  .d-card.pa {
+    background: var(--pa, var(--t-pa));
+  }
+
+  /* A card that is one whole link has to look like something you can press.
+     Lighter than the lift the session cards use — these lists are denser, and
+     several of them sit one under the other. */
+  .d-card.linkbox {
+    transition:
+      transform 0.18s var(--ease-out),
+      box-shadow 0.18s var(--ease-out);
+  }
+
+  .d-card.linkbox:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 -1px var(--stroke);
+  }
+</style>

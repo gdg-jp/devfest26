@@ -1,0 +1,117 @@
+---
+import { render } from "astro:content";
+import Page from "../../layouts/Page.astro";
+import SpeakerRow from "../../components/SpeakerRow.astro";
+import { site } from "../../data/site";
+import {
+  getStandaloneTalks,
+  jstTimestamp,
+  type ProgramSession,
+  type ProgramTalk,
+} from "../../data/program";
+
+/**
+ * One page per talk that is an entry in its own right.
+ *
+ * A city whose sessions hold a single presentation writes no talks, so this
+ * route produces nothing at all there — its sessions already have a page, and
+ * a second URL for the same prose would only compete with it.
+ */
+export async function getStaticPaths() {
+  const talks = await getStandaloneTalks();
+  return talks.map(({ session, talk }) => ({
+    params: { slug: talk.slug },
+    props: { session, talk },
+  }));
+}
+
+interface Props {
+  session: ProgramSession;
+  talk: ProgramTalk;
+}
+
+const { session, talk } = Astro.props;
+const { track, label } = session;
+const { Content } = await render(talk.entry);
+
+const abstract = talk.entry.body?.trim();
+const names = talk.speakers.map((speaker) => speaker.data.name).join("、");
+const sessionTitle = session.entry.data.title ?? label;
+
+const description = abstract
+  ? abstract.replace(/\s+/g, " ").slice(0, 110)
+  : `${talk.title ?? "TBD"}／登壇：${names}`;
+
+const url = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+
+const jsonLd = talk.title
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: talk.title,
+      ...(url ? { url } : {}),
+      ...(talk.start ? { startDate: jstTimestamp(talk.start) } : {}),
+      location: { "@type": "Place", name: site.event.venue.name },
+      performer: talk.speakers.map((speaker) => ({
+        "@type": "Person",
+        name: speaker.data.name,
+        jobTitle: speaker.data.role,
+      })),
+      // The talk sits inside its session, which sits inside the event.
+      superEvent: {
+        "@type": "Event",
+        name: sessionTitle,
+        superEvent: {
+          "@type": "Event",
+          name: site.title,
+          startDate: site.event.startsAt,
+        },
+      },
+    }
+  : undefined;
+---
+
+<Page
+  title={talk.title ?? label}
+  description={description}
+  jsonLd={jsonLd}
+  back={{ href: session.href, label: `← ${sessionTitle}` }}
+>
+  <p class="d-meta">
+    <span
+      class:list={[
+        "d-trk",
+        { ink: track.data.darkInk, plain: track.data.pending },
+      ]}
+      style={`--trk:${track.data.color}`}>{track.data.label}</span
+    >
+    <span class="d-no">{label}</span>
+    {talk.start && <span class="d-time">{talk.start}</span>}
+  </p>
+
+  <h1 class:list={["d-title", { tbd: !talk.title }]}>{talk.title ?? "TBD"}</h1>
+  <p class="d-sub">
+    セッション：<a href={session.href}>{sessionTitle}</a>
+  </p>
+
+  {
+    abstract && (
+      <div class="prose">
+        <Content />
+      </div>
+    )
+  }
+
+  <h2 class="d-h">登壇者</h2>
+  <ul class="d-list">
+    {
+      talk.speakers.map((speaker) => (
+        <li class="d-card linkbox">
+          <SpeakerRow speaker={speaker} bio stretch size={64} />
+        </li>
+      ))
+    }
+  </ul>
+</Page>

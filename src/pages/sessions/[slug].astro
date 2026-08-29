@@ -1,0 +1,184 @@
+---
+import { render } from "astro:content";
+import Page from "../../layouts/Page.astro";
+import SpeakerRow from "../../components/SpeakerRow.astro";
+import { site } from "../../data/site";
+import { pastelCycle } from "../../data/tracks";
+import {
+  getProgramSessions,
+  jstTimestamp,
+  type ProgramSession,
+} from "../../data/program";
+
+/**
+ * Every session has a page, whether or not the city splits it into talks: it
+ * is the slot in the running order, and the thing a track header points at.
+ * What the page shows below the abstract is the only difference — a list of
+ * talks, or the people on stage.
+ */
+export async function getStaticPaths() {
+  const sessions = await getProgramSessions();
+  return sessions.map((session) => ({
+    params: { slug: session.slug },
+    props: { session },
+  }));
+}
+
+interface Props {
+  session: ProgramSession;
+}
+
+const { session } = Astro.props;
+const { entry, track, label, talks } = session;
+const { Content } = await render(entry);
+
+const title = entry.data.title;
+const abstract = entry.body?.trim();
+const listsTalks = talks[0].standalone;
+const time = [entry.data.start, entry.data.end].filter(Boolean).join(" – ");
+
+// Everyone on this slot, in running order and without repeating anyone who
+// appears on more than one of its talks.
+const everyone = [
+  ...new Map(
+    talks
+      .flatMap((talk) => talk.speakers)
+      .map((speaker) => [speaker.id, speaker]),
+  ).values(),
+];
+const names = everyone.map((speaker) => speaker.data.name).join("、");
+
+const description = abstract
+  ? abstract.replace(/\s+/g, " ").slice(0, 110)
+  : `${title ?? label}／登壇：${names}`;
+
+const url = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+
+// A slot with no announced title is not yet a thing search engines should be
+// told about, so it publishes the page without the structured data.
+const jsonLd = title
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: title,
+      ...(url ? { url } : {}),
+      ...(entry.data.start
+        ? { startDate: jstTimestamp(entry.data.start) }
+        : {}),
+      ...(entry.data.end ? { endDate: jstTimestamp(entry.data.end) } : {}),
+      location: { "@type": "Place", name: site.event.venue.name },
+      performer: everyone.map((speaker) => ({
+        "@type": "Person",
+        name: speaker.data.name,
+        jobTitle: speaker.data.role,
+      })),
+      superEvent: {
+        "@type": "Event",
+        name: site.title,
+        startDate: site.event.startsAt,
+      },
+    }
+  : undefined;
+---
+
+<Page
+  title={title ?? label}
+  description={description}
+  jsonLd={jsonLd}
+  back={{ href: "/#sessions", label: "← セッション一覧" }}
+>
+  <p class="d-meta">
+    <span
+      class:list={[
+        "d-trk",
+        { ink: track.data.darkInk, plain: track.data.pending },
+      ]}
+      style={`--trk:${track.data.color}`}>{track.data.label}</span
+    >
+    <span class="d-no">{label}</span>
+    {time && <span class="d-time">{time}</span>}
+  </p>
+
+  <h1 class:list={["d-title", { tbd: !title }]}>{title ?? "TBD"}</h1>
+  <p class="d-sub">{track.data.sub}</p>
+
+  {
+    abstract && (
+      <div class="prose">
+        <Content />
+      </div>
+    )
+  }
+
+  {
+    listsTalks ? (
+      <>
+        <h2 class="d-h">このセッションのトーク（{talks.length}）</h2>
+        <ol class="d-list">
+          {talks.map((talk, i) => (
+            <li
+              class="d-card pa linkbox"
+              style={`--pa:var(--pa-${pastelCycle[i % pastelCycle.length]})`}
+            >
+              <p class="t-meta">
+                <span class="d-no">Talk {String(i + 1).padStart(2, "0")}</span>
+                {talk.start && <span class="d-time">{talk.start}</span>}
+              </p>
+              <h3 class="t-title">
+                <a class="stretch" href={talk.href}>
+                  {talk.title ?? "TBD"}
+                </a>
+              </h3>
+              {talk.speakers.map((speaker) => (
+                <SpeakerRow speaker={speaker} size={44} />
+              ))}
+            </li>
+          ))}
+        </ol>
+      </>
+    ) : (
+      <>
+        <h2 class="d-h">登壇者</h2>
+        <ul class="d-list">
+          {everyone.map((speaker) => (
+            <li class="d-card linkbox">
+              <SpeakerRow speaker={speaker} bio stretch size={64} />
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+</Page>
+
+<style>
+  .t-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 4px;
+  }
+
+  .t-title {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+  }
+
+  .t-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .t-title a:hover {
+    text-decoration: underline;
+  }
+
+  /* A talk card lists its speakers one under the other, with the same rhythm
+     the session cards use. */
+  .d-card :global(.one) + :global(.one) {
+    margin-top: 10px;
+  }
+</style>

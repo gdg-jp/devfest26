@@ -1,18 +1,28 @@
 ---
 import Logo from "./Logo.astro";
 import { site } from "../data/site";
+
+// The nav is a set of page anchors, which only resolve on the page that has
+// the sections. From a session or speaker page they have to travel home first;
+// the scroll-spy simply finds nothing to observe there.
+const onHome = Astro.url.pathname === "/";
+const base = onHome ? "" : "/";
 ---
 
 <header class="topbar" data-topbar>
   <div class="wrap">
-    <a class="home" href="#top" aria-label={`${site.title} — ページ先頭へ`}>
+    <a
+      class="home"
+      href={onHome ? "#top" : "/"}
+      aria-label={`${site.title} — ${onHome ? "ページ先頭へ" : "トップページへ"}`}
+    >
       <Logo variant="primary" class="mark" />
       <span class="edition">{site.editionEn}</span>
     </a>
     <nav aria-label="セクションナビゲーション">
       {
         site.nav.map((item) => (
-          <a href={item.href} data-spy={item.href.slice(1)}>
+          <a href={base + item.href} data-spy={item.href.slice(1)}>
             {item.label}
           </a>
         ))

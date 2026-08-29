@@ -1,45 +1,22 @@
 ---
-import { getCollection } from "astro:content";
 import Props from "./Props.astro";
 import Sticker from "./Sticker.astro";
 import SessionCard from "./SessionCard.astro";
-import { getTracks, pastelCycle } from "../data/tracks";
-
-const tracks = await getTracks();
-const allSessions = await getCollection("sessions");
-const allSpeakers = await getCollection("speakers");
-const speakerById = new Map(allSpeakers.map((s) => [s.id, s]));
+import { getProgram } from "../data/program";
 
 // One pastel rotation running through the whole section, so no two adjacent
 // speaker blocks land on the same colour regardless of how tracks are filled.
+// It advances per talk, which for a city with one talk per session is per card.
 let pastelIndex = 0;
 
-const grouped = tracks
-  .map((track) => {
-    const sessions = allSessions
-      .filter((s) => s.data.track.id === track.id)
-      .sort((a, b) => a.data.order - b.data.order)
-      .map((session) => {
-        const speakers = session.data.speakers.map((ref) => {
-          const speaker = speakerById.get(ref.id);
-          if (!speaker)
-            throw new Error(
-              `Session ${session.id} references unknown speaker "${ref.id}"`,
-            );
-          return speaker;
-        });
-        return {
-          session,
-          speakers,
-          label:
-            track.data.cardLabel ??
-            `Session ${String(session.data.order).padStart(2, "0")}`,
-          pastel: pastelCycle[pastelIndex++ % pastelCycle.length],
-        };
-      });
-    return { track, sessions };
-  })
-  .filter((g) => g.sessions.length > 0);
+const grouped = (await getProgram()).map(({ track, sessions }) => ({
+  track,
+  sessions: sessions.map((session) => {
+    const pastelFrom = pastelIndex;
+    pastelIndex += session.talks.length;
+    return { session, pastelFrom };
+  }),
+}));
 ---
 
 <section class="sec tint" id="sessions">
@@ -91,12 +68,7 @@ const grouped = tracks
             data-stagger
           >
             {sessions.map((s) => (
-              <SessionCard
-                session={s.session}
-                speakers={s.speakers}
-                label={s.label}
-                pastel={s.pastel}
-              />
+              <SessionCard session={s.session} pastelFrom={s.pastelFrom} />
             ))}
           </div>
         </>

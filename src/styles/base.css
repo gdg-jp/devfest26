@@ -177,6 +177,56 @@ p:last-child {
   background: var(--surface);
 }
 
+/*
+  A card whose whole frame follows one link.
+
+  The frame gets `.linkbox` and the link that names it — the title, the person
+  — gets `.stretch`, which grows an invisible layer over the frame. An <a>
+  cannot be nested inside another, so this is how a card can be one link and
+  still hold others: every other link in the box is positioned, which paints it
+  after the layer and leaves it clickable in its own right. Deliberately no
+  z-index: that would trap the layer in a stacking context of its own, and a
+  talk block inside a session card has to be able to cover the card's layer
+  with its own.
+
+  The cost is that a drag cannot select text through the layer. Cards are read
+  at a glance and the same words are on the page they lead to, so the trade is
+  right for a card and wrong for running text — `.prose` is never a link box.
+*/
+.linkbox {
+  position: relative;
+}
+
+.stretch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.linkbox a:not(.stretch) {
+  position: relative;
+}
+
+/* Speaker portrait. Drawn at --av; see SpeakerAvatar.astro for why this is
+   not scoped to that component. */
+.av {
+  width: var(--av, 56px);
+  height: var(--av, 56px);
+  flex: none;
+  border-radius: 50%;
+  border: 2.5px solid var(--stroke);
+  background: var(--surface);
+  object-fit: cover;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: calc(var(--av, 56px) * 0.34);
+  color: var(--ink);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

@@ -4,6 +4,7 @@ import type { StructureResolver } from "sanity/structure";
 export const CITY_SCOPED_TYPES = [
   "track",
   "session",
+  "talk",
   "speaker",
   "meetup",
   "partner",
@@ -58,6 +59,29 @@ export const structure: StructureResolver = (S) =>
                         // by track id rather than by the track's own order.
                         .defaultOrdering([
                           { field: "track._ref", direction: "asc" },
+                          { field: "order", direction: "asc" },
+                        ]),
+                    ),
+                  // Only a city that runs several talks in one session has
+                  // anything here; the rest leave the list empty.
+                  S.listItem()
+                    .title("Talks")
+                    .child(
+                      S.documentList()
+                        .title("Talks")
+                        .schemaType("talk")
+                        .filter('_type == "talk" && event._ref == $eventId')
+                        .params({ eventId })
+                        .initialValueTemplates([
+                          S.initialValueTemplateItem("talk-by-event", {
+                            eventId,
+                          }),
+                        ])
+                        // Same as sessions: GROQ cannot sort through a
+                        // reference, so this groups by session id rather than
+                        // by the session's own running order.
+                        .defaultOrdering([
+                          { field: "session._ref", direction: "asc" },
                           { field: "order", direction: "asc" },
                         ]),
                     ),

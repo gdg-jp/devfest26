@@ -1,0 +1,161 @@
+---
+import { render } from "astro:content";
+import Page from "../../layouts/Page.astro";
+import SpeakerAvatar from "../../components/SpeakerAvatar.astro";
+import { site } from "../../data/site";
+import { getProgramSpeakers, type SpeakerProgram } from "../../data/program";
+
+/**
+ * One page per speaker who is on the programme.
+ *
+ * A speaker file with no session pointing at it gets no page: there would be
+ * nothing on it to read, and it would claim a URL for an appearance that has
+ * not been announced.
+ */
+export async function getStaticPaths() {
+  const speakers = await getProgramSpeakers();
+  return speakers.map((entry) => ({
+    params: { slug: entry.slug },
+    props: entry,
+  }));
+}
+
+type Props = SpeakerProgram;
+
+const { speaker, appearances } = Astro.props;
+const { Content } = await render(speaker);
+
+const { name, role } = speaker.data;
+const profile = speaker.body?.trim();
+
+const description = profile
+  ? profile.replace(/\s+/g, " ").slice(0, 110)
+  : `${name}（${role}）が ${site.title} に登壇します。`;
+
+const url = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name,
+  jobTitle: role,
+  ...(url ? { url } : {}),
+  performerIn: appearances
+    .filter(({ talk }) => talk.title)
+    .map(({ talk }) => ({ "@type": "Event", name: talk.title })),
+};
+---
+
+<Page
+  title={name}
+  description={description}
+  jsonLd={jsonLd}
+  back={{ href: "/#sessions", label: "← セッション一覧" }}
+>
+  <div class="head">
+    <SpeakerAvatar speaker={speaker} size={112} />
+    <div>
+      <h1 class="d-title">{name}</h1>
+      <p class="role">{role}</p>
+    </div>
+  </div>
+
+  {
+    profile && (
+      <div class="prose">
+        <Content />
+      </div>
+    )
+  }
+
+  <h2 class="d-h">登壇</h2>
+  <ul class="d-list">
+    {
+      appearances.map(({ session, talk }) => (
+        <li class="d-card linkbox">
+          <p class="a-meta">
+            <span
+              class:list={[
+                "d-trk",
+                {
+                  ink: session.track.data.darkInk,
+                  plain: session.track.data.pending,
+                },
+              ]}
+              style={`--trk:${session.track.data.color}`}
+            >
+              {session.track.data.label}
+            </span>
+            <span class="d-no">{session.label}</span>
+            {talk.start && <span class="d-time">{talk.start}</span>}
+          </p>
+          <h3 class="a-title">
+            <a class="stretch" href={talk.href}>
+              {talk.title ?? "TBD"}
+            </a>
+          </h3>
+          {/* Only worth naming the slot when the talk is not the whole of it. */}
+          {talk.standalone && (
+            <p class="a-in">
+              セッション：
+              <a href={session.href}>
+                {session.entry.data.title ?? session.label}
+              </a>
+            </p>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</Page>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px 22px;
+    margin-bottom: 26px;
+  }
+
+  .head :global(.d-title) {
+    margin: 0 0 4px;
+  }
+
+  .role {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .a-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+    margin: 0 0 8px;
+  }
+
+  .a-title {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .a-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .a-title a:hover {
+    text-decoration: underline;
+  }
+
+  .a-in {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin: 6px 0 0;
+  }
+</style>
