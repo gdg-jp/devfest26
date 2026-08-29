@@ -12,8 +12,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@sanity/client':
-        specifier: ^8.2.0
-        version: 8.2.0
+        specifier: ^8.4.0
+        version: 8.4.0
       '@sanity/image-url':
         specifier: ^2.1.1
         version: 2.1.1
@@ -767,11 +767,11 @@ packages:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
 
-  '@noble/ed25519@3.1.0':
-    resolution: {integrity: sha512-pfcObRY3CtvwfaG9Mt5XqZdKmAQppl37tHUeuBhDUbiwJBCVY4/A4lbMvb1xKhMDx96AqAqZpMWuBX1HulhX4g==}
+  '@noble/ed25519@3.2.0':
+    resolution: {integrity: sha512-criDgRlnUA09hchYrTy/JUWPIEap5rZxQe6wDWzRx51oWWpDRcUpuNzlgPxDJaOK6AsW9c0wKcj3rKRv6t+bPQ==}
 
-  '@noble/hashes@2.3.0':
-    resolution: {integrity: sha512-oN+QwyX7VSHotibwubG3kpzbwKrfnyR6OOO+3Nk/53ADL7FmgHHz4TgrbaYKvvOw09u6QTx0oiH1cNCIOuN0CQ==}
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
     engines: {node: '>= 20.19.0'}
 
   '@oslojs/encoding@1.1.0':
@@ -891,8 +891,8 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@sanity/client@8.2.0':
-    resolution: {integrity: sha512-SK2o8uh9ayAYAHJtKvd3r78Y5QHlV6RA1H249rYXtm71rdvp4dVvQyf3E/QtYVaeIhrWufK1Mh7sbX6FDVLtWQ==}
+  '@sanity/client@8.4.0':
+    resolution: {integrity: sha512-rwMtDxH3x9dc8ZiCMRDLStZoCr6MSPrH2LH4NIxWTCZ9Vz5OSgg0RolZy+ccM8p4yzK5lgC9XMF8tF6zsje0gQ==}
     engines: {node: '>=22.12.0'}
 
   '@sanity/image-url@2.1.1':
@@ -1679,8 +1679,8 @@ packages:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
     engines: {node: '>= 0.4'}
 
-  get-it@9.5.1:
-    resolution: {integrity: sha512-XCVgepH7ROA/VEW4iaorxII3ZqQt7bqNhRNdeOklqwWsl7iGuJCGL7jxkUzcWVpK5zsYr0WaMqeXrIfeL02Uig==}
+  get-it@9.5.2:
+    resolution: {integrity: sha512-n4iCIF3/STaCsEIgestecjGJ3Oa+GEIwMT91HU+5TBHQ8DIpBCS1/BXjaxS5HuYHtVMRVTFDRX2bf3+gP/MOPg==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       vitest: '>=2.0.0'
@@ -2225,11 +2225,6 @@ packages:
   nanoid@3.3.18:
     resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
-  nanoid@6.0.1:
-    resolution: {integrity: sha512-3wVS3i51pE2pi1k5FFL/95BGfVS0kSsvDVuGXHOtxox/TywUmtgq+3qiTOTbs9J7KfHaXPiN171k/A6dBnaXFw==}
-    engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
   natural-compare@1.4.0:
@@ -3574,9 +3569,9 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@noble/ed25519@3.1.0': {}
+  '@noble/ed25519@3.2.0': {}
 
-  '@noble/hashes@2.3.0': {}
+  '@noble/hashes@2.4.0': {}
 
   '@oslojs/encoding@1.1.0': {}
 
@@ -3640,11 +3635,10 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@sanity/client@8.2.0':
+  '@sanity/client@8.4.0':
     dependencies:
       eventsource: 5.1.1
-      get-it: 9.5.1
-      nanoid: 6.0.1
+      get-it: 9.5.2
       obug: 2.1.4
       rxjs: 7.8.2
     transitivePeerDependencies:
@@ -3656,8 +3650,8 @@ snapshots:
 
   '@sanity/signed-urls@2.0.5':
     dependencies:
-      '@noble/ed25519': 3.1.0
-      '@noble/hashes': 2.3.0
+      '@noble/ed25519': 3.2.0
+      '@noble/hashes': 2.4.0
 
   '@shikijs/core@4.4.3':
     dependencies:
@@ -4687,7 +4681,7 @@ snapshots:
       hasown: 2.0.4
       math-intrinsics: 1.1.0
 
-  get-it@9.5.1:
+  get-it@9.5.2:
     dependencies:
       undici: 7.29.0
 
@@ -5403,8 +5397,6 @@ snapshots:
   muggle-string@0.4.1: {}
 
   nanoid@3.3.18: {}
-
-  nanoid@6.0.1: {}
 
   natural-compare@1.4.0: {}
 
