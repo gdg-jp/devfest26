@@ -38,9 +38,9 @@ jobs:
           - target: kansai
             tenant: kansai
             portal: ""
-          - target: tokyo
-            tenant: tokyo
-            portal: ""
+          # - target: tokyo
+          #   tenant: tokyo
+          #   portal: ""
           # No tenant: the portal is the root page and belongs to no city.
           - target: portal
             tenant: ""
@@ -106,7 +106,7 @@ jobs:
           mkdir -p _site
           cp -r artifacts/site-portal/. _site/
           cp -r artifacts/site-kansai _site/kansai
-          cp -r artifacts/site-tokyo _site/tokyo
+          # cp -r artifacts/site-tokyo _site/tokyo
           find _site -maxdepth 2 -name index.html
 
       # Pages takes exactly one artifact, under the fixed name `github-pages`.
