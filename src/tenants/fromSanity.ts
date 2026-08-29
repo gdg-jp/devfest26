@@ -6,11 +6,17 @@ import type { TenantConfig } from "./types";
 /**
  * The tenant config, read from the single `event` document for this city.
  *
- * It is validated here rather than trusted. A Studio editor can save a document
- * with half its fields blank, and without this the site would build and publish
- * a page reading "undefined" — the failure mode the local TS configs make
- * impossible by being type-checked. A build that cannot produce a complete
- * config should stop.
+ * This is tier 2 — everything a city's own pages need, and nothing the front
+ * page does. It is validated here rather than trusted: a Studio editor can save
+ * a document with half its fields blank, and without this the site would build
+ * and publish a page reading "undefined", the failure mode the local TS configs
+ * make impossible by being type-checked.
+ *
+ * Throwing is the point. In CI it fails that one city's job, which is the
+ * signal the publish step reads as "leave that city's published pages where
+ * they are" — see `.github/workflows/build.yml`. The city keeps its card on the
+ * front page throughout, because a card only needs tier 1 (see
+ * `src/tenants/discovery.ts`) and tier 1 still passes.
  */
 
 const nonEmpty = z.string().min(1);
@@ -107,7 +113,7 @@ export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
   const d = parsed.data;
 
   return {
-    tenant: d.tenant as TenantConfig["tenant"],
+    tenant: d.tenant,
     theme: d.theme,
     lang: d.lang,
     locale: d.locale,

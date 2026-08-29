@@ -1,12 +1,19 @@
 ---
 import Logo from "./Logo.astro";
 import PhotoSticker from "./PhotoSticker.astro";
-import Props from "./Props.astro";
+import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
+
+interface Props {
+  /** Only needed for the gutter photo, which comes from the city's set. */
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
 ---
 
 <section class="sec" id="what">
-  <Props>
+  <Gutter>
     <Sticker
       name="braces"
       width={80}
@@ -23,8 +30,15 @@ import Sticker from "./Sticker.astro";
       rotate={-8}
       speed={-0.75}
     />
-    <PhotoSticker index={1} bottom="15%" right="16px" rotate={6} speed={-0.5} />
-  </Props>
+    <PhotoSticker
+      tenant={tenant}
+      index={1}
+      bottom="15%"
+      right="16px"
+      rotate={6}
+      speed={-0.5}
+    />
+  </Gutter>
 
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">What is DevFest</p>

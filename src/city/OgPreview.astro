@@ -1,11 +1,11 @@
 ---
-import Sprite from "../../components/Sprite.astro";
-import Logo from "../../components/Logo.astro";
-import { site } from "../../data/site";
-import { stickers } from "../../data/stickers";
-import "../../styles/tokens.css";
+import Sprite from "../components/Sprite.astro";
+import Logo from "../components/Logo.astro";
+import { buildableCities } from "../tenants";
+import { stickers } from "../data/stickers";
+import "../styles/tokens.css";
 // base.css carries the reset and the rule that hides the inline sprite.
-import "../../styles/base.css";
+import "../styles/base.css";
 
 /**
  * The source artwork for `public/og/<tenant>.png`, rendered from the same
@@ -15,11 +15,16 @@ import "../../styles/base.css";
  * OG_PREVIEW is set, so production output contains no such route. Screenshot it
  * with `pnpm og` — see scripts/make-og.mjs.
  */
-export function getStaticPaths() {
-  return process.env.OG_PREVIEW ? [{ params: { variant: "card" } }] : [];
+export async function getStaticPaths() {
+  const cities = process.env.OG_PREVIEW ? await buildableCities() : [];
+  return cities.map(({ slug, site }) => ({
+    params: { tenant: slug },
+    props: { site },
+  }));
 }
 
-const { event, links: _links, tagline } = site;
+const { site } = Astro.props;
+const { event, tagline } = site;
 const glyphs = [
   {
     name: "slashes",

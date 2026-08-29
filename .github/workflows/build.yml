@@ -22,45 +22,63 @@ concurrency:
 permissions:
   contents: read
 
-# One job per build target: each city, plus the portal that lists them. They
-# are independent builds of the same commit, so a failure in one does not hide
-# another's result — but all three make up one site, and `assemble` waits for
-# every one of them.
+env:
+  # Repository variable. One origin covers every target: the cities are mounted
+  # under /kansai and /tokyo on the same host as the front page. Unset is not an
+  # error — canonical/OG/JSON-LD absolute URLs are omitted rather than wrong.
+  SITE_URL: ${{ vars.SITE_URL }}
+  # Also repository variables, not secrets: the project id and dataset name are
+  # public information, and `src/lib/sanity/env.ts` falls back to the Markdown
+  # in `src/content/` when the project id is absent. Deliberately no
+  # SANITY_READ_TOKEN — that one reads drafts, which must never reach a
+  # published build.
+  SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+  SANITY_DATASET: ${{ vars.SANITY_DATASET }}
+
+# One job per target: each city, plus the front page that lists them. They are
+# independent builds of the same commit, and that is the point — a city whose
+# `event` document is half-edited takes its own job down and nothing else with
+# it. `publish` then grafts the jobs that succeeded onto the branch GitHub Pages
+# serves, and leaves the rest exactly as they were.
 jobs:
+  # Which cities exist is a question for the CMS, not for this file. Nothing is
+  # installed here: `scripts/discover-targets.mjs` runs on a bare checkout,
+  # which is why `src/tenants/discovery.ts` uses plain fetch and no zod.
+  discover:
+    name: discover
+    runs-on: ubuntu-latest
+
+    outputs:
+      targets: ${{ steps.list.outputs.targets }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - id: list
+        run: node --experimental-strip-types scripts/discover-targets.mjs
+
   build:
     name: build (${{ matrix.target }})
+    needs: discover
     runs-on: ubuntu-latest
 
     strategy:
+      # The requirement, in one line: one city's failure must not cancel
+      # another city's build.
       fail-fast: false
       matrix:
-        include:
-          - target: kansai
-            tenant: kansai
-            portal: ""
-          # - target: tokyo
-          #   tenant: tokyo
-          #   portal: ""
-          # No tenant: the portal is the root page and belongs to no city.
-          - target: portal
-            tenant: ""
-            portal: "1"
+        target: ${{ fromJSON(needs.discover.outputs.targets) }}
 
     env:
-      TENANT: ${{ matrix.tenant }}
-      PORTAL: ${{ matrix.portal }}
-      # Repository variable. One origin now covers every target: the cities are
-      # mounted under /kansai and /tokyo on the same host as the portal. Unset
-      # is not an error — canonical/OG/JSON-LD absolute URLs are omitted rather
-      # than wrong.
-      SITE_URL: ${{ vars.SITE_URL }}
-      # Also repository variables, not secrets: the project id and dataset name
-      # are public information, and `src/lib/sanity/env.ts` falls back to the
-      # Markdown in `src/content/` when the project id is absent. Deliberately
-      # no SANITY_READ_TOKEN — that one reads drafts, which must never reach a
-      # published build.
-      SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
-      SANITY_DATASET: ${{ vars.SANITY_DATASET }}
+      TARGETS: ${{ matrix.target }}
+      # A city whose configuration does not validate fails the job rather than
+      # being quietly skipped. The red job is the signal `publish` reads as
+      # "leave that city's published pages where they are".
+      STRICT_TENANTS: "1"
 
     steps:
       - uses: actions/checkout@v4
@@ -79,54 +97,143 @@ jobs:
 
       - run: pnpm exec astro build
 
+      # A failed job uploads nothing, and that absence is how `publish` tells
+      # the two apart. Nothing else reports per-target success.
       - uses: actions/upload-artifact@v4
         with:
           name: site-${{ matrix.target }}
           path: dist/${{ matrix.target }}
           if-no-files-found: error
 
-  # The three builds are three separate sites on disk. This is where they
-  # become one: the portal at the root, each city on its own path. Astro's
-  # `base` already wrote every internal link to match this layout, so the
-  # directory names here are not cosmetic — renaming one breaks that city's
-  # links.
-  assemble:
-    name: assemble
-    needs: build
-    if: ${{ github.event_name != 'pull_request' }}
+  # The publish branch is the site: repository Settings → Pages serves
+  # `gh-pages` at the root, and GitHub's own pages-build-deployment picks up
+  # every push to it. Nothing in this workflow deploys.
+  #
+  # `always()`, because running when some of the builds failed is this job's
+  # entire purpose. It replaces what succeeded and leaves what did not, which is
+  # what keeps a broken city's previously published pages answering.
+  publish:
+    name: publish
+    needs: [discover, build]
+    # Not `always()` on its own: this job deletes the cities that discovery did
+    # not name, so it must not run on a discovery that never answered.
+    if: ${{ always() && needs.discover.result == 'success' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          path: site
+          # Every branch, so `origin/gh-pages` is there to switch to.
+          fetch-depth: 0
+
+      - name: Move to the publish branch, creating it on the first run
+        working-directory: site
+        run: |
+          set -euo pipefail
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout -B gh-pages origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . > /dev/null
+          fi
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Lay the three builds out as one site
+      - name: Graft the builds that succeeded onto the published site
+        env:
+          TARGETS_JSON: ${{ needs.discover.outputs.targets }}
         run: |
-          mkdir -p _site
-          cp -r artifacts/site-portal/. _site/
-          cp -r artifacts/site-kansai _site/kansai
-          # cp -r artifacts/site-tokyo _site/tokyo
-          find _site -maxdepth 2 -name index.html
+          set -euo pipefail
 
-      # Pages takes exactly one artifact, under the fixed name `github-pages`.
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
+          # Parsed into a file rather than through a process substitution: a
+          # `mapfile < <(...)` swallows the exit status, and a target list that
+          # silently came out empty would make every step below read as "the
+          # CMS has no cities" and delete all of them.
+          jq -r '.[]' <<< "$TARGETS_JSON" > targets.txt
+          mapfile -t targets < targets.txt
+          if [ "${#targets[@]}" -eq 0 ]; then
+            echo "::error::discover produced no targets; refusing to publish"
+            exit 1
+          fi
 
-  deploy:
-    name: deploy
-    needs: assemble
-    runs-on: ubuntu-latest
+          cities=()
+          for target in "${targets[@]}"; do
+            [ "$target" = "portal" ] || cities+=("$target")
+          done
 
-    permissions:
-      pages: write
-      id-token: write
+          # Which root directories are cities rather than the front page's own
+          # output, as recorded by the previous run. Inferring it from the
+          # listing would eventually mistake one for the other.
+          mapfile -t published < <(cat site/.cities 2>/dev/null || true)
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+          # A city deleted from the CMS should stop being served.
+          for slug in "${published[@]}"; do
+            if [ -n "$slug" ] && ! printf '%s\n' "${cities[@]}" | grep -qxF "$slug"; then
+              echo "removing /$slug — no longer an event in the CMS"
+              rm -rf "site/$slug"
+            fi
+          done
 
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          # Each city, if its job produced anything. A `TARGETS=<slug>` build
+          # writes that city under `<slug>/` with its own assets inside it, so
+          # the directory is self-contained and swaps in whole.
+          for slug in "${cities[@]}"; do
+            if [ -d "artifacts/site-$slug/$slug" ]; then
+              echo "replacing /$slug"
+              rm -rf "site/$slug"
+              cp -r "artifacts/site-$slug/$slug" "site/$slug"
+            else
+              echo "::warning::$slug did not build; leaving the published copy in place"
+            fi
+          done
+
+          # The front page owns the root, which is also where the files every
+          # city shares live (public/og, public/favicon). It is replaced
+          # wholesale so a deleted file actually disappears; the city
+          # directories, the git metadata and the two markers are what survive.
+          if [ -d artifacts/site-portal ]; then
+            echo "replacing the front page and the shared assets"
+            prune=(! -name .git ! -name .nojekyll ! -name .cities)
+            for slug in "${cities[@]}"; do prune+=(! -name "$slug"); done
+            find site -mindepth 1 -maxdepth 1 "${prune[@]}" -exec rm -rf {} +
+            cp -r artifacts/site-portal/. site/
+          else
+            echo "::warning::the front page did not build; leaving the published copy in place"
+          fi
+
+          # Astro writes its assets to `_astro/`, and Jekyll drops every path
+          # beginning with an underscore. Without this the site loses its CSS.
+          touch site/.nojekyll
+          printf '%s\n' "${cities[@]}" > site/.cities
+
+          find site -mindepth 1 -maxdepth 2 -name index.html | sort
+
+      - name: Push
+        working-directory: site
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+
+          if git diff --cached --quiet; then
+            echo "nothing changed; not publishing"
+            exit 0
+          fi
+
+          git commit -m "publish: ${{ github.sha }}"
+
+          # `concurrency` already serialises production runs, so a conflict here
+          # means something pushed to the branch by hand. One rebase, then fail
+          # loudly rather than looping.
+          git push origin gh-pages || {
+            git pull --rebase origin gh-pages
+            git push origin gh-pages
+          }

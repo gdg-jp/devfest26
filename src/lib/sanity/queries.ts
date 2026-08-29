@@ -1,24 +1,31 @@
 /**
- * Every city-scoped query is scoped by `event->slug.current == $tenant`.
+ * Every city-scoped query is scoped by `event->slug.current in $tenants`.
  *
- * With the Markdown loaders the scoping is structural — a city's content is in
- * its own directory and cannot leak. Sanity has no such guarantee, so the
- * filter is the guarantee, and it is written once here rather than at each
- * call site.
+ * `$tenants` is the set of cities this build was asked for — see
+ * `src/tenants/selection.ts`. That is what carries the separation the
+ * per-city Markdown directories used to give structurally: a job running
+ * `TARGETS=kansai` never fetches a single Tokyo document, so no amount of bad
+ * Tokyo data can reach it. Within a build that did ask for several cities, the
+ * `tenant` each projection carries is what keeps them apart downstream.
  *
- * The two portal queries at the bottom are the deliberate exceptions: the
- * portal is the page that is about every city at once.
+ * The filter is written once here rather than at each call site, because a
+ * query that forgot it would leak silently.
  */
 
-const SCOPE = "event->slug.current == $tenant";
+const SCOPE = "event->slug.current in $tenants";
+
+/** Which city a document belongs to, as its content-collection entry sees it. */
+const TENANT = `"tenant": event->slug.current`;
 
 export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
   _id, name, role, initial, photo, bio,
-  "slug": slug.current
+  "slug": slug.current,
+  ${TENANT}
 }`;
 
 export const TRACKS = `*[_type == "track" && ${SCOPE}]{
-  _id, order, label, sub, color, textColor, darkInk, pending, cardLabel
+  _id, order, label, sub, color, textColor, darkInk, pending, cardLabel,
+  ${TENANT}
 }`;
 
 /**
@@ -30,54 +37,59 @@ export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
   _id, order, title, abstract, start, end,
   "slug": slug.current,
   "track": track->_id,
-  "speakers": speakers[]->_id
+  "speakers": speakers[]->_id,
+  ${TENANT}
 }`;
 
 export const TALKS = `*[_type == "talk" && ${SCOPE}]{
   _id, order, title, abstract, start,
   "slug": slug.current,
   "session": session->_id,
-  "speakers": speakers[]->_id
+  "speakers": speakers[]->_id,
+  ${TENANT}
 }`;
 
 export const MEETUPS = `*[_type == "meetup" && ${SCOPE}]{
   _id, no, title, subtitle, status, date, doorsAt, startsAt, endsAt,
-  venue, capacity, fee, url, cta, program, description
+  venue, capacity, fee, url, cta, program, description,
+  ${TENANT}
 }`;
 
 export const PARTNERS = `*[_type == "partner" && ${SCOPE}]{
-  _id, name, url, handle, order, rail, description
+  _id, name, url, handle, order, rail, description,
+  ${TENANT}
 }`;
 
 export const ABOUT = `*[_type == "aboutPage" && ${SCOPE}]{
-  _id, lead, body, callout, audienceEyebrow, audienceHeading, audienceItems
+  _id, lead, body, callout, audienceEyebrow, audienceHeading, audienceItems,
+  ${TENANT}
 }`;
 
 export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
   _id,
   registerBackdrop, registerBackdropCredit,
   countdownBackdrop, countdownBackdropCredit,
-  props
+  props,
+  ${TENANT}
 }`;
 
-/** The tenant document itself — matched on its own slug, not a reference. */
+/**
+ * One city's own configuration — matched on its own slug, not a reference.
+ *
+ * This is tier 2: everything a city's pages need and the front page does not.
+ * The tier-1 projection the front page reads lives in
+ * `src/tenants/discovery.ts`, which runs without this client so that CI can
+ * ask what cities exist before installing anything.
+ */
 export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
   "tenant": slug.current,
   theme, title, titleEn, description,
   taglineLead, taglineAccent,
+  lang, locale,
   startsAt, endsAt,
   socialLabel, socialStart, socialEnd,
   venue, format, formatShort, fee, host, coHosts,
   stats, links, nav, footerNav, timetable
-}`;
-
-/**
- * Every city, for the portal's list. Unscoped on purpose: this is the one
- * query that is about all of them at once.
- */
-export const EVENTS = `*[_type == "event"] | order(startsAt asc){
-  "slug": slug.current,
-  title, theme, startsAt, endsAt, venue
 }`;
 
 /**

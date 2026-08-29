@@ -15,12 +15,18 @@ interface Options {
   /** Appears in build logs, e.g. "sanity:sessions". */
   label: string;
   /**
-   * GROQ returning an array of documents. `$tenant` is bound for you when the
+   * GROQ returning an array of documents. `$tenants` is bound for you when the
    * collection is city-scoped.
    */
   query: string;
-  /** Omit for a collection that belongs to no city — see EXTERNAL_EVENTS. */
-  tenant?: string;
+  /**
+   * The cities this build is producing, resolved when the loader runs.
+   *
+   * A thunk rather than a list because discovering them is a network read and
+   * the collections are defined long before anything is loaded. Omit entirely
+   * for a collection that belongs to no city — see EXTERNAL_EVENTS.
+   */
+  tenants?: () => Promise<string[]>;
   toEntry: (doc: never) => SanityEntry;
 }
 
@@ -37,16 +43,17 @@ interface Options {
 export function sanityLoader({
   label,
   query,
-  tenant,
+  tenants,
   toEntry,
 }: Options): Loader {
   return {
     name: `sanity:${label}`,
 
     load: async ({ store, parseData, generateDigest, logger }) => {
+      const scope = tenants ? await tenants() : undefined;
       const docs = await sanityClient().fetch<never[]>(
         query,
-        tenant ? { tenant } : {},
+        scope ? { tenants: scope } : {},
       );
 
       // A full replace: entries deleted in the Studio have to disappear here
@@ -65,8 +72,8 @@ export function sanityLoader({
       }
 
       logger.info(
-        tenant
-          ? `${docs.length} ${label} for "${tenant}"`
+        scope
+          ? `${docs.length} ${label} for ${scope.join(", ") || "(no city)"}`
           : `${docs.length} ${label}`,
       );
     },

@@ -1,9 +1,14 @@
 ---
 import PhotoSticker from "./PhotoSticker.astro";
-import Props from "./Props.astro";
+import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
 
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 const { event, stats } = site;
 
 const rows = [
@@ -32,7 +37,7 @@ const rows = [
 ---
 
 <section class="sec" id="overview">
-  <Props>
+  <Gutter>
     <Sticker
       name="semicolon"
       width={44}
@@ -41,9 +46,23 @@ const rows = [
       rotate={-10}
       speed={0.7}
     />
-    <PhotoSticker index={0} top="30%" right="16px" rotate={-5} speed={-0.6} />
-    <PhotoSticker index={2} top="40%" left="16px" rotate={7} speed={0.55} />
-  </Props>
+    <PhotoSticker
+      tenant={site.tenant}
+      index={0}
+      top="30%"
+      right="16px"
+      rotate={-5}
+      speed={-0.6}
+    />
+    <PhotoSticker
+      tenant={site.tenant}
+      index={2}
+      top="40%"
+      left="16px"
+      rotate={7}
+      speed={0.55}
+    />
+  </Gutter>
 
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Overview</p>

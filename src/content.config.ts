@@ -1,8 +1,12 @@
 import { defineCollection, reference } from "astro:content";
 import { glob, type Loader } from "astro/loaders";
 import { z } from "astro/zod";
-import { activeTenant } from "./tenants/active";
-import { isPortal } from "./portal/active";
+import {
+  LOCAL_TENANT,
+  noCities,
+  portalSelected,
+  selectedCities,
+} from "./tenants/selection";
 import { sanityEnabled } from "./lib/sanity/env";
 import { sanityLoader } from "./loaders/sanity";
 import * as Q from "./lib/sanity/queries";
@@ -27,15 +31,21 @@ import {
  * only the loader changes. The schemas below, and every component reading them,
  * are identical either way.
  *
- * Scoping to a city works differently in each source, and both are deliberate:
- * the Markdown loaders read a per-city directory, so one city's content cannot
- * physically appear in another's build; the Sanity queries filter on the
- * `event` reference, which is the only handle a shared dataset gives us.
+ * One build now holds several cities at once, so every city-scoped entry
+ * carries a `tenant` field and nothing reads a collection without filtering on
+ * it — `byTenant` in `src/data/collections.ts` is the only way in. From Sanity
+ * that field comes off the `event` reference; from Markdown it falls back to
+ * the one city a Markdown build produces, which is why none of the forty-odd
+ * content files had to be touched.
  *
- * There are three builds, not two: the two cities and the portal that lists
- * them. Every collection is defined here for all of them, so `getCollection`
- * has one set of types, but each is loaded only where it is read — see `city`
- * and `frontPage` below.
+ * Scoping still happens twice, and both are deliberate. The query fetches only
+ * the cities this build was asked for, so a job building one city never sees
+ * another's documents at all; the `tenant` field separates the ones it did
+ * fetch. See `src/lib/sanity/queries.ts`.
+ *
+ * Every collection is defined here whether or not this build loads it, so
+ * `getCollection` has one set of types across every target — see `city` and
+ * `frontPage` below.
  */
 
 /**
@@ -75,32 +85,33 @@ type ToEntry = Parameters<typeof sanityLoader>[0]["toEntry"];
 
 /**
  * The loader for one city-scoped collection: the CMS when it is configured,
- * this city's own directory when it is not. The name is both the Sanity label
- * and the directory, so the two sources can never drift apart.
+ * a single city's own directory when it is not. The name is both the Sanity
+ * label and the directory, so the two sources can never drift apart.
  *
- * The portal build reads no city. It still *registers* every collection —
- * these definitions are where `getCollection` gets its types, and one shape
- * across all three builds is what keeps them honest — but actually loading a
- * city there would resolve its speaker photos and emit every one of them into
- * the front page's output for nothing.
+ * A build that produces no city — `TARGETS=portal`, which is how CI builds the
+ * front page — still *registers* every collection, because these definitions
+ * are where `getCollection` gets its types and one shape across every target
+ * is what keeps them honest. Actually loading a city there would resolve its
+ * speaker photos and emit every one of them into the front page's output for
+ * nothing.
  */
 const city = (name: string, query: string, toEntry: ToEntry): Loader =>
-  isPortal
+  noCities
     ? nothing
     : sanityEnabled
-      ? sanityLoader({ label: name, query, tenant: activeTenant, toEntry })
+      ? sanityLoader({ label: name, query, tenants: selectedCities, toEntry })
       : glob({
-          base: `./src/content/${activeTenant}/${name}`,
+          base: `./src/content/${LOCAL_TENANT}/${name}`,
           pattern: "**/*.md",
         });
 
 /**
  * The mirror of `city`, for content that belongs to the front page rather than
- * to any city: loaded in the portal build and nowhere else. No `$tenant` is
- * bound, because there is no city to scope to.
+ * to any city: loaded when the front page is one of this build's targets and
+ * nowhere else. No `$tenants` is bound, because there is no city to scope to.
  */
 const frontPage = (name: string, query: string, toEntry: ToEntry): Loader =>
-  !isPortal
+  !portalSelected
     ? nothing
     : sanityEnabled
       ? sanityLoader({ label: name, query, toEntry })
@@ -124,7 +135,18 @@ const remotePhoto = z.object({
  */
 const slug = z.string().optional();
 
+/**
+ * Which city an entry belongs to.
+ *
+ * Always present from Sanity, where it is projected off the `event` reference.
+ * Never present in Markdown frontmatter — a Markdown build produces one city,
+ * so the default is that city and not one of the forty content files has to
+ * say so. See `LOCAL_TENANT` in `src/tenants/selection.ts`.
+ */
+const tenant = z.string().default(LOCAL_TENANT);
+
 const speakerFields = {
+  tenant,
   name: z.string(),
   /** Job title / affiliation. Shown under the name. */
   role: z.string(),
@@ -160,6 +182,7 @@ const speakers = defineCollection({
 const tracks = defineCollection({
   loader: city("tracks", Q.TRACKS, trackEntry),
   schema: z.object({
+    tenant,
     /** Display order, on the page and in the track headers. */
     order: z.number().int().positive(),
     label: z.string(),
@@ -195,6 +218,7 @@ const tracks = defineCollection({
 const sessions = defineCollection({
   loader: city("sessions", Q.SESSIONS, sessionEntry),
   schema: z.object({
+    tenant,
     track: reference("tracks"),
     /** Position within the track. */
     order: z.number().int().positive(),
@@ -222,6 +246,7 @@ const sessions = defineCollection({
 const talks = defineCollection({
   loader: optional(city("talks", Q.TALKS, talkEntry)),
   schema: z.object({
+    tenant,
     session: reference("sessions"),
     /** Position within the session. */
     order: z.number().int().positive(),
@@ -237,6 +262,7 @@ const talks = defineCollection({
 const meetups = defineCollection({
   loader: city("meetups", Q.MEETUPS, meetupEntry),
   schema: z.object({
+    tenant,
     /** Meetup number — also the sort key. */
     no: z.number().int().positive(),
     title: z.string(),
@@ -272,6 +298,7 @@ const meetups = defineCollection({
 const partners = defineCollection({
   loader: city("partners", Q.PARTNERS, partnerEntry),
   schema: z.object({
+    tenant,
     name: z.string(),
     url: z.url(),
     handle: z.string(),
@@ -289,6 +316,7 @@ const partners = defineCollection({
 const about = defineCollection({
   loader: city("about", Q.ABOUT, aboutEntry),
   schema: z.object({
+    tenant,
     /** Opening line, set larger than the body. */
     lead: z.string(),
     /** Bracketed aside under the body. Plain text. */
@@ -329,6 +357,7 @@ const photos = defineCollection({
     });
 
     return z.object({
+      tenant,
       /** Under the closing call to action, printed into the tenant colour. */
       registerBackdrop: backdrop.optional(),
       /** Behind the countdown band, under the opaque digit cards. */

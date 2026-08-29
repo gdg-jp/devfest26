@@ -1,10 +1,18 @@
-import { activeTenant } from "./active";
 import { eventDates } from "./eventDates";
 import { fromSanityIfEnabled } from "./source";
-import { isPortal } from "../portal/active";
-import type { TenantId } from "./ids";
+import type { LocalTenantId } from "./ids";
 import { registry } from "./registry";
+import { selectedCities, strictTenants } from "./selection";
 import type { TenantConfig } from "./types";
+
+/**
+ * A city's configuration, resolved and expanded.
+ *
+ * This used to be a singleton — one module, one city, decided by an
+ * environment variable — because one build produced one city. A build now
+ * produces several, so the city arrives as an argument and travels down as a
+ * prop. `src/pages/[tenant]/index.astro` is where it enters.
+ */
 
 /**
  * "DevFest 2026 in Kansai" → "Kansai". The top bar sets the city name beside
@@ -37,18 +45,85 @@ function resolve(config: TenantConfig) {
   };
 }
 
-/**
- * Top-level await: with Sanity on, the config is a network read, and every
- * component reads `site` synchronously. Awaiting once here keeps all of them
- * unchanged.
- *
- * The portal build renders no city, so it does not go asking the CMS for one —
- * it would otherwise fail a deploy over a city it never puts on a page.
- */
-export const tenant = resolve(
-  (isPortal ? undefined : await fromSanityIfEnabled(activeTenant)) ??
-    registry[activeTenant as TenantId],
-);
+export type ResolvedTenant = ReturnType<typeof resolve>;
 
-export type ResolvedTenant = typeof tenant;
-export { activeTenant };
+const resolved = new Map<string, Promise<ResolvedTenant>>();
+
+/**
+ * One city's full configuration — tier 2, in the language of
+ * `src/tenants/discovery.ts`.
+ *
+ * Throws when the CMS has no complete `event` document for the slug. That is
+ * the intended failure: a city whose configuration is half-written has no
+ * business rendering a page that reads "undefined", and in CI the throw is
+ * what keeps the previously published copy of that city in place.
+ *
+ * Memoised per slug — a dozen components ask for the same city, and each ask
+ * would otherwise be a network read.
+ */
+export function resolveTenant(slug: string): Promise<ResolvedTenant> {
+  let found = resolved.get(slug);
+  if (!found) {
+    found = load(slug);
+    resolved.set(slug, found);
+  }
+  return found;
+}
+
+async function load(slug: string): Promise<ResolvedTenant> {
+  const fromCms = await fromSanityIfEnabled(slug);
+  if (fromCms) return resolve(fromCms);
+
+  const local = registry[slug as LocalTenantId];
+  if (!local) {
+    throw new Error(
+      `No configuration for the city "${slug}". Add src/tenants/${slug}.ts, ` +
+        `or set SANITY_PROJECT_ID to read it from the CMS.`,
+    );
+  }
+
+  return resolve(local);
+}
+
+export interface BuildableCity {
+  slug: string;
+  site: ResolvedTenant;
+}
+
+let buildable: Promise<BuildableCity[]> | undefined;
+
+/**
+ * The cities this build both was asked for and can actually render.
+ *
+ * Every route's `getStaticPaths` reads this one list, so they cannot disagree
+ * about which cities exist. A city whose configuration does not validate is
+ * dropped here rather than in each of them — with `STRICT_TENANTS` set it
+ * takes the build down instead, which is what a CI city job wants.
+ */
+export function buildableCities(): Promise<BuildableCity[]> {
+  buildable ??= collect();
+  return buildable;
+}
+
+async function collect(): Promise<BuildableCity[]> {
+  const slugs = await selectedCities();
+  const cities: BuildableCity[] = [];
+
+  for (const slug of slugs) {
+    try {
+      cities.push({ slug, site: await resolveTenant(slug) });
+    } catch (error) {
+      if (strictTenants) throw error;
+
+      // Local builds render the cities that are ready and say why the others
+      // are missing. CI never takes this branch.
+      console.warn(
+        `[tenants] Skipping "${slug}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  return cities;
+}

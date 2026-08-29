@@ -1,8 +1,15 @@
 ---
-import { getCollection, render } from "astro:content";
-import { site } from "../data/site";
+import { render } from "astro:content";
+import type { ResolvedTenant } from "../tenants";
+import { byTenant } from "../data/collections";
 
-const partners = (await getCollection("partners")).sort(
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+
+const partners = (await byTenant("partners", site.tenant)).sort(
   (a, b) => a.data.order - b.data.order,
 );
 const rendered = await Promise.all(

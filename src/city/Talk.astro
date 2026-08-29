@@ -1,15 +1,14 @@
 ---
 import { render } from "astro:content";
-import Page from "../../layouts/Page.astro";
-import SpeakerRow from "../../components/SpeakerRow.astro";
-import { site } from "../../data/site";
-import { isPortal } from "../../portal/active";
+import Page from "../layouts/Page.astro";
+import SpeakerRow from "../components/SpeakerRow.astro";
+import { buildableCities, type ResolvedTenant } from "../tenants";
 import {
   getStandaloneTalks,
   jstTimestamp,
   type ProgramSession,
   type ProgramTalk,
-} from "../../data/program";
+} from "../data/program";
 
 /**
  * One page per talk that is an entry in its own right.
@@ -19,22 +18,27 @@ import {
  * a second URL for the same prose would only compete with it.
  */
 export async function getStaticPaths() {
-  // The portal build publishes only the root list, not a city programme.
-  if (isPortal) return [];
+  const cities = await buildableCities();
 
-  const talks = await getStandaloneTalks();
-  return talks.map(({ session, talk }) => ({
-    params: { slug: talk.slug },
-    props: { session, talk },
-  }));
+  return (
+    await Promise.all(
+      cities.map(async ({ slug, site }) =>
+        (await getStandaloneTalks(slug)).map(({ session, talk }) => ({
+          params: { tenant: slug, slug: talk.slug },
+          props: { site, session, talk },
+        })),
+      ),
+    )
+  ).flat();
 }
 
 interface Props {
+  site: ResolvedTenant;
   session: ProgramSession;
   talk: ProgramTalk;
 }
 
-const { session, talk } = Astro.props;
+const { site, session, talk } = Astro.props;
 const { track, label } = session;
 const { Content } = await render(talk.entry);
 
@@ -56,7 +60,9 @@ const jsonLd = talk.title
       "@type": "Event",
       name: talk.title,
       ...(url ? { url } : {}),
-      ...(talk.start ? { startDate: jstTimestamp(talk.start) } : {}),
+      ...(talk.start
+        ? { startDate: jstTimestamp(site.event.isoDate, talk.start) }
+        : {}),
       location: { "@type": "Place", name: site.event.venue.name },
       performer: talk.speakers.map((speaker) => ({
         "@type": "Person",
@@ -78,6 +84,7 @@ const jsonLd = talk.title
 ---
 
 <Page
+  site={site}
   title={talk.title ?? label}
   description={description}
   jsonLd={jsonLd}

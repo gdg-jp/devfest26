@@ -18,10 +18,10 @@
  * link lands on.
  */
 
-import { getCollection, type CollectionEntry } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 import { getTracks, type Track } from "./tracks";
-import { site } from "./site";
-import { withBase } from "../lib/url";
+import { byTenant, partitionByTenant } from "./collections";
+import { tenantPath } from "../lib/url";
 
 export type Session = CollectionEntry<"sessions">;
 export type Talk = CollectionEntry<"talks">;
@@ -89,40 +89,70 @@ const byOrder = (a: Ordered, b: Ordered) => a.data.order - b.data.order;
  */
 export const slugOf = (entry: Sluggable) => entry.data.slug ?? entry.id;
 
+/**
+ * A speaker's page.
+ *
+ * The city comes off the entry rather than from an argument, so the components
+ * that print a speaker — down to the row inside a session card — need to know
+ * nothing about which city they are rendering.
+ */
 export const speakerHref = (speaker: Speaker) =>
-  withBase(`/speakers/${slugOf(speaker)}`);
+  tenantPath(speaker.data.tenant, `/speakers/${slugOf(speaker)}`);
 
 /**
  * A "13:00" written on a session or talk, as a schema.org timestamp.
  *
  * Entries carry a wall-clock time because that is what an organiser writes on
  * a running order; the date belongs to the event and is never repeated on each
- * one.
+ * one, so the event's own `isoDate` supplies it.
  */
-export const jstTimestamp = (hhmm: string) =>
-  `${site.event.isoDate}T${hhmm}:00+09:00`;
+export const jstTimestamp = (isoDate: string, hhmm: string) =>
+  `${isoDate}T${hhmm}:00+09:00`;
 
 /**
  * The whole programme, grouped the way the page prints it: tracks in their own
  * order, sessions in theirs, and a track with nothing in it left out.
  */
-export async function getProgram(): Promise<ProgramTrack[]> {
-  const [tracks, sessions, unordered, speakers] = await Promise.all([
-    getTracks(),
-    getCollection("sessions"),
-    getCollection("talks"),
-    getCollection("speakers"),
+export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
+  const [tracks, sessionSplit, talkSplit, speakerSplit] = await Promise.all([
+    getTracks(tenant),
+    partitionByTenant("sessions", tenant),
+    partitionByTenant("talks", tenant),
+    partitionByTenant("speakers", tenant),
   ]);
+
+  const sessions = sessionSplit.mine;
+  const speakers = speakerSplit.mine;
 
   const speakerById = new Map(speakers.map((speaker) => [speaker.id, speaker]));
   const sessionIds = new Set(sessions.map((session) => session.id));
 
+  /*
+    `reference()` resolves by entry id and knows nothing about cities, so a
+    session in one city naming a speaker in another is a reference that
+    resolves — to the wrong person's page, in the wrong city's build. The
+    Markdown directories used to make that impossible by construction; now the
+    invariant is stated instead, and violating it stops the build.
+  */
+  const crossCity = (
+    ref: string,
+    kind: string,
+    foreign: { id: string; data: { tenant: string } }[],
+  ) => {
+    const elsewhere = foreign.find((entry) => entry.id === ref);
+    return elsewhere
+      ? `${kind} "${ref}", which belongs to "${elsewhere.data.tenant}" and not ` +
+          `to "${tenant}". A reference may not cross cities.`
+      : `unknown ${kind} "${ref}"`;
+  };
+
   // Sorted before grouping, so every group comes out in running order.
-  const ordered = [...unordered].sort(byOrder);
+  const ordered = [...talkSplit.mine].sort(byOrder);
   for (const talk of ordered) {
     if (!sessionIds.has(talk.data.session.id))
       throw new Error(
-        `Talk "${talk.id}" references unknown session "${talk.data.session.id}"`,
+        `Talk "${talk.id}" references ` +
+          crossCity(talk.data.session.id, "session", sessionSplit.foreign),
       );
   }
   const talksBySession = Map.groupBy(ordered, (talk) => talk.data.session.id);
@@ -131,13 +161,16 @@ export async function getProgram(): Promise<ProgramTrack[]> {
     refs.map((ref) => {
       const speaker = speakerById.get(ref.id);
       if (!speaker)
-        throw new Error(`${where} references unknown speaker "${ref.id}"`);
+        throw new Error(
+          `${where} references ` +
+            crossCity(ref.id, "speaker", speakerSplit.foreign),
+        );
       return speaker;
     });
 
   const toProgramSession = (session: Session, track: Track): ProgramSession => {
     const slug = slugOf(session);
-    const href = withBase(`/sessions/${slug}`);
+    const href = tenantPath(tenant, `/sessions/${slug}`);
     const own = talksBySession.get(session.id) ?? [];
 
     // Speakers on the session are what a one-talk-per-slot city writes; talks
@@ -153,7 +186,7 @@ export async function getProgram(): Promise<ProgramTrack[]> {
     const talks: ProgramTalk[] = own.length
       ? own.map((talk) => ({
           slug: slugOf(talk),
-          href: withBase(`/talks/${slugOf(talk)}`),
+          href: tenantPath(tenant, `/talks/${slugOf(talk)}`),
           standalone: true,
           title: talk.data.title ?? session.data.title,
           start: talk.data.start,
@@ -208,16 +241,20 @@ export async function getProgram(): Promise<ProgramTrack[]> {
 }
 
 /** Every session, flattened, in the order the page prints them. */
-export async function getProgramSessions(): Promise<ProgramSession[]> {
-  return (await getProgram()).flatMap((group) => group.sessions);
+export async function getProgramSessions(
+  tenant: string,
+): Promise<ProgramSession[]> {
+  return (await getProgram(tenant)).flatMap((group) => group.sessions);
 }
 
 /**
  * The talks that are entries of their own — the ones with a page. A city that
  * does not use talks returns nothing here, and so publishes no `/talks/` route.
  */
-export async function getStandaloneTalks(): Promise<Appearance[]> {
-  const sessions = await getProgramSessions();
+export async function getStandaloneTalks(
+  tenant: string,
+): Promise<Appearance[]> {
+  const sessions = await getProgramSessions(tenant);
   return sessions.flatMap((session) =>
     session.talks
       .filter((talk) => talk.standalone)
@@ -231,8 +268,10 @@ export async function getStandaloneTalks(): Promise<Appearance[]> {
  * A speaker nobody has been scheduled against is simply absent, which keeps
  * `/speakers/` in step with what the programme actually announces.
  */
-export async function getAppearances(): Promise<Map<string, Appearance[]>> {
-  const sessions = await getProgramSessions();
+export async function getAppearances(
+  tenant: string,
+): Promise<Map<string, Appearance[]>> {
+  const sessions = await getProgramSessions(tenant);
   const byId = new Map<string, Appearance[]>();
 
   for (const session of sessions)
@@ -252,10 +291,12 @@ export async function getAppearances(): Promise<Map<string, Appearance[]>> {
  * Someone with an entry but no session yet has nothing to put on a page, so
  * they do not get one — the same way they do not appear on the home page.
  */
-export async function getProgramSpeakers(): Promise<SpeakerProgram[]> {
+export async function getProgramSpeakers(
+  tenant: string,
+): Promise<SpeakerProgram[]> {
   const [speakers, appearances] = await Promise.all([
-    getCollection("speakers"),
-    getAppearances(),
+    byTenant("speakers", tenant),
+    getAppearances(tenant),
   ]);
 
   const listed = speakers.flatMap((speaker) => {

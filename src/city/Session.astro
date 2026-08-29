@@ -1,16 +1,15 @@
 ---
 import { render } from "astro:content";
-import Page from "../../layouts/Page.astro";
-import SpeakerRow from "../../components/SpeakerRow.astro";
-import { site } from "../../data/site";
-import { home } from "../../lib/url";
-import { isPortal } from "../../portal/active";
-import { pastelCycle } from "../../data/tracks";
+import Page from "../layouts/Page.astro";
+import SpeakerRow from "../components/SpeakerRow.astro";
+import { buildableCities, type ResolvedTenant } from "../tenants";
+import { tenantHome } from "../lib/url";
+import { pastelCycle } from "../data/tracks";
 import {
   getProgramSessions,
   jstTimestamp,
   type ProgramSession,
-} from "../../data/program";
+} from "../data/program";
 
 /**
  * Every session has a page, whether or not the city splits it into talks: it
@@ -19,21 +18,26 @@ import {
  * talks, or the people on stage.
  */
 export async function getStaticPaths() {
-  // The portal build publishes only the root list, not a city programme.
-  if (isPortal) return [];
+  const cities = await buildableCities();
 
-  const sessions = await getProgramSessions();
-  return sessions.map((session) => ({
-    params: { slug: session.slug },
-    props: { session },
-  }));
+  return (
+    await Promise.all(
+      cities.map(async ({ slug, site }) =>
+        (await getProgramSessions(slug)).map((session) => ({
+          params: { tenant: slug, slug: session.slug },
+          props: { site, session },
+        })),
+      ),
+    )
+  ).flat();
 }
 
 interface Props {
+  site: ResolvedTenant;
   session: ProgramSession;
 }
 
-const { session } = Astro.props;
+const { site, session } = Astro.props;
 const { entry, track, label, talks } = session;
 const { Content } = await render(entry);
 
@@ -70,9 +74,11 @@ const jsonLd = title
       name: title,
       ...(url ? { url } : {}),
       ...(entry.data.start
-        ? { startDate: jstTimestamp(entry.data.start) }
+        ? { startDate: jstTimestamp(site.event.isoDate, entry.data.start) }
         : {}),
-      ...(entry.data.end ? { endDate: jstTimestamp(entry.data.end) } : {}),
+      ...(entry.data.end
+        ? { endDate: jstTimestamp(site.event.isoDate, entry.data.end) }
+        : {}),
       location: { "@type": "Place", name: site.event.venue.name },
       performer: everyone.map((speaker) => ({
         "@type": "Person",
@@ -89,10 +95,14 @@ const jsonLd = title
 ---
 
 <Page
+  site={site}
   title={title ?? label}
   description={description}
   jsonLd={jsonLd}
-  back={{ href: `${home}#sessions`, label: "← セッション一覧" }}
+  back={{
+    href: `${tenantHome(site.tenant)}#sessions`,
+    label: "← セッション一覧",
+  }}
 >
   <p class="d-meta">
     <span

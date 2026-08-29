@@ -1,8 +1,18 @@
 ---
-import { timetable, getTracks } from "../data/tracks";
+import { getTracks } from "../data/tracks";
+import type { ResolvedTenant } from "../tenants";
+
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { timetable } = site;
 
 // "3 トラック" is a fact about this city's configuration, not a constant.
-const trackCount = (await getTracks()).filter((t) => !t.data.pending).length;
+const trackCount = (await getTracks(site.tenant)).filter(
+  (t) => !t.data.pending,
+).length;
 ---
 
 <section class="sec" id="timetable">

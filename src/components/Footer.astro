@@ -1,18 +1,23 @@
 ---
 import Logo from "./Logo.astro";
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
 import { photoCredits } from "../lib/photos";
-import { home, isHome } from "../lib/url";
+import { isHome, tenantHome } from "../lib/url";
 
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 const { event } = site;
 const year = new Date().getFullYear();
 
 // Same as the topbar: these are anchors into the home page, so a detail page
 // has to send them there rather than to a section it does not have.
-const prefix = isHome(Astro.url) ? "" : home;
+const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
 
 // Decorative use does not waive the photographer's credit.
-const credits = await photoCredits();
+const credits = await photoCredits(site.tenant);
 ---
 
 <footer>

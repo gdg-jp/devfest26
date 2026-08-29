@@ -1,14 +1,19 @@
 ---
 import Logo from "./Logo.astro";
-import Props from "./Props.astro";
+import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
-import { site } from "../data/site";
-import { getCollection } from "astro:content";
+import type { ResolvedTenant } from "../tenants";
+import { byTenant } from "../data/collections";
 
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 const { event, links, tagline } = site;
 
 // The hero only advertises a pre-event while one is actually taking bookings.
-const meetups = await getCollection("meetups");
+const meetups = await byTenant("meetups", site.tenant);
 const openMeetup = meetups
   .filter((m) => m.data.status === "open" && m.data.date)
   .sort((a, b) => a.data.no - b.data.no)[0];
@@ -22,7 +27,7 @@ const meetupDow = openMeetup?.data.date
 ---
 
 <section class="hero" id="top">
-  <Props>
+  <Gutter>
     <Sticker
       name="slashes"
       width={104}
@@ -48,7 +53,7 @@ const meetupDow = openMeetup?.data.date
       rotate={12}
       speed={-1.1}
     />
-  </Props>
+  </Gutter>
 
   <div class="wrap">
     <div class="lockup" data-intro="1">

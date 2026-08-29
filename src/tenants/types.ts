@@ -2,8 +2,12 @@ import type { Theme } from "../data/themes";
 import type { TenantId } from "./ids";
 
 /**
- * The shape a city has to fill in. One file per city, and nothing outside
- * `src/tenants/` and `src/content/<tenant>/` is city-specific.
+ * The shape a city has to fill in.
+ *
+ * With Sanity on this is what one `event` document has to provide, validated in
+ * `fromSanity.ts`. Without it, one file per city in this directory — and
+ * nothing outside `src/tenants/` and `src/content/<tenant>/` is city-specific
+ * either way.
  */
 
 /**

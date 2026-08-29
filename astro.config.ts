@@ -1,40 +1,58 @@
 import { defineConfig } from "astro/config";
 import type { AstroIntegration } from "astro";
-import { activeTenant } from "./src/tenants/active";
-import { isPortal } from "./src/portal/active";
+import {
+  anyCity,
+  portalSelected,
+  soleCity,
+  targetKey,
+} from "./src/tenants/selection";
 
 /**
  * Absolute URLs (canonical, Open Graph, JSON-LD) need the production origin.
  * Set SITE_URL in the deploy environment; without it those tags are simply
  * omitted rather than pointing somewhere wrong.
  *
- * One origin now covers every build: the cities live under `/kansai` and
- * `/tokyo` on the same host as the portal.
+ * One origin covers everything: the cities live under `/kansai` and `/tokyo`
+ * on the same host as the front page.
  */
 const site = process.env.SITE_URL;
 
-/** Which of the three builds this is. The portal has no city. */
-const target = isPortal ? "portal" : activeTenant;
-
 /**
- * The root route is two different pages: a city's long home page, or the
- * portal's list of every city.
+ * Every route this build produces, chosen by what it was asked for.
  *
- * Injected rather than branched inside `src/pages/index.astro`, because a
- * branch keeps both components in the module graph — the portal would ship
- * every city stylesheet and speaker photo behind a condition that is false.
- * One entrypoint per build means one module graph.
+ * They are injected rather than filed under `src/pages/` because a page in
+ * that directory is built whether or not it renders anything. A front-page
+ * build with the city routes present emits every city stylesheet and the whole
+ * motion bundle beside a page that references none of it; a one-city build
+ * with the front page present emits a second, unwanted copy of the site's
+ * front door into output that is grafted on under `/kansai`. Selecting the
+ * entrypoints keeps one module graph per build, which is the property the
+ * three separate builds used to give.
+ *
+ * The city pages live in `src/city/`. `getStaticPaths` on each one expands
+ * `[tenant]` over the cities this build resolved — see `buildableCities` in
+ * `src/tenants/index.ts`.
  */
-const homeRoute: AstroIntegration = {
-  name: "devfest:home-route",
+const routes: AstroIntegration = {
+  name: "devfest:routes",
   hooks: {
     "astro:config:setup": ({ injectRoute }) => {
-      injectRoute({
-        pattern: "/",
-        entrypoint: isPortal
-          ? "./src/portal/Home.astro"
-          : "./src/home/Tenant.astro",
-      });
+      const inject = (pattern: string, entrypoint: string) =>
+        injectRoute({ pattern, entrypoint });
+
+      if (portalSelected) {
+        inject("/", "./src/portal/Home.astro");
+      }
+
+      if (anyCity) {
+        inject("/[tenant]", "./src/city/Home.astro");
+        inject("/[tenant]/sessions/[slug]", "./src/city/Session.astro");
+        inject("/[tenant]/speakers/[slug]", "./src/city/Speaker.astro");
+        inject("/[tenant]/talks/[slug]", "./src/city/Talk.astro");
+        inject("/[tenant]/favicon.svg", "./src/city/favicon.ts");
+        // Only built with OG_PREVIEW set; see the route itself.
+        inject("/[tenant]/og-preview", "./src/city/OgPreview.astro");
+      }
     },
   },
 };
@@ -42,25 +60,33 @@ const homeRoute: AstroIntegration = {
 // https://astro.build/config
 export default defineConfig({
   site,
-  integrations: [homeRoute],
+  integrations: [routes],
   trailingSlash: "never",
   /**
-   * Each city is mounted on a path of its own; the portal is the root. Astro
-   * does not rewrite hrefs, so every internal link goes through `withBase` in
-   * `src/lib/url.ts` — a hand-written root-absolute path would escape its own
-   * site.
+   * No `base`. The cities are not separate sites mounted on paths any more —
+   * they are routes, `/[tenant]/...`, in one site whose root is the origin.
+   * Internal links go through `tenantPath` in `src/lib/url.ts`, which knows
+   * which city it is writing for; a hand-written root-absolute path would
+   * point at whichever city came first.
    */
-  base: isPortal ? undefined : `/${activeTenant}`,
-  // One directory per build, so building a second one locally does not
-  // silently overwrite the first one's output. `.github/workflows/build.yml`
-  // assembles all three into a single site.
-  outDir: `./dist/${target}`,
-  // The content store is persistent and keyed by collection name, not by
-  // tenant, so a shared cache carries the previous city's entries into this
-  // build. Give each one its own — without this, `pnpm build:all` produces a
-  // second site contaminated with the first one's sessions and speakers.
-  cacheDir: `./node_modules/.astro/${target}`,
+  // One directory per target set, so building a subset locally does not
+  // silently overwrite the last one's output. The content store is persistent
+  // and keyed by collection name rather than by city, so a shared cache would
+  // also carry the previous build's cities into this one — hence the same key
+  // for `cacheDir`.
+  outDir: `./dist/${targetKey}`,
+  cacheDir: `./node_modules/.astro/${targetKey}`,
   build: {
+    /**
+     * A build of one city and nothing else is grafted onto the publish branch
+     * as `/<city>/` and has to be complete on its own, so its stylesheets and
+     * scripts go inside it rather than to a shared root directory that job
+     * does not publish. A build that also makes the front page owns the root
+     * and keeps the default, sharing one copy across every city in it.
+     *
+     * See the `publish` job in `.github/workflows/build.yml`.
+     */
+    assets: soleCity ? `${soleCity}/_astro` : "_astro",
     // The OG card is screenshotted straight off disk, where a `/_astro/...`
     // stylesheet href resolves to nothing. Inlining makes that build
     // self-contained; normal builds keep the default split.

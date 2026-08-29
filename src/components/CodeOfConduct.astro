@@ -1,5 +1,11 @@
 ---
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
+
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 ---
 
 <section class="sec" id="coc">

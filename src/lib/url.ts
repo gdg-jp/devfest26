@@ -1,37 +1,37 @@
 /**
- * Internal links, aware of where this build is mounted.
+ * Internal links.
  *
- * The city sites are not at the origin root: they are assembled under
- * `/kansai` and `/tokyo` on one host, so `base` is set per build (see
- * `astro.config.ts`). Astro does not rewrite hrefs, so a root-absolute path
- * written by hand would point outside its own site. Every one of them goes
- * through here instead.
+ * Every city is mounted on a path of its own — `/kansai`, `/tokyo` — under the
+ * one origin the front page sits at. That used to be Astro's `base`, one value
+ * per build. A single build now emits all of them, so the prefix is the city
+ * rather than the build, and it is written here rather than by hand: a
+ * root-absolute path typed into a component would point at whichever city
+ * happened to be first.
  *
- * `import.meta.env.BASE_URL` is `/` for the portal build and `/kansai` for a
- * city, but the trailing slash has varied across Astro versions — normalising
- * both ends here keeps callers from having to care.
+ * The old `withBase` is deliberately gone rather than kept as a no-op. Every
+ * call site had to be revisited, and a function that silently did nothing
+ * would have let one be missed.
  */
-
-const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 /** Trailing slashes are stripped to match `trailingSlash: "never"`. */
 const normalize = (href: string) =>
   href.length > 1 ? href.replace(/\/$/, "") : href || "/";
 
 /**
- * Prefixes a root-absolute path with this build's base. Anything else — a
- * `#anchor`, an external URL — is already correct and passes through.
- */
-export const withBase = (path: string) =>
-  path.startsWith("/") ? normalize(base + path) : path;
-
-/**
- * This site's home page: `/` for the portal, `/kansai` for a city.
+ * A city's home page: `/kansai`.
  *
  * Also the prefix for the section anchors in the nav, which resolve only on
  * the home page and so have to travel there first from a detail page.
  */
-export const home = withBase("/");
+export const tenantHome = (tenant: string) => `/${tenant}`;
 
-/** True on the home page, whether that is `/` or `/kansai`. */
-export const isHome = (url: URL) => normalize(url.pathname) === home;
+/**
+ * A path inside one city. Anything that is not root-absolute — a `#anchor`, an
+ * external URL — is already correct and passes through.
+ */
+export const tenantPath = (tenant: string, path: string) =>
+  path.startsWith("/") ? normalize(`/${tenant}${path}`) : path;
+
+/** True on that city's home page. */
+export const isHome = (url: URL, tenant: string) =>
+  normalize(url.pathname) === tenantHome(tenant);

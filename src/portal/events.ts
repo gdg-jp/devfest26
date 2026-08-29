@@ -1,19 +1,16 @@
 import { getCollection } from "astro:content";
-import { z } from "astro/zod";
 import type { Theme } from "../data/themes";
-import { sanityEnabled } from "../lib/sanity/env";
-import { EVENTS } from "../lib/sanity/queries";
-import { withBase } from "../lib/url";
+import { tenantHome } from "../lib/url";
 import { eventDates } from "../tenants/eventDates";
-import { TENANT_IDS } from "../tenants/ids";
-import { registry } from "../tenants/registry";
+import { discoverCities } from "../tenants/discovery";
 
 /**
  * Every DevFest the front page lists, from two kinds of source.
  *
- * A **city** is one this codebase builds — it has a page here, at `/kansai`,
- * and everything on its card already exists in its tenant config (or its
- * `event` document). Nothing is written twice: add a city and it appears.
+ * A **city** is one this repository publishes — it has a page here, at
+ * `/kansai`, and everything on its card already exists in its `event`
+ * document. Nothing is written twice: publish a city in the Studio and it
+ * appears, with no matrix to edit and no id to register.
  *
  * An **external event** is one the front page only points at: another
  * chapter's DevFest, a past edition, anything whose page lives elsewhere.
@@ -22,6 +19,14 @@ import { registry } from "../tenants/registry";
  * Both follow the same two-source rule as the rest of the content: from Sanity
  * when `SANITY_PROJECT_ID` is set, from the repository when it is not. See
  * `src/content.config.ts`.
+ *
+ * **Every city is listed, including the ones this build is not producing.**
+ * The front page is built by a job of its own, and a city's job may have
+ * failed — in which case that city's pages are still published, from the last
+ * build that succeeded. A card that vanished whenever a build was scoped or a
+ * city's data was mid-edit would point at nothing while `/kansai` was sitting
+ * there answering. Cards come from `src/tenants/discovery.ts`, which validates
+ * only what a card prints.
  */
 
 export interface PortalEvent {
@@ -52,30 +57,6 @@ export interface PortalEvents {
   past: PortalEvent[];
 }
 
-const THEMES = ["blue", "green", "yellow", "red"] as const;
-
-/**
- * The `event` documents, read across every city rather than one at a time.
- *
- * Validated rather than trusted, for the same reason as
- * `src/tenants/fromSanity.ts`: a half-filled Studio document would otherwise
- * put "undefined" on the front page.
- */
-const cityDoc = z.object({
-  slug: z.string().min(1),
-  title: z.string().min(1),
-  theme: z.enum(THEMES),
-  startsAt: z.string().min(1),
-  endsAt: z.string().min(1),
-  venue: z.object({
-    name: z.string().min(1),
-    city: z.string().min(1),
-    region: z.string().min(1),
-  }),
-});
-
-type CityDoc = z.infer<typeof cityDoc>;
-
 /**
  * 2026年10月18日（日）, and both ends of it when an event runs over two days.
  *
@@ -97,76 +78,23 @@ function dateLabel(startsAt: string, endsAt: string) {
   };
 }
 
-/** The cities, from their local configs. */
-function citiesFromConfig(): CityDoc[] {
-  return TENANT_IDS.map((id) => {
-    const { tenant, title, theme, event } = registry[id];
-    return {
-      slug: tenant,
-      title,
-      theme,
-      startsAt: event.startsAt,
-      endsAt: event.endsAt,
-      venue: event.venue,
-    };
-  });
-}
-
-/** The cities, from the CMS. Kept behind a dynamic import so a build with no
-    Sanity never loads the client. */
-async function citiesFromSanity(): Promise<CityDoc[]> {
-  const { sanityClient } = await import("../lib/sanity/client");
-  const raw = await sanityClient().fetch<unknown[]>(EVENTS);
-
-  return raw.map((doc) => {
-    const parsed = cityDoc.safeParse(doc);
-    if (!parsed.success) {
-      const problems = parsed.error.issues
-        .map((i) => `  ${i.path.join(".") || "(root)"}: ${i.message}`)
-        .join("\n");
-      throw new Error(
-        `An "event" document cannot be listed on the front page:\n${problems}`,
-      );
-    }
-    return parsed.data;
-  });
-}
-
 async function cities(): Promise<PortalEvent[]> {
-  const docs = sanityEnabled ? await citiesFromSanity() : citiesFromConfig();
-
-  // Only a city with a build has a page to link to. One that exists in the CMS
-  // but not in the build matrix would get a card pointing at a 404, so it is
-  // left off with a word about why rather than published broken.
-  const built = new Set<string>(TENANT_IDS);
-
-  return docs.flatMap((doc) => {
-    if (!built.has(doc.slug)) {
-      console.warn(
-        `[portal] Leaving "${doc.slug}" off the front page: no build produces ` +
-          `it. Add it to src/tenants/ids.ts and the matrix in ` +
-          `.github/workflows/build.yml, or list it as an external event.`,
-      );
-      return [];
-    }
-
+  return (await discoverCities()).map((doc) => {
     const { isoDate, label } = dateLabel(doc.startsAt, doc.endsAt);
 
-    return [
-      {
-        slug: doc.slug,
-        title: doc.title,
-        region: doc.venue.region,
-        startsAt: doc.startsAt,
-        isoDate,
-        dateLabel: label,
-        city: doc.venue.city,
-        venue: doc.venue.name,
-        theme: doc.theme,
-        href: withBase(`/${doc.slug}`),
-        external: false,
-      },
-    ];
+    return {
+      slug: doc.slug,
+      title: doc.title,
+      region: doc.venue.region,
+      startsAt: doc.startsAt,
+      isoDate,
+      dateLabel: label,
+      city: doc.venue.city,
+      venue: doc.venue.name,
+      theme: doc.theme,
+      href: tenantHome(doc.slug),
+      external: false,
+    };
   });
 }
 

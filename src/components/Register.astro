@@ -1,12 +1,17 @@
 ---
 import { Image } from "astro:assets";
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
 import { BACKDROP_QUALITY, BACKDROP_WIDTH, isRemotePhoto } from "../lib/photo";
 import { registerBackdrop } from "../lib/photos";
 
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 const { event, links } = site;
 
-const backdrop = await registerBackdrop();
+const backdrop = await registerBackdrop(site.tenant);
 ---
 
 <section class="register" id="register">

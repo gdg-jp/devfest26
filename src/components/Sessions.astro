@@ -1,15 +1,21 @@
 ---
-import Props from "./Props.astro";
+import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import SessionCard from "./SessionCard.astro";
 import { getProgram } from "../data/program";
+
+interface Props {
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
 
 // One pastel rotation running through the whole section, so no two adjacent
 // speaker blocks land on the same colour regardless of how tracks are filled.
 // It advances per talk, which for a city with one talk per session is per card.
 let pastelIndex = 0;
 
-const grouped = (await getProgram()).map(({ track, sessions }) => ({
+const grouped = (await getProgram(tenant)).map(({ track, sessions }) => ({
   track,
   sessions: sessions.map((session) => {
     const pastelFrom = pastelIndex;
@@ -20,7 +26,7 @@ const grouped = (await getProgram()).map(({ track, sessions }) => ({
 ---
 
 <section class="sec tint" id="sessions">
-  <Props>
+  <Gutter>
     <Sticker name="dot" width={34} top="5%" right="5%" speed={1.3} />
     <Sticker
       name="slashes"
@@ -38,7 +44,7 @@ const grouped = (await getProgram()).map(({ track, sessions }) => ({
       rotate={-14}
       speed={0.8}
     />
-  </Props>
+  </Gutter>
 
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Sessions &amp; Speakers</p>

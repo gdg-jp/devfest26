@@ -1,13 +1,12 @@
-import type { TenantId } from "./ids";
+import type { LocalTenantId } from "./ids";
 import { kansai } from "./kansai";
 import { tokyo } from "./tokyo";
 import type { TenantConfig } from "./types";
 
 /**
- * Every city's config, keyed by slug.
+ * Every city that exists as a checked-in config, keyed by slug.
  *
- * Separate from `index.ts` because that module resolves exactly one city and
- * does it behind a top-level await. The portal needs all of them and must not
- * wait on a CMS read to get them.
+ * The Markdown fallback, and only that: with Sanity on, cities come from the
+ * CMS and nothing here is read. See `src/tenants/discovery.ts`.
  */
-export const registry: Record<TenantId, TenantConfig> = { kansai, tokyo };
+export const registry: Record<LocalTenantId, TenantConfig> = { kansai, tokyo };

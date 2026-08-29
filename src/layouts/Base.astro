@@ -1,11 +1,15 @@
 ---
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import "../styles/tokens.css";
 import "../styles/base.css";
-import { site } from "../data/site";
 import { themeColor } from "../data/themes";
-import { withBase } from "../lib/url";
+import type { ResolvedTenant } from "../tenants";
+import { tenantPath } from "../lib/url";
 
 interface Props {
+  /** The city this page belongs to. Every page under `/[tenant]/` has one. */
+  site: ResolvedTenant;
   title?: string;
   description?: string;
   /**
@@ -17,6 +21,7 @@ interface Props {
 }
 
 const {
+  site,
   title = site.title,
   description = site.description,
   jsonLd,
@@ -26,9 +31,21 @@ const { event, links } = site;
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
-const ogImage = Astro.site
-  ? new URL(withBase(`/og/${site.tenant}.png`), Astro.site).href
-  : undefined;
+
+/*
+  A city gets its card the moment its `event` document is published, which is
+  before anyone has run `pnpm og` for it. Checking the file rather than
+  assuming it means a new city ships without an og:image instead of with a URL
+  that 404s in every preview that follows the link.
+
+  `public/og/` is shared by every city and served from the site root, so the
+  path is the same in a one-city build as in a full one.
+*/
+const ogFile = new URL(`../../public/og/${site.tenant}.png`, import.meta.url);
+const ogImage =
+  Astro.site && existsSync(fileURLToPath(ogFile))
+    ? new URL(`/og/${site.tenant}.png`, Astro.site).href
+    : undefined;
 
 const eventSchema = {
   "@context": "https://schema.org",
@@ -84,15 +101,17 @@ const eventSchema = {
     {canonical && <link rel="canonical" href={canonical} />}
 
     {
-      /* /favicon.svg is an endpoint, generated in this city's theme colour.
-        The .ico is only there for browsers that ignore SVG icons. */
+      /* /kansai/favicon.svg is an endpoint, generated in this city's theme
+        colour — one per city, because `public/` is shared by all of them. The
+        .ico is a static file and only there for browsers that ignore SVG
+        icons, so it is picked by theme rather than by city. */
     }
-    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
     <link
       rel="icon"
-      href={withBase(`/favicon/${site.theme}.ico`)}
-      sizes="48x48"
+      href={tenantPath(site.tenant, "/favicon.svg")}
+      type="image/svg+xml"
     />
+    <link rel="icon" href={`/favicon/${site.theme}.ico`} sizes="48x48" />
     <meta name="theme-color" content={themeColor(site.theme)} />
 
     <meta property="og:type" content="website" />

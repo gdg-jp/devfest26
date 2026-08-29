@@ -1,11 +1,10 @@
 ---
 import { render } from "astro:content";
-import Page from "../../layouts/Page.astro";
-import SpeakerAvatar from "../../components/SpeakerAvatar.astro";
-import { site } from "../../data/site";
-import { home } from "../../lib/url";
-import { isPortal } from "../../portal/active";
-import { getProgramSpeakers, type SpeakerProgram } from "../../data/program";
+import Page from "../layouts/Page.astro";
+import SpeakerAvatar from "../components/SpeakerAvatar.astro";
+import { buildableCities, type ResolvedTenant } from "../tenants";
+import { tenantHome } from "../lib/url";
+import { getProgramSpeakers, type SpeakerProgram } from "../data/program";
 
 /**
  * One page per speaker who is on the programme.
@@ -15,19 +14,23 @@ import { getProgramSpeakers, type SpeakerProgram } from "../../data/program";
  * not been announced.
  */
 export async function getStaticPaths() {
-  // The portal build publishes only the root list, not a city programme.
-  if (isPortal) return [];
+  const cities = await buildableCities();
 
-  const speakers = await getProgramSpeakers();
-  return speakers.map((entry) => ({
-    params: { slug: entry.slug },
-    props: entry,
-  }));
+  return (
+    await Promise.all(
+      cities.map(async ({ slug, site }) =>
+        (await getProgramSpeakers(slug)).map((entry) => ({
+          params: { tenant: slug, slug: entry.slug },
+          props: { site, ...entry },
+        })),
+      ),
+    )
+  ).flat();
 }
 
-type Props = SpeakerProgram;
+type Props = SpeakerProgram & { site: ResolvedTenant };
 
-const { speaker, appearances } = Astro.props;
+const { site, speaker, appearances } = Astro.props;
 const { Content } = await render(speaker);
 
 const { name, role } = speaker.data;
@@ -54,10 +57,14 @@ const jsonLd = {
 ---
 
 <Page
+  site={site}
   title={name}
   description={description}
   jsonLd={jsonLd}
-  back={{ href: `${home}#sessions`, label: "← セッション一覧" }}
+  back={{
+    href: `${tenantHome(site.tenant)}#sessions`,
+    label: "← セッション一覧",
+  }}
 >
   <div class="head">
     <SpeakerAvatar speaker={speaker} size={112} />

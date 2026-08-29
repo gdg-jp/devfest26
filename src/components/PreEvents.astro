@@ -1,8 +1,8 @@
 ---
-import { getCollection } from "astro:content";
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
+import { byTenant } from "../data/collections";
 import MeetupCard from "./MeetupCard.astro";
-import Props from "./Props.astro";
+import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 
 /**
@@ -10,7 +10,13 @@ import Sticker from "./Sticker.astro";
  * The loudest surface on the page belongs to the main event's own CTA, and a
  * pre-event that is four days out earns position — not visual weight.
  */
-const meetups = (await getCollection("meetups")).sort(
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+
+const meetups = (await byTenant("meetups", site.tenant)).sort(
   (a, b) => a.data.no - b.data.no,
 );
 ---
@@ -19,7 +25,7 @@ const meetups = (await getCollection("meetups")).sort(
   /* A city with no pre-events announced yet renders nothing here. */
   meetups.length > 0 && (
     <section class="sec" id="preevent">
-      <Props>
+      <Gutter>
         <Sticker
           name="plus"
           width={66}
@@ -29,7 +35,7 @@ const meetups = (await getCollection("meetups")).sort(
           speed={0.8}
         />
         <Sticker name="dot" width={34} bottom="16%" left="2%" speed={-1.2} />
-      </Props>
+      </Gutter>
 
       <div class="wrap">
         <p class="eyebrow" data-reveal="up">

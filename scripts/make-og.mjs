@@ -1,10 +1,10 @@
 /**
- * Renders public/og/<tenant>.png for every tenant.
+ * Renders public/og/<city>.png for every city.
  *
- *   pnpm og            # all tenants
+ *   pnpm og            # every city
  *   pnpm og kansai     # just one
  *
- * The card itself is `src/pages/og-preview/[variant].astro`, which reads the
+ * The card itself is `src/pages/[tenant]/og-preview.astro`, which reads the
  * same tenant config the site does — so the image cannot drift from the page.
  * That route only exists when OG_PREVIEW is set, so it never ships.
  *
@@ -20,7 +20,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import sharp from "sharp";
-import { TENANT_IDS } from "../src/tenants/ids.ts";
+import { discoverCitySlugs } from "../src/tenants/discovery.ts";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -44,14 +44,17 @@ if (!chrome) {
   process.exit(1);
 }
 
+// The cities are whatever the CMS holds, so the argument is checked against
+// that rather than against a list in this repository.
+const known = await discoverCitySlugs();
 const requested = process.argv.slice(2);
 for (const t of requested) {
-  if (!TENANT_IDS.includes(t)) {
-    console.error(`Unknown tenant "${t}". Known: ${TENANT_IDS.join(", ")}`);
+  if (!known.includes(t)) {
+    console.error(`Unknown city "${t}". Known: ${known.join(", ")}`);
     process.exit(1);
   }
 }
-const targets = requested.length ? requested : [...TENANT_IDS];
+const targets = requested.length ? requested : known;
 
 mkdirSync("public/og", { recursive: true });
 const shots = resolve("node_modules/.cache/og");
@@ -65,11 +68,13 @@ for (const tenant of targets) {
     ["node_modules/astro/bin/astro.mjs", "build"],
     {
       stdio: "inherit",
-      env: { ...process.env, TENANT: tenant, OG_PREVIEW: "1" },
+      env: { ...process.env, TARGETS: tenant, OG_PREVIEW: "1" },
     },
   );
 
-  const page = resolve(`dist/${tenant}/og-preview/card/index.html`);
+  // `TARGETS=<city>` puts the build in dist/<city>/, and the route inside it
+  // is /<city>/og-preview.
+  const page = resolve(`dist/${tenant}/${tenant}/og-preview/index.html`);
   if (!existsSync(page)) throw new Error(`Card was not built for ${tenant}`);
 
   const raw = join(shots, `${tenant}.png`);

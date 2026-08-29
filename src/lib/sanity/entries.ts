@@ -15,6 +15,10 @@ import type { SanityEntry } from "../../loaders/sanity";
  * These deliberately produce exactly the shape the existing zod schemas
  * already validate, so the collections keep one schema across both sources and
  * the components keep reading one set of field names.
+ *
+ * Every city-scoped mapper carries `tenant` through from the query. One build
+ * now holds several cities in one store, and that field is what tells them
+ * apart — see `byTenant` in `src/data/collections.ts`.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -27,6 +31,7 @@ export function speakerEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
     data: {
+      tenant: doc.tenant,
       name: doc.name,
       role: doc.role,
       initial: doc.initial ?? undefined,
@@ -49,6 +54,7 @@ export function trackEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
     data: {
+      tenant: doc.tenant,
       order: doc.order,
       label: doc.label,
       sub: doc.sub,
@@ -69,6 +75,7 @@ export function sessionEntry(doc: Doc): SanityEntry {
     // GROQ dereferenced `track` and `speakers` to plain `_id` strings;
     // `reference()` turns them back into collection references when it parses.
     data: {
+      tenant: doc.tenant,
       track: doc.track,
       order: doc.order,
       title: doc.title ?? undefined,
@@ -88,6 +95,7 @@ export function talkEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
     data: {
+      tenant: doc.tenant,
       session: doc.session,
       order: doc.order,
       title: doc.title ?? undefined,
@@ -104,6 +112,7 @@ export function meetupEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
     data: {
+      tenant: doc.tenant,
       no: doc.no,
       title: doc.title,
       subtitle: doc.subtitle ?? undefined,
@@ -134,6 +143,7 @@ export function partnerEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
     data: {
+      tenant: doc.tenant,
       name: doc.name,
       url: doc.url,
       handle: doc.handle,
@@ -146,11 +156,13 @@ export function partnerEntry(doc: Doc): SanityEntry {
 }
 
 export function aboutEntry(doc: Doc): SanityEntry {
-  // The component looks this up by a fixed id, so the Studio's document id is
-  // not used here — there is only ever one About page per city.
+  // Keyed by document id, not by a fixed "about": one build holds several
+  // cities, and a fixed id would have each city's About page overwrite the
+  // last one's. The component finds it by tenant instead.
   return {
-    id: "about",
+    id: doc._id,
     data: {
+      tenant: doc.tenant,
       lead: doc.lead,
       callout: doc.callout ?? undefined,
       audience: doc.audienceItems?.length
@@ -167,7 +179,7 @@ export function aboutEntry(doc: Doc): SanityEntry {
 }
 
 /**
- * One photo set per city, looked up by a fixed id like the About page.
+ * One photo set per city, found by tenant like the About page.
  *
  * Positions are not editable here on purpose: where a prop sits in the gutter
  * is a layout decision that lives with the layout, so the Studio supplies an
@@ -188,8 +200,9 @@ export function photoSetEntry(doc: Doc): SanityEntry {
       : undefined;
 
   return {
-    id: "photos",
+    id: doc._id,
     data: {
+      tenant: doc.tenant,
       registerBackdrop: backdrop(
         doc.registerBackdrop,
         doc.registerBackdropCredit,

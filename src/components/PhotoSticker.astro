@@ -10,6 +10,8 @@ import { propPhoto } from "../lib/photos";
  * before anybody has taken it.
  */
 interface Props {
+  /** Whose photo set to claim from. */
+  tenant: string;
   /** Which prop in the city's ordered list to claim. */
   index: number;
   /** Rendered width in px. Defaults to the shared prop size. */
@@ -25,6 +27,7 @@ interface Props {
 }
 
 const {
+  tenant,
   index,
   width = PROP_SIZE,
   top,
@@ -35,7 +38,7 @@ const {
   speed = 0.5,
 } = Astro.props;
 
-const photo = await propPhoto(index);
+const photo = await propPhoto(tenant, index);
 
 /*
   A CSS background rather than an <img>, which is the whole point: the

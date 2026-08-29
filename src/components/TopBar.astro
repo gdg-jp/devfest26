@@ -1,13 +1,20 @@
 ---
 import Logo from "./Logo.astro";
-import { site } from "../data/site";
-import { home, isHome } from "../lib/url";
+import type { ResolvedTenant } from "../tenants";
+import { isHome, tenantHome } from "../lib/url";
+
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 
 // The nav is a set of page anchors, which only resolve on the page that has
 // the sections. From a session or speaker page they have to travel home first;
 // the scroll-spy simply finds nothing to observe there.
-// `home` is `/kansai` here, not `/` — this site is mounted on a path.
-const onHome = isHome(Astro.url);
+// `home` is `/kansai` here, not `/` — every city is a path of its own.
+const home = tenantHome(site.tenant);
+const onHome = isHome(Astro.url, site.tenant);
 const prefix = onHome ? "" : home;
 ---
 

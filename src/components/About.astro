@@ -1,10 +1,18 @@
 ---
-import { getEntry, render } from "astro:content";
-import Props from "./Props.astro";
+import { render } from "astro:content";
+import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import { inlineMarkdown } from "../lib/inlineMarkdown";
+import { byTenant } from "../data/collections";
 
-const entry = await getEntry("about", "about");
+interface Props {
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
+
+// At most one per city; a city that has not written its pitch renders nothing.
+const entry = (await byTenant("about", tenant))[0];
 const Content = entry ? (await render(entry)).Content : null;
 ---
 
@@ -12,7 +20,7 @@ const Content = entry ? (await render(entry)).Content : null;
   /* A city that has not written its About copy yet renders nothing here. */
   entry && Content && (
     <section class="sec tint bordered" id="about">
-      <Props>
+      <Gutter>
         <Sticker
           name="cross"
           width={70}
@@ -29,7 +37,7 @@ const Content = entry ? (await render(entry)).Content : null;
           rotate={8}
           speed={-0.8}
         />
-      </Props>
+      </Gutter>
 
       <div class="wrap">
         <p class="eyebrow" data-reveal="up">

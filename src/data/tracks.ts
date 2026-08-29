@@ -9,20 +9,17 @@
  * run two tracks or five without any of this changing.
  */
 
-import { getCollection, type CollectionEntry } from "astro:content";
-import { tenant } from "../tenants";
+import type { CollectionEntry } from "astro:content";
+import { byTenant } from "./collections";
 
 export type Track = CollectionEntry<"tracks">;
 export type { TimetableRow } from "../tenants/types";
 
-/** Every track for this city, in the order it should be rendered. */
-export async function getTracks(): Promise<Track[]> {
-  const tracks = await getCollection("tracks");
+/** Every track for one city, in the order it should be rendered. */
+export async function getTracks(tenant: string): Promise<Track[]> {
+  const tracks = await byTenant("tracks", tenant);
   return tracks.sort((a, b) => a.data.order - b.data.order);
 }
-
-/** Timetable rows — the day at track granularity, which is all that is fixed. */
-export const timetable = tenant.timetable;
 
 /** Pastel rotation used to keep adjacent speaker blocks from matching. */
 export const pastelCycle = ["blue", "green", "yellow", "red"] as const;

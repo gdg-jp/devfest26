@@ -1,8 +1,8 @@
-import { getEntry } from "astro:content";
+import { byTenant } from "../data/collections";
 import type { Photo } from "./photo";
 
 /**
- * The city's photo set, or nothing.
+ * A city's photo set, or nothing.
  *
  * Photos trail the events they come from: a city in its first year has none,
  * and a city mid-preparation has some. Rather than make every section repeat
@@ -10,22 +10,26 @@ import type { Photo } from "./photo";
  * there is no photo to show.
  */
 
-async function photoSet() {
-  // Tokyo has no `photos/photos.md` and no `photoSet` document. Astro treats a
-  // missing entry in a collection that exists as a miss, not an error.
-  return await getEntry("photos", "photos");
+async function photoSet(tenant: string) {
+  // At most one per city — and none at all for a city that has taken no
+  // photographs yet, which is a miss rather than an error.
+  return (await byTenant("photos", tenant))[0];
 }
 
 type Backdrop = { image: Photo; credit?: string };
 
 /** The photo printed into the tenant colour behind the closing CTA. */
-export async function registerBackdrop(): Promise<Backdrop | undefined> {
-  return (await photoSet())?.data.registerBackdrop;
+export async function registerBackdrop(
+  tenant: string,
+): Promise<Backdrop | undefined> {
+  return (await photoSet(tenant))?.data.registerBackdrop;
 }
 
 /** The photo behind the countdown band, under the opaque digit cards. */
-export async function countdownBackdrop(): Promise<Backdrop | undefined> {
-  return (await photoSet())?.data.countdownBackdrop;
+export async function countdownBackdrop(
+  tenant: string,
+): Promise<Backdrop | undefined> {
+  return (await photoSet(tenant))?.data.countdownBackdrop;
 }
 
 /**
@@ -33,13 +37,16 @@ export async function countdownBackdrop(): Promise<Backdrop | undefined> {
  * adding a photo to the end of the list in the Studio fills the next empty
  * slot without moving the ones already placed.
  */
-export async function propPhoto(index: number): Promise<Photo | undefined> {
-  return (await photoSet())?.data.props?.[index]?.image;
+export async function propPhoto(
+  tenant: string,
+  index: number,
+): Promise<Photo | undefined> {
+  return (await photoSet(tenant))?.data.props?.[index]?.image;
 }
 
 /** Every credit worth printing, de-duplicated, for the footer colophon. */
-export async function photoCredits(): Promise<string[]> {
-  const set = await photoSet();
+export async function photoCredits(tenant: string): Promise<string[]> {
+  const set = await photoSet(tenant);
   const credits = [
     set?.data.registerBackdrop?.credit,
     set?.data.countdownBackdrop?.credit,

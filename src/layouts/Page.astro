@@ -3,7 +3,7 @@ import Base from "./Base.astro";
 import Sprite from "../components/Sprite.astro";
 import TopBar from "../components/TopBar.astro";
 import Footer from "../components/Footer.astro";
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
 
 /**
  * The shell for the pages behind the programme: one session, one talk, one
@@ -15,6 +15,8 @@ import { site } from "../data/site";
  * column and a way back to where they came from.
  */
 interface Props {
+  /** The city this page belongs to. */
+  site: ResolvedTenant;
   /** Page title. The event name is appended here, not by the caller. */
   title: string;
   description?: string;
@@ -22,10 +24,11 @@ interface Props {
   back: { href: string; label: string };
 }
 
-const { title, description, jsonLd, back } = Astro.props;
+const { site, title, description, jsonLd, back } = Astro.props;
 ---
 
 <Base
+  site={site}
   title={`${title}｜${site.title}`}
   description={description}
   jsonLd={jsonLd}
@@ -33,14 +36,14 @@ const { title, description, jsonLd, back } = Astro.props;
   {/* The lockup in the top bar and the footer is drawn from here. */}
   <Sprite stickers={false} />
 
-  <TopBar />
+  <TopBar site={site} />
   <main id="top" class="detail">
     <div class="wrap">
       <a class="back" href={back.href}>{back.label}</a>
       <slot />
     </div>
   </main>
-  <Footer />
+  <Footer site={site} />
 </Base>
 
 <style is:global>

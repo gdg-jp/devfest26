@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { site } from "../data/site";
+import type { ResolvedTenant } from "../tenants";
 import {
   BACKDROP_QUALITY,
   BACKDROP_WIDTH,
@@ -9,7 +9,13 @@ import {
 } from "../lib/photo";
 import { countdownBackdrop } from "../lib/photos";
 
-const backdrop = await countdownBackdrop();
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+
+const backdrop = await countdownBackdrop(site.tenant);
 const backdropHeight = Math.round(BACKDROP_WIDTH * COUNTDOWN_BACKDROP_RATIO);
 
 const cells = [
