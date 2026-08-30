@@ -57,7 +57,7 @@ GDG Accounts の userinfo が返す `https://gdgs.jp/claims/chapters` が**空�
 
 ## Presentation — 見ながら書く
 
-`/studio` を開くと、**左に編集フォーム、右にプレビュー**という 1 画面になります（Sanity Presentation）。ページの本文をクリックすると左の該当フィールドに飛び、入力の手が止まると右が更新されます（`src/preview/visualEditing.ts` の `QUIET_MS`）。
+`/studio` を開くと、**左に編集フォーム、右にプレビュー**という 1 画面になります（Sanity Presentation）。ページの本文をクリックすると左の該当フィールドに飛び、入力の手が止まると右が更新されます（`src/preview/visualEditing.ts` の `QUIET_MS`）。「Edit」スイッチを切った状態はそのタブの `sessionStorage` に残り、ページを移動しても続きます（同ファイルの `OVERLAY_KEY`）。Studio がつながると枠が作り直されて「入」に戻るので、応答が止まってから切り直します（同 `SETTLE_MS`）。
 
 ```text
 https://<プレビューの URL>/studio     ← Studio。ゲートの内側

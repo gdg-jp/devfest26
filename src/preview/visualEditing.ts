@@ -79,7 +79,247 @@ function reloadAt(when: number): Promise<void> {
 /** The revision the reload now waiting was set for. */
 let saved: string | undefined;
 
+/**
+ * Whether the edit overlay is on — the Studio's "Edit" switch — and whether
+ * that survives a page load.
+ *
+ * The switch does not hold this. It is a mirror of a `useState(true)` living in
+ * the page's own overlay, and every link here is a real navigation, so each
+ * page arrives with a fresh `true`: turn the overlay off to read a page, click
+ * through to the next one, and it is on again. Sanity exposes no initial value
+ * and no setter for it — only a toggle — so the answer is kept here and put
+ * back on each load.
+ *
+ * `sessionStorage`, so it belongs to this tab and lasts as long as the tab
+ * does. Off is a way of reading a page, not a setting: a Studio opened tomorrow
+ * should start where a new editor would.
+ */
+const OVERLAY_KEY = "preview:overlay";
+
+let overlayOn = ((): boolean => {
+  try {
+    return sessionStorage.getItem(OVERLAY_KEY) !== "off";
+  } catch {
+    return true;
+  }
+})();
+
+function rememberOverlay(on: boolean): void {
+  overlayOn = on;
+  try {
+    sessionStorage.setItem(OVERLAY_KEY, on ? "on" : "off");
+  } catch {
+    // Storage can be denied to a framed page. Then this page is the last one
+    // that knows, which is exactly where we started.
+  }
+}
+
+/**
+ * What the overlay's shortcut means by "mod", resolved the way the overlay
+ * resolves it: Cmd on Apple hardware and Ctrl everywhere else. Reading the
+ * other one would have this file recording a toggle that never happened.
+ */
+const MOD = /Mac|iPod|iPhone|iPad/.test(navigator.platform)
+  ? "metaKey"
+  : "ctrlKey";
+
+/**
+ * Where the overlay itself has got to, which is not the same question as what
+ * the editor asked for.
+ *
+ * `overlayOn` above is the editor's answer, and the one carried to the next
+ * page. This is the library's own `useState(true)`, followed here move for
+ * move — the switch, the shortcut, the Alt peek, and the flips below — because
+ * taking the overlay down needs one move from up and a different one from
+ * down, and there is no way to ask which it is.
+ */
+let overlayShown = true;
+
+/** True only while the toggle below is ours, so it is not read back as the editor's. */
+let flipping = false;
+
+/**
+ * Flip the overlay, the only way the library allows.
+ *
+ * There is no API for this state, and the message the switch sends cannot be
+ * forged from in here — the channel checks that it came from the Studio's
+ * window. What is left is the keyboard shortcut the overlay itself listens
+ * for. It checks only the modifiers it named, so an event carrying both
+ * satisfies either reading of `mod`, and this half does not have to agree with
+ * the constant above about what machine it is running on.
+ */
+function flipOverlay(): void {
+  overlayShown = !overlayShown;
+  flipping = true;
+  window.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "\\", ctrlKey: true, metaKey: true }),
+  );
+  flipping = false;
+}
+
+/**
+ * Take the overlay down, from wherever it happens to be.
+ *
+ * One flip if the library still has it up. If it already has it down, the flip
+ * that put it there has probably been undone underneath: the overlay is torn
+ * down and rebuilt whenever the Studio connects or answers the questions the
+ * page asks on connecting, and a rebuilt one comes up switched on without
+ * telling the state it belongs to. So it is switched on and then off again —
+ * on the next turn of the loop rather than in the same one, because React has
+ * to be allowed to run its effect in between or it folds the pair into
+ * nothing.
+ *
+ * Neither case shows: both flips land inside the same frame, and the second is
+ * the one whose effect takes the overlay down and says so to the Studio.
+ */
+function hideOverlay(): void {
+  const rebuilt = !overlayShown;
+  flipOverlay();
+  if (rebuilt) window.setTimeout(flipOverlay);
+}
+
+/**
+ * How long the Studio has to stop answering before the overlay is put back.
+ *
+ * The rebuilds above are answer-driven: the overlay is replaced once when the
+ * channel is established and again when the Studio answers what the page asked
+ * it on connecting, and each replacement reports itself as on. Those answers
+ * come from a Studio in the same browser, so they land within a fraction of a
+ * second of one another. The wait worth having is therefore not one measured
+ * from the page load — that gap is however long the Studio takes to notice the
+ * frame, and it is seconds — but one measured from the last answer.
+ */
+const SETTLE_MS = 500;
+
+let settleTimer: number | undefined;
+let settling = false;
+
+/**
+ * A connection, or an answer on a connection that is still being set up: the
+ * overlay may have been rebuilt, so put it back once the answers stop.
+ *
+ * Answers only count while a connection is settling, so this cannot chase its
+ * own tail — putting the overlay back is itself something the Studio may have
+ * something to say about.
+ */
+function settle(connected: boolean): void {
+  if (connected) settling = true;
+  else if (!settling) return;
+
+  window.clearTimeout(settleTimer);
+  settleTimer = window.setTimeout(() => {
+    settling = false;
+    if (!overlayOn) hideOverlay();
+  }, SETTLE_MS);
+}
+
+/**
+ * Follow the switch, so the next page can be put back the same way, and follow
+ * the channel, so this one can be.
+ *
+ * Two things turn the overlay off and leave it off: the switch, which reaches
+ * this page as a message on the Presentation channel, and Ctrl/Cmd+\ pressed
+ * inside the frame, which never leaves this window. Holding Alt flips it too,
+ * but that one is a peek — it comes back on the way up — so it moves the
+ * overlay without moving the editor's answer.
+ *
+ * Both spellings of every message, because Presentation still talks the older
+ * protocol on the wire. What the Studio actually posts is `sanity/channels`
+ * and names like `presentation/toggleOverlay`; a shim inside the library
+ * rewrites the message, in place, to the `sanity/comlink` names its own code
+ * is written against. Which pair a listener sees therefore depends on whether
+ * it runs before or after that shim — this one is registered first, so today
+ * it sees the old names — and answering to either is what keeps this working
+ * when the shim eventually goes.
+ */
+function watchOverlay(): void {
+  window.addEventListener("message", (event) => {
+    if (event.source !== window.parent) return;
+    const message = event.data;
+    if (
+      message?.domain !== "sanity/comlink" &&
+      message?.domain !== "sanity/channels"
+    ) {
+      return;
+    }
+
+    switch (message.type) {
+      case "presentation/toggle-overlay":
+      case "presentation/toggleOverlay":
+        overlayShown = !overlayShown;
+        rememberOverlay(!overlayOn);
+        return;
+
+      // The last step of the handshake: from here the two ends are talking.
+      case "comlink/handshake/ack":
+      case "handshake/ack":
+        settle(true);
+        return;
+
+      case "comlink/response":
+      case "channel/response":
+        settle(false);
+        return;
+    }
+  });
+
+  let altHeld = false;
+
+  window.addEventListener("keydown", (event) => {
+    if (flipping) return;
+
+    if (event.key === "\\" && event[MOD]) {
+      overlayShown = !overlayShown;
+      rememberOverlay(!overlayOn);
+      return;
+    }
+
+    // Alt by itself. Held with anything else it belongs to some other
+    // shortcut, and the overlay passes on it too.
+    if (event.key === "Alt" && !altHeld) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) return;
+      altHeld = true;
+      overlayShown = !overlayShown;
+    }
+  });
+
+  const release = (): void => {
+    if (!altHeld) return;
+    altHeld = false;
+    overlayShown = !overlayShown;
+  };
+
+  window.addEventListener("keyup", (event) => {
+    if (event.key === "Alt") release();
+  });
+
+  // A peek that ended by leaving the page rather than by letting go. The
+  // overlay counts that as the key coming up, and so does this.
+  window.addEventListener("blur", release);
+}
+
+/** Whether this page has already been put back the way the last one was left. */
+let restored = false;
+
+function restoreOverlay(): void {
+  if (restored) return;
+  restored = true;
+  if (overlayOn) return;
+
+  /*
+    Once the document has finished loading, because the Studio takes the
+    overlay's report of its own state only after it has seen the frame load —
+    sent earlier it is dropped, and the switch would sit there saying the
+    opposite of the page.
+  */
+  const hide = () => window.setTimeout(hideOverlay);
+  if (document.readyState === "complete") hide();
+  else window.addEventListener("load", hide, { once: true });
+}
+
 export function init(): void {
+  watchOverlay();
+
   enableVisualEditing({
     /*
       Over the bar along the bottom of every preview page, which sits at 9999
@@ -160,6 +400,16 @@ export function init(): void {
         const report = () =>
           navigate({ type: "replace", url: window.location.href });
         report();
+
+        /*
+          And the first moment the overlay is known to be listening. This runs
+          from an effect that mounts after the overlay's own, so the shortcut
+          `restoreOverlay` sends has somewhere to land. There is no earlier
+          signal, and doing it from `init` would be shouting at a page that has
+          not rendered the overlay yet.
+        */
+        restoreOverlay();
+
         window.addEventListener("popstate", report);
         return () => window.removeEventListener("popstate", report);
       },
