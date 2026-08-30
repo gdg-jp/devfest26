@@ -194,6 +194,12 @@ async function serveSite(
  * would also let them past the two headers above, and "every response from
  * this origin is `no-store` and `noindex`" is worth more than the round trip
  * this costs on a genuine 404.
+ *
+ * The whole request goes across, not its URL: a URL on its own is a GET, so a
+ * HEAD would come back carrying the body it asked not to be sent, and a
+ * conditional request would lose the `If-None-Match` that lets it be answered
+ * 304. There is no body to worry about forwarding twice — the two methods that
+ * get here cannot have one.
  */
 async function private404(
   rendered: Response,
@@ -203,7 +209,7 @@ async function private404(
   if (rendered.status !== 404) return rendered;
   if (request.method !== "GET" && request.method !== "HEAD") return rendered;
 
-  const asset = await env.ASSETS.fetch(request.url);
+  const asset = await env.ASSETS.fetch(request);
   return asset.status === 404 ? rendered : asset;
 }
 
