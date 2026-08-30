@@ -1,28 +1,58 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
+  "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "devfest26-preview",
+  // The gate, not Astro's handler. `@astrojs/cloudflare` only fills this in
+  // when it is absent, so naming it here is what puts authentication in front
+  // of the site — see `src/index.ts`.
   "main": "./src/index.ts",
   // Not "today": workerd only knows dates up to the release it ships in, and a
   // date past that is a hard error rather than a warning.
   "compatibility_date": "2026-07-25",
-  // openid-client reaches for a few Node built-ins.
+  // openid-client reaches for a few Node built-ins, and so does the Astro
+  // server bundle.
   "compatibility_flags": ["nodejs_compat"],
 
-  // The site itself, uploaded with the Worker. `pnpm build` at the repository
-  // root with no TARGETS writes exactly one tree containing the front page and
-  // every city, which is the shape this wants — the per-city split in
-  // `.github/workflows/build.yml` exists so one city's failure cannot take
-  // another off GitHub Pages, and there is nothing to graft here.
+  // The site's client build, uploaded with the Worker: stylesheets, scripts,
+  // images, `public/`. The pages themselves are not in here any more — they
+  // are rendered per request from the drafts, which is the whole point — so
+  // `directory` is left to the adapter, which knows where its own client
+  // output went.
   "assets": {
     "binding": "ASSETS",
-    "directory": "../dist/all",
     // `astro.config.ts` sets `trailingSlash: "never"`, so `/kansai/` is not a
     // second URL for the same page — it is redirected to `/kansai`.
     "html_handling": "drop-trailing-slash",
-    // The whole point. Without this Cloudflare answers asset requests before
-    // the Worker ever runs, and the gate would only cover the paths that do
-    // not match a file — which is none of them.
-    "run_worker_first": true
+    /*
+      The whole point of the first rule. Without it Cloudflare answers asset
+      requests before the Worker ever runs, and the gate would only cover the
+      paths that do not match a file — which is none of them.
+
+      The exclusions after it are the five URL namespaces a Vite dev server
+      answers from, and they are here because `astro dev` runs this same
+      config: `@cloudflare/vite-plugin` turns these rules into its dev routing,
+      and anything sent to the Worker never reaches Vite's own middleware. With
+      `run_worker_first: true` that is every request, so the dev server serves
+      no stylesheet and no client script at all — the page renders and then
+      nothing on it moves.
+
+      They cost the deployment nothing. The built Worker's assets are `_astro/`
+      and a copy of `public/`; no file it uploads lives under any of these, so
+      the asset router answers each of them 404 without the Worker running,
+      which is what it would have answered anyway.
+    */
+    "run_worker_first": [
+      "/*",
+      // Vite's own client, and its HMR plumbing.
+      "!/@vite/*",
+      // Resolved bare and virtual module ids — Astro's dev toolbar arrives here.
+      "!/@id/*",
+      // Files outside the project root: linked packages, the pnpm store.
+      "!/@fs/*",
+      // The source tree itself, which is most of a dev module graph.
+      "!/src/*",
+      // Pre-bundled dependencies, under `node_modules/.vite/deps`.
+      "!/node_modules/*"
+    ]
   },
 
   "vars": {

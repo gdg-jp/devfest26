@@ -3,6 +3,7 @@ import { render } from "astro:content";
 import Page from "../layouts/Page.astro";
 import SpeakerAvatar from "../components/SpeakerAvatar.astro";
 import { buildableCities, type ResolvedTenant } from "../tenants";
+import { notFound, speakerProps } from "./params";
 import { tenantHome } from "../lib/url";
 import { getProgramSpeakers, type SpeakerProgram } from "../data/program";
 
@@ -30,7 +31,12 @@ export async function getStaticPaths() {
 
 type Props = SpeakerProgram & { site: ResolvedTenant };
 
-const { site, speaker, appearances } = Astro.props;
+// See `src/city/params.ts`: the static build filled these in from
+// `getStaticPaths`, the preview has only the URL.
+const props = Astro.props.site ? Astro.props : await speakerProps(Astro.params);
+if (!props) return notFound(`登壇者「${Astro.params.slug}」`);
+
+const { site, speaker, appearances } = props;
 const { Content } = await render(speaker);
 
 const { name, role } = speaker.data;

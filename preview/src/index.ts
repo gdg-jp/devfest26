@@ -1,14 +1,22 @@
 import * as oidc from "openid-client";
+import site from "@astrojs/cloudflare/entrypoints/server";
 
 /**
  * The gate in front of the draft preview.
  *
  * The published site is static files on GitHub Pages, which can gate nothing —
- * which is exactly why the draft build does not go there. It is uploaded
- * beside this Worker instead, and `run_worker_first` in `wrangler.jsonc` means
- * every request for it arrives here first: HTML, stylesheet and image alike.
- * Gating only the pages would leave `/kansai/_astro/*.css` answering to
- * anybody, and unpublished content is just as readable in a stylesheet.
+ * which is exactly why the draft build does not go there. The preview is a
+ * Worker instead, and `run_worker_first` in `wrangler.jsonc` means every
+ * request arrives here first: page, stylesheet and image alike. Gating only
+ * the pages would leave `/kansai/_astro/*.css` answering to anybody, and
+ * unpublished content is just as readable in a stylesheet.
+ *
+ * This file *is* the Worker — `main` in `wrangler.jsonc` names it, and
+ * `@astrojs/cloudflare` only supplies its own entrypoint when nothing else
+ * has. That is the right way round, and not an arrangement of convenience:
+ * the adapter's handler matches and returns static assets itself, before any
+ * Astro middleware would run, so a gate written inside the app would be a gate
+ * every asset walked past.
  *
  * The OIDC half is the `accounts-oidc-client-demo` Worker with its demo page
  * removed — PKCE, state and nonce, an authorization code grant, then the
@@ -16,18 +24,30 @@ import * as oidc from "openid-client";
  * GDG Accounts never reaches this file: everything about the provider arrives
  * through discovery.
  *
- * No Sanity token lives here. The drafts were rendered into HTML by the build
- * that produced these assets, so there is nothing for this Worker to hold and
- * nothing for a browser to find.
+ * The Sanity read token *does* live here, as a Worker secret, and that is the
+ * change the request-time rendering brought with it. It never reaches a
+ * browser: it is read by the site's server code inside this isolate, and what
+ * leaves is HTML. `SANITY_READ_TOKEN` belongs to this deployment and to no
+ * other — see `.github/workflows/build.yml`, which deliberately has none.
  */
 
 type Env = {
-  /** The built site, uploaded alongside this Worker. See `wrangler.jsonc`. */
+  /** The site's client build, uploaded alongside. See `wrangler.jsonc`. */
   ASSETS: Fetcher;
   IDP_ISSUER: string;
   IDP_CLIENT_ID?: string;
   IDP_CLIENT_SECRET?: string;
   SESSION_SECRET?: string;
+  /**
+   * Read by the site's own code through `process.env`, which `nodejs_compat`
+   * fills from these — see `src/lib/sanity/env.ts`. Declared here because
+   * without them this deployment is not a draft preview at all, and saying so
+   * on the setup page is better than serving published content under a name
+   * that promises drafts.
+   */
+  SANITY_PROJECT_ID?: string;
+  SANITY_DATASET?: string;
+  SANITY_READ_TOKEN?: string;
 };
 
 /** One entry of the `https://gdgs.jp/claims/chapters` claim. */
@@ -86,13 +106,31 @@ const decoder = new TextDecoder();
 const issuerCache = new Map<string, Promise<oidc.Configuration>>();
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    context: ExecutionContext,
+  ): Promise<Response> {
     const url = new URL(request.url);
 
     // Before the routes, not after: a Worker missing its credentials cannot
     // establish a session, and "cannot check" must never fall through to
     // "serve the drafts anyway".
-    if (!isConfigured(env)) return setupPage(url);
+    const missing = missingConfig(env, url);
+    if (missing.length > 0) return setupPage(url, missing);
+
+    /*
+      `html_handling: "drop-trailing-slash"` in `wrangler.jsonc` promises this,
+      and `run_worker_first` is what stops it happening — the asset router
+      never sees the request. Without it `/kansai/` is a 404 here while the
+      published site answers it, which is a difference a pasted URL finds
+      immediately.
+    */
+    if (url.pathname.length > 1 && url.pathname.endsWith("/")) {
+      return redirect(
+        `${url.origin}${url.pathname.replace(/\/+$/, "")}${url.search}`,
+      );
+    }
 
     if (url.pathname === "/auth/login") return startLogin(request, env);
     if (url.pathname === "/auth/callback") return finishLogin(request, env);
@@ -102,7 +140,7 @@ export default {
     if (!session) return challenge(request, url);
     if (!isMember(session)) return refusal(session);
 
-    return serveAsset(request, env);
+    return serveSite(request, env, context);
   },
 } satisfies ExportedHandler<Env>;
 
@@ -111,20 +149,62 @@ export default {
  * ---------------------------------------------------------------------- */
 
 /**
- * Serves the draft build, with the two headers that keep it from outliving the
- * request that was allowed to make it.
+ * Hands the request to the site, with the two headers that keep the answer
+ * from outliving the request that was allowed to make it.
+ *
+ * Everything past this line is Astro's: `@astrojs/cloudflare` matches static
+ * assets against the `ASSETS` binding and otherwise renders the page, reading
+ * the drafts out of Sanity as it goes.
  *
  * `no-store` because a shared cache holding a page fetched with a session
  * would hand it to the next request without one, and because a draft that
  * changed a minute ago is the entire reason this deployment exists.
- * `noindex` in case a crawler ever does get a page.
+ * `noindex` in case a crawler ever does get a page. Both are set here rather
+ * than per route, so a route added later cannot forget them.
  */
-async function serveAsset(request: Request, env: Env): Promise<Response> {
-  const asset = await env.ASSETS.fetch(request);
-  const response = new Response(asset.body, asset);
+async function serveSite(
+  request: Request,
+  env: Env,
+  context: ExecutionContext,
+): Promise<Response> {
+  const rendered = await private404(
+    await site.fetch(request, env, context),
+    request,
+    env,
+  );
+  const response = new Response(rendered.body, rendered);
   response.headers.set("Cache-Control", "no-store");
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
   return response;
+}
+
+/**
+ * `public/` — the favicons and the OG cards — when the site says there is no
+ * such page.
+ *
+ * The deployed Worker never needs this: the adapter's handler asks `ASSETS`
+ * itself for anything that matched no route. Under `astro dev` it does not,
+ * because Astro's dev app answers *every* unmatched path with its own 404
+ * page, so the handler sees a route and the asset fallback is never reached —
+ * and a `/favicon/blue.ico` that the published site serves is missing from
+ * the preview of it.
+ *
+ * Asking here rather than opening a hole in `run_worker_first`: these files
+ * are public on the published site, but a rule that let them past the Worker
+ * would also let them past the two headers above, and "every response from
+ * this origin is `no-store` and `noindex`" is worth more than the round trip
+ * this costs on a genuine 404.
+ */
+async function private404(
+  rendered: Response,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (rendered.status !== 404) return rendered;
+  if (request.method !== "GET" && request.method !== "HEAD") return rendered;
+
+  const asset = await env.ASSETS.fetch(request.url);
+  return asset.status === 404 ? rendered : asset;
 }
 
 /**
@@ -208,9 +288,10 @@ function isNavigation(request: Request): boolean {
  * ---------------------------------------------------------------------- */
 
 async function startLogin(request: Request, env: Env): Promise<Response> {
-  if (!isConfigured(env)) return setupPage(new URL(request.url));
-
   const url = new URL(request.url);
+  const missing = missingConfig(env, url);
+  if (missing.length > 0) return setupPage(url, missing);
+
   const issuer = await getIssuer(env);
   const codeVerifier = oidc.randomPKCECodeVerifier();
   const codeChallenge = await oidc.calculatePKCECodeChallenge(codeVerifier);
@@ -249,7 +330,8 @@ async function finishLogin(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const clearTransaction = clearCookie(TRANSACTION_COOKIE, url);
 
-  if (!isConfigured(env)) return setupPage(url);
+  const missing = missingConfig(env, url);
+  if (missing.length > 0) return setupPage(url, missing);
 
   if (url.searchParams.has("error")) {
     return loginFailure(
@@ -381,18 +463,46 @@ async function getIssuer(env: Env): Promise<oidc.Configuration> {
   return cached;
 }
 
-function isConfigured(
-  env: Env,
-): env is Env &
-  Required<
-    Pick<Env, "IDP_CLIENT_ID" | "IDP_CLIENT_SECRET" | "SESSION_SECRET">
-  > {
-  return Boolean(
-    env.IDP_ISSUER &&
-    env.IDP_CLIENT_ID &&
-    env.IDP_CLIENT_SECRET &&
-    env.SESSION_SECRET,
-  );
+/**
+ * The names this Worker cannot do without, and which of them are unset.
+ *
+ * Two kinds, and both are refusals rather than degradations. Without the OIDC
+ * credentials there is no way to establish a session, and "cannot check" must
+ * never fall through to "serve the drafts anyway". Without the Sanity read
+ * token there are no drafts: the site would render perfectly well from
+ * published content and look exactly like a preview, which is the one outcome
+ * that would teach an editor to trust "my draft is not in there yet".
+ *
+ * The second check used to live in `.github/workflows/preview.yml`, where it
+ * could only ask whether CI had the token. Rendering at request time moved the
+ * token into this Worker, so the question can now be asked of the thing that
+ * actually needs it.
+ */
+function missingConfig(env: Env, url: URL): string[] {
+  const deployed = url.protocol === "https:";
+
+  const required: Record<string, string | undefined> = {
+    IDP_ISSUER: env.IDP_ISSUER,
+    IDP_CLIENT_ID: env.IDP_CLIENT_ID,
+    IDP_CLIENT_SECRET: env.IDP_CLIENT_SECRET,
+    SESSION_SECRET: env.SESSION_SECRET,
+    // Without a project there is no content at all, anywhere.
+    SANITY_PROJECT_ID: env.SANITY_PROJECT_ID,
+    /*
+      Only on a deployment, which is the same `https:` test the session cookie
+      uses for its `Secure` flag. A deployed preview that cannot read drafts is
+      published content wearing a preview URL, and refusing to serve it is the
+      point of this whole file. A `wrangler dev` on plain http is somebody
+      working on the site who may well not have a Viewer token, and turning
+      them away teaches nothing — the bar along the bottom of every page says
+      what is being read instead. See `src/preview/status.ts`.
+    */
+    ...(deployed ? { SANITY_READ_TOKEN: env.SANITY_READ_TOKEN } : {}),
+  };
+
+  return Object.entries(required)
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
 }
 
 /* -------------------------------------------------------------------------
@@ -605,23 +715,26 @@ function loginFailure(message: string, cookie: string): Response {
 }
 
 /**
- * Shown instead of the site when the Worker has no client credentials.
+ * Shown instead of the site when the Worker is not fully configured.
  *
  * It prints the URLs that have to be registered, because they are derived from
  * wherever this Worker ended up and are the one thing the person registering
  * the client cannot know before deploying it.
  */
-function setupPage(url: URL): Response {
+function setupPage(url: URL, missing: string[]): Response {
   return html(
     page(
       "設定が未完了です",
-      `<p class="error">この Worker には GDG Accounts の OIDC クライアント情報が設定されていません。</p>
+      `<p class="error">この Worker には次の設定がありません: ${missing
+        .map((name) => `<code>${escapeHtml(name)}</code>`)
+        .join("、")}</p>
 <p>GDG Accounts に以下を登録し、<code>wrangler secret put</code> でシークレットを設定してください。</p>
 <dl>
 <dt>Redirect URI</dt><dd><code>${escapeHtml(callbackUrl(url))}</code></dd>
 <dt>Post-logout redirect URI</dt><dd><code>${escapeHtml(`${url.origin}/`)}</code></dd>
 <dt>Scopes</dt><dd><code>${escapeHtml(REQUESTED_SCOPE)}</code></dd>
 </dl>
+<p><code>SANITY_*</code> は下書きを読むためのものです。これが無いと公開済みの内容がプレビューとして出てしまうため、意図的に配信を止めています。</p>
 <p>詳しくは <code>preview/README.md</code> を参照してください。</p>`,
     ),
     503,

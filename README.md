@@ -30,6 +30,7 @@ pnpm dev
 | `pnpm build`        | 全部を `./dist/all/` にビルド                               |
 | `pnpm build:portal` | トップページだけを `./dist/portal/` にビルド                |
 | `pnpm preview`      | ビルド結果をローカルで確認                                  |
+| `pnpm preview:dev`  | 下書きプレビュー（SSR＋認証ゲート・[preview/](preview/)）   |
 | `pnpm type-check`   | 型・コンテンツスキーマの検証                                |
 | `pnpm targets`      | いま存在する都市の一覧（CI の matrix と同じもの）           |
 

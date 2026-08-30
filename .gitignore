@@ -4,8 +4,12 @@ dist/
 # generated types
 .astro/
 
-# wrangler's local state (preview/)
+# wrangler's local state
 .wrangler/
+
+# The preview Worker's local secrets: the OIDC client secret and the key that
+# encrypts the session cookie. Its deployed counterparts are Worker secrets.
+preview/.dev.vars
 
 # dependencies
 node_modules/

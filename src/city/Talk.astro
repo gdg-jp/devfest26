@@ -3,6 +3,7 @@ import { render } from "astro:content";
 import Page from "../layouts/Page.astro";
 import SpeakerRow from "../components/SpeakerRow.astro";
 import { buildableCities, type ResolvedTenant } from "../tenants";
+import { notFound, talkProps } from "./params";
 import {
   getStandaloneTalks,
   jstTimestamp,
@@ -38,7 +39,12 @@ interface Props {
   talk: ProgramTalk;
 }
 
-const { site, session, talk } = Astro.props;
+// See `src/city/params.ts`: the static build filled these in from
+// `getStaticPaths`, the preview has only the URL.
+const props = Astro.props.site ? Astro.props : await talkProps(Astro.params);
+if (!props) return notFound(`トーク「${Astro.params.slug}」`);
+
+const { site, session, talk } = props;
 const { track, label } = session;
 const { Content } = await render(talk.entry);
 

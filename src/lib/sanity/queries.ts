@@ -17,6 +17,30 @@ const SCOPE = "event->slug.current in $tenants";
 /** Which city a document belongs to, as its content-collection entry sees it. */
 const TENANT = `"tenant": event->slug.current`;
 
+/**
+ * The same query with the city filter taken back out.
+ *
+ * The draft preview is one deployment holding every city at once, and it reads
+ * at request time rather than at build time — so there is no `TARGETS` to scope
+ * to and nothing to bind `$tenants` from without a round trip of its own. It
+ * fetches the lot in one query and lets the `tenant` field separate them, which
+ * is the second half of the scoping this module's header describes.
+ *
+ * Written here, next to `SCOPE`, and refusing to return a query it did not
+ * actually change: a filter that silently failed to be removed would bind
+ * nothing and return nothing, and an empty preview looks exactly like a preview
+ * of an empty CMS.
+ */
+export function everyCity(query: string): string {
+  const filter = ` && ${SCOPE}`;
+  if (!query.includes(filter)) {
+    throw new Error(
+      `A city-scoped query was expected to contain "${filter}", and does not.`,
+    );
+  }
+  return query.replace(filter, "");
+}
+
 export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
   _id, name, role, initial, photo, bio,
   "slug": slug.current,
@@ -81,15 +105,32 @@ export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
  * `src/tenants/discovery.ts`, which runs without this client so that CI can
  * ask what cities exist before installing anything.
  */
-export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
-  "tenant": slug.current,
+const EVENT_FIELDS = `
   theme, title, titleEn, description,
   taglineLead, taglineAccent,
   lang, locale,
   startsAt, endsAt,
   socialLabel, socialStart, socialEnd,
   venue, format, formatShort, fee, host, coHosts,
-  stats, links, nav, footerNav, timetable
+  stats, links, nav, footerNav, timetable`;
+
+export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
+  "tenant": slug.current,${EVENT_FIELDS}
+}`;
+
+/**
+ * Every city's `event` document at once — both tiers in one projection.
+ *
+ * The preview reads this instead of `EVENT`, and reads it once per render. That
+ * is what lets a single request answer three separate questions from one moment
+ * in the Studio: which cities exist (tier 1, `src/tenants/discovery.ts`), what
+ * each one's pages need (tier 2, `src/tenants/fromSanity.ts`), and which slug
+ * the URL is asking for. `slug` is projected alongside `tenant` because tier 1
+ * knows the field by that name.
+ */
+export const EVENTS = `*[_type == "event"] | order(startsAt asc){
+  "slug": slug.current,
+  "tenant": slug.current,${EVENT_FIELDS}
 }`;
 
 /**

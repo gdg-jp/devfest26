@@ -2,6 +2,8 @@
 import "../styles/tokens.css";
 import "../styles/base.css";
 import { themeColor } from "../data/themes";
+import { previewMode } from "../preview/mode";
+import PreviewBar from "../preview/Bar.astro";
 
 /**
  * The shell for the front page.
@@ -77,6 +79,7 @@ const theme = "blue";
   <body>
     <a class="skip" href="#top">本文へスキップ</a>
     <slot />
+    {previewMode && <PreviewBar />}
     <style is:global>
       /* The city sites get this from Base.astro; the hub carries its own copy
          rather than pulling that layout's tenant dependencies along with it. */

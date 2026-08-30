@@ -1,9 +1,10 @@
 ---
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import "../styles/tokens.css";
 import "../styles/base.css";
 import { themeColor } from "../data/themes";
+import { hasOgCard } from "../lib/og";
+import { previewMode } from "../preview/mode";
+import PreviewBar from "../preview/Bar.astro";
 import type { ResolvedTenant } from "../tenants";
 import { tenantPath } from "../lib/url";
 
@@ -33,17 +34,12 @@ const canonical = Astro.site
   : undefined;
 
 /*
-  A city gets its card the moment its `event` document is published, which is
-  before anyone has run `pnpm og` for it. Checking the file rather than
-  assuming it means a new city ships without an og:image instead of with a URL
-  that 404s in every preview that follows the link.
-
   `public/og/` is shared by every city and served from the site root, so the
-  path is the same in a one-city build as in a full one.
+  path is the same in a one-city build as in a full one. Whether the file is
+  there at all is `hasOgCard`'s question — see `src/lib/og.ts`.
 */
-const ogFile = new URL(`../../public/og/${site.tenant}.png`, import.meta.url);
 const ogImage =
-  Astro.site && existsSync(fileURLToPath(ogFile))
+  Astro.site && (await hasOgCard(site.tenant))
     ? new URL(`/og/${site.tenant}.png`, Astro.site).href
     : undefined;
 
@@ -196,6 +192,7 @@ const eventSchema = {
   <body>
     <a class="skip" href="#top">本文へスキップ</a>
     <slot />
+    {previewMode && <PreviewBar />}
     <script>
       import "../scripts/main";
     </script>

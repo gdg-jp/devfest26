@@ -32,6 +32,8 @@ import {
   readToken,
   sanityEnabled,
 } from "../lib/sanity/env.ts";
+import { previewMode } from "../preview/mode.ts";
+import { reject, report } from "../preview/problems.ts";
 import { LOCAL_TENANT_IDS, PORTAL_TARGET } from "./ids.ts";
 
 /** Everything the front page needs to draw a card for a city. */
@@ -128,13 +130,14 @@ function readCard(doc: unknown): { card: CityCard } | { problems: string[] } {
 
 /** The Sanity query endpoint, without the client library. */
 async function query<T>(groq: string): Promise<T> {
-  const perspective = readToken ? "drafts" : "published";
+  const token = readToken();
+  const perspective = token ? "drafts" : "published";
   const url =
-    `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}` +
+    `https://${projectId()}.api.sanity.io/v${apiVersion()}/data/query/${dataset()}` +
     `?perspective=${perspective}&query=${encodeURIComponent(groq)}`;
 
   const response = await fetch(url, {
-    headers: readToken ? { Authorization: `Bearer ${readToken}` } : {},
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   if (!response.ok) {
@@ -160,10 +163,28 @@ let cached: Promise<CityCard[]> | undefined;
  * cities it is not building, because their pages are already published and a
  * card that disappeared whenever a build was scoped would be a worse lie than
  * a card pointing at last week's copy.
+ *
+ * The memo is right for a build, which runs once and wants one answer. It is
+ * wrong for the draft preview, which runs inside a Worker isolate that outlives
+ * many requests: the first list of cities it ever saw would be the only one it
+ * ever showed. There the cities come out of the same snapshot as everything
+ * else on the page — see `src/preview/drafts.ts`.
  */
 export function discoverCities(): Promise<CityCard[]> {
-  cached ??= sanityEnabled ? fromSanity() : fromRegistry();
+  if (previewMode) return draftCities();
+  cached ??= sanityEnabled() ? fromSanity() : fromRegistry();
   return cached;
+}
+
+/**
+ * Imported for its side effects only when the preview asks. `discovery.ts` runs
+ * on a bare checkout under `scripts/discover-targets.mjs`, with no
+ * `node_modules` to resolve a Sanity client from, so the import may not be a
+ * static one.
+ */
+async function draftCities(): Promise<CityCard[]> {
+  const { draftEvents } = await import("../preview/drafts.ts");
+  return keepValid(await draftEvents());
 }
 
 /**
@@ -191,10 +212,18 @@ function keepValid(docs: unknown[]): CityCard[] {
       `[discovery] Leaving "${label}" off the front page:\n` +
         read.problems.map((p) => `  ${p}`).join("\n"),
     );
+
+    // `report`, not `reject`: dropping a half-written city is the *correct*
+    // behaviour in every mode — tier 1 exists so that one unfinished draft
+    // cannot take the front page down. The preview only wants the same warning
+    // somewhere an editor will actually see it.
+    report(
+      "cities",
+      `"${label}" is not on the front page: ${read.problems.join("; ")}.`,
+    );
   }
 
-  assertUniqueSlugs(cards);
-  return cards;
+  return uniqueSlugs(cards);
 }
 
 async function fromSanity(): Promise<CityCard[]> {
@@ -235,7 +264,7 @@ async function fromRegistry(): Promise<CityCard[]> {
  * registry, whose imports are resolved by the bundler rather than by Node.
  */
 export async function discoverCitySlugs(): Promise<string[]> {
-  if (!sanityEnabled) return [...LOCAL_TENANT_IDS];
+  if (!sanityEnabled()) return [...LOCAL_TENANT_IDS];
   return (await discoverCities()).map((city) => city.slug);
 }
 
@@ -243,13 +272,21 @@ export async function discoverCitySlugs(): Promise<string[]> {
  * Two cities on one slug would be one city with the other's pages overwriting
  * it, silently and by whichever the build wrote last.
  */
-function assertUniqueSlugs(cards: CityCard[]) {
+function uniqueSlugs(cards: CityCard[]): CityCard[] {
   const seen = new Set<string>();
-  for (const { slug } of cards) {
-    if (seen.has(slug))
-      throw new Error(
-        `Two "event" documents share the slug "${slug}". Give one of them its own.`,
+  const kept: CityCard[] = [];
+
+  for (const card of cards) {
+    if (seen.has(card.slug)) {
+      reject(
+        "cities",
+        `Two "event" documents share the slug "${card.slug}". Give one of them its own.`,
       );
-    seen.add(slug);
+      continue;
+    }
+    seen.add(card.slug);
+    kept.push(card);
   }
+
+  return kept;
 }

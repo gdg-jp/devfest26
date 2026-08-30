@@ -1,0 +1,157 @@
+---
+/**
+ * The strip along the bottom of every preview page.
+ *
+ * Two jobs, and the second is the one that matters. It says this is the draft
+ * preview and not the published site — which somebody will otherwise forget
+ * within a week and quote at a sponsor. And it lists what the page could not
+ * draw: the sessions with nobody on them yet, the references typed halfway,
+ * the cities whose `event` document is still missing its venue. A published
+ * build fails on each of those and the failure is the message; here the page
+ * renders anyway, so the message has to be somewhere, and next to the hole is
+ * the right somewhere.
+ *
+ * It fills itself from `/preview/status` rather than being rendered with the
+ * page. Astro renders top-down and this sits at the foot of the document, so a
+ * server-rendered version would *mostly* have the whole list — and "mostly" is
+ * not a property to build a warning on. Asking the endpoint is asking the one
+ * thing that has walked every city on purpose.
+ *
+ * The styles are inline for a reason: this component is imported by
+ * `Base.astro`, which every published page also uses. A scoped `<style>` would
+ * be collected into the production stylesheet even though `previewMode` means
+ * this never renders there.
+ */
+---
+
+<aside id="devfest-preview-bar" data-state="loading" hidden>
+  <button type="button" data-toggle aria-expanded="false">
+    <span data-label>下書きプレビュー</span>
+  </button>
+  <div data-detail hidden></div>
+</aside>
+
+<style is:inline>
+  #devfest-preview-bar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 9999;
+    font:
+      13px/1.5 system-ui,
+      "Noto Sans JP",
+      sans-serif;
+    color: #fff;
+    background: #172033;
+    box-shadow: 0 -2px 16px #17203333;
+  }
+
+  #devfest-preview-bar[data-state="problems"] {
+    background: #7a2f12;
+  }
+
+  #devfest-preview-bar [data-toggle] {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  #devfest-preview-bar [data-detail] {
+    max-height: 40vh;
+    overflow: auto;
+    padding: 0 16px 14px;
+  }
+
+  #devfest-preview-bar h2 {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin: 12px 0 4px;
+  }
+
+  #devfest-preview-bar ul {
+    margin: 0;
+    padding-left: 1.2em;
+  }
+
+  #devfest-preview-bar li {
+    margin: 2px 0;
+    overflow-wrap: anywhere;
+  }
+</style>
+
+<script is:inline>
+  (async () => {
+    const bar = document.getElementById("devfest-preview-bar");
+    if (!bar) return;
+
+    const label = bar.querySelector("[data-label]");
+    const detail = bar.querySelector("[data-detail]");
+    const toggle = bar.querySelector("[data-toggle]");
+
+    toggle.addEventListener("click", () => {
+      const open = detail.hidden;
+      detail.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+
+    let status;
+    try {
+      const response = await fetch("/preview/status", {
+        headers: { Accept: "application/json" },
+      });
+      status = await response.json();
+    } catch {
+      // The gate answers 401 for a subresource once the session has expired,
+      // which is not worth a red bar — the next navigation signs back in.
+      bar.hidden = false;
+      label.textContent = "下書きプレビュー（状態を取得できません）";
+      return;
+    }
+
+    bar.hidden = false;
+
+    const problems = status.problems ?? [];
+    const read = status.at ? new Date(status.at) : undefined;
+    const when = read
+      ? read.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })
+      : "不明";
+
+    if (problems.length === 0) {
+      label.textContent = `下書きプレビュー — ${when} 時点の内容`;
+      return;
+    }
+
+    bar.dataset.state = "problems";
+    label.textContent =
+      `下書きプレビュー — ${when} 時点。表示できなかったものが ` +
+      `${problems.length}${status.dropped ? "+" : ""} 件あります（クリックで詳細）`;
+
+    const groups = new Map();
+    for (const problem of problems) {
+      const list = groups.get(problem.where) ?? [];
+      list.push(problem.message);
+      groups.set(problem.where, list);
+    }
+
+    for (const [where, messages] of groups) {
+      const heading = document.createElement("h2");
+      heading.textContent = where;
+      detail.append(heading);
+
+      const list = document.createElement("ul");
+      for (const message of messages) {
+        const item = document.createElement("li");
+        item.textContent = message;
+        list.append(item);
+      }
+      detail.append(list);
+    }
+  })();
+</script>

@@ -1,6 +1,6 @@
 # Prettier reads the repository root's .gitignore and this file, and nothing
-# else — the .gitignore files inside studio/ and preview/ never reach it. What
-# is listed there and generated has to be repeated here.
+# else — the .gitignore inside studio/ never reaches it. What is listed there
+# and generated has to be repeated here.
 
 # Sanity generates the Studio's runtime entry point on every `sanity dev`.
 studio/.sanity/
@@ -8,4 +8,3 @@ studio/.sanity/
 # pnpm writes the lockfiles; their formatting is its business, not ours.
 pnpm-lock.yaml
 studio/pnpm-lock.yaml
-preview/pnpm-lock.yaml

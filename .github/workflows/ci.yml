@@ -1,10 +1,15 @@
 name: CI
 
-# Three projects live in this repository and they do not share an install:
-# the site at the root, the Sanity Studio in `studio/`, and the access-control
-# Worker in `preview/`. What they *do* share is one Prettier config and one
-# ESLint config, both at the root — so formatting and linting are one pass over
-# the whole tree, while type checking has to be one job per project.
+# Two projects live in this repository and they do not share an install: the
+# site at the root, and the Sanity Studio in `studio/`. The preview Worker in
+# `preview/` used to be a third; it is part of the site's install now, because
+# the site is what it serves — it imports `@astrojs/cloudflare` and is built by
+# `astro build`. It keeps a tsconfig of its own, though: it is workerd code,
+# and checking it against the site's DOM libs would check the wrong thing.
+#
+# What they all share is one Prettier config and one ESLint config, both at the
+# root — so formatting and linting are one pass over the whole tree, while type
+# checking is one job per tsconfig.
 on:
   workflow_dispatch:
   push:
@@ -54,11 +59,10 @@ jobs:
       - name: Run Lint
         run: pnpm lint
 
-  # The part that cannot be shared. Each project has its own tsconfig and its
-  # own dependency tree — Astro here, React and Sanity in `studio/`,
-  # workers-types in `preview/` — so each needs its own install to type check
-  # against. `fail-fast: false` for the same reason `build.yml` uses it: one
-  # project's type error should not cancel another's job and hide a second one.
+  # The part that cannot be shared. Each entry has its own tsconfig — Astro
+  # here, React and Sanity in `studio/`, workers-types in `preview/`.
+  # `fail-fast: false` for the same reason `build.yml` uses it: one project's
+  # type error should not cancel another's job and hide a second one.
   type_check:
     name: type-check (${{ matrix.name }})
     timeout-minutes: 30
@@ -80,12 +84,16 @@ jobs:
           - name: site
             dir: .
             lockfile: pnpm-lock.yaml
+            script: type-check
+          # The Worker, from the site's install, against its own tsconfig.
+          - name: preview
+            dir: .
+            lockfile: pnpm-lock.yaml
+            script: type-check:preview
           - name: studio
             dir: studio
             lockfile: studio/pnpm-lock.yaml
-          - name: preview
-            dir: preview
-            lockfile: preview/pnpm-lock.yaml
+            script: type-check
 
     steps:
       - name: Checkout repository
@@ -99,10 +107,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
-          # Keyed on the lockfile of the project being checked. `studio/` and
-          # `preview/` sit outside the site's pnpm workspace and carry
-          # lockfiles of their own; pointing the cache at the root one would
-          # restore the wrong `node_modules` for them.
+          # Keyed on the lockfile of the project being checked. `studio/` sits
+          # outside the site's pnpm workspace and carries a lockfile of its
+          # own; pointing the cache at the root one would restore the wrong
+          # `node_modules` for it.
           cache-dependency-path: ${{ matrix.lockfile }}
 
       - name: Install node modules
@@ -111,4 +119,4 @@ jobs:
 
       - name: Run Type Check
         working-directory: ${{ matrix.dir }}
-        run: pnpm type-check
+        run: pnpm ${{ matrix.script }}

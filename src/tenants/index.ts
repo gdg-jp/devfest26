@@ -1,4 +1,6 @@
 import { eventDates } from "./eventDates";
+import { previewMode } from "../preview/mode";
+import { report } from "../preview/problems";
 import { fromSanityIfEnabled } from "./source";
 import type { LocalTenantId } from "./ids";
 import { registry } from "./registry";
@@ -60,8 +62,16 @@ const resolved = new Map<string, Promise<ResolvedTenant>>();
  *
  * Memoised per slug — a dozen components ask for the same city, and each ask
  * would otherwise be a network read.
+ *
+ * Not in the preview. A build runs once and one answer is the right answer; a
+ * Worker isolate answers requests for hours, and a map filled on the first of
+ * them would show that city's name and dates until the isolate was recycled.
+ * The reads it saves are already saved there — every one of them comes out of
+ * the snapshot in `src/preview/drafts.ts`, which is fetched once per render.
  */
 export function resolveTenant(slug: string): Promise<ResolvedTenant> {
+  if (previewMode) return load(slug);
+
   let found = resolved.get(slug);
   if (!found) {
     found = load(slug);
@@ -101,6 +111,8 @@ let buildable: Promise<BuildableCity[]> | undefined;
  * takes the build down instead, which is what a CI city job wants.
  */
 export function buildableCities(): Promise<BuildableCity[]> {
+  if (previewMode) return collect();
+
   buildable ??= collect();
   return buildable;
 }
@@ -115,13 +127,16 @@ async function collect(): Promise<BuildableCity[]> {
     } catch (error) {
       if (strictTenants) throw error;
 
+      const why = error instanceof Error ? error.message : String(error);
+
       // Local builds render the cities that are ready and say why the others
       // are missing. CI never takes this branch.
-      console.warn(
-        `[tenants] Skipping "${slug}": ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      console.warn(`[tenants] Skipping "${slug}": ${why}`);
+
+      // In the preview the console is a Cloudflare log nobody has open, and
+      // the person who left that document half-written is the one looking at
+      // the page it is missing from.
+      report("cities", `"${slug}" has no page: ${why}`);
     }
   }
 
