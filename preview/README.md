@@ -57,7 +57,7 @@ GDG Accounts の userinfo が返す `https://gdgs.jp/claims/chapters` が**空�
 
 ## Presentation — 見ながら書く
 
-`/studio` を開くと、**左に編集フォーム、右にプレビュー**という 1 画面になります（Sanity Presentation）。ページの本文をクリックすると左の該当フィールドに飛び、保存すると右が数秒で更新されます。
+`/studio` を開くと、**左に編集フォーム、右にプレビュー**という 1 画面になります（Sanity Presentation）。ページの本文をクリックすると左の該当フィールドに飛び、入力の手が止まると右が更新されます（`src/preview/visualEditing.ts` の `QUIET_MS`）。
 
 ```text
 https://<プレビューの URL>/studio     ← Studio。ゲートの内側
