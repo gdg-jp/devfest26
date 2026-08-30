@@ -90,6 +90,49 @@ jobs:
           SITE_URL: ${{ vars.PREVIEW_URL }}
         run: pnpm exec astro build
 
+      # Presentation: the Studio again, this time served from the preview's own
+      # origin at /studio so its preview iframe carries the session cookie —
+      # see `serveStudio` in `preview/src/index.ts` for why that is not
+      # optional. It goes straight into the adapter's client output, which is
+      # what `wrangler deploy` uploads as this Worker's assets, so it has to
+      # run *after* `astro build` — that step recreates the directory.
+      #
+      # The same source and the same commit as `studio.yml` publishes to
+      # devfest26.sanity.studio, so the two cannot drift. `studio/` is outside
+      # the root workspace and keeps its own lockfile, hence the separate
+      # install.
+      #
+      # SANITY_STUDIO_PREVIEW_ORIGIN is what turns the Presentation tool on;
+      # the deployed Studio has it unset and shows no Presentation tab, because
+      # a cross-site iframe of the preview could never load.
+      - name: Install the Studio's dependencies
+        working-directory: studio
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the Studio into the preview
+        working-directory: studio
+        env:
+          SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+          SANITY_STUDIO_DATASET: ${{ vars.SANITY_DATASET }}
+          # Read by the CLI, which sets Vite's `base` and hands the same
+          # value to `renderStudio` so the Studio's own router agrees with
+          # where it is mounted. Not a `sanity.config.ts` option: `basePath`
+          # there is the workspace's URL segment, which is a different thing
+          # and would be a second prefix on top of this one.
+          SANITY_STUDIO_BASEPATH: /studio
+          SANITY_STUDIO_PREVIEW_ORIGIN: ${{ vars.PREVIEW_URL }}
+        run: pnpm exec sanity build ../dist/all/client/studio
+
+      # The CLI applies the base path to its scripts and stylesheets but not to
+      # the four links in the head — favicons and the web manifest — which come
+      # out as `/static/...` and would be asked of the site rather than of the
+      # Studio. Nothing breaks; it is four 404s on every load of a tool that
+      # gets reloaded a lot. A no-op if the CLI ever starts writing them
+      # correctly.
+      - name: Point the Studio's icons at the Studio
+        run: |
+          sed -i 's|href="/static/|href="/studio/static/|g'             dist/all/client/studio/index.html
+
       # `dist/all/server/wrangler.json` is what the adapter wrote: the gate as
       # `main`, the client build as the asset directory, and everything from
       # `preview/wrangler.jsonc` carried through. Deploying the source config

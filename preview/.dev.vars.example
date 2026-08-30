@@ -21,3 +21,9 @@ SANITY_PROJECT_ID=replace-with-the-sanity-project-id
 # editor to distrust it — but a local run is allowed to go without, and says so
 # in the bar along the bottom of every page.
 # SANITY_READ_TOKEN=replace-with-a-viewer-token
+
+# Where the click-to-edit overlays should open the Studio. Only needed
+# locally: a deployment serves its own copy at /studio on this origin, which is
+# the default, and a same-origin Studio is what lets Presentation's preview
+# iframe carry the session cookie. Locally the Studio is `sanity dev`.
+SANITY_STUDIO_URL=http://localhost:3333
