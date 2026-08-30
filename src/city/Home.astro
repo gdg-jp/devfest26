@@ -16,6 +16,7 @@ import CodeOfConduct from "../components/CodeOfConduct.astro";
 import Register from "../components/Register.astro";
 import Footer from "../components/Footer.astro";
 import { buildableCities, type ResolvedTenant } from "../tenants";
+import { cityProps, notFound } from "./params";
 
 /**
  * A city's home page — the long scrolling one, at `/kansai`.
@@ -37,7 +38,16 @@ interface Props {
   site: ResolvedTenant;
 }
 
-const { site } = Astro.props;
+/*
+  Built statically, this arrived from `getStaticPaths` above. Rendered on
+  demand — the draft preview — nothing expanded those paths and the URL is all
+  there is, so the same lookup happens here for the one city being asked for.
+  See `src/city/params.ts`.
+*/
+const props = Astro.props.site ? Astro.props : await cityProps(Astro.params);
+if (!props) return notFound(`都市「${Astro.params.tenant}」`);
+
+const { site } = props;
 ---
 
 <Base site={site}>

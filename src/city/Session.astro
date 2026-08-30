@@ -3,6 +3,7 @@ import { render } from "astro:content";
 import Page from "../layouts/Page.astro";
 import SpeakerRow from "../components/SpeakerRow.astro";
 import { buildableCities, type ResolvedTenant } from "../tenants";
+import { notFound, sessionProps } from "./params";
 import { tenantHome } from "../lib/url";
 import { pastelCycle } from "../data/tracks";
 import {
@@ -37,7 +38,12 @@ interface Props {
   session: ProgramSession;
 }
 
-const { site, session } = Astro.props;
+// See `src/city/params.ts`: the static build filled these in from
+// `getStaticPaths`, the preview has only the URL.
+const props = Astro.props.site ? Astro.props : await sessionProps(Astro.params);
+if (!props) return notFound(`セッション「${Astro.params.slug}」`);
+
+const { site, session } = props;
 const { entry, track, label, talks } = session;
 const { Content } = await render(entry);
 

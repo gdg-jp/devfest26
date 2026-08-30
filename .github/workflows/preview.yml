@@ -1,13 +1,19 @@
 name: Preview
 
-# The draft preview: the same commit as production, built with a Sanity read
-# token so it renders unpublished content, and served from a Cloudflare Worker
-# that lets nobody past who is not a GDG member.
+# The draft preview: the same commit as production, deployed as a Cloudflare
+# Worker that renders each request from Sanity's *drafts* and lets nobody past
+# who is not a GDG member.
 #
 # A separate workflow from `build.yml` on purpose. That one carries no
 # SANITY_READ_TOKEN and must not gain one — GitHub Pages serves whatever it is
 # handed, to whoever asks. This one is the only place the token belongs, and
 # the Worker in `preview/` is what makes that safe.
+#
+# Note what this job does *not* do: read any content. The preview build
+# registers every collection empty and fetches while it renders, so there is no
+# copy of the CMS baked into what is uploaded here, and no read token in this
+# job's build step. The token is a Worker secret, pushed below, and it is read
+# inside the isolate that renders the page.
 on:
   workflow_dispatch:
   push:
@@ -16,6 +22,10 @@ on:
   # /repos/gdg-jp/devfest26/dispatches with {"event_type": "content-draft"}:
   # saving a draft in the Studio reaches the preview without a push. The
   # trigger is here already so that wiring is a Sanity-side change only.
+  #
+  # Less urgent than it was. The deployed Worker re-reads Sanity on every
+  # request, so a saved draft shows up on the next reload without any deploy at
+  # all; this only matters when the *code* changes.
   repository_dispatch:
     types: [content-draft]
 
@@ -50,7 +60,10 @@ jobs:
 
       # A missing token is not a smaller preview, it is a silent copy of
       # production wearing a preview URL — the one outcome that would make an
-      # editor trust "my draft is not in there yet".
+      # editor trust "my draft is not in there yet". The deployed Worker
+      # refuses to serve without it too (see `missingConfig` in
+      # `preview/src/index.ts`); this is the earlier, louder half of the same
+      # rule.
       - name: Refuse to deploy a preview that cannot read drafts
         env:
           SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
@@ -63,40 +76,53 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # No TARGETS: one build, one tree, the front page and every city in it.
-      # `astro check` is deliberately skipped — `build.yml` already ran it on
-      # this commit, and what differs here is the content, which `astro build`
-      # validates against the collection schemas anyway.
+      # No TARGETS: one deployment, the front page and every city in it. The
+      # routes are resolved per request, so which cities exist is a question
+      # the Studio answers at the moment someone asks — not one this build
+      # freezes in.
       #
-      # No STRICT_TENANTS either, and that is the difference that matters: a
-      # city whose draft `event` document is half-written is skipped with a
-      # warning rather than taking the whole preview down. In `build.yml` a red
-      # job is a signal the publish step reads; here there is no publish step
-      # to read it, and one editor mid-sentence should not blank the preview
-      # for everyone else.
-      - name: Build the site from drafts
+      # `astro check` is deliberately skipped: `build.yml` already ran it on
+      # this commit, and what differs here is content, which nothing at build
+      # time even reads.
+      - name: Build the preview Worker
         env:
+          PREVIEW: "1"
           SITE_URL: ${{ vars.PREVIEW_URL }}
-          SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
-          SANITY_DATASET: ${{ vars.SANITY_DATASET }}
-          SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
         run: pnpm exec astro build
 
-      # Its own install with its own lockfile, like `studio/`. Wrangler and the
-      # OIDC client have nothing to do with the site's dependency tree.
-      - run: pnpm install --frozen-lockfile
-        working-directory: preview
-
-      # Uploads `dist/all` as the Worker's assets. The two Worker secrets
-      # (IDP_CLIENT_SECRET, SESSION_SECRET) are set once by hand with
-      # `wrangler secret put` and survive every deploy, so CI never sees them.
+      # `dist/all/server/wrangler.json` is what the adapter wrote: the gate as
+      # `main`, the client build as the asset directory, and everything from
+      # `preview/wrangler.jsonc` carried through. Deploying the source config
+      # instead would upload the gate with no site behind it.
       #
-      # A build that failed above never reaches this step, which leaves the
-      # previous deployment answering — the same "leave the last good copy in
-      # place" the publish job gives GitHub Pages.
+      # The two Sanity identifiers are public — a project id is in every image
+      # URL the site serves — but they live in repository variables rather than
+      # in the committed config, so they are passed here.
+      #
+      # The two OIDC secrets are set once by hand and survive every deploy, so
+      # CI never sees them. See `preview/README.md`.
       - name: Deploy the Worker
-        working-directory: preview
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: pnpm exec wrangler deploy
+        run: |
+          pnpm exec wrangler deploy \
+            --config dist/all/server/wrangler.json \
+            --var SANITY_PROJECT_ID:'${{ vars.SANITY_PROJECT_ID }}' \
+            --var SANITY_DATASET:'${{ vars.SANITY_DATASET }}'
+
+      # The read token, unlike the OIDC secrets, already lives in this
+      # environment — it is what the guard above checks — so it is pushed from
+      # here rather than kept in a second place that has to be rotated
+      # separately. After the deploy, because a secret needs a Worker to belong
+      # to; on a first deploy that leaves a few seconds in which the gate
+      # serves its setup page, which is the correct thing for it to do.
+      - name: Give the Worker its read token
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$SANITY_READ_TOKEN" | pnpm exec wrangler secret put \
+            SANITY_READ_TOKEN --config dist/all/server/wrangler.json

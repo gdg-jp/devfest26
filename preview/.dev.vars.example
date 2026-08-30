@@ -1,5 +1,6 @@
-# Copy to .dev.vars for `pnpm dev`. The deployed Worker reads the same names
-# from `wrangler secret put`, never from this file.
+# Copy to .dev.vars for `pnpm preview:dev`. The deployed Worker reads the same
+# names from `wrangler secret put` and `wrangler deploy --var`, never from this
+# file.
 
 # From the OIDC client registered for this Worker in GDG Accounts.
 IDP_CLIENT_SECRET=replace-with-the-client-secret
@@ -8,3 +9,15 @@ IDP_CLIENT_SECRET=replace-with-the-client-secret
 #   openssl rand -base64 32
 # Changing it signs everyone out, which is the emergency lever.
 SESSION_SECRET=replace-with-a-long-random-secret
+
+# The site is rendered per request now, inside this Worker, so Sanity is part
+# of the Worker's environment rather than the build's. The `.env` at the
+# repository root configures `astro build`; this file configures the Worker.
+SANITY_PROJECT_ID=replace-with-the-sanity-project-id
+# SANITY_DATASET=production
+
+# Only needed to read drafts. A deployed preview refuses to serve without it —
+# published content wearing a preview URL is the one thing that would teach an
+# editor to distrust it — but a local run is allowed to go without, and says so
+# in the bar along the bottom of every page.
+# SANITY_READ_TOKEN=replace-with-a-viewer-token

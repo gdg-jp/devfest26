@@ -1,0 +1,88 @@
+---
+/**
+ * What the preview shows when something threw anyway.
+ *
+ * There is no such page in a published build: a page that threw there failed
+ * the build and never became a URL. Here it is a live request, and the default
+ * is a blank 500 from Cloudflare — which tells the person who caused it, by
+ * saving a draft twenty seconds ago, precisely nothing.
+ *
+ * `src/preview/problems.ts` catches everything this codebase knows how to
+ * expect, so reaching this page means something it does not: Sanity refusing
+ * the query, a token that has expired, a projection that changed shape. Hence
+ * the two things offered — the message, and the endpoint that says what the
+ * content itself looks like.
+ */
+interface Props {
+  /** Astro hands the error page the thing that threw, as a prop. */
+  error?: unknown;
+}
+
+const { error } = Astro.props;
+const message =
+  error instanceof Error ? error.message : error ? String(error) : undefined;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>表示できませんでした — DevFest 2026 Preview</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>このページを表示できませんでした</h1>
+      <p>
+        下書きの内容そのものが原因であれば、ふつうは該当のカードだけが消えて
+        ページは表示されます。ここまで来たということは、Sanity への接続や
+        読み取りトークンなど、内容の外側で何かが起きています。
+      </p>
+      {message && <pre>{message}</pre>}
+      <p>
+        <a href="/preview/status">プレビューの状態（JSON）</a>
+      </p>
+    </main>
+
+    <style is:inline>
+      body {
+        background: #f7f8fc;
+        color: #172033;
+        font:
+          16px/1.7 system-ui,
+          "Noto Sans JP",
+          sans-serif;
+        margin: 0;
+      }
+
+      main {
+        background: #fff;
+        border: 1px solid #dde1eb;
+        border-radius: 16px;
+        margin: 8vh auto;
+        max-width: 680px;
+        padding: 32px;
+      }
+
+      h1 {
+        font-size: 1.3rem;
+        margin-top: 0;
+      }
+
+      pre {
+        background: #f2f4f9;
+        border-radius: 10px;
+        overflow-x: auto;
+        padding: 14px 16px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      a {
+        color: #235bd8;
+      }
+    </style>
+  </body>
+</html>

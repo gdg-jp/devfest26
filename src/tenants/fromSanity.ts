@@ -91,8 +91,17 @@ const clean = <T>(value: T | null | undefined): T | undefined =>
   value ?? undefined;
 
 export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
-  const raw = await sanityClient().fetch(EVENT, { tenant: slug });
+  return parseEvent(await sanityClient().fetch(EVENT, { tenant: slug }), slug);
+}
 
+/**
+ * The validation half, apart from the fetch.
+ *
+ * The draft preview already holds every `event` document — it read them in the
+ * same round trip as everything else on the page — so it needs this without the
+ * query in front of it. See `src/preview/drafts.ts`.
+ */
+export function parseEvent(raw: unknown, slug: string): TenantConfig {
   if (!raw) {
     throw new Error(
       `No published "event" document with slug "${slug}" in Sanity. ` +

@@ -16,11 +16,20 @@
  * only when it is an entry in its own right, so a city that writes no talks
  * publishes no `/talks/` at all. `ProgramTalk.href` hides which of the two a
  * link lands on.
+ *
+ * Every rule this file states is a rule a published build dies on: a reference
+ * that crosses cities, a slot with nobody on it, two entries claiming one URL.
+ * That is deliberate and unchanged. The draft preview is the one caller that
+ * cannot afford it — half-written content is what it exists to show — so there
+ * the same checks drop the entry and say so instead. See `reject` in
+ * `src/preview/problems.ts`.
  */
 
 import type { CollectionEntry } from "astro:content";
 import { getTracks, type Track } from "./tracks";
 import { byTenant, partitionByTenant } from "./collections";
+import { previewMode } from "../preview/mode";
+import { reject, report } from "../preview/problems";
 import { tenantPath } from "../lib/url";
 
 export type Session = CollectionEntry<"sessions">;
@@ -147,28 +156,44 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   };
 
   // Sorted before grouping, so every group comes out in running order.
-  const ordered = [...talkSplit.mine].sort(byOrder);
-  for (const talk of ordered) {
-    if (!sessionIds.has(talk.data.session.id))
-      throw new Error(
-        `Talk "${talk.id}" references ` +
-          crossCity(talk.data.session.id, "session", sessionSplit.foreign),
-      );
+  const ordered: Talk[] = [];
+  for (const talk of [...talkSplit.mine].sort(byOrder)) {
+    if (sessionIds.has(talk.data.session.id)) {
+      ordered.push(talk);
+      continue;
+    }
+    reject(
+      "programme",
+      `Talk "${talk.id}" references ` +
+        crossCity(talk.data.session.id, "session", sessionSplit.foreign),
+    );
   }
   const talksBySession = Map.groupBy(ordered, (talk) => talk.data.session.id);
 
-  const resolveSpeakers = (refs: { id: string }[], where: string): Speaker[] =>
-    refs.map((ref) => {
+  const resolveSpeakers = (
+    refs: { id: string }[],
+    where: string,
+  ): Speaker[] => {
+    const found: Speaker[] = [];
+    for (const ref of refs) {
       const speaker = speakerById.get(ref.id);
-      if (!speaker)
-        throw new Error(
-          `${where} references ` +
-            crossCity(ref.id, "speaker", speakerSplit.foreign),
-        );
-      return speaker;
-    });
+      if (speaker) {
+        found.push(speaker);
+        continue;
+      }
+      reject(
+        "programme",
+        `${where} references ` +
+          crossCity(ref.id, "speaker", speakerSplit.foreign),
+      );
+    }
+    return found;
+  };
 
-  const toProgramSession = (session: Session, track: Track): ProgramSession => {
+  const toProgramSession = (
+    session: Session,
+    track: Track,
+  ): ProgramSession | undefined => {
     const slug = slugOf(session);
     const href = tenantPath(tenant, `/sessions/${slug}`);
     const own = talksBySession.get(session.id) ?? [];
@@ -177,36 +202,56 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     // are what a many-talk city writes. Neither means nobody is on stage,
     // which is worth failing the build over rather than publishing a card with
     // an empty speaker block.
-    if (own.length === 0 && !session.data.speakers?.length)
-      throw new Error(
+    if (own.length === 0 && !session.data.speakers?.length) {
+      reject(
+        "programme",
         `Session "${session.id}" names no speakers and has no talks. ` +
           `Give it "speakers", or add a talk pointing at it.`,
       );
+      return undefined;
+    }
 
-    const talks: ProgramTalk[] = own.length
-      ? own.map((talk) => ({
+    const talks: ProgramTalk[] = [];
+
+    if (own.length) {
+      for (const talk of own) {
+        const talkSpeakers = resolveSpeakers(
+          talk.data.speakers,
+          `Talk "${talk.id}"`,
+        );
+        // Only reachable in the preview: a build threw on the first bad
+        // reference. A talk whose whole cast went missing has nothing to show.
+        if (talkSpeakers.length === 0) continue;
+
+        talks.push({
           slug: slugOf(talk),
           href: tenantPath(tenant, `/talks/${slugOf(talk)}`),
           standalone: true,
           title: talk.data.title ?? session.data.title,
           start: talk.data.start,
-          speakers: resolveSpeakers(talk.data.speakers, `Talk "${talk.id}"`),
+          speakers: talkSpeakers,
           entry: talk,
-        }))
-      : [
-          {
-            slug,
-            href,
-            standalone: false,
-            title: session.data.title,
-            start: session.data.start,
-            speakers: resolveSpeakers(
-              session.data.speakers ?? [],
-              `Session "${session.id}"`,
-            ),
-            entry: session,
-          },
-        ];
+        });
+      }
+    } else {
+      const sessionSpeakers = resolveSpeakers(
+        session.data.speakers ?? [],
+        `Session "${session.id}"`,
+      );
+      if (sessionSpeakers.length > 0) {
+        talks.push({
+          slug,
+          href,
+          standalone: false,
+          title: session.data.title,
+          start: session.data.start,
+          speakers: sessionSpeakers,
+          entry: session,
+        });
+      }
+    }
+
+    if (talks.length === 0) return undefined;
 
     return {
       entry: session,
@@ -226,18 +271,77 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       sessions: sessions
         .filter((session) => session.data.track.id === track.id)
         .sort(byOrder)
-        .map((session) => toProgramSession(session, track)),
+        .flatMap((session) => toProgramSession(session, track) ?? []),
     }))
     .filter((group) => group.sessions.length > 0);
 
+  /*
+    A session pointing at a track this city does not have has always been left
+    off the page in silence — there is no group to put it in. That is fine for
+    a build, where the tracks were written first and the omission would be
+    noticed; it is not fine for someone watching their own draft fail to
+    appear. Preview only: `previewMode` is substituted at build time, so a
+    published build does not carry this loop.
+  */
+  if (previewMode) {
+    const trackIds = new Set(tracks.map((track) => track.id));
+    for (const session of sessions) {
+      if (!trackIds.has(session.data.track.id)) {
+        report(
+          "programme",
+          `Session "${session.id}" is on the track "${session.data.track.id}", ` +
+            `which is not one of ${tenant}'s. It is not on the page.`,
+        );
+      }
+    }
+  }
+
   const all = program.flatMap((group) => group.sessions);
-  assertUniqueSlugs("sessions", all);
-  assertUniqueSlugs(
-    "talks",
-    all.flatMap((session) => session.talks.filter((talk) => talk.standalone)),
+  const standalone = all.flatMap((session) =>
+    session.talks.filter((talk) => talk.standalone),
   );
 
-  return program;
+  const keptSessions = keepUniqueSlugs("sessions", all);
+  const keptTalks = keepUniqueSlugs("talks", standalone);
+
+  // A build reaches this having thrown on any duplicate, so nothing was ever
+  // dropped and the programme is already the answer.
+  if (
+    keptSessions.length === all.length &&
+    keptTalks.length === standalone.length
+  ) {
+    return program;
+  }
+
+  return withoutDuplicates(program, new Set(keptSessions), new Set(keptTalks));
+}
+
+/**
+ * The programme with the entries that lost a slug collision taken out.
+ *
+ * Rebuilt rather than mutated, and only when something was actually dropped:
+ * losing every talk empties the session, and losing every session empties the
+ * track, so the two `filter`s above the surface have to run afterwards.
+ */
+function withoutDuplicates(
+  program: ProgramTrack[],
+  sessions: Set<ProgramSession>,
+  talks: Set<ProgramTalk>,
+): ProgramTrack[] {
+  return program
+    .map((group) => ({
+      track: group.track,
+      sessions: group.sessions
+        .filter((session) => sessions.has(session))
+        .map((session) => ({
+          ...session,
+          talks: session.talks.filter(
+            (talk) => !talk.standalone || talks.has(talk),
+          ),
+        }))
+        .filter((session) => session.talks.length > 0),
+    }))
+    .filter((group) => group.sessions.length > 0);
 }
 
 /** Every session, flattened, in the order the page prints them. */
@@ -306,22 +410,35 @@ export async function getProgramSpeakers(
       : [];
   });
 
-  assertUniqueSlugs("speakers", listed);
-  return listed;
+  return keepUniqueSlugs("speakers", listed);
 }
 
 /**
  * Two entries claiming one URL would publish whichever the build wrote last
  * and say nothing about it. Slugs are hand-written on the Sanity path, so this
  * is a real mistake rather than a theoretical one.
+ *
+ * A build throws on the second one; the preview keeps the first, drops the
+ * rest, and says which URL they were fighting over.
  */
-function assertUniqueSlugs(kind: string, items: { slug: string }[]) {
+function keepUniqueSlugs<T extends { slug: string }>(
+  kind: string,
+  items: T[],
+): T[] {
   const seen = new Set<string>();
-  for (const { slug } of items) {
-    if (seen.has(slug))
-      throw new Error(
-        `Two ${kind} resolve to the same slug "${slug}". Give one of them its own "slug".`,
+  const kept: T[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.slug)) {
+      reject(
+        "programme",
+        `Two ${kind} resolve to the same slug "${item.slug}". Give one of them its own "slug".`,
       );
-    seen.add(slug);
+      continue;
+    }
+    seen.add(item.slug);
+    kept.push(item);
   }
+
+  return kept;
 }

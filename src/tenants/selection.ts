@@ -18,6 +18,7 @@
  */
 
 import { sanityEnabled } from "../lib/sanity/env";
+import { previewMode } from "../preview/mode";
 import { discoverCitySlugs } from "./discovery";
 import { DEFAULT_TENANT, LOCAL_TENANT_IDS, PORTAL_TARGET } from "./ids";
 
@@ -89,7 +90,7 @@ export const strictTenants = Boolean(process.env.STRICT_TENANTS?.trim());
  * files to carry a prefix, a build with no CMS behind it takes one city.
  */
 export const LOCAL_TENANT: string = (() => {
-  if (sanityEnabled) return requestedCities?.[0] ?? DEFAULT_TENANT;
+  if (sanityEnabled()) return requestedCities?.[0] ?? DEFAULT_TENANT;
 
   const asked = requestedCities;
   if (!asked || asked.length === 0) return DEFAULT_TENANT;
@@ -123,6 +124,12 @@ let cached: Promise<string[]> | undefined;
  * query.
  */
 export function selectedCities(): Promise<string[]> {
+  // The preview asks again every render, for the reason `resolveTenant` in
+  // `src/tenants/index.ts` gives: a memo filled on a Worker isolate's first
+  // request is an answer it keeps giving for hours. A city published in the
+  // Studio has to be able to appear without a redeploy.
+  if (previewMode) return resolveCities();
+
   cached ??= resolveCities();
   return cached;
 }
@@ -131,7 +138,7 @@ async function resolveCities(): Promise<string[]> {
   if (requestedCities?.length === 0) return [];
 
   // Without a CMS there is one city and `LOCAL_TENANT` has already checked it.
-  if (!sanityEnabled) return [LOCAL_TENANT];
+  if (!sanityEnabled()) return [LOCAL_TENANT];
 
   const known = await discoverCitySlugs();
   if (!requestedCities) return known;

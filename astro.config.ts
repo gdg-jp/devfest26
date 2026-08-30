@@ -1,5 +1,7 @@
 import { defineConfig } from "astro/config";
+import cloudflare from "@astrojs/cloudflare";
 import type { AstroIntegration } from "astro";
+import { previewMode } from "./src/preview/mode";
 import {
   anyCity,
   portalSelected,
@@ -31,7 +33,10 @@ const site = process.env.SITE_URL;
  *
  * The city pages live in `src/city/`. `getStaticPaths` on each one expands
  * `[tenant]` over the cities this build resolved — see `buildableCities` in
- * `src/tenants/index.ts`.
+ * `src/tenants/index.ts`. In the draft preview there is nothing to expand at
+ * build time, so those exports are ignored (Astro says so, once per route) and
+ * each page resolves its own props from `Astro.params` instead — see
+ * `src/city/params.ts`.
  */
 const routes: AstroIntegration = {
   name: "devfest:routes",
@@ -50,8 +55,22 @@ const routes: AstroIntegration = {
         inject("/[tenant]/speakers/[slug]", "./src/city/Speaker.astro");
         inject("/[tenant]/talks/[slug]", "./src/city/Talk.astro");
         inject("/[tenant]/favicon.svg", "./src/city/favicon.ts");
-        // Only built with OG_PREVIEW set; see the route itself.
-        inject("/[tenant]/og-preview", "./src/city/OgPreview.astro");
+        // Only built with OG_PREVIEW set; see the route itself. The preview
+        // renders on demand, where `getStaticPaths` decides nothing and the
+        // route would answer for every city — so it is left out entirely.
+        if (!previewMode) {
+          inject("/[tenant]/og-preview", "./src/city/OgPreview.astro");
+        }
+      }
+
+      if (previewMode) {
+        // What could not be rendered, and when the content was read. Read by
+        // the bar at the foot of every preview page.
+        inject("/preview/status", "./src/preview/status.ts");
+        // Astro serves this for anything that still throws. There is no
+        // equivalent in a static build — a page that failed there failed the
+        // build — so it exists only here.
+        inject("/500", "./src/preview/Error.astro");
       }
     },
   },
@@ -62,6 +81,42 @@ export default defineConfig({
   site,
   integrations: [routes],
   trailingSlash: "never",
+  /**
+   * The published site is a directory of files; the draft preview is a
+   * Cloudflare Worker that renders each request from whatever is in the Studio
+   * at that moment. Same routes, same components, same schemas — see
+   * `src/preview/mode.ts` for the whole of what differs.
+   */
+  output: previewMode ? "server" : "static",
+  /**
+   * Pointed at the gate's own config, because the gate is the Worker: `main`
+   * there is `preview/src/index.ts`, which authenticates and only then hands
+   * the request to this adapter's handler. It has to be that way round —
+   * the handler serves static assets itself, before any Astro middleware
+   * would run, so a gate inside the app would leave `/_astro/*` open.
+   */
+  adapter: previewMode
+    ? cloudflare({
+        configPath: "preview/wrangler.jsonc",
+        /**
+         * Neither of the bindings this adapter reaches for by default is
+         * wanted here, and both would be a binding the deploy has to be given
+         * something real for.
+         *
+         * Images: every photo on the Sanity path is already a URL on Sanity's
+         * CDN, cropped to the hotspot an organiser set — see
+         * `src/lib/sanity/image.ts`. There is nothing left for an image
+         * service to transform, so it passes them through.
+         */
+        imageService: "passthrough",
+      })
+    : undefined,
+  /**
+   * KV sessions, the other default binding. Nothing in this site has a session
+   * — the only one in the deployment is the sign-in cookie, which belongs to
+   * the gate and is encrypted into the cookie itself.
+   */
+  session: previewMode ? false : undefined,
   /**
    * No `base`. The cities are not separate sites mounted on paths any more —
    * they are routes, `/[tenant]/...`, in one site whose root is the origin.
@@ -93,6 +148,16 @@ export default defineConfig({
     inlineStylesheets: process.env.OG_PREVIEW ? "always" : "auto",
   },
   vite: {
+    define: {
+      /**
+       * Which of the two this is, decided once and substituted in. A constant
+       * rather than an environment read, because the preview's own branches
+       * run inside a Worker where `process.env` is only reliably populated
+       * during a request — and because it lets the published build drop every
+       * preview-only branch instead of shipping it. See `src/preview/mode.ts`.
+       */
+      __PREVIEW__: JSON.stringify(previewMode),
+    },
     build: {
       cssMinify: "lightningcss",
     },

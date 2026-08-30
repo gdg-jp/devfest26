@@ -1,8 +1,9 @@
-import { getCollection } from "astro:content";
 import type { Theme } from "../data/themes";
+import { entries } from "../data/collections";
 import { tenantHome } from "../lib/url";
 import { eventDates } from "../tenants/eventDates";
 import { discoverCities } from "../tenants/discovery";
+import { reject } from "../preview/problems";
 
 /**
  * Every DevFest the front page lists, from two kinds of source.
@@ -99,9 +100,7 @@ async function cities(): Promise<PortalEvent[]> {
 }
 
 async function external(): Promise<PortalEvent[]> {
-  const entries = await getCollection("externalEvents");
-
-  return entries.map((entry) => {
+  return (await entries("externalEvents")).map((entry) => {
     const d = entry.data;
     const startsAt = d.startsAt.toISOString();
     const { isoDate, label } = dateLabel(
@@ -135,13 +134,11 @@ async function external(): Promise<PortalEvent[]> {
  * the hour.
  */
 export async function getPortalEvents(): Promise<PortalEvents> {
-  const all = [...(await cities()), ...(await external())];
+  const all = uniqueSlugs([...(await cities()), ...(await external())]);
 
   const now = Date.now();
   const at = (event: PortalEvent) => new Date(event.startsAt).getTime();
   const isPast = (event: PortalEvent) => at(event) < now;
-
-  assertUniqueSlugs(all);
 
   return {
     upcoming: all.filter((e) => !isPast(e)).sort((a, b) => at(a) - at(b)),
@@ -153,14 +150,25 @@ export async function getPortalEvents(): Promise<PortalEvents> {
  * Two events under one key would be indistinguishable in the list and in any
  * anchor pointing into it. Cities and external events come from different
  * places, so nothing else catches a collision between the two.
+ *
+ * A build throws. The preview keeps the first and says so, because a duplicate
+ * slug is a mistake in one card and not a reason to take the list away.
  */
-function assertUniqueSlugs(events: PortalEvent[]) {
+function uniqueSlugs(events: PortalEvent[]): PortalEvent[] {
   const seen = new Set<string>();
-  for (const { slug } of events) {
-    if (seen.has(slug))
-      throw new Error(
-        `Two front-page events share the slug "${slug}". Give one of them its own.`,
+  const kept: PortalEvent[] = [];
+
+  for (const event of events) {
+    if (seen.has(event.slug)) {
+      reject(
+        "front page",
+        `Two front-page events share the slug "${event.slug}". Give one of them its own.`,
       );
-    seen.add(slug);
+      continue;
+    }
+    seen.add(event.slug);
+    kept.push(event);
   }
+
+  return kept;
 }
