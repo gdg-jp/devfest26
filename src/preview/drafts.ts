@@ -5,7 +5,7 @@ import { sources } from "../lib/sanity/sources";
 import { everyCity, EVENTS } from "../lib/sanity/queries";
 import { parseEvent } from "../tenants/fromSanity";
 import type { TenantConfig } from "../tenants/types";
-import { report, startRecording } from "./problems";
+import { recordInto, recording, report, type Recording } from "./problems";
 
 /**
  * The content the preview is rendering, read now rather than at build time.
@@ -55,6 +55,13 @@ interface Snapshot {
   entries: Map<CollectionName, Entry[]>;
   /** Raw `event` documents. Tier 1 and tier 2 both read these — see `EVENTS`. */
   events: unknown[];
+  /**
+   * What reading it ran into — a document that does not match its schema, a
+   * mapper that threw. It belongs to the snapshot rather than to the request
+   * that happened to trigger it, because every request served from this
+   * snapshot has the same holes in it.
+   */
+  problems: Recording;
 }
 
 /**
@@ -102,17 +109,30 @@ ${Object.entries(sources)
 }
 
 async function take(): Promise<Snapshot> {
-  startRecording();
+  /*
+    Its own recording, opened here rather than inherited from whichever request
+    arrived first. One snapshot is read by every request for the next second,
+    so a schema failure found while parsing it is not that request's finding —
+    it is a property of the content all of them are being shown.
+  */
+  const found = recording();
 
-  const raw =
-    await sanityClient().fetch<Record<string, unknown[]>>(batchQuery());
+  return recordInto(found, async () => {
+    const raw =
+      await sanityClient().fetch<Record<string, unknown[]>>(batchQuery());
 
-  const entries = new Map<CollectionName, Entry[]>();
-  for (const key of Object.keys(sources) as CollectionName[]) {
-    entries.set(key, parseAll(key, raw[key] ?? []));
-  }
+    const entries = new Map<CollectionName, Entry[]>();
+    for (const key of Object.keys(sources) as CollectionName[]) {
+      entries.set(key, parseAll(key, raw[key] ?? []));
+    }
 
-  return { at: Date.now(), entries, events: raw.events ?? [] };
+    return {
+      at: Date.now(),
+      entries,
+      events: raw.events ?? [],
+      problems: found,
+    };
+  });
 }
 
 /**
@@ -221,4 +241,16 @@ export async function draftTenant(slug: string): Promise<TenantConfig> {
 /** When the content on this page was read. */
 export async function draftsTakenAt(): Promise<number> {
   return (await snapshot()).at;
+}
+
+/**
+ * What reading the current snapshot ran into.
+ *
+ * `/preview/status` merges this with its own walk. The two are separate
+ * because they are found at different times by different code: these come out
+ * of parsing the documents, the others out of trying to assemble pages from
+ * them.
+ */
+export async function draftProblems(): Promise<Recording> {
+  return (await snapshot()).problems;
 }
