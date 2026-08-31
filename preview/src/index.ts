@@ -32,7 +32,10 @@ import site from "@astrojs/cloudflare/entrypoints/server";
  */
 
 type Env = {
-  /** The site's client build, uploaded alongside. See `wrangler.jsonc`. */
+  /**
+   * The site's client build, uploaded alongside — and, since Presentation, the
+   * Studio as well. See `wrangler.jsonc` and `serveStudio`.
+   */
   ASSETS: Fetcher;
   IDP_ISSUER: string;
   IDP_CLIENT_ID?: string;
@@ -48,6 +51,13 @@ type Env = {
   SANITY_PROJECT_ID?: string;
   SANITY_DATASET?: string;
   SANITY_READ_TOKEN?: string;
+  /**
+   * Where an overlay in the preview should open the Studio. Unset on a
+   * deployment, where the default `/studio` is this Worker's own copy; set to
+   * `http://localhost:3333` for a local run against `sanity dev`. See
+   * `studioUrl` in `src/lib/sanity/env.ts`.
+   */
+  SANITY_STUDIO_URL?: string;
 };
 
 /** One entry of the `https://gdgs.jp/claims/chapters` claim. */
@@ -140,6 +150,13 @@ export default {
     if (!session) return challenge(request, url);
     if (!isMember(session)) return refusal(session);
 
+    // Inside the gate, deliberately: this is the Studio, and it is here so
+    // that Presentation's preview iframe shares an origin with the page it is
+    // framing. See `serveStudio`.
+    if (url.pathname === STUDIO || url.pathname.startsWith(`${STUDIO}/`)) {
+      return serveStudio(request, env, url);
+    }
+
     return serveSite(request, env, context);
   },
 } satisfies ExportedHandler<Env>;
@@ -175,7 +192,127 @@ async function serveSite(
   const response = new Response(rendered.body, rendered);
   response.headers.set("Cache-Control", "no-store");
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  response.headers.set("Content-Security-Policy", frameAncestors(env));
   return response;
+}
+
+/**
+ * Who may put these pages in a frame.
+ *
+ * Presentation's whole shape is an iframe, so the preview has to be frameable
+ * — and a page that is frameable is a page listening to whoever framed it:
+ * `src/preview/visualEditing.ts` navigates on messages that arrive over that
+ * channel. Left open, any site could embed a signed-in editor's preview and
+ * talk to it.
+ *
+ * `'self'` is the deployed arrangement, and the reason the Studio is served
+ * from this origin at all. A local run puts it on another port instead, so the
+ * origin named by `SANITY_STUDIO_URL` — already the one the overlays are told
+ * to open — is added when there is one. The default is a path, `/studio`,
+ * which is this origin and needs no allowance.
+ */
+function frameAncestors(env: Env): string {
+  const studio = env.SANITY_STUDIO_URL?.trim();
+  let extra = "";
+  try {
+    if (studio) extra = ` ${new URL(studio).origin}`;
+  } catch {
+    /* A path rather than a URL: this origin, already covered by 'self'. */
+  }
+  return `frame-ancestors 'self'${extra}`;
+}
+
+/**
+ * The Studio, on this Worker's own origin.
+ *
+ * Sanity Presentation is the Studio with the site beside it in an iframe:
+ * edit on the left, watch on the right, click the page to jump to the field.
+ * The iframe is the whole difficulty. Every request it makes is a request to
+ * this Worker, and the session that allows it lives in a `SameSite=Lax`
+ * cookie — which a browser will not send from a frame embedded in a *different*
+ * site. `devfest26.sanity.studio` is a different site (`workers.dev` is on the
+ * Public Suffix List, so the two share nothing), so from there the frame gets
+ * a 302 to GDG Accounts, which declines to render in a frame, and the editor
+ * gets an empty panel. Relaxing the cookie to `SameSite=None` would fix Chrome
+ * and not Safari, which blocks third-party cookies outright.
+ *
+ * So the Studio is served from here as well. Same origin, so the cookie is
+ * simply sent, in every browser, with nothing relaxed. It is the same build
+ * from the same commit as the deployed one — see `.github/workflows/preview.yml`
+ * — and `devfest26.sanity.studio` stays exactly as it was for everyone who
+ * just wants to write.
+ *
+ * `/studio` is a reserved path on this deployment as a consequence: a city
+ * whose slug is `studio` would never be reached. `portal` is the other one.
+ *
+ * The fallback to `index.html` is because the Studio is a single-page app —
+ * `/studio/presentation` and `/studio/desk/session;abc` are routes it handles
+ * itself, and there is no file at either.
+ */
+const STUDIO = "/studio";
+
+async function serveStudio(
+  request: Request,
+  env: Env,
+  url: URL,
+): Promise<Response> {
+  const asset = await env.ASSETS.fetch(request);
+
+  const found =
+    asset.status === 404
+      ? await env.ASSETS.fetch(
+          new Request(new URL(`${STUDIO}/index.html`, request.url), request),
+        )
+      : asset;
+
+  if (found.status === 404) return noStudio();
+
+  const response = new Response(found.body, found);
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  /*
+    The one carve-out from `no-store` on this origin, and it is a distinction
+    between code and content rather than a hole in the gate. The Studio is
+    several megabytes of JavaScript under `/studio/static/`, every file named
+    by its own hash, and identical to what `devfest26.sanity.studio` hands to
+    anybody who asks. No draft is in it — the drafts arrive later, over the
+    API, with the editor's own Sanity credentials. Re-downloading all of it on
+    every reload of a tool whose entire purpose is reloading would be a real
+    cost for no privacy gained. `private` keeps it out of shared caches all the
+    same, and it stays unindexable.
+  */
+  response.headers.set(
+    "Cache-Control",
+    // The path, not the whole URL: `/studio?x=/studio/static/` is the
+    // entrypoint, and a year of `immutable` on it is a Studio that cannot be
+    // updated in that browser.
+    url.pathname.startsWith(`${STUDIO}/static/`)
+      ? "private, max-age=31536000, immutable"
+      : "no-store",
+  );
+  response.headers.set("Content-Security-Policy", frameAncestors(env));
+  return response;
+}
+
+/**
+ * What `/studio` says when this deployment has no Studio in it.
+ *
+ * A local `pnpm preview:dev` is the ordinary case: `astro dev` serves no
+ * Studio build, and the Studio to point at is `sanity dev` on its own port.
+ * Saying which is better than a bare 404 on a path the Presentation
+ * documentation will have just told somebody to open.
+ */
+function noStudio(): Response {
+  return html(
+    page(
+      "Studio はここにありません",
+      "<p>この配信には Studio が同梱されていません。</p>" +
+        "<p>ローカルでは <code>studio/</code> で <code>pnpm dev</code> を実行し、" +
+        '<a href="http://localhost:3333">http://localhost:3333</a> を開いてください。' +
+        "デプロイ版では <code>.github/workflows/preview.yml</code> の Studio ビルドが" +
+        "走っているか確認してください。</p>",
+    ),
+    404,
+  );
 }
 
 /**

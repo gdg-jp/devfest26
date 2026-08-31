@@ -28,3 +28,17 @@ export const readToken = () =>
   process.env.SANITY_READ_TOKEN?.trim() || undefined;
 
 export const sanityEnabled = () => Boolean(projectId());
+
+/**
+ * Where the Studio that the draft preview's overlays open into is served from.
+ *
+ * A path, not a URL, and that is the point: the preview serves the Studio at
+ * `/studio` on its own origin so that the Presentation iframe carries the
+ * session cookie. See `serveStudio` in `preview/src/index.ts`. Overridden for a
+ * local run, where the Studio is `sanity dev` on port 3333.
+ *
+ * Read by the stega encoder and by nothing in a published build — see
+ * `src/preview/stega.ts`.
+ */
+export const studioUrl = () =>
+  process.env.SANITY_STUDIO_URL?.trim() || "/studio";

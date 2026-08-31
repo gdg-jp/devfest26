@@ -4,6 +4,7 @@ import "../styles/base.css";
 import { themeColor } from "../data/themes";
 import { hasOgCard } from "../lib/og";
 import { previewMode } from "../preview/mode";
+import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
 import type { ResolvedTenant } from "../tenants";
 import { tenantPath } from "../lib/url";
@@ -21,13 +22,22 @@ interface Props {
   jsonLd?: Record<string, unknown>;
 }
 
-const {
-  site,
-  title = site.title,
-  description = site.description,
-  jsonLd,
-} = Astro.props;
+/*
+  Everything in the head is cleaned rather than rendered as it arrived. In the
+  draft preview the strings carry Sanity's invisible edit markers, which is
+  what makes the body of the page clickable — but the head is not a place
+  anybody clicks, and these are the strings that leave the page: `<title>` is
+  routinely selected and pasted, the Open Graph tags become somebody else's
+  link card, and the JSON-LD is read by machines that will not thank us for a
+  hundred tag characters inside an organiser's name. Identity outside the
+  preview; see `src/preview/stega.ts`.
+*/
+const { site, jsonLd } = Astro.props;
 const { event, links } = site;
+
+const siteName = clean(site.title);
+const title = clean(Astro.props.title ?? site.title);
+const description = clean(Astro.props.description ?? site.description);
 
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
@@ -43,7 +53,7 @@ const ogImage =
     ? new URL(`/og/${site.tenant}.png`, Astro.site).href
     : undefined;
 
-const eventSchema = {
+const eventSchema = clean({
   "@context": "https://schema.org",
   "@type": "Event",
   name: site.title,
@@ -84,7 +94,7 @@ const eventSchema = {
   },
   ...(ogImage ? { image: [ogImage] } : {}),
   ...(canonical ? { url: canonical } : {}),
-};
+});
 ---
 
 <!doctype html>
@@ -111,7 +121,7 @@ const eventSchema = {
     <meta name="theme-color" content={themeColor(site.theme)} />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content={site.title} />
+    <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:locale" content={site.locale} />
@@ -141,7 +151,7 @@ const eventSchema = {
         <script
           type="application/ld+json"
           is:inline
-          set:html={JSON.stringify(jsonLd)}
+          set:html={JSON.stringify(clean(jsonLd))}
         />
       )
     }

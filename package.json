@@ -34,10 +34,14 @@
     "@portabletext/to-html": "^6.0.0",
     "@sanity/client": "^8.4.0",
     "@sanity/image-url": "^2.1.1",
+    "@sanity/visual-editing": "^6.1.1",
     "astro": "^7.2.4",
     "motion": "^13.1.1",
     "openid-client": "^6.8.4",
-    "sharp": "^0.35.3"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sharp": "^0.35.3",
+    "styled-components": "^6.5.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

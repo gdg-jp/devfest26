@@ -55,6 +55,37 @@ GDG Accounts の userinfo が返す `https://gdgs.jp/claims/chapters` が**空�
 
 本番ビルド側の挙動は 1 ミリも変わっていません。同じ不備は `build.yml` でこれまでどおりそのジョブを赤くし、その都市の公開済みページはそのまま残ります。
 
+## Presentation — 見ながら書く
+
+`/studio` を開くと、**左に編集フォーム、右にプレビュー**という 1 画面になります（Sanity Presentation）。ページの本文をクリックすると左の該当フィールドに飛び、入力の手が止まると右が更新されます（`src/preview/visualEditing.ts` の `QUIET_MS`）。「Edit」スイッチを切った状態はそのタブの `sessionStorage` に残り、ページを移動しても続きます（同ファイルの `OVERLAY_KEY`）。Studio がつながると枠が作り直されて「入」に戻るので、応答が止まってから切り直します（同 `SETTLE_MS`）。
+
+```text
+https://<プレビューの URL>/studio     ← Studio。ゲートの内側
+  └─ 「プレビュー」タブ
+       ├─ 左: 編集フォーム
+       └─ 右: <iframe src="https://<プレビューの URL>/kansai">
+```
+
+### なぜ Studio がここにも居るのか
+
+**同一オリジンでなければ iframe が開けないからです。** セッションは `SameSite=Lax` の cookie で、ブラウザは別サイトに埋め込まれた frame からのリクエストにはそれを送りません。`devfest26.sanity.studio` からだと frame の中は毎回 `/auth/login` への 302 になり、GDG Accounts は frame 内に表示できないので、プレビュー枠は真っ白のままになります（`SameSite=None` にしても Safari は third-party cookie 自体を拒否します）。
+
+そこで、同じコミットの同じ `studio/` を、このプレビューのオリジンにも `/studio` として配ります。オリジンが同じなので cookie はそのまま流れ、ゲートが Studio ごと守ります。詳細は [`src/index.ts`](src/index.ts) の `serveStudio` に書いてあります。
+
+- **`devfest26.sanity.studio` はこれまでどおり**です。書くだけなら今までどおりそちらで構いません。Presentation タブはプレビュー側にしか出ません（あちらに出しても壊れているだけなので）
+- **`/studio` は予約パスになります。** スラッグが `studio` の `event` を作ると、その都市のページはゲートに食われて表示されません。`portal` と同じ扱いです
+- `/studio/static/*` だけは `Cache-Control: private, max-age=31536000, immutable` です。中身はファイル名にハッシュの入った JavaScript だけで、下書きは 1 バイトも含まれません（下書きは後から API 越しに、閲覧者自身の Sanity 権限で届きます）。それ以外のレスポンスは今までどおり `no-store` です
+
+### クリック編集が効く範囲
+
+文字列に不可視文字を埋め込む仕組み（stega）なので、**文字だけ**です。画像と参照（トラック、登壇者の紐付け）はクリックしても反応しません — 左のフォームから編集してください。
+
+埋め込む対象は [`src/preview/stega.ts`](../src/preview/stega.ts) の許可リストで決まっています。全部に埋めてしまうと、`initial`（2 文字まで）や `stats[].tone`・`rail`（選択肢）のような「検証される文字列」が壊れ、そのドキュメントがプレビューから消えます。**Studio に新しいフィールドを足しても自動では対象になりません** — 本文として読ませたいなら、そのファイルの `ENCODABLE` に名前を足してください。
+
+### CORS の登録（初回だけ）
+
+[sanity.io/manage](https://www.sanity.io/manage) → 対象プロジェクト → **API** → **CORS origins** に、プレビューのオリジンを **Allow credentials を有効にして**追加します。これが無いと `/studio` の Studio が Sanity にログインできません。
+
 ## セットアップ
 
 初回だけ、この順番で進めます。**先に Worker をデプロイして、それが表示する URL を GDG Accounts に登録する**流れです（Worker の URL は登録前には分からないため）。
@@ -151,21 +182,29 @@ pnpm preview:build
 ```
 
 ```bash
+cp preview/.dev.vars dist/all/server/.dev.vars
+```
+
+```bash
 pnpm exec wrangler dev -c dist/all/server/wrangler.json
 ```
+
+`wrangler` は設定ファイルの隣で `.dev.vars` を探すので、コピーが要ります（`dist/` は gitignore 済みです）。こちらなら `/studio` も本番と同じ形で確認できます — ただし Studio が Sanity に繋がるには、そのオリジン（`http://localhost:4321`）を CORS origins に足す必要があります。足していなければ Studio は「Connect this Studio to your project」を表示します。
 
 覚えておくと楽なこと。
 
 - **`SANITY_READ_TOKEN` はローカルでは省略できます。** 省略すると公開済みの内容が表示され、画面下のバーが赤くなってそう言います。デプロイ先では省略できません（後述）
 - HMR は効きます。`run_worker_first` を `true` ではなく配列で書き、Vite が使う 5 つの名前空間（`/@vite/*`、`/@id/*`、`/@fs/*`、`/src/*`、`/node_modules/*`）を除外しているためです。`true` のままだと Worker が全部を受けてしまい、スタイルもスクリプトも 1 つも届きません
-- サインインはローカルではできません（redirect URI が登録されていないため）。ページを見るだけなら、`.dev.vars` の `SESSION_SECRET` で暗号化したセッション cookie を手で作れば通れます
+- **サインインはローカルでもできます。** GDG Accounts に `http://localhost:4321/auth/callback` が redirect URI として登録済みなら、ブラウザでそのまま通れます
+- **Presentation をローカルで試すときは、Studio を別ポートで立てます。** `studio/` で `pnpm dev`（:3333）を動かし、`studio/.env` に `SANITY_STUDIO_PREVIEW_ORIGIN=http://localhost:4321`、`preview/.dev.vars` に `SANITY_STUDIO_URL=http://localhost:3333` を書きます。`localhost` 同士は同一サイト扱いなので、ここでは cookie の問題は起きません。`/studio` はローカルには無く（Studio ビルドを同梱していないため）、開くとその旨のページが出ます
 
 ## 覚えておくこと
 
 - **本番の [`build.yml`](../.github/workflows/build.yml) に `SANITY_READ_TOKEN` を足さないでください。** あのワークフローにトークンが無いことが、下書きが公開サイトに出ない唯一の保証です
 - **トークンはブラウザに届きません。** Worker の中でサーバコードが読み、外に出るのは HTML だけです
 - **読み取りトークンが無い Worker は、サイトを配信せず設定ページを返します。** 下書きを読めないプレビューは「公開済みの内容がプレビューの顔をしている」状態で、編集者に「まだ入っていないんだな」と誤解させる唯一の失敗だからです。この判定は `https` のときだけ働きます
-- Worker が返すレスポンスはすべて `Cache-Control: no-store` と `X-Robots-Tag: noindex, nofollow` を持ちます。ゲートが 1 か所で付けているので、ルートを増やしても付け忘れは起きません
+- Worker が返すレスポンスはすべて `Cache-Control: no-store` と `X-Robots-Tag: noindex, nofollow` を持ちます。ゲートが 1 か所で付けているので、ルートを増やしても付け忘れは起きません（例外は `/studio/static/*` のみ。Presentation の節を参照）
+- **`Content-Security-Policy: frame-ancestors` を付けています。** Presentation のためにプレビューは iframe に入る必要があり、iframe に入るページは「入れた側からのメッセージを聞くページ」でもあります（`src/preview/visualEditing.ts` はそれで移動します）。許可するのは自分自身と、`SANITY_STUDIO_URL` がオリジンを指しているときだけそのオリジンです
 - `run_worker_first` により、HTML だけでなく CSS・画像・favicon まですべてゲートを通ります。ここを外すと `/kansai/_astro/*.css` が誰でも読める状態になります。除外しているのは Vite の開発用パスだけで、デプロイ先にはそこに置かれるファイルが 1 つもありません
 - プレビューのビルドは Sanity を一切読みません。コレクションは空で登録され、内容はレンダリング時に取りに行きます。ビルド成果物の中に CMS のコピーは存在しません
 - ビルドが失敗した回はデプロイまで到達しないので、**前回のプレビューがそのまま残ります**

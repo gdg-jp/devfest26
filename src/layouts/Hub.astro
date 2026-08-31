@@ -3,6 +3,7 @@ import "../styles/tokens.css";
 import "../styles/base.css";
 import { themeColor } from "../data/themes";
 import { previewMode } from "../preview/mode";
+import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
 
 /**
@@ -25,7 +26,18 @@ interface Props {
   jsonLd?: Record<string, unknown>;
 }
 
-const { title, description, jsonLd } = Astro.props;
+/*
+  The head is cleaned here for the reason `Base.astro` gives at length, and
+  this is the layout where it was actually going wrong: the front page's
+  `ItemList` is assembled out of every city's title and venue, and in the
+  preview those still carry Sanity's invisible edit markers. Invisible is a
+  property of text that gets *rendered*; inside a `<script>` they are just
+  characters in a JSON document that machines read. The preview says so out
+  loud — `onSuspiciousStega` in `src/preview/visualEditing.ts`.
+*/
+const { jsonLd } = Astro.props;
+const title = clean(Astro.props.title);
+const description = clean(Astro.props.description);
 
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
@@ -70,7 +82,7 @@ const theme = "blue";
         <script
           type="application/ld+json"
           is:inline
-          set:html={JSON.stringify(jsonLd)}
+          set:html={JSON.stringify(clean(jsonLd))}
         />
       )
     }

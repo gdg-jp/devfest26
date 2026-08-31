@@ -9,7 +9,10 @@ import {
   projectId,
   readToken,
   sanityEnabled,
+  studioUrl,
 } from "./env";
+import { previewMode } from "../../preview/mode";
+import { encodable } from "../../preview/stega";
 
 let cached: { key: string; client: SanityClient } | undefined;
 
@@ -33,6 +36,22 @@ export function sanityClient(): SanityClient {
     // is the entire point of it.
     useCdn: false,
     perspective: token ? "drafts" : "published",
+    /*
+      Click-to-edit, and only in the preview. Turning this on makes the client
+      ask for a Content Source Map alongside the result and hide an invisible
+      "this came from that field" marker inside each string it is allowed to —
+      which is what lets the overlay in the browser open the right field
+      without a single component being annotated. `filter` is what "allowed
+      to" means, and it is not optional: see `src/preview/stega.ts`.
+
+      `false` rather than absent in a published build, so the shape of this
+      object does not depend on the branch. `previewMode` is a build-time
+      constant either way, so the published build drops the import along with
+      the branch.
+    */
+    stega: previewMode
+      ? { enabled: true, studioUrl: studioUrl(), filter: encodable }
+      : false,
   };
 
   /*

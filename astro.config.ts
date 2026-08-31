@@ -41,7 +41,7 @@ const site = process.env.SITE_URL;
 const routes: AstroIntegration = {
   name: "devfest:routes",
   hooks: {
-    "astro:config:setup": ({ injectRoute }) => {
+    "astro:config:setup": ({ injectRoute, injectScript }) => {
       const inject = (pattern: string, entrypoint: string) =>
         injectRoute({ pattern, entrypoint });
 
@@ -71,6 +71,24 @@ const routes: AstroIntegration = {
         // equivalent in a static build — a page that failed there failed the
         // build — so it exists only here.
         inject("/500", "./src/preview/Error.astro");
+
+        /*
+          Sanity's click-to-edit overlays, on every preview page.
+
+          Injected here rather than imported behind `if (previewMode)` in
+          `src/scripts/main.ts`, and the difference is not stylistic. A
+          conditional `import()` there does get its call removed from the
+          published bundle — but the module graph was already built by then,
+          so the chunk is still *emitted*: three orphan files and 734 kB of
+          React and overlay code, published to a static host where nothing
+          would ever load them. Injecting keeps the module out of the
+          published graph entirely, which is the same reason the two routes
+          above are injected rather than filed under `src/pages/`.
+        */
+        injectScript(
+          "page",
+          `import { init } from "/src/preview/visualEditing.ts"; init();`,
+        );
       }
     },
   },

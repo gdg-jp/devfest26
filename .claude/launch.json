@@ -6,6 +6,26 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "preview:dev", "--port", "4321"],
       "port": 4321
+    },
+    {
+      "name": "studio",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "studio", "run", "dev", "--port", "3333"],
+      "port": 3333
+    },
+    {
+      "name": "preview-built",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "exec",
+        "wrangler",
+        "dev",
+        "-c",
+        "dist/all/server/wrangler.json",
+        "--port",
+        "4321"
+      ],
+      "port": 4321
     }
   ]
 }

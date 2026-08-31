@@ -2,6 +2,7 @@
 import Logo from "./Logo.astro";
 import type { ResolvedTenant } from "../tenants";
 import { isHome, tenantHome } from "../lib/url";
+import { clean } from "../preview/stega";
 
 interface Props {
   site: ResolvedTenant;
@@ -13,6 +14,12 @@ const { site } = Astro.props;
 // the sections. From a session or speaker page they have to travel home first;
 // the scroll-spy simply finds nothing to observe there.
 // `home` is `/kansai` here, not `/` — every city is a path of its own.
+// The city's name reaches this one as an `aria-label` — read out, never drawn
+// — and Sanity's edit markers are only invisible in text that is drawn. There
+// is nothing here to click either, so nothing is lost by taking them out. The
+// same call and the same reason as the head; see `src/preview/stega.ts`.
+const siteName = clean(site.title);
+
 const home = tenantHome(site.tenant);
 const onHome = isHome(Astro.url, site.tenant);
 const prefix = onHome ? "" : home;
@@ -23,7 +30,7 @@ const prefix = onHome ? "" : home;
     <a
       class="home"
       href={onHome ? "#top" : home}
-      aria-label={`${site.title} — ${onHome ? "ページ先頭へ" : "トップページへ"}`}
+      aria-label={`${siteName} — ${onHome ? "ページ先頭へ" : "トップページへ"}`}
     >
       <Logo variant="primary" class="mark" />
       <span class="edition">{site.editionEn}</span>
