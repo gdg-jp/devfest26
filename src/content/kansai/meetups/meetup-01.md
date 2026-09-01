@@ -2,13 +2,13 @@
 no: 1
 title: "AIどう使ってる？LT会 in 大阪"
 subtitle: "〜疑問と経験を共有しよう〜"
-status: open
+status: done
 date: 2026-08-28
 doorsAt: "18:30"
 startsAt: "19:00"
 endsAt: "21:00"
 venue: "アールスリーインスティテュート（gusuku Ashibinaa OSAKA）／グランフロント大阪 タワーC 16階"
-capacity: "40 名（現地参加 35 ＋ LT 枠 5）"
+capacity: "50 名（現地参加 45 ＋ LT 枠 5）"
 fee: "無料"
 url: https://gdgkwansai.connpass.com/event/403503/
 cta: "connpass で申し込む"
@@ -23,24 +23,24 @@ program:
     talk: true
     who: "saita shinya"
   - at: "19:20"
-    what: "非エンジニア社労士、AIと一緒に仕事してます！"
+    what: "AIが使えない開発現場で、どうAIを使うか"
     talk: true
-    who: "KONDO SAYURI"
+    who: "misoyakiniku"
   - at: "19:30"
     what: "休憩"
     break: true
   - at: "19:40"
-    what: "AIが使えない開発現場で、どうAIを使うか"
-    talk: true
-    who: "misoyakiniku"
-  - at: "19:50"
     what: "ソフトウェアエンジニアのAI活用事例"
     talk: true
     who: "afuroda"
-  - at: "20:00"
+  - at: "19:50"
     what: "「AI活用すると生産性は上がる」は正しいか"
     talk: true
     who: "xinsuzuki"
+  - at: "20:00"
+    what: "Human-Initiated 型 Loop Engineering を実践する"
+    talk: true
+    who: "マツイ"
   - at: "20:10"
     what: "懇親会 兼 Open Space Technology"
     who: "AI についての疑問を持ち寄って話す時間です"
