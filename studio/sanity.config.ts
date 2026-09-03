@@ -7,6 +7,7 @@ import { structure } from "./structure";
 import { CITY_SCOPED_TYPES } from "./structure";
 import { locations, mainDocuments } from "./presentation";
 import { withConfirm } from "./actions/confirmPublish";
+import { batchPublishTool } from "./tools/batchPublish";
 
 /**
  * Where the draft preview is, if this build of the Studio is meant to drive
@@ -57,6 +58,8 @@ export default defineConfig({
       : []),
     visionTool(),
   ],
+
+  tools: (prev) => [...prev, batchPublishTool],
 
   document: {
     /**

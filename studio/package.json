@@ -9,6 +9,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@sanity/icons": "^5.2.1",
+    "@sanity/ui": "^4.0.6",
     "@sanity/vision": "^6.11.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
