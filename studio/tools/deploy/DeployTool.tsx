@@ -14,6 +14,7 @@ import {
 import { useToast } from "@sanity/ui/toast";
 import { useClient, useCurrentUser, type SanityDocument } from "sanity";
 import { DEPLOY_ID } from "../../schemas/deploy";
+import { BuildStatus } from "./BuildStatus";
 import {
   lastDeployedAt,
   nextDeployDocument,
@@ -81,6 +82,8 @@ export function DeployTool() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [deploying, setDeploying] = useState(false);
+  /* Bumped after a deploy, to send the build panel looking for the new run. */
+  const [deployed, setDeployed] = useState(0);
 
   const load = useCallback(async (): Promise<Loaded> => {
     const [cities, document] = await Promise.all([
@@ -187,6 +190,7 @@ export function DeployTool() {
         title: `${targets.length} 件の開催地の反映を始めました`,
         description: "ビルドとデプロイに数分かかります。",
       });
+      setDeployed((n) => n + 1);
       refresh();
     } catch (error) {
       toast.push({
@@ -291,6 +295,8 @@ export function DeployTool() {
                 </Card>
               ))}
             </Stack>
+
+            <BuildStatus nonce={deployed} />
 
             <Stack gap={2}>
               <Text size={1} muted>
