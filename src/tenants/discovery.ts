@@ -96,6 +96,14 @@ function readCard(doc: unknown): { card: CityCard } | { problems: string[] } {
   const theme = str(d.theme);
 
   if (!slug) problems.push("slug is missing");
+  // A slug is not only a URL segment: `discover` hands it to a build matrix,
+  // `publish` uses it as a directory name and prints it into an annotation, and
+  // the Studio shows it in the deploy list. Holding it to the shape of a slug
+  // here is what lets all of those treat it as a plain string.
+  else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+    problems.push(
+      `slug must be lowercase letters, digits and hyphens, got "${slug}"`,
+    );
   if (!title) problems.push("title is missing");
   if (!startsAt) problems.push("startsAt is missing or not a date");
   if (!endsAt) problems.push("endsAt is missing or not a date");
