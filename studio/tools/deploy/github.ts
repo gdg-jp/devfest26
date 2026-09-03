@@ -30,6 +30,24 @@ export const REPO =
 const API = "https://api.github.com";
 const WORKFLOW = "build.yml";
 
+/**
+ * Only the runs that can change the site.
+ *
+ * A pull request builds every city too, and its `publish` job is skipped —
+ * `github.event_name != 'pull_request'` in `build.yml` — so a green PR run
+ * says nothing at all about what is being served, and a red one is a problem
+ * for the branch rather than for the site. Showing either here would answer a
+ * different question than the one this panel is for.
+ *
+ * Filtering by branch is what separates them: a pull request run carries the
+ * topic branch as its `head_branch`, while a push, a `repository_dispatch`
+ * (which GitHub runs on the default branch) and a `workflow_dispatch` started
+ * from main all carry this. The one thing it also hides is a
+ * `workflow_dispatch` started from a topic branch, which does publish — rare
+ * enough, and visible on GitHub, to be worth the simpler rule.
+ */
+const BRANCH = "main";
+
 const HEADERS = {
   Accept: "application/vnd.github+json",
   "X-GitHub-Api-Version": "2022-11-28",
@@ -103,10 +121,13 @@ interface RunPayload {
   html_url: string;
 }
 
-/** The most recent run of the build workflow, or null if it has never run. */
+/**
+ * The most recent run of the build workflow that could have changed the site,
+ * or null if there has never been one.
+ */
 export async function latestRun(repo: string): Promise<Run | null> {
   const { data, remaining } = await get<{ workflow_runs: RunPayload[] }>(
-    `${API}/repos/${repo}/actions/workflows/${WORKFLOW}/runs?per_page=1`,
+    `${API}/repos/${repo}/actions/workflows/${WORKFLOW}/runs?branch=${BRANCH}&per_page=1`,
   );
 
   const run = data.workflow_runs?.[0];
