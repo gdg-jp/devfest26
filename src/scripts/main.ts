@@ -1,5 +1,6 @@
 import { initCountdown } from "./countdown";
 import { initIntro } from "./intro";
+import { initMeetupAccordion } from "./meetup-accordion";
 import { initNav } from "./nav";
 import { initParallax } from "./parallax";
 import { initReveal } from "./reveal";
@@ -22,6 +23,7 @@ if (window.__dfMotionFallback) {
  * so this stays a plain list rather than a set of conditionals.
  */
 initCountdown();
+initMeetupAccordion();
 initNav();
 initReveal();
 initParallax();
