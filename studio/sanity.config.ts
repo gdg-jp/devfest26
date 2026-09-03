@@ -6,6 +6,7 @@ import { schemaTypes } from "./schemas";
 import { structure } from "./structure";
 import { CITY_SCOPED_TYPES } from "./structure";
 import { locations, mainDocuments } from "./presentation";
+import { withConfirm } from "./actions/confirmPublish";
 
 /**
  * Where the draft preview is, if this build of the Studio is meant to drive
@@ -56,6 +57,21 @@ export default defineConfig({
       : []),
     visionTool(),
   ],
+
+  document: {
+    /**
+     * A confirmation step in front of Publish. See `actions/confirmPublish.ts`
+     * for why the button needs one.
+     *
+     * Matching on `action` rather than on position: the array order is not
+     * contractual, and a plugin adding an action would silently wrap the wrong
+     * one.
+     */
+    actions: (prev) =>
+      prev.map((action) =>
+        action.action === "publish" ? withConfirm(action) : action,
+      ),
+  },
 
   schema: {
     types: schemaTypes,
