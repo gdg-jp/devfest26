@@ -25,6 +25,14 @@ export const event = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "isPublic",
+      title: "Public",
+      type: "boolean",
+      initialValue: true,
+      description:
+        "サイトへの公開・非公開を切り替えます。オフにするとサイトや開催地一覧に表示されません。",
+    }),
+    defineField({
       name: "lang",
       title: "Language",
       type: "string",
@@ -332,6 +340,13 @@ export const event = defineType({
     select: {
       title: "title",
       subtitle: "slug.current",
+      isPublic: "isPublic",
+    },
+    prepare({ title, subtitle, isPublic }) {
+      return {
+        title,
+        subtitle: `${subtitle || ""}${isPublic === false ? " (非公開)" : ""}`,
+      };
     },
   },
 });
