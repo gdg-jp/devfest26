@@ -38,7 +38,8 @@ const isPast = eventDate ? eventDate < today : false;
 const isCompleted = d.status === "done" || (!isPlanned && isPast);
 
 const status = isCompleted ? "開催済み" : STATUS[d.status];
-const ctaLabel = d.cta ?? (isCompleted ? "イベントページを見る" : "connpass で申し込む");
+const ctaLabel =
+  d.cta ?? (isCompleted ? "イベントページを見る" : "connpass で申し込む");
 const isGhostCta = isPlanned || isCompleted;
 
 const facts = [
@@ -86,7 +87,9 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
       <div class="meet-done-content" data-meetup-content>
         <div class="meet-done-body">
           {d.subtitle && <p class="meet-done-subtitle">{d.subtitle}</p>}
-          <div class="meet-lede"><Content /></div>
+          <div class="meet-lede">
+            <Content />
+          </div>
 
           {doneFacts.length > 0 && (
             <ul class="meet-facts">
@@ -137,22 +140,23 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
   ) : (
     <article class:list={["meet", { next: isPlanned }]} data-reveal="up">
       <div class="meet-when">
-        <span class="meet-no">Meetup #{d.no}{isPlanned ? " →" : ""}</span>
-        {
-          dated ? (
-            <>
-              <time class="meet-date" datetime={dated.iso}>
-                {dated.md.split("/")[0]}
-                <span class="sl">/</span>
-                {dated.md.split("/")[1]}
-              </time>
-              <span class="meet-dow">{dated.dow}</span>
-              {span && <span class="meet-time">{span}</span>}
-            </>
-          ) : (
-            <span class="meet-date">TBD</span>
-          )
-        }
+        <span class="meet-no">
+          Meetup #{d.no}
+          {isPlanned ? " →" : ""}
+        </span>
+        {dated ? (
+          <>
+            <time class="meet-date" datetime={dated.iso}>
+              {dated.md.split("/")[0]}
+              <span class="sl">/</span>
+              {dated.md.split("/")[1]}
+            </time>
+            <span class="meet-dow">{dated.dow}</span>
+            {span && <span class="meet-time">{span}</span>}
+          </>
+        ) : (
+          <span class="meet-date">TBD</span>
+        )}
       </div>
 
       <div class="meet-body">
@@ -163,57 +167,53 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
           {d.subtitle && <small>{d.subtitle}</small>}
         </h3>
 
-        <div class="meet-lede"><Content /></div>
+        <div class="meet-lede">
+          <Content />
+        </div>
 
-        {
-          facts.length > 0 && (
-            <ul class="meet-facts">
-              {facts.map((f) => (
-                <li>
-                  <span>{f.k}</span>
-                  {f.v}
+        {facts.length > 0 && (
+          <ul class="meet-facts">
+            {facts.map((f) => (
+              <li>
+                <span>{f.k}</span>
+                {f.v}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {d.program && d.program.length > 0 && (
+          <details class="lt-wrap">
+            <summary>
+              当日のタイムテーブル
+              {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+            </summary>
+            <ol class="lt">
+              {d.program.map((p) => (
+                <li class:list={{ brk: p.break }}>
+                  <span class="t">{p.at}</span>
+                  <div>
+                    <b>{p.what}</b>
+                    {p.who && <i>{p.who}</i>}
+                  </div>
                 </li>
               ))}
-            </ul>
-          )
-        }
+            </ol>
+          </details>
+        )}
 
-        {
-          d.program && d.program.length > 0 && (
-            <details class="lt-wrap">
-              <summary>
-                当日のタイムテーブル
-                {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
-              </summary>
-              <ol class="lt">
-                {d.program.map((p) => (
-                  <li class:list={{ brk: p.break }}>
-                    <span class="t">{p.at}</span>
-                    <div>
-                      <b>{p.what}</b>
-                      {p.who && <i>{p.who}</i>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </details>
-          )
-        }
-
-        {
-          d.url && (
-            <div class="cta-row">
-              <a
-                class:list={["btn", { ghost: isPlanned }]}
-                href={d.url}
-                target="_blank"
-                rel="noopener"
-              >
-                {d.cta ?? "connpass で申し込む"}
-              </a>
-            </div>
-          )
-        }
+        {d.url && (
+          <div class="cta-row">
+            <a
+              class:list={["btn", { ghost: isPlanned }]}
+              href={d.url}
+              target="_blank"
+              rel="noopener"
+            >
+              {d.cta ?? "connpass で申し込む"}
+            </a>
+          </div>
+        )}
       </div>
     </article>
   )
