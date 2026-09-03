@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@sanity/diff':
+        specifier: ^6.11.0
+        version: 6.11.0
       '@sanity/icons':
         specifier: ^5.2.1
         version: 5.2.1(react@19.2.8)

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
+import { CloseIcon } from "@sanity/icons/Close";
 import { PublishIcon } from "@sanity/icons/Publish";
 import {
   Badge,
@@ -13,11 +20,18 @@ import {
   Text,
 } from "@sanity/ui";
 import { useToast } from "@sanity/ui/toast";
-import { useClient, useSchema, type SanityDocument } from "sanity";
+import {
+  useClient,
+  useSchema,
+  type ObjectSchemaType,
+  type SanityDocument,
+} from "sanity";
+import { DocumentDiff } from "./DocumentDiff";
 import {
   buildPublishTransaction,
   dependenciesOf,
   publishedIdOf,
+  publishedValueOf,
   resolveSelection,
   type Resolution,
 } from "./publish";
@@ -49,6 +63,25 @@ interface Loaded {
   groups: Group[];
   count: number;
 }
+
+/*
+  The row is two controls side by side — a checkbox that selects and a button
+  that inspects — so the button cannot be a `Card as="label"` the way the whole
+  row used to be. A plain button carries the browser's own styling, hence the
+  reset.
+*/
+const ROW_BUTTON: CSSProperties = {
+  appearance: "none",
+  background: "none",
+  border: 0,
+  color: "inherit",
+  cursor: "pointer",
+  flex: "1 1 auto",
+  font: "inherit",
+  minWidth: 0,
+  padding: 0,
+  textAlign: "left",
+};
 
 function valueAtPath(doc: SanityDocument, path: string): unknown {
   return path
@@ -84,6 +117,18 @@ export function BatchPublishTool() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [inspecting, setInspecting] = useState<string | null>(null);
+  /*
+    Published documents, fetched one at a time as rows are opened. The list
+    query deliberately asks only for `{_id, _rev}`; a diff needs the whole
+    document, and fetching every one of them up front would mean downloading
+    the published dataset twice over to answer a question about the handful of
+    rows anyone actually opens.
+  */
+  const [bases, setBases] = useState<
+    ReadonlyMap<string, SanityDocument | null>
+  >(new Map());
+  const [baseError, setBaseError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<Resolution | null>(null);
   const [publishing, setPublishing] = useState(false);
 
@@ -198,6 +243,8 @@ export function BatchPublishTool() {
   const refresh = useCallback(() => {
     let cancelled = false;
     setLoadError(null);
+    /* Every cached published document is now potentially a revision behind. */
+    setBases(new Map());
     load().then(
       (next) => {
         if (!cancelled) setLoaded(next);
@@ -212,6 +259,40 @@ export function BatchPublishTool() {
   }, [load]);
 
   useEffect(refresh, [refresh]);
+
+  /** The row whose detail pane is open, paired with the draft behind it. */
+  const inspected = useMemo(() => {
+    if (!inspecting || !loaded) return null;
+    const draft = loaded.byPublishedId.get(publishedIdOf(inspecting));
+    const row = loaded.groups
+      .flatMap((group) => group.rows)
+      .find((candidate) => candidate.draftId === inspecting);
+    return row && draft ? { row, draft } : null;
+  }, [inspecting, loaded]);
+
+  useEffect(() => {
+    if (!inspected) return;
+    const { publishedId, isNew } = inspected.row;
+    if (isNew || bases.has(publishedId)) return;
+
+    let cancelled = false;
+    setBaseError(null);
+    client
+      .fetch<SanityDocument | null>(`*[_id == $id][0]`, { id: publishedId })
+      .then(
+        (document) => {
+          if (!cancelled) {
+            setBases((prev) => new Map(prev).set(publishedId, document));
+          }
+        },
+        (error: unknown) => {
+          if (!cancelled) setBaseError(String(error));
+        },
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [bases, client, inspected]);
 
   const toggle = useCallback((draftId: string) => {
     setSelected((prev) => {
@@ -259,6 +340,8 @@ export function BatchPublishTool() {
         title: `${documents.length} 件を公開しました`,
       });
       setSelected(new Set());
+      /* The draft this was showing no longer exists. */
+      setInspecting(null);
       setConfirming(null);
       refresh();
     } catch (error) {
@@ -294,92 +377,134 @@ export function BatchPublishTool() {
   }
 
   return (
-    <Flex direction="column" height="fill">
-      <Card
-        padding={4}
-        borderBottom
-        tone="transparent"
-        style={{ position: "sticky", top: 0, zIndex: 1 }}
-      >
-        <Flex align="center" gap={3}>
-          <Stack gap={2} flex={1}>
-            <Text weight="semibold">まとめて公開</Text>
+    <Flex height="fill">
+      <Flex direction="column" flex={3} style={{ minWidth: 0 }}>
+        <Card
+          padding={4}
+          borderBottom
+          tone="transparent"
+          style={{ position: "sticky", top: 0, zIndex: 1 }}
+        >
+          <Flex align="center" gap={3}>
+            <Stack gap={2} flex={1}>
+              <Text weight="semibold">まとめて公開</Text>
+              <Text size={1} muted>
+                選んだものを 1
+                つのトランザクションで公開します。参照先が未公開なら自動で一緒に公開するので、先に単独で公開する必要はありません。
+              </Text>
+            </Stack>
             <Text size={1} muted>
-              選んだものを 1
-              つのトランザクションで公開します。参照先が未公開なら自動で一緒に公開するので、先に単独で公開する必要はありません。
+              {selected.size} / {loaded.count} 件
             </Text>
-          </Stack>
-          <Text size={1} muted>
-            {selected.size} / {loaded.count} 件
-          </Text>
-          <Button
-            text="公開する"
-            tone="primary"
-            icon={PublishIcon}
-            disabled={selected.size === 0}
-            onClick={confirm}
-          />
-        </Flex>
-      </Card>
+            <Button
+              text="公開する"
+              tone="primary"
+              icon={PublishIcon}
+              disabled={selected.size === 0}
+              onClick={confirm}
+            />
+          </Flex>
+        </Card>
 
-      <Box flex={1} overflow="auto" padding={4}>
-        {loaded.count === 0 ? (
-          <Text muted>公開待ちの下書きはありません。</Text>
-        ) : (
-          <Stack gap={5}>
-            {loaded.groups.map((group) => {
-              const all = group.rows.every((row) => selected.has(row.draftId));
-              return (
-                <Stack key={group.key || "__none__"} gap={3}>
-                  <Flex align="center" gap={3}>
-                    <Checkbox
-                      checked={all}
-                      indeterminate={
-                        !all &&
-                        group.rows.some((row) => selected.has(row.draftId))
-                      }
-                      onChange={() => toggleGroup(group, !all)}
-                    />
-                    <Text weight="semibold">{group.title}</Text>
-                    <Text size={1} muted>
-                      {group.rows.length} 件
-                    </Text>
-                  </Flex>
+        <Box flex={1} overflow="auto" padding={4}>
+          {loaded.count === 0 ? (
+            <Text muted>公開待ちの下書きはありません。</Text>
+          ) : (
+            <Stack gap={5}>
+              {loaded.groups.map((group) => {
+                const all = group.rows.every((row) =>
+                  selected.has(row.draftId),
+                );
+                return (
+                  <Stack key={group.key || "__none__"} gap={3}>
+                    <Flex align="center" gap={3}>
+                      <Checkbox
+                        checked={all}
+                        indeterminate={
+                          !all &&
+                          group.rows.some((row) => selected.has(row.draftId))
+                        }
+                        onChange={() => toggleGroup(group, !all)}
+                      />
+                      <Text weight="semibold">{group.title}</Text>
+                      <Text size={1} muted>
+                        {group.rows.length} 件
+                      </Text>
+                    </Flex>
 
-                  <Stack gap={1}>
-                    {group.rows.map((row) => (
-                      <Card
-                        key={row.draftId}
-                        padding={3}
-                        radius={2}
-                        tone={selected.has(row.draftId) ? "primary" : "default"}
-                        as="label"
-                        style={{ cursor: "pointer" }}
-                      >
-                        <Flex align="center" gap={3}>
-                          <Checkbox
-                            checked={selected.has(row.draftId)}
-                            onChange={() => toggle(row.draftId)}
-                          />
-                          <Text size={1} muted style={{ minWidth: "6em" }}>
-                            {row.type}
-                          </Text>
-                          <Box flex={1}>
-                            <Text textOverflow="ellipsis">{row.title}</Text>
-                          </Box>
-                          <Badge tone={row.isNew ? "primary" : "caution"}>
-                            {row.isNew ? "新規" : "変更あり"}
-                          </Badge>
-                        </Flex>
-                      </Card>
-                    ))}
+                    <Stack gap={1}>
+                      {group.rows.map((row) => (
+                        <Card
+                          key={row.draftId}
+                          radius={2}
+                          tone={
+                            selected.has(row.draftId) ? "primary" : "default"
+                          }
+                          selected={inspecting === row.draftId}
+                        >
+                          <Flex align="center">
+                            <Box
+                              as="label"
+                              padding={3}
+                              style={{ cursor: "pointer", display: "flex" }}
+                            >
+                              <Checkbox
+                                checked={selected.has(row.draftId)}
+                                onChange={() => toggle(row.draftId)}
+                              />
+                            </Box>
+                            <button
+                              type="button"
+                              style={ROW_BUTTON}
+                              onClick={() => setInspecting(row.draftId)}
+                            >
+                              <Flex
+                                align="center"
+                                gap={3}
+                                paddingY={3}
+                                paddingRight={3}
+                              >
+                                <Text
+                                  size={1}
+                                  muted
+                                  style={{ minWidth: "6em" }}
+                                >
+                                  {row.type}
+                                </Text>
+                                <Box flex={1} style={{ minWidth: 0 }}>
+                                  <Text textOverflow="ellipsis">
+                                    {row.title}
+                                  </Text>
+                                </Box>
+                                <Badge tone={row.isNew ? "primary" : "caution"}>
+                                  {row.isNew ? "新規" : "変更あり"}
+                                </Badge>
+                              </Flex>
+                            </button>
+                          </Flex>
+                        </Card>
+                      ))}
+                    </Stack>
                   </Stack>
-                </Stack>
-              );
-            })}
-          </Stack>
-        )}
-      </Box>
+                );
+              })}
+            </Stack>
+          )}
+        </Box>
+      </Flex>
+
+      {inspected && (
+        <DetailPane
+          row={inspected.row}
+          draft={inspected.draft}
+          base={bases.get(inspected.row.publishedId) ?? null}
+          loading={
+            !inspected.row.isNew && !bases.has(inspected.row.publishedId)
+          }
+          error={baseError}
+          onClose={() => setInspecting(null)}
+        />
+      )}
 
       {confirming && (
         <ConfirmDialog
@@ -391,6 +516,88 @@ export function BatchPublishTool() {
         />
       )}
     </Flex>
+  );
+}
+
+/**
+ * What the selected row will look like once published.
+ *
+ * The pane shows the *published value* of the draft rather than the draft
+ * itself, which is the only version of it that is true: a reference picked
+ * while its target was unpublished carries `_weak` and `_strengthenOnPublish`
+ * bookkeeping that publishing strips, and diffing the raw draft would report
+ * those as changes to fields nobody edited.
+ */
+function DetailPane(props: {
+  row: Row;
+  draft: SanityDocument;
+  base: SanityDocument | null;
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+}) {
+  const { row, draft, base, loading, error, onClose } = props;
+  const schema = useSchema();
+  const schemaType = schema.get(row.type) as ObjectSchemaType | undefined;
+  const next = useMemo(() => publishedValueOf(draft), [draft]);
+
+  return (
+    <Card flex={2} borderLeft tone="transparent" style={{ minWidth: 0 }}>
+      <Flex direction="column" height="fill">
+        <Card padding={4} borderBottom tone="transparent">
+          <Flex align="flex-start" gap={3}>
+            <Stack gap={2} flex={1} style={{ minWidth: 0 }}>
+              <Text size={1} muted>
+                {row.type}
+              </Text>
+              <Text weight="semibold" textOverflow="ellipsis">
+                {row.title}
+              </Text>
+            </Stack>
+            <Badge tone={row.isNew ? "primary" : "caution"}>
+              {row.isNew ? "新規" : "変更あり"}
+            </Badge>
+            <Button
+              icon={CloseIcon}
+              mode="bleed"
+              aria-label="閉じる"
+              onClick={onClose}
+            />
+          </Flex>
+        </Card>
+
+        <Box flex={1} overflow="auto" padding={4}>
+          {error ? (
+            <Card padding={3} radius={2} tone="critical">
+              <Text size={1}>
+                公開済みの内容を読み込めませんでした: {error}
+              </Text>
+            </Card>
+          ) : loading ? (
+            <Flex align="center" justify="center" padding={5}>
+              <Spinner muted />
+            </Flex>
+          ) : !schemaType ? (
+            <Card padding={3} radius={2} tone="caution">
+              <Text size={1}>
+                スキーマに {row.type} がないため内容を表示できません。
+              </Text>
+            </Card>
+          ) : (
+            <Stack gap={4}>
+              <Card padding={3} radius={2} tone="transparent">
+                <Text size={1} muted>
+                  {row.isNew
+                    ? "まだ公開されていません。以下がすべて新しく公開される内容です。"
+                    : "公開済みの内容と比べた差分です。ここに出ていない項目は変わりません。"}
+                </Text>
+              </Card>
+              <DocumentDiff base={base} next={next} schemaType={schemaType} />
+            </Stack>
+          )}
+        </Box>
+      </Flex>
+    </Card>
   );
 }
 
