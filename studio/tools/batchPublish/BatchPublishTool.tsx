@@ -589,7 +589,7 @@ function DetailPane(props: {
                 <Text size={1} muted>
                   {row.isNew
                     ? "まだ公開されていません。以下がすべて新しく公開される内容です。"
-                    : "公開済みの内容と比べた差分です。ここに出ていない項目は変わりません。"}
+                    : "公開済みの内容と比べた差分です。緑が追加される値、赤がなくなる値で、ここに出ていない項目は変わりません。"}
                 </Text>
               </Card>
               <DocumentDiff base={base} next={next} schemaType={schemaType} />

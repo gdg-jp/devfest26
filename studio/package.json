@@ -9,6 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@sanity/color": "^3.0.8",
     "@sanity/diff": "^6.11.0",
     "@sanity/icons": "^5.2.1",
     "@sanity/ui": "^4.0.6",

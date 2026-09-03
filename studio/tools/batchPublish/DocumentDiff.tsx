@@ -1,13 +1,16 @@
-import { Component, useMemo, type ReactNode } from "react";
+import { Component, useMemo, type CSSProperties, type ReactNode } from "react";
+import { hues } from "@sanity/color";
 import { Card, Stack, Text } from "@sanity/ui";
 import { Code } from "@sanity/ui/code";
 import {
   ChangeList,
+  useColorSchemeValue,
   type DocumentChangeContextInstance,
   type ObjectSchemaType,
   type SanityDocument,
 } from "sanity";
 import { DocumentChangeContext } from "sanity/_singletons";
+import { styled } from "styled-components";
 import { comparable, publishDiff } from "./diff";
 import { publishedIdOf } from "./publish";
 
@@ -33,6 +36,7 @@ export function DocumentDiff(props: {
 }) {
   const { base, next, schemaType } = props;
 
+  const palette = useDiffPalette();
   const rootDiff = useMemo(() => publishDiff(base, next), [base, next]);
 
   const change: DocumentChangeContextInstance = useMemo(
@@ -52,11 +56,73 @@ export function DocumentDiff(props: {
 
   return (
     <ErrorBoundary fallback={<Fallback document={next} />}>
-      <DocumentChangeContext.Provider value={change}>
-        <ChangeList diff={rootDiff} schemaType={schemaType} />
-      </DocumentChangeContext.Provider>
+      <Directional style={palette}>
+        <DocumentChangeContext.Provider value={change}>
+          <ChangeList diff={rootDiff} schemaType={schemaType} />
+        </DocumentChangeContext.Provider>
+      </Directional>
     </ErrorBoundary>
   );
+}
+
+/*
+  Out of the box the Studio paints each changed value with the colour of
+  whoever changed it, from a palette that leaves out red and green on purpose.
+  There is nobody to colour by here — this compares two versions of one
+  document, not two people — so the same cards are repainted by direction,
+  which is the only thing this pane has to report.
+
+  Direction is readable from the element the card renders as. A from/to pair
+  puts the outgoing value in a `<del>` and the incoming one in an `<ins>`; a
+  string diff instead leaves the card a `<span>` and puts one `<del>` or
+  `<ins>` inside it per changed run of text. Hence the two shapes of rule.
+  The child combinator earns its keep: a replaced image strikes out the old
+  filename deep inside its card, and that card is not itself a removal.
+
+  Four rules rather than two selector lists, because a browser that cannot
+  parse `:has()` would drop the plain `del` and `ins` rules along with it.
+*/
+const Directional = styled.div`
+  del[data-ui="diff-card"] {
+    background-color: var(--publish-diff-removed-bg);
+    color: var(--publish-diff-removed-fg);
+  }
+
+  [data-ui="diff-card"]:has(> del) {
+    background-color: var(--publish-diff-removed-bg);
+    color: var(--publish-diff-removed-fg);
+  }
+
+  ins[data-ui="diff-card"] {
+    background-color: var(--publish-diff-added-bg);
+    color: var(--publish-diff-added-fg);
+  }
+
+  [data-ui="diff-card"]:has(> ins) {
+    background-color: var(--publish-diff-added-bg);
+    color: var(--publish-diff-added-fg);
+  }
+`;
+
+/**
+ * Red for what goes away, green for what arrives.
+ *
+ * The tints are the ones the Studio picks for its own annotation colours —
+ * `100` on `700` in light, `900` on `200` in dark — so a repainted card carries
+ * the same weight as everything around it instead of shouting.
+ */
+function useDiffPalette(): CSSProperties {
+  const scheme = useColorSchemeValue();
+  return useMemo(() => {
+    const background = scheme === "dark" ? "900" : "100";
+    const text = scheme === "dark" ? "200" : "700";
+    return {
+      "--publish-diff-removed-bg": hues.red[background].hex,
+      "--publish-diff-removed-fg": hues.red[text].hex,
+      "--publish-diff-added-bg": hues.green[background].hex,
+      "--publish-diff-added-fg": hues.green[text].hex,
+    } as CSSProperties;
+  }, [scheme]);
 }
 
 /**
