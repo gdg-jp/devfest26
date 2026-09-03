@@ -45,6 +45,7 @@ export interface CityCard {
   startsAt: string;
   endsAt: string;
   venue: { name: string; city: string; region: string };
+  isPublic?: boolean;
 }
 
 /**
@@ -124,6 +125,7 @@ function readCard(doc: unknown): { card: CityCard } | { problems: string[] } {
       startsAt: startsAt!,
       endsAt: endsAt!,
       venue: { name: name!, city: city!, region: region! },
+      isPublic: d.isPublic !== false,
     },
   };
 }
@@ -184,10 +186,7 @@ export function discoverCities(): Promise<CityCard[]> {
  */
 async function draftCities(): Promise<CityCard[]> {
   const { draftEvents } = await import("../preview/drafts.ts");
-  const events = (await draftEvents()).filter(
-    (doc) => (doc as Unknown).isPublic !== false,
-  );
-  return keepValid(events);
+  return keepValid(await draftEvents());
 }
 
 /**
