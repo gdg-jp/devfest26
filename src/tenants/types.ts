@@ -52,6 +52,7 @@ export interface TenantConfig {
   tenant: TenantId;
   /** One of the four DevFest core colours. See src/data/themes.ts. */
   theme: Theme;
+  isPublic?: boolean;
 
   lang: string;
   locale: string;

@@ -112,7 +112,8 @@ const EVENT_FIELDS = `
   startsAt, endsAt,
   socialLabel, socialStart, socialEnd,
   venue, format, formatShort, fee, host, coHosts,
-  stats, links, nav, footerNav, timetable`;
+  stats, links, nav, footerNav, timetable,
+  isPublic`;
 
 export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
   "tenant": slug.current,${EVENT_FIELDS}

@@ -25,6 +25,7 @@ const tone = z.enum(["blue", "green", "yellow", "red"]);
 const eventDoc = z.object({
   tenant: nonEmpty,
   theme: tone,
+  isPublic: z.boolean().nullish(),
 
   lang: nonEmpty.default("ja"),
   locale: nonEmpty.default("ja_JP"),
@@ -124,6 +125,7 @@ export function parseEvent(raw: unknown, slug: string): TenantConfig {
   return {
     tenant: d.tenant,
     theme: d.theme,
+    isPublic: d.isPublic ?? true,
     lang: d.lang,
     locale: d.locale,
     title: d.title,

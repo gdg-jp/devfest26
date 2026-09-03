@@ -51,7 +51,7 @@ export interface CityCard {
  * The tier-1 projection. Deliberately short: every field here is one a card
  * prints, so a document missing any of them has nothing to show.
  */
-const CITY_QUERY = `*[_type == "event"] | order(startsAt asc){
+const CITY_QUERY = `*[_type == "event" && coalesce(isPublic, true) == true] | order(startsAt asc){
   "slug": slug.current,
   title, theme, startsAt, endsAt,
   "venue": { "name": venue.name, "city": venue.city, "region": venue.region }
@@ -184,7 +184,10 @@ export function discoverCities(): Promise<CityCard[]> {
  */
 async function draftCities(): Promise<CityCard[]> {
   const { draftEvents } = await import("../preview/drafts.ts");
-  return keepValid(await draftEvents());
+  const events = (await draftEvents()).filter(
+    (doc) => (doc as Unknown).isPublic !== false,
+  );
+  return keepValid(events);
 }
 
 /**
