@@ -8,6 +8,7 @@ import { CITY_SCOPED_TYPES } from "./structure";
 import { locations, mainDocuments } from "./presentation";
 import { withConfirm } from "./actions/confirmPublish";
 import { batchPublishTool } from "./tools/batchPublish";
+import { deployTool } from "./tools/deploy";
 
 /**
  * Where the draft preview is, if this build of the Studio is meant to drive
@@ -59,7 +60,12 @@ export default defineConfig({
     visionTool(),
   ],
 
-  tools: (prev) => [...prev, batchPublishTool],
+  /*
+    In the order the two are used: publish what is ready, then put it on the
+    site. They are separate steps on purpose — see `tools/deploy` for why the
+    site does not rebuild itself.
+  */
+  tools: (prev) => [...prev, batchPublishTool, deployTool],
 
   document: {
     /**
