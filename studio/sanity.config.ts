@@ -6,6 +6,9 @@ import { schemaTypes } from "./schemas";
 import { structure } from "./structure";
 import { CITY_SCOPED_TYPES } from "./structure";
 import { locations, mainDocuments } from "./presentation";
+import { withConfirm } from "./actions/confirmPublish";
+import { batchPublishTool } from "./tools/batchPublish";
+import { deployTool } from "./tools/deploy";
 
 /**
  * Where the draft preview is, if this build of the Studio is meant to drive
@@ -56,6 +59,28 @@ export default defineConfig({
       : []),
     visionTool(),
   ],
+
+  /*
+    In the order the two are used: publish what is ready, then put it on the
+    site. They are separate steps on purpose — see `tools/deploy` for why the
+    site does not rebuild itself.
+  */
+  tools: (prev) => [...prev, batchPublishTool, deployTool],
+
+  document: {
+    /**
+     * A confirmation step in front of Publish. See `actions/confirmPublish.ts`
+     * for why the button needs one.
+     *
+     * Matching on `action` rather than on position: the array order is not
+     * contractual, and a plugin adding an action would silently wrap the wrong
+     * one.
+     */
+    actions: (prev) =>
+      prev.map((action) =>
+        action.action === "publish" ? withConfirm(action) : action,
+      ),
+  },
 
   schema: {
     types: schemaTypes,
