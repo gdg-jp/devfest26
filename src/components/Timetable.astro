@@ -144,6 +144,17 @@ const minWidth = timetable
      the finger. */
   .tt-scroll {
     --tt-axis: 62px;
+    /* The blocks carry the black outline the rest of the site is drawn with,
+       so the row lines stop being a border and become a guide: what tells the
+       eye where 14:25 is in a column where nothing is on. Two line systems of
+       the same weight would only compete. */
+    --tt-rule: rgb(30 30 30 / 9%);
+    /* The day is held off the head row and off the frame, because the first
+       and last times are written across those edges rather than inside them:
+       with the grid flush to both, the digits are pressed against a black
+       line at the top and against the frame at the bottom. */
+    --tt-brow: 14px;
+    --tt-tail: 16px;
 
     overflow-x: auto;
     border: var(--bw) solid var(--stroke);
@@ -157,7 +168,7 @@ const minWidth = timetable
   .tt {
     display: grid;
     gap: 0;
-    padding: 0 0 10px;
+    padding: 0 0 var(--tt-tail);
   }
 
   .tt-head {
@@ -169,15 +180,20 @@ const minWidth = timetable
     padding: 10px 12px;
     background: var(--trk);
     color: #fff;
-    border-left: 1.5px solid rgb(255 255 255 / 35%);
+    border-left: 2px solid var(--stroke);
+    border-bottom: var(--bw) solid var(--stroke);
+    margin-bottom: var(--tt-brow);
   }
 
   .tt-head.ink {
     color: var(--ink);
-    border-left-color: rgb(30 30 30 / 20%);
   }
 
-  .tt-head:first-of-type {
+  /* The corner is the first div in the grid, so `.tt-head:first-of-type` names
+     nothing and the first head kept a left border of its own — set against the
+     clock column's right border, the two read as one 4px line. The sibling
+     selector says what was meant: the divider is the column's, once. */
+  .tt-corner + .tt-head {
     border-left: 0;
   }
 
@@ -212,6 +228,7 @@ const minWidth = timetable
     font-variant-numeric: tabular-nums;
     color: var(--muted);
     background: var(--surface);
+    border-right: 2px solid var(--stroke);
   }
 
   .tt-at > span {
@@ -226,6 +243,11 @@ const minWidth = timetable
   .tt-at.last {
     align-items: flex-end;
     background: none;
+    /* Stretched over the tail and padded back off it: the label still sits on
+       the last boundary, while the column's rule carries on to the frame
+       instead of stopping short of it. */
+    margin-bottom: calc(-1 * var(--tt-tail));
+    padding-bottom: var(--tt-tail);
   }
 
   .tt-at.last > span {
@@ -234,7 +256,10 @@ const minWidth = timetable
 
   /* Nothing is written in the clock column beside the track headers, and
      without something opaque there the first header slides into view under it.
-     `aria-hidden`, because it says nothing. */
+     `aria-hidden`, because it says nothing — which is why the line under the
+     head row stops short of this column rather than crossing it: there is no
+     heading here for it to underline, and the first time, sitting half above
+     its own row, would be struck through by it. */
   .tt-corner {
     position: sticky;
     left: 0;
@@ -242,11 +267,12 @@ const minWidth = timetable
     grid-row: 1;
     grid-column: 1;
     background: var(--surface);
+    border-right: 2px solid var(--stroke);
   }
 
   .tt-rule {
     grid-column: 1 / -1;
-    border-top: 1.5px solid var(--rule);
+    border-top: 1.5px solid var(--tt-rule);
     pointer-events: none;
   }
 
@@ -259,7 +285,13 @@ const minWidth = timetable
      the programme, and a break is usually a break on every track at once, so a
      track colour would say something untrue about one. Grey is the whole
      vocabulary they need, and it is the one thing on the grid that is neither
-     white nor a pastel. */
+     white nor a pastel.
+
+     The outline is the brand's, and the same 2px the tags and the avatars are
+     drawn with. It is what makes a block a block on this site rather than a
+     patch of colour, and it lands on the programme only: an outlined break
+     would claim to be one of the things the day is made of, and the figure and
+     the ground would read alike. */
   .tt-cell {
     display: flex;
     flex-direction: column;
@@ -267,10 +299,25 @@ const minWidth = timetable
     margin: 3px 4px;
     padding: 7px 9px;
     border-radius: var(--r-sm);
+    border: 2px solid var(--stroke);
     background: var(--pa, var(--surface));
     color: inherit;
     text-decoration: none;
     overflow: hidden;
+  }
+
+  /* Every session block is a link and nothing said so. The lift is the one the
+     buttons use, kept for the hover rather than worn all day: thirty of these
+     shadows standing at once is a busier grid than the day actually is. */
+  a.tt-cell {
+    transition:
+      transform 0.14s ease,
+      box-shadow 0.14s ease;
+  }
+
+  a.tt-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 0 var(--stroke);
   }
 
   a.tt-cell:hover b {
@@ -278,6 +325,7 @@ const minWidth = timetable
   }
 
   .tt-cell.fixture {
+    border: 0;
     align-items: center;
     justify-content: center;
     text-align: center;
