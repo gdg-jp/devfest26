@@ -87,33 +87,27 @@ export const tokyo = {
     { href: "#register", label: "参加登録" },
   ],
 
-  timetable: [
+  /*
+    Tokyo has tracks but no sessions with times on them yet, so the timetable is
+    still all fixtures — which is the point of keeping them separate: the frame
+    of the day can be published long before the programme is. The first row is a
+    placeholder standing in for the sessions, and comes out the moment they land;
+    leaving it in once a session is scheduled is a build error rather than two
+    blocks drawn on top of each other.
+  */
+  fixtures: [
+    { start: "10:30", end: "11:00", label: "開場・受付" },
     {
       start: "11:00",
-      end: "– 18:00",
-      lines: [
-        {
-          label: "Track A｜メイン・トーク",
-          note: "技術セッション（予定）",
-          rail: "var(--red)",
-        },
-        {
-          label: "Track B｜ハンズオン",
-          note: "ワークショップ・ハンズオン（予定）",
-          rail: "var(--blue)",
-        },
-      ],
+      end: "18:00",
+      label: "セッション（予定）",
+      note: "タイムテーブルは確定後に掲載します",
     },
     {
       start: "18:30",
-      end: "– 20:30",
-      lines: [
-        {
-          label: "懇親会（予定）",
-          note: "登壇者・参加者とのネットワーキング",
-          rail: "var(--yellow)",
-        },
-      ],
+      end: "20:30",
+      label: "懇親会（予定）",
+      note: "登壇者・参加者とのネットワーキング",
     },
   ],
 } satisfies TenantConfig;

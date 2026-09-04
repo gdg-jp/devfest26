@@ -59,6 +59,11 @@ export interface ProgramSession {
   href: string;
   /** Printed above the card: "Session 03", or what the track calls its cards. */
   label: string;
+  /** As written. The end a session leaves out is filled in from what starts
+      next on its track — that needs the city's fixtures, so it happens in
+      `src/data/timetable.ts` rather than here. */
+  start: string | undefined;
+  end: string | undefined;
   /** Never empty. Exactly one entry for a city that does not use talks. */
   talks: ProgramTalk[];
 }
@@ -90,6 +95,57 @@ interface Sluggable {
 }
 
 const byOrder = (a: Ordered, b: Ordered) => a.data.order - b.data.order;
+
+/**
+ * A track's running order, which is just its sessions by the clock.
+ *
+ * Sessions used to carry an `order` alongside a `start`, which is two
+ * statements of one fact and no way to tell which of them is wrong when they
+ * disagree. A track is serial, so the start time already *is* the position —
+ * and unlike a hand-kept number it does not need every later session renumbered
+ * to insert one in the middle.
+ *
+ * A session with no time yet sorts after everything that has one, by id so that
+ * the page does not reshuffle between builds. It keeps its card and its page;
+ * it is only absent from the timetable, which is exactly what "時間調整中"
+ * means.
+ */
+const byStart = (a: Session, b: Session) => {
+  const [x, y] = [a.data.start, b.data.start];
+  if (x && y) return x < y ? -1 : x > y ? 1 : 0;
+  if (x) return -1;
+  if (y) return 1;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+};
+
+/**
+ * One track's sessions, sorted, having said so if two of them collide.
+ *
+ * A track is one room running one thing at a time, so two sessions on it
+ * claiming the same minute is a real mistake — and it is the mistake a
+ * hand-written `order` could not catch, because it would happily sort them and
+ * put the clash on the page as two consecutive cards.
+ */
+function runningOrder(track: Track, sessions: Session[]): Session[] {
+  const mine = sessions
+    .filter((session) => session.data.track.id === track.id)
+    .sort(byStart);
+
+  let previous: Session | undefined;
+  for (const session of mine) {
+    if (session.data.start && previous?.data.start === session.data.start) {
+      reject(
+        "programme",
+        `Sessions "${previous.id}" and "${session.id}" are both on the track ` +
+          `"${track.id}" and both start at ${session.data.start}. A track ` +
+          `runs one session at a time.`,
+      );
+    }
+    previous = session;
+  }
+
+  return mine;
+}
 
 /**
  * From Markdown the entry id is the file name, which is already a good URL
@@ -193,6 +249,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   const toProgramSession = (
     session: Session,
     track: Track,
+    position: number,
   ): ProgramSession | undefined => {
     const slug = slugOf(session);
     const href = tenantPath(tenant, `/sessions/${slug}`);
@@ -259,8 +316,9 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       slug,
       href,
       label:
-        track.data.cardLabel ??
-        `Session ${String(session.data.order).padStart(2, "0")}`,
+        track.data.cardLabel ?? `Session ${String(position).padStart(2, "0")}`,
+      start: session.data.start,
+      end: session.data.end,
       talks,
     };
   };
@@ -268,10 +326,12 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   const program = tracks
     .map((track) => ({
       track,
-      sessions: sessions
-        .filter((session) => session.data.track.id === track.id)
-        .sort(byOrder)
-        .flatMap((session) => toProgramSession(session, track) ?? []),
+      sessions: runningOrder(track, sessions).flatMap(
+        // Numbered over the sorted track rather than over what survives it, so
+        // the preview dropping a broken entry does not renumber the ones after
+        // it and make the page disagree with the published build.
+        (session, index) => toProgramSession(session, track, index + 1) ?? [],
+      ),
     }))
     .filter((group) => group.sessions.length > 0);
 

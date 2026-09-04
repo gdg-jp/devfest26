@@ -31,12 +31,6 @@ export const session = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "order",
-      title: "Order",
-      type: "number",
-      validation: (Rule) => Rule.required().integer().positive(),
-    }),
-    defineField({
       name: "title",
       title: "Title",
       type: "string",
@@ -53,12 +47,28 @@ export const session = defineType({
       name: "start",
       title: "Start",
       type: "string",
-      description: 'Wall clock on the day of the event, e.g. "13:00".',
+      description:
+        'Wall clock on the day, e.g. "13:00". This is what orders the track ' +
+        "and what places the session on the timetable, so there is no separate " +
+        "order field. Leave it empty while the slot is undecided: the session " +
+        "keeps its page and is listed under the timetable as 時間調整中.",
+      validation: (Rule) =>
+        Rule.regex(/^([01]\d|2[0-3]):[0-5]\d$/, {
+          name: "HH:MM",
+        }).warning('A time reads "HH:MM", zero-padded.'),
     }),
     defineField({
       name: "end",
       title: "End",
       type: "string",
+      description:
+        "Optional. Left empty, the session runs until the next thing on its " +
+        "track starts — another session, or a fixture on the event. Fill it " +
+        "in only when the gap that follows is deliberate.",
+      validation: (Rule) =>
+        Rule.regex(/^([01]\d|2[0-3]):[0-5]\d$/, {
+          name: "HH:MM",
+        }).warning('A time reads "HH:MM", zero-padded.'),
     }),
     defineField({
       name: "speakers",
@@ -80,12 +90,12 @@ export const session = defineType({
     select: {
       title: "title",
       track: "track.label",
-      order: "order",
+      start: "start",
     },
-    prepare({ title, track, order }) {
+    prepare({ title, track, start }) {
       return {
         title: title || "TBD",
-        subtitle: `${track ?? "No track"} - ${order}`,
+        subtitle: `${track ?? "No track"} - ${start || "時間未定"}`,
       };
     },
   },

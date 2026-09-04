@@ -288,8 +288,11 @@ export const event = defineType({
       ],
     }),
     defineField({
-      name: "timetable",
-      title: "Timetable",
+      name: "fixtures",
+      title: "Fixtures",
+      description:
+        "タイムテーブルのうち、セッション以外の行。受付・休憩・写真撮影・懇親会など。" +
+        "セッションは自分の開始時刻から自動で並ぶので、ここには書きません。",
       type: "array",
       of: [
         defineArrayMember({
@@ -297,41 +300,59 @@ export const event = defineType({
           fields: [
             defineField({
               name: "start",
+              title: "Start",
               type: "string",
+              description: '"13:00" の形式。',
               validation: (Rule) => Rule.required(),
             }),
             defineField({
               name: "end",
+              title: "End",
               type: "string",
+              description:
+                '"13:45" の形式。セッションと違い必須：前のセッションがここで終わる。',
               validation: (Rule) => Rule.required(),
             }),
             defineField({
-              name: "lines",
+              name: "label",
+              title: "Label",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({ name: "note", title: "Note", type: "string" }),
+            defineField({
+              name: "tracks",
+              title: "Tracks",
               type: "array",
+              description:
+                "空なら全トラック。休憩の開始がトラックで違う場合は、時刻ごとに 2 行に分けてそれぞれのトラックを選びます。",
               of: [
                 defineArrayMember({
-                  type: "object",
-                  fields: [
-                    defineField({
-                      name: "label",
-                      type: "string",
-                      validation: (Rule) => Rule.required(),
+                  type: "reference",
+                  to: [{ type: "track" }],
+                  // Only this city's own tracks, the same way a session's
+                  // track field is filtered. A document being edited has a
+                  // `drafts.` prefix on its id while its tracks point at the
+                  // published one, so the prefix comes off — otherwise the
+                  // list is empty exactly while somebody is editing.
+                  options: {
+                    filter: ({ document }) => ({
+                      filter: "event._ref == $eventId",
+                      params: {
+                        eventId: document._id.replace(/^drafts\./, ""),
+                      },
                     }),
-                    defineField({
-                      name: "note",
-                      type: "string",
-                      validation: (Rule) => Rule.required(),
-                    }),
-                    defineField({
-                      name: "rail",
-                      type: "string",
-                      validation: (Rule) => Rule.required(),
-                    }),
-                  ],
+                  },
                 }),
               ],
             }),
           ],
+          preview: {
+            select: { label: "label", start: "start", end: "end" },
+            prepare({ label, start, end }) {
+              return { title: label, subtitle: `${start} - ${end}` };
+            },
+          },
         }),
       ],
     }),

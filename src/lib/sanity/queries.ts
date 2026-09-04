@@ -58,7 +58,7 @@ export const TRACKS = `*[_type == "track" && ${SCOPE}]{
  * `slug` is separate and only ever a URL segment.
  */
 export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
-  _id, order, title, abstract, start, end,
+  _id, title, abstract, start, end,
   "slug": slug.current,
   "track": track->_id,
   "speakers": speakers[]->_id,
@@ -112,7 +112,8 @@ const EVENT_FIELDS = `
   startsAt, endsAt,
   socialLabel, socialStart, socialEnd,
   venue, format, formatShort, fee, host, coHosts,
-  stats, links, nav, footerNav, timetable,
+  stats, links, nav, footerNav,
+  fixtures[]{start, end, label, note, "tracks": tracks[]->_id},
   isPublic`;
 
 export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{

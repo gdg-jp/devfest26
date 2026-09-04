@@ -1,4 +1,17 @@
 ---
+/**
+ * The timetable as a grid, built from the sessions rather than written out.
+ *
+ * Nothing here decides anything: `src/data/timetable.ts` has already resolved
+ * the ends, sorted the boundaries and placed every block. This turns that into
+ * columns and rows, and stops if there is not yet enough to draw.
+ *
+ * Row heights are proportional but clamped. A row is the gap between two
+ * boundaries, so a two-hour lunch really is twelve times a ten-minute break —
+ * which, drawn honestly, is a screenful of empty beige. The clamp keeps the
+ * shape of the day legible without letting one row own the page.
+ */
+import { getTimetable } from "../data/timetable";
 import { getTracks } from "../data/tracks";
 import type { ResolvedTenant } from "../tenants";
 
@@ -7,12 +20,31 @@ interface Props {
 }
 
 const { site } = Astro.props;
-const { timetable } = site;
 
 // "3 トラック" is a fact about this city's configuration, not a constant.
 const trackCount = (await getTracks(site.tenant)).filter(
   (t) => !t.data.pending,
 ).length;
+
+const timetable = await getTimetable(site);
+
+const minutes = (time: string) =>
+  Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+const rows =
+  timetable?.boundaries.slice(0, -1).map((time, index) => {
+    const next = timetable.boundaries[index + 1];
+    const span = next ? minutes(next) - minutes(time) : 0;
+    return Math.min(88, Math.max(34, span * 1.15));
+  }) ?? [];
+
+const template = `auto ${rows.map((h) => `minmax(${h}px, auto)`).join(" ")}`;
+const columns = timetable
+  ? `var(--tt-axis) repeat(${timetable.tracks.length}, minmax(0, 1fr))`
+  : "";
+const minWidth = timetable
+  ? `calc(var(--tt-axis) + ${timetable.tracks.length} * 168px)`
+  : "";
 ---
 
 <section class="sec" id="timetable">
@@ -20,126 +52,298 @@ const trackCount = (await getTracks(site.tenant)).filter(
     <p class="eyebrow" data-reveal="up">Timetable</p>
     <h2 class="sec-h" data-reveal="up">タイムテーブル</h2>
     <p class="sec-lede" data-reveal="up">
-      現在 {trackCount} トラックでの開催を予定しています。各セッションの時間割は調整中です。
+      現在 {trackCount} トラックでの開催を予定しています。{
+        timetable
+          ? "確定したセッションから順に掲載しています。"
+          : "各セッションの時間割は調整中です。"
+      }
     </p>
 
-    <div class="tt" data-stagger>
-      {
-        timetable.map((row) => (
-          <div class="tt-row" data-reveal="up">
-            <div class="tt-time">
-              <b>{row.start}</b>
-              <span>{row.end}</span>
+    {
+      timetable && (
+        <div class="tt-scroll" data-reveal="up">
+          <div
+            class="tt"
+            style={`grid-template-columns:${columns};grid-template-rows:${template};min-width:${minWidth}`}
+          >
+            <div class="tt-corner" aria-hidden="true" />
+
+            {timetable.tracks.map((track, index) => (
+              <div
+                class:list={["tt-head", { ink: track.data.darkInk }]}
+                style={`--trk:${track.data.color};grid-column:${index + 2}`}
+              >
+                <b>{track.data.label}</b>
+                <span>{track.data.sub}</span>
+              </div>
+            ))}
+
+            {rows.map((_, index) => (
+              <div class="tt-rule" style={`grid-row:${index + 2}`} />
+            ))}
+
+            {timetable.boundaries.slice(0, -1).map((time, index) => (
+              <div class="tt-at" style={`grid-row:${index + 2}`}>
+                <span>{time}</span>
+              </div>
+            ))}
+            <div class="tt-at last" style={`grid-row:${rows.length + 1}`}>
+              <span>{timetable.boundaries.at(-1)}</span>
             </div>
-            <div class="tt-body">
-              {row.lines.map((line) => (
-                <div class="tt-line" style={`--rail:${line.rail}`}>
-                  <b>{line.label}</b>
-                  <span>{line.note}</span>
-                </div>
-              ))}
-            </div>
+
+            {timetable.cells.map((cell) => {
+              const Tag = cell.href ? "a" : "div";
+              return (
+                <Tag
+                  class:list={["tt-cell", cell.kind]}
+                  href={cell.href}
+                  style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
+                >
+                  <b>{cell.label}</b>
+                  {cell.note && <span class="who">{cell.note}</span>}
+                  <span class="span">
+                    {cell.start} – {cell.end}
+                  </span>
+                </Tag>
+              );
+            })}
           </div>
-        ))
-      }
-    </div>
-    <p class="note">※ セッション単位の時間割は確定後に掲載します。</p>
+        </div>
+      )
+    }
+
+    {
+      timetable && timetable.undated.length > 0 && (
+        <div class="tbd" data-reveal="up">
+          <b>時間調整中</b>
+          <ul>
+            {timetable.undated.map((session) => (
+              <li>
+                <a href={session.href}>
+                  {session.entry.data.title ??
+                    session.talks[0]?.title ??
+                    session.label}
+                </a>
+                <span>{session.track.data.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
+    <p class="note">※ タイムテーブルは変更となる場合があります。</p>
   </div>
 </section>
 
 <style>
-  .tt {
-    display: grid;
-    gap: 12px;
-  }
+  /* Four tracks do not fit on a phone and nothing sensible happens if they are
+     made to. The frame and the scrolling are on the same element deliberately:
+     it is what a `position: sticky` inside can be sticky *to*, and the clock
+     column is the one thing that has to stay put while the tracks pass under
+     the finger. */
+  .tt-scroll {
+    --tt-axis: 62px;
 
-  .tt-row {
-    display: grid;
-    grid-template-columns: 168px 1fr;
-    align-items: stretch;
+    overflow-x: auto;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    background: var(--surface);
     transition:
       opacity 0.5s var(--ease-out),
       transform 0.5s var(--ease-out);
   }
 
-  @media (width <= 720px) {
-    .tt-row {
-      grid-template-columns: 1fr;
-    }
+  .tt {
+    display: grid;
+    gap: 0;
+    padding: 0 0 10px;
   }
 
-  .tt-time {
+  .tt-head {
+    z-index: 2;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
+    gap: 1px;
+    padding: 10px 12px;
+    background: var(--trk);
+    color: #fff;
+    border-left: 1.5px solid rgb(255 255 255 / 35%);
+  }
+
+  .tt-head.ink {
+    color: var(--ink);
+    border-left-color: rgb(30 30 30 / 20%);
+  }
+
+  .tt-head:first-of-type {
+    border-left: 0;
+  }
+
+  .tt-head b {
+    font-family: var(--f-display);
+    font-size: 14.5px;
+    line-height: 1.25;
+  }
+
+  .tt-head span {
+    font-size: 11px;
+    opacity: 0.85;
+    line-height: 1.3;
+  }
+
+  /* A label names the boundary it is written against, so it sits on the line
+     rather than under it: the span is pulled up by half its own height, which
+     puts the middle of the digits on the rule the row starts at. The element
+     itself still fills the row, because its background is what keeps the rules
+     out of the clock column. */
+  .tt-at {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    grid-column: 1;
+    display: flex;
     justify-content: center;
-    gap: 2px;
-    border: var(--bw) solid var(--stroke);
-    border-right: 0;
-    border-radius: var(--r-md) 0 0 var(--r-md);
-    padding: 16px 18px;
-    background: var(--surface);
-  }
-
-  @media (width <= 720px) {
-    .tt-time {
-      border-right: var(--bw) solid var(--stroke);
-      border-bottom: 0;
-      border-radius: var(--r-md) var(--r-md) 0 0;
-      flex-direction: row;
-      align-items: baseline;
-      gap: 8px;
-    }
-  }
-
-  .tt-time b {
+    align-items: flex-start;
     font-family: var(--f-mono);
-    font-weight: 700;
-    font-size: clamp(20px, 2.6vw, 26px);
+    font-size: 11.5px;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
-    line-height: 1.2;
-  }
-
-  .tt-time span {
-    font-family: var(--f-mono);
-    font-size: 13px;
     color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .tt-body {
-    border: var(--bw) solid var(--stroke);
-    border-radius: 0 var(--r-md) var(--r-md) 0;
     background: var(--surface);
-    padding: 8px 0;
   }
 
-  @media (width <= 720px) {
-    .tt-body {
-      border-radius: 0 0 var(--r-md) var(--r-md);
-    }
+  .tt-at > span {
+    transform: translateY(-50%);
   }
 
-  .tt-line {
+  /* The closing time is the bottom edge of the last row, not the top of one —
+     so it is a second label in a row that already has one, and it is drawn
+     after it. No background here, or it would be an opaque sheet over its own
+     neighbour: the row's own label supplies the one that hides the rules and
+     masks the cells sliding under the clock column. */
+  .tt-at.last {
+    align-items: flex-end;
+    background: none;
+  }
+
+  .tt-at.last > span {
+    transform: translateY(50%);
+  }
+
+  /* Nothing is written in the clock column beside the track headers, and
+     without something opaque there the first header slides into view under it.
+     `aria-hidden`, because it says nothing. */
+  .tt-corner {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    grid-row: 1;
+    grid-column: 1;
+    background: var(--surface);
+  }
+
+  .tt-rule {
+    grid-column: 1 / -1;
+    border-top: 1.5px solid var(--rule);
+    pointer-events: none;
+  }
+
+  /* A track is named once in strong colour at the top of its column, and the
+     pastel of that same colour carries it down the day — the pairing the
+     timetable image uses. It means a block is read along its own colour rather
+     than by counting columns back to a header a screen away.
+
+     Fixtures take no colour at all. They are the frame of the day rather than
+     the programme, and a break is usually a break on every track at once, so a
+     track colour would say something untrue about one. Grey is the whole
+     vocabulary they need, and it is the one thing on the grid that is neither
+     white nor a pastel. */
+  .tt-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 3px 4px;
+    padding: 7px 9px;
+    border-radius: var(--r-sm);
+    background: var(--pa, var(--surface));
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+  }
+
+  a.tt-cell:hover b {
+    text-decoration: underline;
+  }
+
+  .tt-cell.fixture {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--ground);
+    color: var(--muted);
+  }
+
+  .tt-cell b {
+    font-family: var(--f-display);
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .tt-cell .who {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.3;
+  }
+
+  .tt-cell .span {
+    margin-top: auto;
+    padding-top: 3px;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+
+  .tt-cell.fixture .span {
+    display: none;
+  }
+
+  .tbd {
+    margin-top: 22px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    padding: 14px 18px;
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  .tbd > b {
+    font-family: var(--f-display);
+    font-size: 14px;
+  }
+
+  .tbd ul {
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+
+  .tbd li {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 14px;
+    gap: 4px 12px;
     align-items: baseline;
-    padding: 11px 20px;
-    border-bottom: 1.5px solid var(--rule);
-    border-left: 7px solid var(--rail, var(--t));
+    font-size: 14px;
   }
 
-  .tt-line:last-child {
-    border-bottom: 0;
-  }
-
-  .tt-line b {
-    font-family: var(--f-display);
-    font-size: 15.5px;
-  }
-
-  .tt-line span {
-    font-size: 13.5px;
+  .tbd li span {
+    font-size: 12px;
     color: var(--muted);
   }
 </style>

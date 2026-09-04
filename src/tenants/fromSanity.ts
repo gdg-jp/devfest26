@@ -22,6 +22,10 @@ import type { TenantConfig } from "./types";
 const nonEmpty = z.string().min(1);
 const tone = z.enum(["blue", "green", "yellow", "red"]);
 
+/** Sanity returns null for a field nobody filled in; the config wants absence. */
+const blank = <T>(value: T | null | undefined): T | undefined =>
+  value ?? undefined;
+
 const eventDoc = z.object({
   tenant: nonEmpty,
   theme: tone,
@@ -76,20 +80,25 @@ const eventDoc = z.object({
   nav: z.array(z.object({ href: nonEmpty, label: nonEmpty })).min(1),
   footerNav: z.array(z.object({ href: nonEmpty, label: nonEmpty })).min(1),
 
-  timetable: z.array(
-    z.object({
-      start: nonEmpty,
-      end: nonEmpty,
-      lines: z
-        .array(z.object({ label: nonEmpty, note: z.string(), rail: nonEmpty }))
-        .min(1),
-    }),
-  ),
+  /*
+    Empty is a legitimate answer, unlike most of this file: a city that has not
+    yet decided when its doors open has no fixtures, and the timetable is drawn
+    from its sessions alone or not at all. `null` because that is what Sanity
+    returns for an array nobody has touched.
+  */
+  fixtures: z
+    .array(
+      z.object({
+        start: nonEmpty,
+        end: nonEmpty,
+        label: nonEmpty,
+        note: z.string().nullish().transform(blank),
+        tracks: z.array(nonEmpty).nullish().transform(blank),
+      }),
+    )
+    .nullish()
+    .transform((rows) => rows ?? []),
 });
-
-/** Sanity returns null for a blank field; the config wants it absent. */
-const clean = <T>(value: T | null | undefined): T | undefined =>
-  value ?? undefined;
 
 export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
   return parseEvent(await sanityClient().fetch(EVENT, { tenant: slug }), slug);
@@ -147,10 +156,10 @@ export function parseEvent(raw: unknown, slug: string): TenantConfig {
         cityEn: d.venue.cityEn,
         city: d.venue.city,
         region: d.venue.region,
-        addressLocality: clean(d.venue.addressLocality),
-        addressRegion: clean(d.venue.addressRegion),
-        streetAddress: clean(d.venue.streetAddress),
-        postalCode: clean(d.venue.postalCode),
+        addressLocality: blank(d.venue.addressLocality),
+        addressRegion: blank(d.venue.addressRegion),
+        streetAddress: blank(d.venue.streetAddress),
+        postalCode: blank(d.venue.postalCode),
       },
       format: d.format,
       formatShort: d.formatShort,
@@ -164,6 +173,6 @@ export function parseEvent(raw: unknown, slug: string): TenantConfig {
     nav: d.nav,
     footerNav: d.footerNav,
 
-    timetable: d.timetable,
+    fixtures: d.fixtures,
   };
 }

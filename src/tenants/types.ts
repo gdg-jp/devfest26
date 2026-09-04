@@ -14,10 +14,37 @@ import type { TenantId } from "./ids";
  * Tracks are not here: they are a content collection, so a city adds one
  * without touching this file. See `src/content.config.ts`.
  */
-export interface TimetableRow {
+
+/**
+ * A row of the timetable that no session accounts for: the doors opening, a
+ * break, the photo, the party afterwards.
+ *
+ * The sessions supply everything else — they carry their own times — so what
+ * is left here is the schedule nobody would look up: the things that are true
+ * of the day rather than of a talk. Writing them as content instead of as a
+ * `kind` on `sessions` is what keeps them out of the sessions list, off the
+ * speaker pages, and clear of the rule that a session names somebody.
+ *
+ * This is also the whole of the answer to a break that starts at a different
+ * time on each track. `tracks` names the tracks a row covers and omitting it
+ * means all of them, so the uneven case is two rows rather than a mechanism:
+ *
+ *     { start: "14:25", end: "15:00", label: "休憩", tracks: ["b", "c"] }
+ *     { start: "14:45", end: "15:00", label: "休憩", tracks: ["a", "d"] }
+ */
+export interface Fixture {
+  /** Wall clock, `"13:00"`. */
   start: string;
+  /**
+   * Required, unlike a session's. A session may leave its end to be inferred
+   * from whatever starts next; something has to state the last boundary of the
+   * day, and a fixture — doors closing, the party — is what always does.
+   */
   end: string;
-  lines: { label: string; note: string; rail: string }[];
+  label: string;
+  note?: string;
+  /** Track entry ids. Omit for every track, which is the usual case. */
+  tracks?: readonly string[];
 }
 
 export interface NavItem {
@@ -92,5 +119,9 @@ export interface TenantConfig {
   nav: readonly NavItem[];
   footerNav: readonly NavItem[];
 
-  timetable: TimetableRow[];
+  /**
+   * Everything on the timetable that is not a session. The sessions themselves
+   * are read from the `sessions` collection and placed by their own times.
+   */
+  fixtures: Fixture[];
 }
