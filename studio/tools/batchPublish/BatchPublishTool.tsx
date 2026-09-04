@@ -328,10 +328,19 @@ export function BatchPublishTool() {
         .map((draftId) => loaded.byPublishedId.get(publishedIdOf(draftId)))
         .filter((doc): doc is SanityDocument => Boolean(doc));
 
+      /*
+        `sync`, so the commit does not resolve until the deletes it contains
+        are visible to queries. Sanity's own publish action uses `async` and
+        can afford to — the document views it feeds are driven by a real-time
+        listener, which hears about the change either way. This tool asks
+        again instead, and an async commit means it asks before the Content
+        Lake has finished indexing: the drafts come back, and the rows sit
+        there looking unpublished until someone reloads the tool.
+      */
       await buildPublishTransaction(client, documents, loaded.revisions).commit(
         {
           tag: "document.publish",
-          visibility: "async",
+          visibility: "sync",
         },
       );
 
