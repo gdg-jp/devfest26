@@ -27,7 +27,20 @@ const STATUS: Record<string, string | null> = {
   done: "開催済み",
   planned: null,
 };
-const status = STATUS[d.status];
+
+const isPlanned = d.status === "planned";
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const eventDate = d.date ? new Date(d.date) : null;
+if (eventDate) eventDate.setHours(0, 0, 0, 0);
+const isPast = eventDate ? eventDate < today : false;
+const isCompleted = d.status === "done" || (!isPlanned && isPast);
+
+const status = isCompleted ? "開催済み" : STATUS[d.status];
+const ctaLabel =
+  d.cta ?? (isCompleted ? "イベントページを見る" : "connpass で申し込む");
+const isGhostCta = isPlanned || isCompleted;
 
 const facts = [
   d.venue && { k: "会場", v: d.venue },
@@ -35,91 +48,176 @@ const facts = [
   d.fee && { k: "参加費", v: d.fee },
 ].filter(Boolean) as { k: string; v: string }[];
 
-const isPlanned = d.status === "planned";
+const doneFacts = [
+  span && { k: "時間", v: span },
+  d.venue && { k: "会場", v: d.venue },
+  d.capacity && { k: "定員", v: d.capacity },
+  d.fee && { k: "参加費", v: d.fee },
+].filter(Boolean) as { k: string; v: string }[];
+
 const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
 ---
 
-<article class:list={["meet", { next: isPlanned }]} data-reveal="up">
-  <div class="meet-when">
-    <span class="meet-no">Meetup #{d.no}{isPlanned ? " →" : ""}</span>
-    {
-      dated ? (
-        <>
-          <time class="meet-date" datetime={dated.iso}>
-            {dated.md.split("/")[0]}
-            <span class="sl">/</span>
-            {dated.md.split("/")[1]}
-          </time>
-          <span class="meet-dow">{dated.dow}</span>
-          {span && <span class="meet-time">{span}</span>}
-        </>
-      ) : (
-        <span class="meet-date">TBD</span>
-      )
-    }
-  </div>
+{
+  isCompleted ? (
+    <details class="meet meet-done" data-meetup-details data-reveal="up">
+      <summary class="meet-done-summary">
+        <div class="meet-done-left">
+          <span class="meet-no">Meetup #{d.no}</span>
+          {dated && (
+            <time class="meet-done-date" datetime={dated.iso}>
+              {dated.md}
+              {d.date && (
+                <span class="meet-done-dow">({DOW[d.date.getDay()]})</span>
+              )}
+            </time>
+          )}
+        </div>
+        <h3 class="meet-done-title">{d.title}</h3>
+        <div class="meet-done-right">
+          {status && (
+            <span class:list={["meet-status", { done: isCompleted }]}>
+              {status}
+            </span>
+          )}
+          <span class="meet-done-toggle" aria-hidden="true" />
+        </div>
+      </summary>
 
-  <div class="meet-body">
-    {status && <span class="meet-status">{status}</span>}
+      <div class="meet-done-content" data-meetup-content>
+        <div class="meet-done-body">
+          {d.subtitle && <p class="meet-done-subtitle">{d.subtitle}</p>}
+          <div class="meet-lede">
+            <Content />
+          </div>
 
-    <h3>
-      {d.title}
-      {d.subtitle && <small>{d.subtitle}</small>}
-    </h3>
+          {doneFacts.length > 0 && (
+            <ul class="meet-facts">
+              {doneFacts.map((f) => (
+                <li>
+                  <span>{f.k}</span>
+                  {f.v}
+                </li>
+              ))}
+            </ul>
+          )}
 
-    <div class="meet-lede"><Content /></div>
+          {d.program && d.program.length > 0 && (
+            <details class="lt-wrap">
+              <summary>
+                当日のタイムテーブル
+                {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+              </summary>
+              <ol class="lt">
+                {d.program.map((p) => (
+                  <li class:list={{ brk: p.break }}>
+                    <span class="t">{p.at}</span>
+                    <div>
+                      <b>{p.what}</b>
+                      {p.who && <i>{p.who}</i>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )}
 
-    {
-      facts.length > 0 && (
-        <ul class="meet-facts">
-          {facts.map((f) => (
-            <li>
-              <span>{f.k}</span>
-              {f.v}
-            </li>
-          ))}
-        </ul>
-      )
-    }
+          {d.url && (
+            <div class="cta-row">
+              <a
+                class:list={["btn", { ghost: isGhostCta }]}
+                href={d.url}
+                target="_blank"
+                rel="noopener"
+              >
+                {ctaLabel}
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </details>
+  ) : (
+    <article class:list={["meet", { next: isPlanned }]} data-reveal="up">
+      <div class="meet-when">
+        <span class="meet-no">
+          Meetup #{d.no}
+          {isPlanned ? " →" : ""}
+        </span>
+        {dated ? (
+          <>
+            <time class="meet-date" datetime={dated.iso}>
+              {dated.md.split("/")[0]}
+              <span class="sl">/</span>
+              {dated.md.split("/")[1]}
+            </time>
+            <span class="meet-dow">{dated.dow}</span>
+            {span && <span class="meet-time">{span}</span>}
+          </>
+        ) : (
+          <span class="meet-date">TBD</span>
+        )}
+      </div>
 
-    {
-      d.program && d.program.length > 0 && (
-        <details class="lt-wrap">
-          <summary>
-            当日のタイムテーブル
-            {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
-          </summary>
-          <ol class="lt">
-            {d.program.map((p) => (
-              <li class:list={{ brk: p.break }}>
-                <span class="t">{p.at}</span>
-                <div>
-                  <b>{p.what}</b>
-                  {p.who && <i>{p.who}</i>}
-                </div>
+      <div class="meet-body">
+        {status && <span class="meet-status">{status}</span>}
+
+        <h3>
+          {d.title}
+          {d.subtitle && <small>{d.subtitle}</small>}
+        </h3>
+
+        <div class="meet-lede">
+          <Content />
+        </div>
+
+        {facts.length > 0 && (
+          <ul class="meet-facts">
+            {facts.map((f) => (
+              <li>
+                <span>{f.k}</span>
+                {f.v}
               </li>
             ))}
-          </ol>
-        </details>
-      )
-    }
+          </ul>
+        )}
 
-    {
-      d.url && (
-        <div class="cta-row">
-          <a
-            class:list={["btn", { ghost: isPlanned }]}
-            href={d.url}
-            target="_blank"
-            rel="noopener"
-          >
-            {d.cta ?? "connpass で申し込む"}
-          </a>
-        </div>
-      )
-    }
-  </div>
-</article>
+        {d.program && d.program.length > 0 && (
+          <details class="lt-wrap">
+            <summary>
+              当日のタイムテーブル
+              {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+            </summary>
+            <ol class="lt">
+              {d.program.map((p) => (
+                <li class:list={{ brk: p.break }}>
+                  <span class="t">{p.at}</span>
+                  <div>
+                    <b>{p.what}</b>
+                    {p.who && <i>{p.who}</i>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
+
+        {d.url && (
+          <div class="cta-row">
+            <a
+              class:list={["btn", { ghost: isPlanned }]}
+              href={d.url}
+              target="_blank"
+              rel="noopener"
+            >
+              {d.cta ?? "connpass で申し込む"}
+            </a>
+          </div>
+        )}
+      </div>
+    </article>
+  )
+}
 
 <style>
   .meet {
@@ -220,6 +318,12 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
     border: 2px solid var(--stroke);
     border-radius: 999px;
     padding: 4px 13px;
+  }
+
+  .meet-status.done {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1.5px solid var(--stroke);
   }
 
   .meet-lede {
@@ -379,9 +483,179 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
     color: var(--muted);
   }
 
+  /* 完了したプレイベント（アコーディオン） */
+  .meet.meet-done {
+    display: block;
+    grid-template-columns: none;
+  }
+
+  .meet-done-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    background: var(--surface);
+    transition: background-color 0.15s ease;
+  }
+
+  .meet-done-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .meet-done-summary:hover {
+    background: var(--t-pa);
+  }
+
+  .meet-done-summary:focus-visible {
+    outline: 3px solid var(--t);
+    outline-offset: -3px;
+  }
+
+  .meet-done[open] > .meet-done-summary {
+    border-bottom: var(--bw) solid var(--stroke);
+    background: var(--t-pa);
+  }
+
+  .meet-done-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .meet-done-left .meet-no {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--t-deep);
+  }
+
+  .meet-done-date {
+    font-family: var(--f-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .meet-done-dow {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .meet-done-title {
+    flex: 1;
+    font-size: 16.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--ink);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .meet-done-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .meet-done-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--stroke);
+    background: var(--surface);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: var(--ink);
+    flex-shrink: 0;
+    transition:
+      transform 0.25s var(--ease-out),
+      background-color 0.15s ease;
+  }
+
+  .meet-done-toggle::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentcolor;
+    border-bottom: 2px solid currentcolor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.25s var(--ease-out);
+  }
+
+  .meet-done[open] > .meet-done-summary .meet-done-toggle::after {
+    transform: translateY(2px) rotate(225deg);
+  }
+
+  .meet-done-content {
+    overflow: hidden;
+  }
+
+  .meet-done-body {
+    padding: 22px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    align-items: flex-start;
+  }
+
+  .meet-done-subtitle {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--muted);
+    margin: 0;
+  }
+
   @media (width <= 760px) {
     .meet {
       grid-template-columns: 1fr;
+    }
+
+    .meet-done-summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px 12px;
+      padding: 14px 18px;
+    }
+
+    .meet-done-left {
+      grid-column: 1;
+      gap: 10px;
+    }
+
+    .meet-done-right {
+      grid-column: 2;
+      justify-self: end;
+    }
+
+    .meet-done-title {
+      grid-column: 1 / -1;
+      white-space: normal;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .meet-done-body {
+      padding: 18px 18px 22px;
     }
 
     .meet-when {

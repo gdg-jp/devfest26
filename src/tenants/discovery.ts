@@ -45,13 +45,14 @@ export interface CityCard {
   startsAt: string;
   endsAt: string;
   venue: { name: string; city: string; region: string };
+  isPublic?: boolean;
 }
 
 /**
  * The tier-1 projection. Deliberately short: every field here is one a card
  * prints, so a document missing any of them has nothing to show.
  */
-const CITY_QUERY = `*[_type == "event"] | order(startsAt asc){
+const CITY_QUERY = `*[_type == "event" && coalesce(isPublic, true) == true] | order(startsAt asc){
   "slug": slug.current,
   title, theme, startsAt, endsAt,
   "venue": { "name": venue.name, "city": venue.city, "region": venue.region }
@@ -132,6 +133,7 @@ function readCard(doc: unknown): { card: CityCard } | { problems: string[] } {
       startsAt: startsAt!,
       endsAt: endsAt!,
       venue: { name: name!, city: city!, region: region! },
+      isPublic: d.isPublic !== false,
     },
   };
 }

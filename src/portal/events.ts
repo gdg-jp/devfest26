@@ -49,6 +49,7 @@ export interface PortalEvent {
   /** True when the page it leads to is not part of this site. */
   external: boolean;
   note?: string;
+  isPublic?: boolean;
 }
 
 export interface PortalEvents {
@@ -95,6 +96,7 @@ async function cities(): Promise<PortalEvent[]> {
       theme: doc.theme,
       href: tenantHome(doc.slug),
       external: false,
+      isPublic: doc.isPublic,
     };
   });
 }

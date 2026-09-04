@@ -1,5 +1,6 @@
 ---
 import type { PortalEvent } from "./events";
+import { previewMode } from "../preview/mode";
 
 /**
  * One DevFest in the front-page list.
@@ -25,6 +26,11 @@ const { event, past = false } = Astro.props;
   <p class="when">
     <time datetime={event.isoDate}>{event.dateLabel}</time>
     <span class="region">{event.region}</span>
+    {
+      previewMode && event.isPublic === false && (
+        <span class="badge-private">非公開</span>
+      )
+    }
   </p>
 
   <h3 class="title">
@@ -137,5 +143,15 @@ const { event, past = false } = Astro.props;
 
   .past:hover {
     box-shadow: 0 6px 0 var(--dash);
+  }
+
+  .badge-private {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: var(--r-sm);
+    background: color-mix(in srgb, var(--red) 15%, transparent);
+    color: var(--red);
+    border: 1px solid color-mix(in srgb, var(--red) 40%, transparent);
   }
 </style>
