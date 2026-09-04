@@ -313,7 +313,77 @@ Sanity 側は `event` リファレンスがスコープの根拠です。Sanity 
 
 ### 公開フロー
 
-Sanity で publish → webhook → デプロイフック → 再ビルド。静的サイトなので、**コンテンツの変更は再ビルドしないと反映されません。** 当日にタイムテーブルを即時更新したい場合は別の作りが必要です。
+**Studio の publish はサイトを変えません。** publish が変えるのは Sanity のデータだけです（公開データセットなので、その時点で API からは誰でも読めます）。サイトが変わるのは、Studio の**「サイトに反映」**を誰かが押したときだけです。当日にタイムテーブルを即時更新したい場合は別の作りが必要です。
+
+```text
+Studio「サイトに反映」  [x] 関西  [ ] 東京
+   │  deploy ドキュメントを書き換える
+   ▼
+Sanity の webhook       filter: _type == "deploy"   ← ほかのドキュメントでは飛びません
+   │
+   ▼
+POST /repos/gdg-jp/devfest26/dispatches
+   │
+   ▼
+discover ──▶ build (portal)  build (kansai)         ← 東京はビルドされません
+   │
+   ▼
+publish ──▶ gh-pages                                ← 東京の公開済みページはそのまま
+```
+
+**ビルドが 1 回で済むのは filter のおかげです。** Sanity の webhook は**ドキュメント単位**で飛びます — 「まとめて公開」で 12 件を 1 トランザクションで公開しても、webhook は 12 回です。コンテンツで飛ばすと 12 回のビルドになります。`deploy` は「サイトに反映」1 回につき 1 回だけ書き換わるドキュメントなので、**1 クリック = 1 ビルド**です。
+
+**開催地ごとに反映できます。** 反映しなかった開催地のディレクトリは `gh-pages` にそのまま残ります。ビルドに失敗した開催地も同じ扱いで、前回反映した内容が答え続けます。
+
+**トップページは必ず一緒に作り直されます。** カードが印刷するのはその開催地の `event` ドキュメントの中身（slug・タイトル・テーマ・日程・会場）なので、関西だけ作り直してトップページを置いていくと、カードだけ古いままになります。
+
+**ビルドの結果は Studio から見えます。**「サイトに反映」の下に直近のビルドが出ます（`main` のものだけです。プルリクエストのビルドは `publish` が走らないので、サイトについて何も言っていません）。失敗したときは**どの開催地のどのステップで落ちたか**と、**原因の抜粋**が並びます。抜粋は `scripts/annotate-failure.mjs` がビルドの出力の末尾を注釈として書き出したものです — Studio はトークンを持たないので**生のログは読めません**（未認証だと 403 です）。足りないときは GitHub のリンクを開いてください。
+
+Studio を通さず作り直したいときは Actions から `Build` を手動実行してください。`作り直す開催地` に `kansai` のように書けば同じことができ、空欄なら全部です。`main` への push は今までどおり全部を作り直します — コンテンツではなくコードが変わったのだから、というのがその理由です。
+
+#### webhook を作る
+
+[Manage](https://www.sanity.io/manage) → API → Webhooks → Create webhook。**Free プランでは webhook は 2 本までです。**
+
+| 項目              | 値                                                         |
+| :---------------- | :--------------------------------------------------------- |
+| URL               | `https://api.github.com/repos/gdg-jp/devfest26/dispatches` |
+| Dataset           | `production`（`SANITY_DATASET` と同じもの）                |
+| Trigger on        | Create / Update                                            |
+| Drafts · Versions | **オフのまま。** 既定でオフです                            |
+| HTTP method       | `POST`                                                     |
+
+Filter — `deploy` ドキュメント 1 種類だけです。
+
+```groq
+_type == "deploy"
+```
+
+Projection — GitHub の `dispatches` が受け取る形そのものにします。ドキュメントの中身は送りません。
+
+```groq
+{
+  "event_type": "deploy",
+  "client_payload": {
+    "targets": targets,
+    "by": requestedBy
+  }
+}
+```
+
+`targets` は開催地の slug の配列で、**空なら全部**という意味です。CMS 側から来る値なので `build.yml` はこれをシェルに展開せず、環境変数で `scripts/discover-targets.mjs` に渡します。スクリプトが実在する開催地との積集合を取るので、知らない名前は警告になって落ちるだけです。`by` は Actions のログに 1 行出るだけのものです。
+
+HTTP Headers に 3 つ。
+
+| Header                 | 値                            |
+| :--------------------- | :---------------------------- |
+| `Authorization`        | `Bearer <トークン>`           |
+| `Accept`               | `application/vnd.github+json` |
+| `X-GitHub-Api-Version` | `2022-11-28`                  |
+
+トークンは fine-grained personal access token を `gdg-jp/devfest26` 1 つだけに絞り、権限は **Repository permissions → Contents: Read and write** です。`dispatches` に対して GitHub が用意している最小がこれで、**同じトークンで repo に push もできてしまいます。** しかもトークンは webhook の設定に平文で保存され、Sanity プロジェクトの管理者には見えます。取り扱いはそのつもりで、漏れたときは GitHub 側で失効させてください。
+
+Secret（署名）は設定しても意味がありません。GitHub の `dispatches` は Sanity の署名を検証しないので、このトークンだけが認証です。
 
 ## OG 画像
 

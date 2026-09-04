@@ -5,19 +5,34 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-  # Sanity (or any other CMS) triggers a rebuild by POSTing to
-  # /repos/gdg-jp/devfest26/dispatches with a token and
-  # {"event_type": "content-published"}. GitHub Actions cannot receive an
+    inputs:
+      targets:
+        description: "作り直す開催地。空欄で全部。例: kansai tokyo"
+        required: false
+        type: string
+  # Publishing in the Studio does not build anything. The Studio's「サイトに反映」
+  # tool touches a `deploy` document, a Sanity webhook turns that into a POST to
+  # /repos/gdg-jp/devfest26/dispatches with a token, and the cities that
+  # document names are the ones rebuilt. GitHub Actions cannot receive an
   # arbitrary webhook directly, so this is the entry point for one.
+  #
+  # Nothing else in the CMS reaches here: the webhook's filter is
+  # `_type == "deploy"`. Publishing a session changes what the API answers and
+  # leaves the site alone until a person asks for it. What to configure on the
+  # Sanity side — filter, projection, headers — is in the README under 公開フロー.
   repository_dispatch:
-    types: [content-published]
+    types: [deploy]
 
-# A burst of CMS publishes should collapse into a single deploy of the latest
-# content rather than queueing one build per edit. Pull requests are keyed by
-# their own ref so they only ever cancel themselves.
+# One production deploy at a time, and they queue rather than cancel each other.
+# Cancelling would be cheaper but wrong now that a run carries the set of cities
+# someone asked for: press 関西, then 東京 ten seconds later, and the newer run
+# would take 関西's build down with it and never put it back. Builds only start
+# when a person asks for one, so the queue stays short. Pull requests are keyed
+# by their own ref and do cancel, because there the newest push really does
+# subsume the ones before it.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -35,20 +50,27 @@ env:
   SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
   SANITY_DATASET: ${{ vars.SANITY_DATASET }}
 
-# One job per target: each city, plus the front page that lists them. They are
-# independent builds of the same commit, and that is the point — a city whose
-# `event` document is half-edited takes its own job down and nothing else with
-# it. `publish` then grafts the jobs that succeeded onto the branch GitHub Pages
-# serves, and leaves the rest exactly as they were.
+# One job per target the deploy asked for: those cities, plus the front page
+# that lists them. They are independent builds of the same commit, and that is
+# the point — a city whose `event` document is half-edited takes its own job
+# down and nothing else with it. `publish` then grafts the jobs that succeeded
+# onto the branch GitHub Pages serves, and leaves the rest exactly as they were,
+# which covers both the cities that failed and the cities nobody asked for.
 jobs:
-  # Which cities exist is a question for the CMS, not for this file. Nothing is
-  # installed here: `scripts/discover-targets.mjs` runs on a bare checkout,
-  # which is why `src/tenants/discovery.ts` uses plain fetch and no zod.
+  # Two questions, both for the CMS rather than for this file: which cities
+  # exist, and which of them this run was asked to rebuild. Nothing is installed
+  # here — `scripts/discover-targets.mjs` runs on a bare checkout, which is why
+  # `src/tenants/discovery.ts` uses plain fetch and no zod.
   discover:
     name: discover
     runs-on: ubuntu-latest
 
     outputs:
+      # Every city the CMS holds. `publish` takes down the published
+      # directories that are *not* in here, so it is deliberately not narrowed
+      # to the cities being rebuilt.
+      cities: ${{ steps.list.outputs.cities }}
+      # The subset this run rebuilds, plus the front page. Drives the matrix.
       targets: ${{ steps.list.outputs.targets }}
 
     steps:
@@ -59,6 +81,14 @@ jobs:
           node-version-file: .nvmrc
 
       - id: list
+        env:
+          # Through the environment rather than into the script body: the
+          # dispatch carries a list written by whoever can edit the CMS, and
+          # `${{ }}` would paste it into the shell as code. The script reads it
+          # there and keeps only the names that are actually cities.
+          DEPLOY_TARGETS: ${{ github.event_name == 'repository_dispatch' && toJSON(github.event.client_payload.targets) || inputs.targets }}
+          # For the log only, so that a run can say who asked for it.
+          DEPLOY_BY: ${{ github.event.client_payload.by }}
         run: node --experimental-strip-types scripts/discover-targets.mjs
 
   build:
@@ -92,10 +122,31 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # `shell: bash` for its `pipefail`, which the default shell does not set:
+      # without it `tee` would answer for the pipeline and a failed build would
+      # look green.
+      #
       # Types and content-collection schemas, scoped to this target.
-      - run: pnpm exec astro check
+      - name: Check
+        shell: bash
+        run: pnpm exec astro check 2>&1 | tee -a build.log
 
-      - run: pnpm exec astro build
+      - name: Build
+        shell: bash
+        run: pnpm exec astro build 2>&1 | tee -a build.log
+
+      # GitHub hands raw job logs to a token and to nothing else, and the Studio
+      # has no token — it reads this repository unauthenticated, from a browser.
+      # Annotations it *can* read, so the tail of the failure is copied into
+      # one. Without this step「サイトに反映」can say that 関西 failed and not one
+      # word about why.
+      - name: Copy the failure into an annotation the Studio can read
+        if: failure()
+        env:
+          # Not `${{ matrix.target }}` in an argument: the slug comes from the
+          # CMS, and the environment is where CMS strings belong.
+          TARGET: ${{ matrix.target }}
+        run: node scripts/annotate-failure.mjs build.log
 
       # A failed job uploads nothing, and that absence is how `publish` tells
       # the two apart. Nothing else reports per-target success.
@@ -148,32 +199,42 @@ jobs:
 
       - name: Graft the builds that succeeded onto the published site
         env:
+          # Two lists, and telling them apart is what makes a deploy of one city
+          # safe. `cities` is every city the CMS holds and decides what comes
+          # *down*. `targets` is what this run actually rebuilt and decides what
+          # goes *up*. Reading the second where the first belongs would take
+          # every city nobody asked for off the site.
+          CITIES_JSON: ${{ needs.discover.outputs.cities }}
           TARGETS_JSON: ${{ needs.discover.outputs.targets }}
         run: |
           set -euo pipefail
 
-          # Parsed into a file rather than through a process substitution: a
-          # `mapfile < <(...)` swallows the exit status, and a target list that
+          # Parsed into files rather than through a process substitution: a
+          # `mapfile < <(...)` swallows the exit status, and a list that
           # silently came out empty would make every step below read as "the
           # CMS has no cities" and delete all of them.
+          jq -r '.[]' <<< "$CITIES_JSON" > cities.txt
           jq -r '.[]' <<< "$TARGETS_JSON" > targets.txt
+          mapfile -t cities < cities.txt
           mapfile -t targets < targets.txt
           if [ "${#targets[@]}" -eq 0 ]; then
             echo "::error::discover produced no targets; refusing to publish"
             exit 1
           fi
 
-          cities=()
-          for target in "${targets[@]}"; do
-            [ "$target" = "portal" ] || cities+=("$target")
-          done
+          # Was this city part of what the deploy asked for? The answer is how
+          # a missing artifact is read: a city nobody asked for did not build
+          # because there was nothing to build, and that is not a failure.
+          rebuilt() { printf '%s\n' "${targets[@]}" | grep -qxF "$1"; }
 
           # Which root directories are cities rather than the front page's own
           # output, as recorded by the previous run. Inferring it from the
           # listing would eventually mistake one for the other.
           mapfile -t published < <(cat site/.cities 2>/dev/null || true)
 
-          # A city deleted from the CMS should stop being served.
+          # A city deleted from the CMS should stop being served. Against
+          # `cities` and not `targets`: a city left out of this deploy is still
+          # a city, and its pages stay exactly where they are.
           for slug in "${published[@]}"; do
             if [ -n "$slug" ] && ! printf '%s\n' "${cities[@]}" | grep -qxF "$slug"; then
               echo "removing /$slug — no longer an event in the CMS"
@@ -189,6 +250,8 @@ jobs:
               echo "replacing /$slug"
               rm -rf "site/$slug"
               cp -r "artifacts/site-$slug/$slug" "site/$slug"
+            elif ! rebuilt "$slug"; then
+              echo "leaving /$slug as it was — not part of this deploy"
             else
               echo "::warning::$slug did not build; leaving the published copy in place"
             fi
