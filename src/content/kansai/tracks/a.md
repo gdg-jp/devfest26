@@ -1,7 +1,7 @@
 ---
 order: 1
-label: "Track A｜メイン・トーク"
-sub: "技術セッション・パネルディスカッション"
+label: "Track A"
+sub: "メイントーク"
 color: "var(--blue)"
 textColor: "var(--blue)"
 ---

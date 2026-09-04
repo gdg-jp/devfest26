@@ -11,6 +11,7 @@ import {
   jstTimestamp,
   type ProgramSession,
 } from "../data/program";
+import { getTimetable } from "../data/timetable";
 
 /**
  * Every session has a page, whether or not the city splits it into talks: it
@@ -50,7 +51,14 @@ const { Content } = await render(entry);
 const title = entry.data.title;
 const abstract = entry.body?.trim();
 const listsTalks = talks[0].standalone;
-const time = [entry.data.start, entry.data.end].filter(Boolean).join(" – ");
+// The end may not be written down: a session runs until the next thing on its
+// track starts, and the timetable is what knows what that is. Asking it here is
+// what keeps this page and the grid from disagreeing about the same slot.
+const end =
+  entry.data.end ?? (await getTimetable(site))?.ends.get(session.slug);
+const time = [entry.data.start, entry.data.start && end]
+  .filter(Boolean)
+  .join(" – ");
 
 // Everyone on this slot, in running order and without repeating anyone who
 // appears on more than one of its talks.
@@ -82,9 +90,7 @@ const jsonLd = title
       ...(entry.data.start
         ? { startDate: jstTimestamp(site.event.isoDate, entry.data.start) }
         : {}),
-      ...(entry.data.end
-        ? { endDate: jstTimestamp(site.event.isoDate, entry.data.end) }
-        : {}),
+      ...(end ? { endDate: jstTimestamp(site.event.isoDate, end) } : {}),
       location: { "@type": "Place", name: site.event.venue.name },
       performer: everyone.map((speaker) => ({
         "@type": "Person",

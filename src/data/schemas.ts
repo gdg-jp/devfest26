@@ -57,6 +57,18 @@ const slug = z.string().optional();
  */
 const tenant = z.string().default(LOCAL_TENANT);
 
+/**
+ * A wall-clock time on the day, `"13:00"`.
+ *
+ * Zero-padded because the timetable sorts these, and `"9:30"` sorts after
+ * `"13:00"` while `"09:30"` does not. Checking the shape here rather than
+ * coping with it downstream keeps every reader free to compare them as
+ * strings, and turns a typo into a build error naming the file it is in.
+ */
+const hhmm = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'A time reads "HH:MM", zero-padded.');
+
 export const speakers = ({ image }: Images) =>
   z.object({
     tenant,
@@ -120,8 +132,6 @@ export const tracks = z.object({
 export const sessions = z.object({
   tenant,
   track: reference("tracks"),
-  /** Position within the track. */
-  order: z.number().int().positive(),
   /** Omit while the session is still TBD. */
   title: z.string().optional(),
   /** The people on stage for the whole slot. Omit only when the session's
@@ -129,10 +139,20 @@ export const sessions = z.object({
       build rather than publishing an empty card. */
   speakers: z.array(reference("speakers")).min(1).optional(),
   slug,
-  /** "13:00". The timetable stays hand-written per city, so these are just
-      for the session's own page and may be left out entirely. */
-  start: z.string().optional(),
-  end: z.string().optional(),
+  /** "13:00", and the only thing that says where the session goes: the track
+      orders itself by this, the running number printed on the card follows
+      from that order, and the timetable places the block from it. A track is
+      serial, so two sessions on one track starting at the same minute is a
+      mistake the build stops on.
+
+      Still optional. A session that has been announced before its slot is
+      settled is a real state — it keeps its card and its page, sorts after
+      everything with a time, and is simply not on the timetable yet. */
+  start: hhmm.optional(),
+  /** Optional even when `start` is set: a session runs until the next thing on
+      its track begins, and writing that boundary twice is how the two come to
+      disagree. Set it only when the gap that follows is deliberate. */
+  end: hhmm.optional(),
 });
 
 /**
@@ -145,14 +165,22 @@ export const sessions = z.object({
 export const talks = z.object({
   tenant,
   session: reference("sessions"),
-  /** Position within the session. */
+  /** Position within the session.
+
+      Kept, where a session's was dropped in favour of its start time, because
+      the two levels mean different things by a time. A session occupies a slot
+      on the grid, so its time is structural and is the only sensible thing to
+      order by. Five lightning talks in one slot are a running order that often
+      has no per-talk times at all — which is why `start` here is optional and
+      there is no `end` — so taking `order` away would leave them nothing to
+      sort by. */
   order: z.number().int().positive(),
   /** Omit to inherit the session's title — a slot holding a single talk
       rarely has a second name for it. */
   title: z.string().optional(),
   speakers: z.array(reference("speakers")).min(1),
   slug,
-  start: z.string().optional(),
+  start: hhmm.optional(),
 });
 
 export const meetups = z.object({

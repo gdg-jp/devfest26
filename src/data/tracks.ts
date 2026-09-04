@@ -13,7 +13,7 @@ import type { CollectionEntry } from "astro:content";
 import { byTenant } from "./collections";
 
 export type Track = CollectionEntry<"tracks">;
-export type { TimetableRow } from "../tenants/types";
+export type { Fixture } from "../tenants/types";
 
 /** Every track for one city, in the order it should be rendered. */
 export async function getTracks(tenant: string): Promise<Track[]> {
@@ -23,3 +23,24 @@ export async function getTracks(tenant: string): Promise<Track[]> {
 
 /** Pastel rotation used to keep adjacent speaker blocks from matching. */
 export const pastelCycle = ["blue", "green", "yellow", "red"] as const;
+
+/**
+ * The pale fill a track's blocks take in the timetable.
+ *
+ * A table rather than a calculation, because the brand's pastels are their own
+ * four colours and not tints of the core four — `--pa-blue` is a cyan where
+ * `--blue` is a blue, and mixing white into the latter never arrives at the
+ * former. The table is closed for the same reason `src/styles/tokens.css` has
+ * exactly four theme blocks: the brand guide has four core colours. A track
+ * painted some other way is drawn plain rather than guessed at.
+ */
+const PASTELS: Record<string, string> = {
+  "var(--blue)": "var(--pa-blue)",
+  "var(--green)": "var(--pa-green)",
+  "var(--yellow)": "var(--pa-yellow)",
+  "var(--red)": "var(--pa-red)",
+};
+
+export function trackPastel(track: Track): string {
+  return PASTELS[track.data.color] ?? "var(--surface)";
+}

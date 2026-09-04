@@ -77,38 +77,29 @@ export const kansai = {
     { href: "#register", label: "参加登録" },
   ],
 
-  timetable: [
-    {
-      start: "11:00",
-      end: "– 18:00",
-      lines: [
-        {
-          label: "Track A｜メイン・トーク",
-          note: "技術セッション・パネルディスカッション（予定）",
-          rail: "var(--blue)",
-        },
-        {
-          label: "Track B｜ハンズオン・トーク",
-          note: "Google AI・生成AI ハンズオン（予定）",
-          rail: "var(--green)",
-        },
-        {
-          label: "Track C｜ハンズオン・トーク",
-          note: "LT・コミュニティセッション（予定）",
-          rail: "var(--yellow)",
-        },
-      ],
-    },
+  /*
+    Everything the timetable needs that the sessions do not already say. The
+    talks place themselves from their own `start`, so what is left here is the
+    day around them — and the breaks, which are the one thing that genuinely
+    differs per track: the 14:00 slot runs to 14:45 on A and D and to 14:25 on
+    B and C, so the break is two rows rather than a special case.
+
+    The last one also closes the day. A session may leave its `end` out and run
+    to whatever starts next; something has to state the final boundary, and it
+    is always one of these.
+  */
+  fixtures: [
+    { start: "10:00", end: "10:30", label: "開場・受付" },
+    { start: "11:25", end: "13:25", label: "昼休憩" },
+    { start: "14:25", end: "15:00", label: "休憩", tracks: ["b", "c"] },
+    { start: "14:45", end: "15:00", label: "休憩", tracks: ["a", "d"] },
+    { start: "16:00", end: "16:20", label: "休憩" },
+    { start: "17:10", end: "17:30", label: "休憩" },
     {
       start: "18:30",
-      end: "– 20:30",
-      lines: [
-        {
-          label: "懇親会（予定）",
-          note: "登壇者・参加者とのネットワーキング",
-          rail: "var(--red)",
-        },
-      ],
+      end: "20:30",
+      label: "懇親会（予定）",
+      note: "登壇者・参加者とのネットワーキング",
     },
   ],
 } satisfies TenantConfig;

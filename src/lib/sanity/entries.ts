@@ -77,7 +77,6 @@ export function sessionEntry(doc: Doc): SanityEntry {
     data: {
       tenant: doc.tenant,
       track: doc.track,
-      order: doc.order,
       title: doc.title ?? undefined,
       // Empty in the Studio means "the talks name them", not "nobody", so it
       // has to reach the schema as absent rather than as an empty array.

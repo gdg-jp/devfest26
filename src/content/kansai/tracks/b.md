@@ -1,7 +1,7 @@
 ---
 order: 2
-label: "Track B｜ハンズオン・トーク"
-sub: "Google AI・生成AI ハンズオン"
+label: "Track B"
+sub: "トーク・パネルディスカッション"
 color: "var(--green)"
 textColor: "var(--green)"
 ---
