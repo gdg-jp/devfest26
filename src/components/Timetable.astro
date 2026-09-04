@@ -168,10 +168,11 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
      The frame is a third element around the two scrollers rather than one of
      them, because it is what the head row is sticky *within*. A sticky box may
-     not leave its containing block, so the head lets go of the top of the
-     window at the moment its own bottom edge reaches the frame's — which is to
-     say the moment the last row of the day is on screen. Nothing has to decide
-     that; it is where the box already stops.
+     not leave its containing block — and it is its *margin* box that may not,
+     so the margin under the head is how far short of the frame's bottom it
+     lets go, and `--tt-release` is that distance written the way it is meant
+     rather than the way it is measured. Nothing observes the frame and nothing
+     decides when: the box already stops where it has been told to.
 
      `clip`, not `hidden`: `hidden` would make the frame a scroll container,
      and a sticky child is sticky to the nearest one of those. That is the trap
@@ -191,6 +192,29 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
        line at the top and against the frame at the bottom. */
     --tt-brow: 14px;
     --tt-tail: 16px;
+
+    /* Where the head lets go, as a line across the window measured from its
+       top: the frame's bottom edge crossing this line is what unpins it.
+       `100dvh` is the foot of the window, so the head starts travelling with
+       the page the moment the end of the day comes into view. Raising the line
+       keeps the head longer; `calc(var(--topbar-h) + var(--tt-headh))` is the
+       whole way down, the head let go of last. */
+    --tt-release: 100dvh;
+    /* The head row's own height plus the frame's border: the one term of that
+       line CSS has no way to read, since the sub-label takes a second row once
+       the columns are narrow. Over-estimated at the tallest the row gets, and
+       allowed to be approximate — the term is a distance along the scroll, so
+       a few pixels out moves the moment of release by a few pixels and touches
+       nothing else. */
+    --tt-headh: 72px;
+    /* Handed to the head as a bottom margin and taken straight back off the
+       body, which leaves nothing between them whether the two margins collapse
+       or merely add. Clamped at zero for the window taller than the day, where
+       the end is in view from the start and the head never pins at all. */
+    --tt-slack: max(
+      0px,
+      calc(var(--tt-release) - var(--topbar-h) - var(--tt-headh))
+    );
 
     overflow: clip;
     border: var(--bw) solid var(--stroke);
@@ -221,6 +245,7 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
   .tt-scroll.head {
     position: sticky;
     top: var(--topbar-h);
+    margin-bottom: var(--tt-slack);
     z-index: 2;
     /* A second scrollbar for an axis that already has one below. */
     scrollbar-width: none;
@@ -237,6 +262,7 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
   .tt-scroll.body {
     position: relative;
     z-index: 0;
+    margin-top: calc(-1 * var(--tt-slack));
   }
 
   .tt-hd,
