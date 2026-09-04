@@ -39,6 +39,14 @@ try {
 const tail = log
   // The colour escapes astro writes. `\x1b[` then digits, semicolons and
   // question marks, then the letter that ends the sequence.
+  //
+  // `no-control-regex` is looking for a control character that arrived by
+  // accident — a literal tab typed into a pattern, a stray `\x00`. Here the
+  // control character *is* the subject: the point of the line is to take ESC
+  // out of the text before it reaches an annotation. Writing it as \u001b
+  // or assembling it from `String.fromCharCode` would satisfy the rule and
+  // make the pattern harder to read, which is the wrong trade.
+  // eslint-disable-next-line no-control-regex
   .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "")
   .split("\n")
   .filter((line) => line.trim() !== "")
