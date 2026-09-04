@@ -100,7 +100,10 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
               <div class="tt-rule last" style={`grid-row:${rows.length + 1}`} />
 
               {timetable.boundaries.slice(0, -1).map((time, index) => (
-                <div class="tt-at" style={`grid-row:${index + 2}`}>
+                <div
+                  class:list={["tt-at", { first: index === 0 }]}
+                  style={`grid-row:${index + 2}`}
+                >
                   <span>{time}</span>
                 </div>
               ))}
@@ -195,11 +198,13 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
     /* Where the head lets go, as a line across the window measured from its
        top: the frame's bottom edge crossing this line is what unpins it.
-       `100dvh` is the foot of the window, so the head starts travelling with
-       the page the moment the end of the day comes into view. Raising the line
-       keeps the head longer; `calc(var(--topbar-h) + var(--tt-headh))` is the
-       whole way down, the head let go of last. */
-    --tt-release: 100dvh;
+       `100dvh` is the foot of the window and lets the head go the moment the
+       end of the day comes into view, which is sooner than it reads: a screen
+       of the day is still up there, unlabelled. Seven tenths down keeps the
+       head for that screen and gives it up once the end is properly in hand.
+       `calc(var(--topbar-h) + var(--tt-headh))` would be the whole way, the
+       head let go of last. */
+    --tt-release: 70dvh;
     /* The head row's own height plus the frame's border: the one term of that
        line CSS has no way to read, since the sub-label takes a second row once
        the columns are narrow. Over-estimated at the tallest the row gets, and
@@ -255,13 +260,12 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
     display: none;
   }
 
-  /* Given a stacking context of its own, so that the clock column's z-index
-     stops at the scroller it is in. It has to outrank the blocks sliding under
-     it, and without this it would outrank the pinned head row along with
-     them. */
+  /* Left without a stacking context on purpose: the clock column's z-index is
+     meant to reach past this scroller and over the pinned head row, so that
+     the hour a block starts at is still written beside the head instead of
+     disappearing under it. The blocks stay below either way — nothing in the
+     grid but the clock column is positioned. */
   .tt-scroll.body {
-    position: relative;
-    z-index: 0;
     margin-top: calc(-1 * var(--tt-slack));
   }
 
@@ -335,6 +339,16 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
   .tt-at > span {
     transform: translateY(-50%);
+  }
+
+  /* The brow is the grid's padding, so the column started below it and the
+     rule down the side of the day broke for 14px right where the opening time
+     is written. Stretched up over it and padded back off, the same way the
+     closing time is stretched over the tail — the label stays on its boundary
+     and the column runs unbroken into the head row. */
+  .tt-at.first {
+    margin-top: calc(-1 * var(--tt-brow));
+    padding-top: var(--tt-brow);
   }
 
   /* The closing time is the bottom edge of the last row, not the top of one —
