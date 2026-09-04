@@ -130,17 +130,17 @@ export function DeployTool() {
         if (cancelled) return;
         setLoaded(next);
         /*
-          The cities with something waiting, ticked. Unlike「まとめて公開」this
-          list starts full rather than empty, and the asymmetry is deliberate:
-          publishing exposes content, so it asks to be chosen, while deploying
-          only shows content that is already public. The failure this guards
-          against is not deploying too much but forgetting to deploy at all.
+          Nothing ticked, not even the cities with something waiting. A deploy
+          is usually one city — a fix to 関西 has nothing to do with 東京 — so
+          ticking every waiting city in advance would make the ordinary case a
+          list of boxes to untick, and one missed untick spends a build
+          rebuilding a site nobody changed.
+
+          What the pre-ticking was for — not letting a publish sit unreflected
+          — is the 未反映 badges' job instead: they say what is waiting without
+          deciding it.
         */
-        setSelected(
-          new Set(
-            next.rows.filter((row) => row.pending > 0).map((row) => row.slug),
-          ),
-        );
+        setSelected(new Set());
       },
       (error: unknown) => {
         if (!cancelled) setLoadError(String(error));
@@ -304,7 +304,7 @@ export function DeployTool() {
                 — 下書きはまず「まとめて公開」で公開してください。
               </Text>
               <Text size={1} muted>
-                外した開催地は作り直されず、今出ているページがそのまま残ります。ビルドに失敗した開催地も同じで、前回反映した内容が答え続けます。
+                選ばなかった開催地は作り直されず、今出ているページがそのまま残ります。ビルドに失敗した開催地も同じで、前回反映した内容が答え続けます。
               </Text>
             </Stack>
           </Stack>
