@@ -45,6 +45,10 @@ const columns = timetable
 const minWidth = timetable
   ? `calc(var(--tt-axis) + ${timetable.tracks.length} * 168px)`
   : "";
+
+// The line the last track's column ends on. A block against it, or against the
+// clock column, has the frame on one side rather than a neighbour.
+const lastLine = (timetable?.tracks.length ?? 0) + 2;
 ---
 
 <section class="sec" id="timetable">
@@ -81,6 +85,7 @@ const minWidth = timetable
             {rows.map((_, index) => (
               <div class="tt-rule" style={`grid-row:${index + 2}`} />
             ))}
+            <div class="tt-rule last" style={`grid-row:${rows.length + 1}`} />
 
             {timetable.boundaries.slice(0, -1).map((time, index) => (
               <div class="tt-at" style={`grid-row:${index + 2}`}>
@@ -95,7 +100,14 @@ const minWidth = timetable
               const Tag = cell.href ? "a" : "div";
               return (
                 <Tag
-                  class:list={["tt-cell", cell.kind]}
+                  class:list={[
+                    "tt-cell",
+                    cell.kind,
+                    {
+                      "edge-start": cell.columnStart === 2,
+                      "edge-end": cell.columnEnd === lastLine,
+                    },
+                  ]}
                   href={cell.href}
                   style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
                 >
@@ -276,6 +288,13 @@ const minWidth = timetable
     pointer-events: none;
   }
 
+  /* A rule is the top of a row, so the day's closing time had none: there is
+     no row after it to draw one. The last is written the other way up. */
+  .tt-rule.last {
+    border-top: 0;
+    border-bottom: 1.5px solid var(--tt-rule);
+  }
+
   /* A track is named once in strong colour at the top of its column, and the
      pastel of that same colour carries it down the day — the pairing the
      timetable image uses. It means a block is read along its own colour rather
@@ -309,6 +328,19 @@ const minWidth = timetable
   /* Every session block is a link and nothing said so. The lift is the one the
      buttons use, kept for the hover rather than worn all day: thirty of these
      shadows standing at once is a busier grid than the day actually is. */
+  /* The gutter between two blocks is two margins wide. Against the frame and
+     against the clock column there is only ever one, so the outermost blocks
+     sat at half the distance of every other pair. They are given the half back
+     rather than the whole grid being inset, which would take the track colours
+     off the edges they are meant to fill. */
+  .tt-cell.edge-start {
+    margin-left: 8px;
+  }
+
+  .tt-cell.edge-end {
+    margin-right: 8px;
+  }
+
   a.tt-cell {
     transition:
       transform 0.14s ease,
