@@ -4,6 +4,7 @@ import { initMeetupAccordion } from "./meetup-accordion";
 import { initNav } from "./nav";
 import { initParallax } from "./parallax";
 import { initReveal } from "./reveal";
+import { initTimetable } from "./timetable";
 
 declare global {
   interface Window {
@@ -26,5 +27,6 @@ initCountdown();
 initMeetupAccordion();
 initNav();
 initReveal();
+initTimetable();
 initParallax();
 initIntro();

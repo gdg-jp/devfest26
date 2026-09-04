@@ -53,6 +53,12 @@
   /* ---- Metrics ------------------------------------------------------- */
   --w: 1120px;
   --bw: 2.5px;
+  /* The topbar once it has condensed, which is the state anything far enough
+     down the page to be pinned under it meets. The nav script publishes the
+     measured height over this one — it is the only thing that knows, since the
+     bar shrinks on scroll and its lockup narrows twice on the way to a phone —
+     and this is what holds until it does. */
+  --topbar-h: 63px;
   --r-lg: 30px;
   --r-md: 20px;
   --r-sm: 12px;

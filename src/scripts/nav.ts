@@ -15,6 +15,18 @@ export function initNav() {
     const sync = () => bar.classList.toggle("is-stuck", window.scrollY > 60);
     sync();
     addEventListener("scroll", sync, { passive: true });
+
+    // The bar's height is not a constant — it condenses here and the lockup
+    // narrows at two breakpoints — so anything pinned just below it wants the
+    // measurement rather than a number. `--topbar-h` in the tokens is the
+    // resting value this refines; the observer catches the condense as it
+    // animates, so nothing pinned drifts while the padding is still moving.
+    if ("ResizeObserver" in window) {
+      new ResizeObserver(() => {
+        const h = Math.round(bar.getBoundingClientRect().height);
+        document.documentElement.style.setProperty("--topbar-h", `${h}px`);
+      }).observe(bar);
+    }
   }
 
   const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-spy]")];
