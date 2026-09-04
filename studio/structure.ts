@@ -58,9 +58,15 @@ export const structure: StructureResolver = (S) =>
                         // "track.order" is compiled to the GROQ dereference
                         // "track->order", so the list runs in the order the
                         // site prints: track by track, session by session.
+                        // A session is placed by its own start, which is the
+                        // only running order it has — there is no separate
+                        // order field to keep in step. GROQ sorts null lowest,
+                        // so a session with no time yet sits at the top of its
+                        // track, which is where it wants to be while it is
+                        // still being decided.
                         .defaultOrdering([
                           { field: "track.order", direction: "asc" },
-                          { field: "order", direction: "asc" },
+                          { field: "start", direction: "asc" },
                         ]),
                     ),
                   // Only a city that runs several talks in one session has
@@ -80,11 +86,14 @@ export const structure: StructureResolver = (S) =>
                         ])
                         // Same as sessions, one reference deeper: this is
                         // compiled to "session->track->order" and
-                        // "session->order", so the talks of a city read in
-                        // their running order rather than grouped by id.
+                        // "session->start", so the talks of a city read in
+                        // their running order rather than grouped by id. The
+                        // last key is the talk's own `order`, which it keeps:
+                        // several lightning talks in one slot are "this
+                        // order" and rarely carry times of their own.
                         .defaultOrdering([
                           { field: "session.track.order", direction: "asc" },
-                          { field: "session.order", direction: "asc" },
+                          { field: "session.start", direction: "asc" },
                           { field: "order", direction: "asc" },
                         ]),
                     ),
