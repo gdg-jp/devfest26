@@ -82,7 +82,9 @@ async function main() {
     return;
   }
 
-  console.log(`Found ${talks.length} talk document(s) with session references.`);
+  console.log(
+    `Found ${talks.length} talk document(s) with session references.`,
+  );
 
   // Group talks by published talk ID to prioritize draft over published for grouping
   const talksByPublishedId = new Map();
@@ -193,10 +195,7 @@ async function main() {
     if (deleteLegacy) {
       for (const t of sessionTalks) {
         const pubTalkId = publishedIdOf(t._id);
-        const talkDocsToClean = [
-          pubTalkId,
-          `${DRAFTS_PREFIX}${pubTalkId}`,
-        ];
+        const talkDocsToClean = [pubTalkId, `${DRAFTS_PREFIX}${pubTalkId}`];
 
         for (const tId of talkDocsToClean) {
           if (isDryRun) {
