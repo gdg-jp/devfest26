@@ -70,5 +70,13 @@
   // with a mismatch. One URL, which is the one people are given.
   "preview_urls": false,
 
-  "observability": { "enabled": true }
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false
+    }
+  }
 }
