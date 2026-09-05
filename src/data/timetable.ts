@@ -31,11 +31,12 @@ export interface TimetableCell {
   key: string;
   kind: "session" | "fixture";
   label: string;
+  /** A fixture's aside. A session says who is on through `speakers` instead. */
   note: string | undefined;
   /**
-   * Who is on, deduplicated, in the order the session lists them. The line in
-   * `note` is written from this same list, so the faces and the names on a
-   * block cannot come to disagree. Empty for a fixture.
+   * Who is on, deduplicated, in the order the session lists them. The names
+   * and the faces on a block are both drawn from this, so they cannot come to
+   * disagree. Empty for a fixture.
    */
   speakers: Speaker[];
   href: string | undefined;
@@ -144,7 +145,7 @@ export async function getTimetable(site: Site): Promise<Timetable | undefined> {
       kind: "session",
       label:
         session.entry.data.title ?? session.talks[0]?.title ?? session.label,
-      note: speakerLine(speakers),
+      note: undefined,
       speakers,
       href: session.href,
       start,
@@ -385,13 +386,4 @@ function speakersOf(session: ProgramSession): Speaker[] {
     }
   }
   return [...found.values()];
-}
-
-/** The same people written out, short enough to sit under a title. */
-function speakerLine(speakers: Speaker[]): string | undefined {
-  const names = speakers.map((speaker) => speaker.data.name);
-  if (names.length === 0) return undefined;
-  return names.length > 2
-    ? `${names.slice(0, 2).join("、")} 他`
-    : names.join("、");
 }

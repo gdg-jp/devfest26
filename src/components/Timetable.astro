@@ -47,21 +47,33 @@ const template = `0 ${rows.map((h) => `minmax(${h}px, auto)`).join(" ")}`;
 const columns = timetable
   ? `var(--tt-axis) repeat(${timetable.tracks.length}, minmax(0, 1fr))`
   : "";
+// Wide enough that the pile is what a block costs. 208px is the floor the
+// clock alone asks for — 82px of tabular time, the 8px between, the 78px pile,
+// and the padding, border and margins a block is drawn with. The 8px on top of
+// that is for the names: 96px is where they stop wrapping into lines the pile
+// had not already paid for, and it is where the block heights on a phone stop
+// moving. 224px buys nothing further.
 const minWidth = timetable
-  ? `calc(var(--tt-axis) + ${timetable.tracks.length} * 168px)`
+  ? `calc(var(--tt-axis) + ${timetable.tracks.length} * 216px)`
   : "";
 
 /**
- * The portraits a block draws: how wide, and how many before the rest become a
- * count.
+ * The portraits a block draws: how wide, how far they lap over one another,
+ * and how many before the rest become a count.
  *
- * The names are written under the title already, so the faces say the same
- * thing a second way — worth the corner of a block rather than a line of it.
- * 22px is the largest circle that still leaves the clock its half of the last
- * line in the narrowest column this grid draws.
+ * The names are written beside them already, so the faces say the same thing a
+ * second way — worth the corner of a block rather than a line of it. They fill
+ * that corner two abreast, which up to six of them keeps the pile as tall as
+ * the names and the clock standing beside it, or taller: what a block costs is
+ * the pile, and the names all but come free. Six is three rows of it.
+ *
+ * Lapping the circles over one another takes 10px off the pile in each
+ * direction per row after the first — a little under a quarter of a circle,
+ * enough to read as a group rather than a grid.
  */
-const FACE = 22;
-const FACES = 3;
+const FACE = 44;
+const FACES = 6;
+const LAP = 10;
 
 // The line the last track's column ends on. A block against it, or against the
 // clock column, has the frame on one side rather than a neighbour.
@@ -123,14 +135,17 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
               {timetable.cells.map((cell) => {
                 const Tag = cell.href ? "a" : "div";
-                // A fourth speaker turns the third portrait into the number of
-                // everyone not drawn, rather than the row of faces going on
-                // past the width there is for it.
+                // A seventh speaker turns the sixth portrait into the number
+                // of everyone not drawn, rather than the pile going on past
+                // the corner there is for it.
                 const faces = cell.speakers.slice(
                   0,
                   cell.speakers.length > FACES ? FACES - 1 : FACES,
                 );
                 const rest = cell.speakers.length - faces.length;
+                // An odd pile stands its lone row on top, so that the row the
+                // clock ends up beside is a full one.
+                const odd = (faces.length + (rest > 0 ? 1 : 0)) % 2 === 1;
                 return (
                   <Tag
                     class:list={[
@@ -145,13 +160,24 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
                     style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
                   >
                     <b>{cell.label}</b>
-                    {cell.note && <span class="who">{cell.note}</span>}
+                    {cell.note && <span class="note">{cell.note}</span>}
                     <div class="foot">
+                      {cell.speakers.length > 0 && (
+                        <span class="who">
+                          {cell.speakers.map((speaker) => (
+                            <span>{speaker.data.name}</span>
+                          ))}
+                        </span>
+                      )}
                       <span class="span">
                         {cell.start} – {cell.end}
                       </span>
                       {faces.length > 0 && (
-                        <span class="faces" aria-hidden="true">
+                        <span
+                          class:list={["faces", { odd }]}
+                          style={`--lap:${LAP}px`}
+                          aria-hidden="true"
+                        >
                           {faces.map((speaker) => (
                             <SpeakerAvatar speaker={speaker} size={FACE} />
                           ))}
@@ -496,30 +522,46 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
     line-height: 1.3;
   }
 
-  .tt-cell .who {
+  /* A fixture's aside, where a session has names. */
+  .tt-cell .note {
     font-size: 11.5px;
     color: var(--muted);
     line-height: 1.3;
   }
 
-  /* The clock and the faces share the last line of a block, beside one another
-     rather than one over the other. A title wraps to whatever height it needs,
-     so a portrait pinned to the corner would sooner or later be sitting on the
-     end of it; laid out in a row there is no arrangement in which they meet.
+  /* Everything under the title, laid out against the height the block already
+     has: the names at the top where they have always been, the clock on the
+     bottom line, and the portraits filling the corner between the two.
 
-     Wrapping is the narrow column's answer. Where there is not width for both,
-     the faces take a line of their own under the clock — a block a portrait
-     taller, rather than one with the portraits cut off by its own edge. */
+     Names above, faces below would have been the obvious reading of "beside",
+     and it is the wrong one. Up to six speakers the pile is as tall as the
+     names and the clock stacked together, or taller, so giving the names
+     full-width lines of their own above it charges the block twice for one
+     height. Here they share it, and what they give up is width: 1fr, whatever
+     is left once the pile has its 78px. A name too long for that wraps into a
+     line the pile had already paid for. */
   .tt-cell .foot {
-    margin-top: auto;
-    padding-top: 3px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 3px 8px;
+    flex: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;
+    column-gap: 8px;
+  }
+
+  .tt-cell .who {
+    grid-area: 1 / 1;
+    align-self: start;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.3;
+  }
+
+  .tt-cell .who span {
+    display: block;
   }
 
   .tt-cell .span {
+    grid-area: 2 / 1;
     font-family: var(--f-mono);
     font-size: 10.5px;
     font-variant-numeric: tabular-nums;
@@ -531,38 +573,54 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
     display: none;
   }
 
-  /* Who is on, said again as faces: `aria-hidden`, because `.who` above has
-     already said it in the form that can be read out. It earns the space by
-     being the way somebody finds a person they already know in a grid of
-     thirty titles — a thing the names, at 11.5px and four to a column, are
-     slow at.
+  /* Who is on, said again as faces: `aria-hidden`, because `.who` beside it
+     has already said it in the form that can be read out. It earns the space
+     by being the way somebody finds a person they already know in a grid of
+     thirty titles — a thing the names, at 11.5px, are slow at.
 
-     `.av` is base.css's and belongs to <SpeakerAvatar>, so a scoped rule
-     cannot reach it and the two things that do not survive the drop to 22px
-     are set through `:global` instead: a 2.5px ring is a sixth of a circle
-     this small, and an initial at `--av * 0.34` is 7.5px. Five of the sixteen
-     speakers announced so far have no photograph, so the initial is not the
-     rare case here. */
+     Two abreast in the bottom-right corner. `.av` is base.css's and belongs
+     to <SpeakerAvatar>, so a scoped rule cannot reach it and the lap is set
+     through `:global`; the ring and the initial it draws at 44px are the ones
+     base.css already wanted, which is a reason to prefer this diameter. Five
+     of the sixteen speakers announced so far have no photograph, so the
+     initial is not the rare case here. */
   .faces {
-    margin-left: auto;
-    display: flex;
-    flex: none;
+    grid-area: 1 / 2 / 3 / 3;
+    align-self: end;
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-items: end;
+    padding: var(--lap) 0 0 var(--lap);
   }
 
+  /* The lap is what makes the pile smaller than the circles in it. Every face
+     pulls itself up and left by `--lap`, the padding above gives back the row
+     and the column the first one is pulled out of, and the pile comes to
+     `2 × FACE - LAP` across by `rows × FACE - (rows - 1) × LAP` down. One
+     rule for every face, so the pile does not care where the odd one went.
+
+     The lap is also what a column measures, which leaves each column a lap
+     narrower than the circle standing in it. base.css keeps every image inside
+     its box with `max-width: 100%`, and that box is now the narrow one: a
+     portrait clamped to it comes out an oval, while an initial, not being an
+     image, stays round. The faces are drawn at `--av` in both directions by
+     construction, so the clamp has nothing to protect here. */
   .faces :global(.av) {
-    border-width: 2px;
-    font-size: 11px;
+    margin: calc(-1 * var(--lap)) 0 0 calc(-1 * var(--lap));
+    max-width: none;
   }
 
-  /* Overlapped rather than spaced: three circles in a column that has room for
-     two and a half, and a row that reads as one group. */
-  .faces :global(.av:not(:first-child)) {
-    margin-left: -6px;
+  /* Five faces are a row of one above two rows of two, not the other way up:
+     the lone circle goes to the top, which leaves the bottom row full and the
+     clock a straight edge to sit against. */
+  .faces.odd :global(.av:first-child) {
+    grid-column: 2;
   }
 
-  /* Everyone not drawn. The same circle, with a number where a face is. */
+  /* Everyone not drawn. The same circle, with a number where a face is. Drawn
+     last, so it is the one on top of the pile rather than under it. */
   .faces .more {
-    font-size: 10.5px;
+    font-size: 13px;
     color: var(--muted);
   }
 
