@@ -256,39 +256,49 @@ async function serveStudio(
   env: Env,
   url: URL,
 ): Promise<Response> {
+  /*
+    静的アセット（JS/CSS 等）へのリクエスト:
+    /studio/static/ 配下のファイルはハッシュ付きファイル名を持つ実ファイル。
+    万が一アセットが見つからない場合に index.html へフォールバックすると、
+    HTML が JavaScript として読み込まれて構文エラーを引き起こすため、
+    ASSETS のレスポンス（存在すれば 200、無ければ 404）をそのまま返す。
+    ハッシュ付きファイルは内容が変わらないため immutable キャッシュを付与する。
+  */
+  if (url.pathname.startsWith(`${STUDIO}/static/`)) {
+    const asset = await env.ASSETS.fetch(request);
+    const response = new Response(asset.body, asset);
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    response.headers.set(
+      "Cache-Control",
+      "private, max-age=31536000, immutable",
+    );
+    response.headers.set("Content-Security-Policy", frameAncestors(env));
+    return response;
+  }
+
+  // 静的アセット以外のリクエスト（/studio, /studio/favicon.ico, /studio/structure/... など）
   const asset = await env.ASSETS.fetch(request);
 
+  /*
+    実在ファイルへのリクエストであれば 200（または 304 Not Modified）が返る。
+    Cloudflare Workers Static Assets (html_handling: "drop-trailing-slash") は、
+    studio/index.html が存在するディレクトリ配下の存在しないパス（/studio/structure/... など）
+    に対して 404 ではなく 307 Temporary Redirect（Location: /studio）を返す。
+    また、/studio/index.html への直接リクエストに対しても 307（Location: /studio）を返す。
+    そのため、2xx または 304 以外はすべて SPA ルートとみなし、/studio（index.html が 200 で返るパス）へフォールバックする。
+  */
   const found =
-    asset.status === 404
-      ? await env.ASSETS.fetch(
-          new Request(new URL(`${STUDIO}/index.html`, request.url), request),
-        )
-      : asset;
+    asset.ok || asset.status === 304
+      ? asset
+      : await env.ASSETS.fetch(
+          new Request(new URL(STUDIO, request.url), request),
+        );
 
   if (found.status === 404) return noStudio();
 
   const response = new Response(found.body, found);
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
-  /*
-    The one carve-out from `no-store` on this origin, and it is a distinction
-    between code and content rather than a hole in the gate. The Studio is
-    several megabytes of JavaScript under `/studio/static/`, every file named
-    by its own hash, and identical to what `devfest26.sanity.studio` hands to
-    anybody who asks. No draft is in it — the drafts arrive later, over the
-    API, with the editor's own Sanity credentials. Re-downloading all of it on
-    every reload of a tool whose entire purpose is reloading would be a real
-    cost for no privacy gained. `private` keeps it out of shared caches all the
-    same, and it stays unindexable.
-  */
-  response.headers.set(
-    "Cache-Control",
-    // The path, not the whole URL: `/studio?x=/studio/static/` is the
-    // entrypoint, and a year of `immutable` on it is a Studio that cannot be
-    // updated in that browser.
-    url.pathname.startsWith(`${STUDIO}/static/`)
-      ? "private, max-age=31536000, immutable"
-      : "no-store",
-  );
+  response.headers.set("Cache-Control", "no-store");
   response.headers.set("Content-Security-Policy", frameAncestors(env));
   return response;
 }
