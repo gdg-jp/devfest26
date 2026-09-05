@@ -86,7 +86,7 @@ export interface SpeakerProgram {
 }
 
 interface Ordered {
-  data: { order: number };
+  data: { order?: number | undefined };
 }
 
 interface Sluggable {
@@ -94,7 +94,8 @@ interface Sluggable {
   data: { slug?: string | undefined };
 }
 
-const byOrder = (a: Ordered, b: Ordered) => a.data.order - b.data.order;
+const byOrder = (a: Ordered, b: Ordered) =>
+  (a.data.order ?? 0) - (b.data.order ?? 0);
 
 /**
  * A track's running order, which is just its sessions by the clock.
@@ -190,6 +191,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   const speakers = speakerSplit.mine;
 
   const speakerById = new Map(speakers.map((speaker) => [speaker.id, speaker]));
+  const talkById = new Map(talkSplit.mine.map((talk) => [talk.id, talk]));
   const sessionIds = new Set(sessions.map((session) => session.id));
 
   /*
@@ -211,20 +213,110 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       : `unknown ${kind} "${ref}"`;
   };
 
-  // Sorted before grouping, so every group comes out in running order.
-  const ordered: Talk[] = [];
+  // Track which session claimed each talk, to enforce exactly-one-session semantics.
+  const claimedBy = new Map<string, Session>();
+
+  // 1. Resolve talks from sessions that define their own `talks` array.
+  const talksBySession = new Map<string, Talk[]>();
+  for (const session of sessions) {
+    if (!session.data.talks?.length) continue;
+
+    const seenInSession = new Set<string>();
+    const resolved: Talk[] = [];
+
+    for (const ref of session.data.talks) {
+      if (seenInSession.has(ref.id)) {
+        reject(
+          "programme",
+          `Session "${session.id}" references talk "${ref.id}" multiple times.`,
+        );
+        continue;
+      }
+      seenInSession.add(ref.id);
+
+      const talk = talkById.get(ref.id);
+      if (!talk) {
+        reject(
+          "programme",
+          `Session "${session.id}" references ` +
+            crossCity(ref.id, "talk", talkSplit.foreign),
+        );
+        continue;
+      }
+
+      const previous = claimedBy.get(talk.id);
+      if (previous) {
+        reject(
+          "programme",
+          `Talk "${talk.id}" is referenced by both Session "${previous.id}" and Session "${session.id}". A talk belongs to exactly one session.`,
+        );
+        continue;
+      }
+
+      claimedBy.set(talk.id, session);
+      resolved.push(talk);
+    }
+
+    talksBySession.set(session.id, resolved);
+  }
+
+  // 2. Legacy fallback: talks pointing at sessions via talk.data.session.
+  const legacyTalks: Talk[] = [];
   for (const talk of [...talkSplit.mine].sort(byOrder)) {
-    if (sessionIds.has(talk.data.session.id)) {
-      ordered.push(talk);
+    if (!talk.data.session) continue;
+
+    // If talk was already claimed by a session via session.talks:
+    const claimedSession = claimedBy.get(talk.id);
+    if (claimedSession) {
+      if (talk.data.session.id !== claimedSession.id) {
+        reject(
+          "programme",
+          `Talk "${talk.id}" is listed in Session "${claimedSession.id}"'s "talks", but its legacy "session" field points to Session "${talk.data.session.id}". Remove the legacy "session" field or resolve the conflict.`,
+        );
+      }
+      // Already claimed; do not process in legacy loop to prevent duplicate rendering.
       continue;
     }
-    reject(
-      "programme",
-      `Talk "${talk.id}" references ` +
-        crossCity(talk.data.session.id, "session", sessionSplit.foreign),
+
+    if (!sessionIds.has(talk.data.session.id)) {
+      reject(
+        "programme",
+        `Talk "${talk.id}" references ` +
+          crossCity(talk.data.session.id, "session", sessionSplit.foreign),
+      );
+      continue;
+    }
+
+    // Target session already defined its own `talks` array, but did not include this talk.
+    if (talksBySession.has(talk.data.session.id)) {
+      reject(
+        "programme",
+        `Talk "${talk.id}" references Session "${talk.data.session.id}" via legacy "session" field, but Session "${talk.data.session.id}" already defines its own "talks" list. Add "${talk.id}" to the session's "talks" array instead.`,
+      );
+      continue;
+    }
+
+    claimedBy.set(
+      talk.id,
+      sessions.find((s) => s.id === talk.data.session!.id)!,
     );
+    legacyTalks.push(talk);
   }
-  const talksBySession = Map.groupBy(ordered, (talk) => talk.data.session.id);
+
+  const legacyTalksBySession = Map.groupBy(
+    legacyTalks,
+    (talk) => talk.data.session!.id,
+  );
+
+  // 3. Ensure no orphaned talks exist (every talk must belong to exactly one session).
+  for (const talk of talkSplit.mine) {
+    if (!claimedBy.has(talk.id)) {
+      reject(
+        "programme",
+        `Talk "${talk.id}" belongs to no session. Add it to a session's "talks" list.`,
+      );
+    }
+  }
 
   const resolveSpeakers = (
     refs: { id: string }[],
@@ -253,7 +345,10 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   ): ProgramSession | undefined => {
     const slug = slugOf(session);
     const href = tenantPath(tenant, `/sessions/${slug}`);
-    const own = talksBySession.get(session.id) ?? [];
+    const own =
+      talksBySession.get(session.id) ??
+      legacyTalksBySession.get(session.id) ??
+      [];
 
     // Speakers on the session are what a one-talk-per-slot city writes; talks
     // are what a many-talk city writes. Neither means nobody is on stage,
@@ -263,7 +358,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       reject(
         "programme",
         `Session "${session.id}" names no speakers and has no talks. ` +
-          `Give it "speakers", or add a talk pointing at it.`,
+          `Give it "speakers", or add talks to it.`,
       );
       return undefined;
     }

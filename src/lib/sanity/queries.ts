@@ -62,6 +62,7 @@ export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
   "slug": slug.current,
   "track": track->_id,
   "speakers": speakers[]->_id,
+  "talks": talks[]->_id,
   ${TENANT}
 }`;
 

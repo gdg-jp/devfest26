@@ -84,17 +84,27 @@ export const structure: StructureResolver = (S) =>
                             eventId,
                           }),
                         ])
-                        // Same as sessions, one reference deeper: this is
-                        // compiled to "session->track->order" and
-                        // "session->start", so the talks of a city read in
-                        // their running order rather than grouped by id. The
-                        // last key is the talk's own `order`, which it keeps:
-                        // several lightning talks in one slot are "this
-                        // order" and rarely carry times of their own.
+                        // Talks belong to sessions, which set their order.
+                        // Listed by title, then start time, then creation time.
                         .defaultOrdering([
-                          { field: "session.track.order", direction: "asc" },
-                          { field: "session.start", direction: "asc" },
-                          { field: "order", direction: "asc" },
+                          { field: "title", direction: "asc" },
+                          { field: "start", direction: "asc" },
+                          { field: "_createdAt", direction: "desc" },
+                        ]),
+                    ),
+                  // Catches talks that have been created but not yet attached to any session.
+                  S.listItem()
+                    .title("Unassigned Talks")
+                    .child(
+                      S.documentList()
+                        .title("Unassigned Talks")
+                        .schemaType("talk")
+                        .filter(
+                          '_type == "talk" && event._ref == $eventId && count(*[_type == "session" && references(^._id)]) == 0',
+                        )
+                        .params({ eventId })
+                        .defaultOrdering([
+                          { field: "_createdAt", direction: "desc" },
                         ]),
                     ),
                   S.listItem()
