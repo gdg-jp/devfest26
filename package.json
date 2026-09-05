@@ -27,7 +27,9 @@
     "lint:fix": "eslint --fix .",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "type-check:preview": "tsc --noEmit -p preview/tsconfig.json"
+    "type-check:preview": "tsc --noEmit -p preview/tsconfig.json",
+    "migrate:talks": "dotenv -- node scripts/migrate-talks-to-sessions.mjs",
+    "migrate:talks:dry": "dotenv -- node scripts/migrate-talks-to-sessions.mjs --dry-run"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.5",

@@ -124,7 +124,7 @@ export const tracks = z.object({
  *
  * They are the same collection either way. A city with one presentation per
  * slot writes its speakers and its abstract here and no `talks` at all; a city
- * with several writes `talks` pointing back at the session, and this entry
+ * with several writes `talks` inside the session, and this entry
  * carries what the slot as a whole is called. `src/data/program.ts` normalises
  * the two into one shape, so the difference between cities is whether content
  * exists rather than a flag anyone has to set.

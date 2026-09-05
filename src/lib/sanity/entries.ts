@@ -70,6 +70,13 @@ export function trackEntry(doc: Doc): SanityEntry {
 }
 
 export function sessionEntry(doc: Doc): SanityEntry {
+  const speakers = doc.speakers?.filter(
+    (id: unknown): id is string => typeof id === "string",
+  );
+  const talks = doc.talks?.filter(
+    (id: unknown): id is string => typeof id === "string",
+  );
+
   return {
     id: doc._id,
     // GROQ dereferenced `track`, `speakers` and `talks` to plain `_id` strings;
@@ -80,8 +87,8 @@ export function sessionEntry(doc: Doc): SanityEntry {
       title: doc.title ?? undefined,
       // Empty in the Studio means "the talks name them", not "nobody", so it
       // has to reach the schema as absent rather than as an empty array.
-      speakers: doc.speakers?.length ? doc.speakers : undefined,
-      talks: doc.talks?.length ? doc.talks : undefined,
+      speakers: speakers?.length ? speakers : undefined,
+      talks: talks?.length ? talks : undefined,
       slug: doc.slug ?? undefined,
       start: doc.start ?? undefined,
       end: doc.end ?? undefined,
@@ -92,14 +99,19 @@ export function sessionEntry(doc: Doc): SanityEntry {
 }
 
 export function talkEntry(doc: Doc): SanityEntry {
+  const speakers =
+    doc.speakers?.filter(
+      (id: unknown): id is string => typeof id === "string",
+    ) ?? [];
+
   return {
     id: doc._id,
     data: {
       tenant: doc.tenant,
-      session: doc.session ?? undefined,
-      order: doc.order ?? undefined,
+      session: typeof doc.session === "string" ? doc.session : undefined,
+      order: typeof doc.order === "number" ? doc.order : undefined,
       title: doc.title ?? undefined,
-      speakers: doc.speakers ?? [],
+      speakers,
       slug: doc.slug ?? undefined,
       start: doc.start ?? undefined,
     },

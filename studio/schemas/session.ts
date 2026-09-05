@@ -98,6 +98,7 @@ export const session = defineType({
           },
         }),
       ],
+      validation: (Rule) => Rule.unique(),
       description:
         "Optional: split this slot into multiple presentations. Ordered by drag-and-drop.",
     }),
