@@ -29,7 +29,7 @@ const { site, title, description, jsonLd, back } = Astro.props;
 
 <Base
   site={site}
-  title={`${title}｜${site.title}`}
+  title={`${title}｜${site.fullTitle ?? site.title}`}
   description={description}
   jsonLd={jsonLd}
 >

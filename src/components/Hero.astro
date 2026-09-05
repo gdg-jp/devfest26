@@ -64,7 +64,10 @@ const meetupDow = openMeetup?.data.date
       >
     </div>
 
-    <h1 data-intro="2">{site.title}</h1>
+    <h1 data-intro="2">
+      <span class="hero-title">{site.title}{site.subtitle && ":"}</span>
+      {site.subtitle && <span class="hero-subtitle">{site.subtitle}</span>}
+    </h1>
     <p class="tagline" data-intro="3">
       {tagline.lead}<em>{tagline.accent}</em>
     </p>
@@ -157,6 +160,18 @@ const meetupDow = openMeetup?.data.date
     font-size: clamp(34px, 6.4vw, 72px);
     letter-spacing: -0.03em;
     margin: 0 0 6px;
+  }
+
+  .hero-title {
+    display: block;
+  }
+
+  .hero-subtitle {
+    display: block;
+    font-size: clamp(24px, 4.4vw, 48px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-top: clamp(2px, 0.4vw, 6px);
   }
 
   .tagline {

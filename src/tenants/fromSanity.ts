@@ -34,7 +34,9 @@ const eventDoc = z.object({
   lang: nonEmpty.default("ja"),
   locale: nonEmpty.default("ja_JP"),
   title: nonEmpty,
+  subtitle: z.string().nullish().transform(blank),
   titleEn: nonEmpty,
+  subtitleEn: z.string().nullish().transform(blank),
   description: nonEmpty,
 
   taglineLead: nonEmpty,
@@ -138,7 +140,9 @@ export function parseEvent(raw: unknown, slug: string): TenantConfig {
     lang: d.lang,
     locale: d.locale,
     title: d.title,
+    subtitle: d.subtitle,
     titleEn: d.titleEn,
+    subtitleEn: d.subtitleEn,
     description: d.description,
 
     tagline: { lead: d.taglineLead, accent: d.taglineAccent },

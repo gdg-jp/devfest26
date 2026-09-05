@@ -25,7 +25,7 @@ const credits = await photoCredits(site.tenant);
     <div class="foot-top">
       <div>
         <Logo variant="primary" class="foot-mark" />
-        <p class="foot-title">{site.title}</p>
+        <p class="foot-title">{site.fullTitle ?? site.title}</p>
         <p class="foot-sub">
           {event.isoDate.replace(/-/g, ".")}
           {event.dayOfWeekEn.toUpperCase()} ／ {event.venue.name}
