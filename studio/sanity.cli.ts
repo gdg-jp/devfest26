@@ -39,6 +39,6 @@ export default defineCliConfig({
   }),
 
   deployment: {
-    appId: "raw8pg2trn5iphtz0rpkbdrr",
+    appId: "tulynrkb66wifpttaox8ijpm",
   },
 });
