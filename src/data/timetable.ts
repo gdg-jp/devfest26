@@ -23,7 +23,7 @@
 
 import type { Fixture } from "../tenants/types";
 import { getTracks, trackPastel, type Track } from "./tracks";
-import { getProgram, type ProgramSession } from "./program";
+import { getProgram, type ProgramSession, type Speaker } from "./program";
 import { reject } from "../preview/problems";
 
 /** One block on the grid, already placed. */
@@ -31,7 +31,14 @@ export interface TimetableCell {
   key: string;
   kind: "session" | "fixture";
   label: string;
+  /** A fixture's aside. A session says who is on through `speakers` instead. */
   note: string | undefined;
+  /**
+   * Who is on, deduplicated, in the order the session lists them. The names
+   * and the faces on a block are both drawn from this, so they cannot come to
+   * disagree. Empty for a fixture.
+   */
+  speakers: Speaker[];
   href: string | undefined;
   start: string;
   end: string;
@@ -131,12 +138,15 @@ export async function getTimetable(site: Site): Promise<Timetable | undefined> {
     const [rowStart, rowEnd] = [rowOf.get(start), rowOf.get(end)];
     if (rowStart === undefined || rowEnd === undefined) continue;
 
+    const speakers = speakersOf(session);
+
     cells.push({
       key: `session:${session.slug}`,
       kind: "session",
       label:
         session.entry.data.title ?? session.talks[0]?.title ?? session.label,
-      note: speakerLine(session),
+      note: undefined,
+      speakers,
       href: session.href,
       start,
       end,
@@ -161,6 +171,7 @@ export async function getTimetable(site: Site): Promise<Timetable | undefined> {
         kind: "fixture",
         label: fixture.label,
         note: fixture.note,
+        speakers: [],
         href: undefined,
         start: fixture.start,
         end: fixture.end,
@@ -361,17 +372,18 @@ function columnRuns(
   return runs;
 }
 
-/** Who is on, short enough to sit under a title in a grid cell. */
-function speakerLine(session: ProgramSession): string | undefined {
-  const names = [
-    ...new Set(
-      session.talks.flatMap((talk) =>
-        talk.speakers.map((speaker) => speaker.data.name),
-      ),
-    ),
-  ];
-  if (names.length === 0) return undefined;
-  return names.length > 2
-    ? `${names.slice(0, 2).join("、")} 他`
-    : names.join("、");
+/**
+ * Who is on, in the order the session lists them.
+ *
+ * Deduplicated by entry rather than by name: one person on two talks in the
+ * same slot is one person, and two people who happen to share a name are two.
+ */
+function speakersOf(session: ProgramSession): Speaker[] {
+  const found = new Map<string, Speaker>();
+  for (const talk of session.talks) {
+    for (const speaker of talk.speakers) {
+      if (!found.has(speaker.id)) found.set(speaker.id, speaker);
+    }
+  }
+  return [...found.values()];
 }
