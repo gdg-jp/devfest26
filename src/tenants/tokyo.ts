@@ -17,7 +17,9 @@ export const tokyo = {
   lang: "ja",
   locale: "ja_JP",
   title: "DevFest 2026 in Tokyo",
+  // subtitle: "サブタイトルがある場合はここに指定（ヒーローセクションで改行表示されます）",
   titleEn: "DevFest 2026 in Tokyo",
+  // subtitleEn: "Subtitle in English",
   // TODO: 実際の開催概要に差し替える
   description:
     "GDG Tokyo が開催する DevFest 2026。Google の最新技術をテーマにしたコミュニティ主催のデベロッパーイベントです。開催日・会場・セッションは調整中です。",

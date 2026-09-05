@@ -54,7 +54,7 @@ export interface CityCard {
  */
 const CITY_QUERY = `*[_type == "event" && coalesce(isPublic, true) == true] | order(startsAt asc){
   "slug": slug.current,
-  title, theme, startsAt, endsAt,
+  title, subtitle, theme, startsAt, endsAt,
   "venue": { "name": venue.name, "city": venue.city, "region": venue.region }
 }`;
 
@@ -88,7 +88,9 @@ function readCard(doc: unknown): { card: CityCard } | { problems: string[] } {
   const venue = (d.venue ?? {}) as Unknown;
 
   const slug = str(d.slug);
-  const title = str(d.title);
+  const rawTitle = str(d.title);
+  const subtitle = str(d.subtitle);
+  const title = rawTitle && subtitle ? `${rawTitle}: ${subtitle}` : rawTitle;
   const startsAt = timestamp(d.startsAt);
   const endsAt = timestamp(d.endsAt);
   const name = str(venue.name);
@@ -248,10 +250,11 @@ async function fromRegistry(): Promise<CityCard[]> {
   const { registry } = await import("./registry");
 
   const docs = LOCAL_TENANT_IDS.map((id) => {
-    const { tenant, title, theme, event } = registry[id];
+    const { tenant, title, subtitle, theme, event } = registry[id];
+    const fullTitle = subtitle ? `${title}: ${subtitle}` : title;
     return {
       slug: tenant,
-      title,
+      title: fullTitle,
       theme,
       startsAt: event.startsAt,
       endsAt: event.endsAt,

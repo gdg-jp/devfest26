@@ -18,7 +18,7 @@ const { site } = Astro.props;
 // — and Sanity's edit markers are only invisible in text that is drawn. There
 // is nothing here to click either, so nothing is lost by taking them out. The
 // same call and the same reason as the head; see `src/preview/stega.ts`.
-const siteName = clean(site.title);
+const siteName = clean(site.fullTitle ?? site.title);
 
 const home = tenantHome(site.tenant);
 const onHome = isHome(Astro.url, site.tenant);

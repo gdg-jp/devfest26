@@ -81,7 +81,7 @@ const jsonLd = talk.title
         name: sessionTitle,
         superEvent: {
           "@type": "Event",
-          name: site.title,
+          name: site.fullTitle ?? site.title,
           startDate: site.event.startsAt,
         },
       },

@@ -35,8 +35,8 @@ interface Props {
 const { site, jsonLd } = Astro.props;
 const { event, links } = site;
 
-const siteName = clean(site.title);
-const title = clean(Astro.props.title ?? site.title);
+const siteName = clean(site.fullTitle ?? site.title);
+const title = clean(Astro.props.title ?? site.fullTitle ?? site.title);
 const description = clean(Astro.props.description ?? site.description);
 
 const canonical = Astro.site
@@ -56,7 +56,7 @@ const ogImage =
 const eventSchema = clean({
   "@context": "https://schema.org",
   "@type": "Event",
-  name: site.title,
+  name: site.fullTitle ?? site.title,
   description: site.description,
   startDate: event.startsAt,
   endDate: event.endsAt,

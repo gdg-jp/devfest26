@@ -35,9 +35,18 @@ function editionEn(config: TenantConfig): string {
  */
 function resolve(config: TenantConfig) {
   const { social, ...event } = config.event;
+  // サブタイトルが存在する場合はコロン区切りの1行タイトルを合成
+  const fullTitle = config.subtitle
+    ? `${config.title}: ${config.subtitle}`
+    : config.title;
+  const fullTitleEn = config.subtitleEn
+    ? `${config.titleEn}: ${config.subtitleEn}`
+    : config.titleEn;
 
   return {
     ...config,
+    fullTitle,
+    fullTitleEn,
     editionEn: editionEn(config),
     event: {
       ...event,

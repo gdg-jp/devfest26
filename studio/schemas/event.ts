@@ -12,10 +12,22 @@ export const event = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "subtitle",
+      title: "Subtitle",
+      type: "string",
+      description:
+        "サブタイトル（副題）。設定した場合、ヒーローセクションでタイトルの下に改行して表示されます。",
+    }),
+    defineField({
       name: "titleEn",
       title: "Title (English)",
       type: "string",
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "subtitleEn",
+      title: "Subtitle (English)",
+      type: "string",
     }),
     defineField({
       name: "slug",

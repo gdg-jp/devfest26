@@ -107,7 +107,7 @@ export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
  * ask what cities exist before installing anything.
  */
 const EVENT_FIELDS = `
-  theme, title, titleEn, description,
+  theme, title, subtitle, titleEn, subtitleEn, description,
   taglineLead, taglineAccent,
   lang, locale,
   startsAt, endsAt,

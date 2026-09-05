@@ -46,7 +46,7 @@ const glyphs = [
 <html lang={site.lang} data-theme={site.theme}>
   <head>
     <meta charset="utf-8" />
-    <title>{site.title} — OG</title>
+    <title>{site.fullTitle ?? site.title} — OG</title>
     <meta name="robots" content="noindex" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -77,7 +77,14 @@ const glyphs = [
         <Logo variant="brackets" class="mark" />
 
         <div>
-          <h1>{site.titleEn}</h1>
+          <h1>
+            <span class="og-title">{site.titleEn}{site.subtitleEn && ":"}</span>
+            {
+              site.subtitleEn && (
+                <span class="og-subtitle">{site.subtitleEn}</span>
+              )
+            }
+          </h1>
           <p class="pitch">{tagline.lead}{tagline.accent}</p>
         </div>
 
@@ -141,6 +148,17 @@ const glyphs = [
     letter-spacing: -0.035em;
     line-height: 1.1;
     text-wrap: balance;
+  }
+
+  .og-title {
+    display: block;
+  }
+
+  .og-subtitle {
+    display: block;
+    font-size: 52px;
+    font-weight: 600;
+    margin-top: 6px;
   }
 
   .pitch {
