@@ -72,7 +72,7 @@ export function trackEntry(doc: Doc): SanityEntry {
 export function sessionEntry(doc: Doc): SanityEntry {
   return {
     id: doc._id,
-    // GROQ dereferenced `track` and `speakers` to plain `_id` strings;
+    // GROQ dereferenced `track`, `speakers` and `talks` to plain `_id` strings;
     // `reference()` turns them back into collection references when it parses.
     data: {
       tenant: doc.tenant,
@@ -81,6 +81,7 @@ export function sessionEntry(doc: Doc): SanityEntry {
       // Empty in the Studio means "the talks name them", not "nobody", so it
       // has to reach the schema as absent rather than as an empty array.
       speakers: doc.speakers?.length ? doc.speakers : undefined,
+      talks: doc.talks?.length ? doc.talks : undefined,
       slug: doc.slug ?? undefined,
       start: doc.start ?? undefined,
       end: doc.end ?? undefined,
@@ -95,8 +96,8 @@ export function talkEntry(doc: Doc): SanityEntry {
     id: doc._id,
     data: {
       tenant: doc.tenant,
-      session: doc.session,
-      order: doc.order,
+      session: doc.session ?? undefined,
+      order: doc.order ?? undefined,
       title: doc.title ?? undefined,
       speakers: doc.speakers ?? [],
       slug: doc.slug ?? undefined,

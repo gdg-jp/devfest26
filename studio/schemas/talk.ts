@@ -20,31 +20,6 @@ export const talk = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "session",
-      title: "Session",
-      type: "reference",
-      to: [{ type: "session" }],
-      // Only the sessions of the city this talk is already attached to, so a
-      // Tokyo talk cannot land inside a Kansai session. Pick the event first
-      // and the list fills itself in.
-      options: {
-        filter: ({ document }) => ({
-          filter: "event._ref == $eventId",
-          params: {
-            eventId: (document.event as { _ref?: string } | undefined)?._ref,
-          },
-        }),
-      },
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "order",
-      title: "Order",
-      type: "number",
-      description: "Position within the session.",
-      validation: (Rule) => Rule.required().integer().positive(),
-    }),
-    defineField({
       name: "title",
       title: "Title",
       type: "string",
@@ -81,13 +56,13 @@ export const talk = defineType({
   preview: {
     select: {
       title: "title",
-      session: "session.title",
-      order: "order",
+      speaker0: "speakers.0.name",
+      start: "start",
     },
-    prepare({ title, session, order }) {
+    prepare({ title, speaker0, start }) {
       return {
         title: title || "TBD",
-        subtitle: `${session ?? "No session"} - ${order}`,
+        subtitle: [speaker0, start].filter(Boolean).join(" - ") || "No speaker",
       };
     },
   },

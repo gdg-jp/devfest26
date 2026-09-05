@@ -20,6 +20,7 @@ const gitignorePaths = [".gitignore", "studio/.gitignore"].map((p) =>
 
 export default defineConfig([
   ...includeIgnoreFile(gitignorePaths, { gitignoreResolution: true }),
+  { ignores: [".claude/**"] },
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
     plugins: { js },

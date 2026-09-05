@@ -86,7 +86,7 @@ export interface SpeakerProgram {
 }
 
 interface Ordered {
-  data: { order: number };
+  data: { order?: number | undefined };
 }
 
 interface Sluggable {
@@ -94,7 +94,8 @@ interface Sluggable {
   data: { slug?: string | undefined };
 }
 
-const byOrder = (a: Ordered, b: Ordered) => a.data.order - b.data.order;
+const byOrder = (a: Ordered, b: Ordered) =>
+  (a.data.order ?? 0) - (b.data.order ?? 0);
 
 /**
  * A track's running order, which is just its sessions by the clock.
@@ -190,6 +191,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   const speakers = speakerSplit.mine;
 
   const speakerById = new Map(speakers.map((speaker) => [speaker.id, speaker]));
+  const talkById = new Map(talkSplit.mine.map((talk) => [talk.id, talk]));
   const sessionIds = new Set(sessions.map((session) => session.id));
 
   /*
@@ -211,11 +213,30 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       : `unknown ${kind} "${ref}"`;
   };
 
-  // Sorted before grouping, so every group comes out in running order.
-  const ordered: Talk[] = [];
+  // Resolve talks listed directly on the session.
+  const resolveSessionTalks = (session: Session): Talk[] => {
+    const found: Talk[] = [];
+    for (const ref of session.data.talks ?? []) {
+      const talk = talkById.get(ref.id);
+      if (talk) {
+        found.push(talk);
+        continue;
+      }
+      reject(
+        "programme",
+        `Session "${session.id}" references ` +
+          crossCity(ref.id, "talk", talkSplit.foreign),
+      );
+    }
+    return found;
+  };
+
+  // Legacy fallback: talks pointing at sessions that do not list their own `talks` array.
+  const legacyTalks: Talk[] = [];
   for (const talk of [...talkSplit.mine].sort(byOrder)) {
+    if (!talk.data.session) continue;
     if (sessionIds.has(talk.data.session.id)) {
-      ordered.push(talk);
+      legacyTalks.push(talk);
       continue;
     }
     reject(
@@ -224,7 +245,10 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
         crossCity(talk.data.session.id, "session", sessionSplit.foreign),
     );
   }
-  const talksBySession = Map.groupBy(ordered, (talk) => talk.data.session.id);
+  const legacyTalksBySession = Map.groupBy(
+    legacyTalks,
+    (talk) => talk.data.session!.id,
+  );
 
   const resolveSpeakers = (
     refs: { id: string }[],
@@ -253,7 +277,9 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   ): ProgramSession | undefined => {
     const slug = slugOf(session);
     const href = tenantPath(tenant, `/sessions/${slug}`);
-    const own = talksBySession.get(session.id) ?? [];
+    const own = session.data.talks?.length
+      ? resolveSessionTalks(session)
+      : legacyTalksBySession.get(session.id) ?? [];
 
     // Speakers on the session are what a one-talk-per-slot city writes; talks
     // are what a many-talk city writes. Neither means nobody is on stage,
@@ -263,7 +289,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       reject(
         "programme",
         `Session "${session.id}" names no speakers and has no talks. ` +
-          `Give it "speakers", or add a talk pointing at it.`,
+          `Give it "speakers", or add talks to it.`,
       );
       return undefined;
     }

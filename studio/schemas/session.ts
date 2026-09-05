@@ -80,6 +80,27 @@ export const session = defineType({
       description: "Leave empty when this session's talks name the speakers.",
     }),
     defineField({
+      name: "talks",
+      title: "Talks",
+      type: "array",
+      of: [
+        defineArrayMember({
+          type: "reference",
+          to: [{ type: "talk" }],
+          options: {
+            filter: ({ document }) => ({
+              filter: "event._ref == $eventId",
+              params: {
+                eventId: (document.event as { _ref?: string } | undefined)?._ref,
+              },
+            }),
+          },
+        }),
+      ],
+      description:
+        "Optional: split this slot into multiple presentations. Ordered by drag-and-drop.",
+    }),
+    defineField({
       name: "abstract",
       title: "Abstract",
       type: "array",

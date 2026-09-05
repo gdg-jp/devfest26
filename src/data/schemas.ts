@@ -138,6 +138,8 @@ export const sessions = z.object({
       own talks name them instead — a session that names neither fails the
       build rather than publishing an empty card. */
   speakers: z.array(reference("speakers")).min(1).optional(),
+  /** Talks inside this session, in their running order. */
+  talks: z.array(reference("talks")).optional(),
   slug,
   /** "13:00", and the only thing that says where the session goes: the track
       orders itself by this, the running number printed on the card follows
@@ -164,17 +166,10 @@ export const sessions = z.object({
  */
 export const talks = z.object({
   tenant,
-  session: reference("sessions"),
-  /** Position within the session.
-
-      Kept, where a session's was dropped in favour of its start time, because
-      the two levels mean different things by a time. A session occupies a slot
-      on the grid, so its time is structural and is the only sensible thing to
-      order by. Five lightning talks in one slot are a running order that often
-      has no per-talk times at all — which is why `start` here is optional and
-      there is no `end` — so taking `order` away would leave them nothing to
-      sort by. */
-  order: z.number().int().positive(),
+  /** Legacy: reference to parent session. Optional when session.talks is used. */
+  session: reference("sessions").optional(),
+  /** Legacy: position within session. Optional when session.talks is used. */
+  order: z.number().int().positive().optional(),
   /** Omit to inherit the session's title — a slot holding a single talk
       rarely has a second name for it. */
   title: z.string().optional(),

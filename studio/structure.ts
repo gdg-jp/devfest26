@@ -84,17 +84,10 @@ export const structure: StructureResolver = (S) =>
                             eventId,
                           }),
                         ])
-                        // Same as sessions, one reference deeper: this is
-                        // compiled to "session->track->order" and
-                        // "session->start", so the talks of a city read in
-                        // their running order rather than grouped by id. The
-                        // last key is the talk's own `order`, which it keeps:
-                        // several lightning talks in one slot are "this
-                        // order" and rarely carry times of their own.
+                        // Talks belong to sessions, which set their order.
+                        // Here they are listed alphabetically by title.
                         .defaultOrdering([
-                          { field: "session.track.order", direction: "asc" },
-                          { field: "session.start", direction: "asc" },
-                          { field: "order", direction: "asc" },
+                          { field: "title", direction: "asc" },
                         ]),
                     ),
                   S.listItem()
