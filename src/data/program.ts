@@ -279,7 +279,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     const href = tenantPath(tenant, `/sessions/${slug}`);
     const own = session.data.talks?.length
       ? resolveSessionTalks(session)
-      : legacyTalksBySession.get(session.id) ?? [];
+      : (legacyTalksBySession.get(session.id) ?? []);
 
     // Speakers on the session are what a one-talk-per-slot city writes; talks
     // are what a many-talk city writes. Neither means nobody is on stage,

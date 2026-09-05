@@ -91,7 +91,8 @@ export const session = defineType({
             filter: ({ document }) => ({
               filter: "event._ref == $eventId",
               params: {
-                eventId: (document.event as { _ref?: string } | undefined)?._ref,
+                eventId: (document.event as { _ref?: string } | undefined)
+                  ?._ref,
               },
             }),
           },

@@ -18,8 +18,12 @@ import { createClient } from "@sanity/client";
 const isDryRun = process.argv.includes("--dry-run");
 const keepLegacy = process.argv.includes("--keep-legacy");
 
-const projectId = process.env.SANITY_PROJECT_ID || process.env.SANITY_STUDIO_PROJECT_ID;
-const dataset = process.env.SANITY_DATASET || process.env.SANITY_STUDIO_DATASET || "production";
+const projectId =
+  process.env.SANITY_PROJECT_ID || process.env.SANITY_STUDIO_PROJECT_ID;
+const dataset =
+  process.env.SANITY_DATASET ||
+  process.env.SANITY_STUDIO_DATASET ||
+  "production";
 const token =
   process.env.SANITY_WRITE_TOKEN ||
   process.env.SANITY_AUTH_TOKEN ||
@@ -45,7 +49,9 @@ const client = createClient({
 });
 
 async function main() {
-  console.log(`\nConnecting to Sanity project "${projectId}", dataset "${dataset}"...`);
+  console.log(
+    `\nConnecting to Sanity project "${projectId}", dataset "${dataset}"...`,
+  );
   if (isDryRun) {
     console.log("=== DRY RUN MODE: No changes will be written ===\n");
   }
@@ -61,7 +67,9 @@ async function main() {
   );
 
   if (talks.length === 0) {
-    console.log("No talks with `session` reference found. Migration not needed.");
+    console.log(
+      "No talks with `session` reference found. Migration not needed.",
+    );
     return;
   }
 
@@ -90,11 +98,15 @@ async function main() {
 
     console.log(`Session [${sessionId}]:`);
     for (const t of sessionTalks) {
-      console.log(`  - #${t.order ?? "?"} [${t._id}] "${t.title ?? "(untitled)"}"`);
+      console.log(
+        `  - #${t.order ?? "?"} [${t._id}] "${t.title ?? "(untitled)"}"`,
+      );
     }
 
     if (isDryRun) {
-      console.log(`  -> Would set ${talkRefs.length} talk reference(s) on session ${sessionId}`);
+      console.log(
+        `  -> Would set ${talkRefs.length} talk reference(s) on session ${sessionId}`,
+      );
     } else {
       console.log(`  -> Setting talks references on session [${sessionId}]...`);
       await client.patch(sessionId).set({ talks: talkRefs }).commit();
@@ -105,9 +117,13 @@ async function main() {
     if (!keepLegacy) {
       for (const t of sessionTalks) {
         if (isDryRun) {
-          console.log(`  -> Would unset 'session' and 'order' on talk [${t._id}]`);
+          console.log(
+            `  -> Would unset 'session' and 'order' on talk [${t._id}]`,
+          );
         } else {
-          console.log(`  -> Unsetting 'session' and 'order' on talk [${t._id}]...`);
+          console.log(
+            `  -> Unsetting 'session' and 'order' on talk [${t._id}]...`,
+          );
           await client.patch(t._id).unset(["session", "order"]).commit();
         }
       }
