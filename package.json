@@ -37,7 +37,7 @@
     "@sanity/client": "^8.4.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/visual-editing": "^6.1.1",
-    "astro": "^7.2.4",
+    "astro": "^7.2.8",
     "motion": "^13.1.1",
     "openid-client": "^6.8.4",
     "react": "^19.2.8",
