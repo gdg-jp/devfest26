@@ -6,10 +6,10 @@ import EventCard from "./EventCard.astro";
 import { getPortalEvents } from "./events";
 import { messages } from "../i18n";
 import {
-  alternateLanguage,
   alternatePath,
+  currentAlternateLanguage,
+  currentLanguage,
   LANGUAGE_NAMES,
-  language,
 } from "../i18n/language";
 
 /**
@@ -21,7 +21,7 @@ import {
  */
 
 const { upcoming, past } = await getPortalEvents();
-const t = messages(language);
+const t = messages(currentLanguage());
 
 const title = t.portal.title;
 const description = t.portal.description;
@@ -56,8 +56,9 @@ const jsonLd = {
   }),
 };
 
+const switchTo = currentAlternateLanguage();
 const switchHref = alternatePath(Astro.url.pathname);
-const switchLabel = LANGUAGE_NAMES[alternateLanguage];
+const switchLabel = LANGUAGE_NAMES[switchTo];
 ---
 
 <Hub title={title} description={description} jsonLd={jsonLd}>
@@ -66,7 +67,7 @@ const switchLabel = LANGUAGE_NAMES[alternateLanguage];
   <header class="bar">
     <div class="wrap">
       <Logo variant="primary" class="mark" />
-      <a class="lang-switch" href={switchHref} hreflang={alternateLanguage}>
+      <a class="lang-switch" href={switchHref} hreflang={switchTo}>
         {switchLabel}
       </a>
     </div>

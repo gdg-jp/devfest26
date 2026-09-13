@@ -1,14 +1,14 @@
 ---
 import type { ResolvedTenant } from "../tenants";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 ---
 
 <section class="sec" id="coc">

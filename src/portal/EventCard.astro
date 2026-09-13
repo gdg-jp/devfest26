@@ -2,7 +2,7 @@
 import type { PortalEvent } from "./events";
 import { previewMode } from "../preview/mode";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * One DevFest in the front-page list.
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const { event, past = false } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 ---
 
 <li

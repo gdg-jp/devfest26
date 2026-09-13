@@ -16,14 +16,14 @@ import { getTimetable } from "../data/timetable";
 import { getTracks } from "../data/tracks";
 import type { ResolvedTenant } from "../tenants";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 // "3 トラック" is a fact about this city's configuration, not a constant.
 const trackCount = (await getTracks(site.tenant)).filter(

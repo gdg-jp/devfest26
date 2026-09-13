@@ -8,7 +8,7 @@ import {
   type SpeakerProgram,
 } from "../data/program";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * The other half of `getStaticPaths`.
@@ -101,7 +101,7 @@ export async function themeProps(params: Params) {
  * `/preview/status` next door has the detail.
  */
 export function notFound(what: string): Response {
-  const t = messages(language);
+  const t = messages(currentLanguage());
   return new Response(
     `<!doctype html><html lang="${t.meta.htmlLang}"><meta charset="utf-8">` +
       `<meta name="viewport" content="width=device-width, initial-scale=1">` +

@@ -18,7 +18,7 @@ import Footer from "../components/Footer.astro";
 import { buildableCities, type ResolvedTenant } from "../tenants";
 import { cityProps, notFound } from "./params";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * A city's home page — the long scrolling one, at `/kansai`.
@@ -47,7 +47,7 @@ interface Props {
   See `src/city/params.ts`.
 */
 const props = Astro.props.site ? Astro.props : await cityProps(Astro.params);
-const t = messages(language);
+const t = messages(currentLanguage());
 if (!props) return notFound(t.notFound.city(Astro.params.tenant ?? ""));
 
 const { site } = props;

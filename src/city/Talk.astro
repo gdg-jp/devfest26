@@ -11,7 +11,7 @@ import {
   type ProgramTalk,
 } from "../data/program";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * One page per talk that is an entry in its own right.
@@ -44,7 +44,7 @@ interface Props {
 // See `src/city/params.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await talkProps(Astro.params);
-const t = messages(language);
+const t = messages(currentLanguage());
 if (!props) return notFound(t.notFound.talk(Astro.params.slug ?? ""));
 
 const { site, session, talk } = props;

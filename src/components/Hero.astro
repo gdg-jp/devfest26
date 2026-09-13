@@ -6,7 +6,7 @@ import type { ResolvedTenant } from "../tenants";
 import { byTenant } from "../data/collections";
 import { eventDates } from "../tenants/eventDates";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
@@ -14,7 +14,7 @@ interface Props {
 
 const { site } = Astro.props;
 const { event, links, tagline } = site;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 // The hero only advertises a pre-event while one is actually taking bookings.
 const meetups = await byTenant("meetups", site.tenant);
@@ -27,7 +27,7 @@ const openMeetup = meetups
 // the build machine's timezone instead.
 const meetupIso = openMeetup?.data.date?.toISOString();
 const meetupDates = meetupIso
-  ? eventDates(meetupIso, meetupIso, language)
+  ? eventDates(meetupIso, meetupIso, currentLanguage())
   : null;
 const meetupDate = meetupDates?.dateShort ?? null;
 const meetupDow = meetupDates?.dayOfWeek ?? null;

@@ -4,7 +4,8 @@ import { sanityClient } from "../lib/sanity/client";
 import { sources } from "../lib/sanity/sources";
 import { everyCity, EVENTS } from "../lib/sanity/queries";
 import { parseEvent } from "../tenants/fromSanity";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
+import type { Language } from "../i18n";
 import type { TenantConfig } from "../tenants/types";
 import { recordInto, recording, report, type Recording } from "./problems";
 
@@ -77,19 +78,33 @@ interface Snapshot {
  */
 const TTL_MS = 1000;
 
-let taken: Promise<Snapshot> | undefined;
-let takenAt = 0;
+/**
+ * One standing snapshot per language, rather than one for the deployment.
+ *
+ * `$lang` is bound into the query, so a snapshot *is* a language — it holds
+ * Japanese titles or English ones, not both. The preview answers `/kansai` and
+ * `/en/kansai` from the same Worker (see `src/middleware.ts`), so a single
+ * cache slot would hand the page whichever language asked most recently.
+ *
+ * Two languages is at most two round trips a second, and only while somebody
+ * is actually reading both.
+ */
+const held = new Map<Language, { at: number; snapshot: Promise<Snapshot> }>();
 
 function snapshot(): Promise<Snapshot> {
+  const lang = currentLanguage();
   const now = Date.now();
-  if (!taken || now - takenAt >= TTL_MS) {
-    takenAt = now;
-    taken = take().catch((error: unknown) => {
-      // A failed fetch must not become the answer for the next second.
-      taken = undefined;
-      throw error;
-    });
-  }
+
+  const standing = held.get(lang);
+  if (standing && now - standing.at < TTL_MS) return standing.snapshot;
+
+  const taken = take(lang).catch((error: unknown) => {
+    // A failed fetch must not become the answer for the next second. By
+    // language, so a failure on one does not throw away the other's.
+    held.delete(lang);
+    throw error;
+  });
+  held.set(lang, { at: now, snapshot: taken });
   return taken;
 }
 
@@ -109,7 +124,7 @@ ${Object.entries(sources)
   return batch;
 }
 
-async function take(): Promise<Snapshot> {
+async function take(lang: Language): Promise<Snapshot> {
   /*
     Its own recording, opened here rather than inherited from whichever request
     arrived first. One snapshot is read by every request for the next second,
@@ -120,15 +135,14 @@ async function take(): Promise<Snapshot> {
 
   return recordInto(found, async () => {
     /*
-      `$lang` is this Worker build's own language for now — see
-      `src/i18n/language.ts`. The preview serves every city from one
-      deployment, so a request-time language (the `/en/` prefix on the URL
-      it is answering) is a Stage 6 concern; until then every preview build
-      answers in the one language it was built for.
+      `$lang` is the language of the request this snapshot was opened for — the
+      `/en/` prefix on the URL, resolved by `src/middleware.ts` — rather than
+      the Worker's own build language. It is passed in rather than read again
+      here so that the snapshot and the key it is filed under cannot disagree.
     */
     const raw = await sanityClient().fetch<Record<string, unknown[]>>(
       batchQuery(),
-      { lang: language },
+      { lang },
     );
 
     const entries = new Map<CollectionName, Entry[]>();

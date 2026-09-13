@@ -5,7 +5,7 @@ import MeetupCard from "./MeetupCard.astro";
 import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * Deliberately quiet: plain ground, no colour band, running order folded away.
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const { site } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 const meetups = (await byTenant("meetups", site.tenant)).sort(
   (a, b) => a.data.no - b.data.no,

@@ -4,14 +4,14 @@ import Sticker from "./Sticker.astro";
 import SessionCard from "./SessionCard.astro";
 import { getProgram } from "../data/program";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   tenant: string;
 }
 
 const { tenant } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 // One pastel rotation running through the whole section, so no two adjacent
 // speaker blocks land on the same colour regardless of how tracks are filled.

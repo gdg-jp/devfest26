@@ -4,7 +4,7 @@ import PhotoSticker from "./PhotoSticker.astro";
 import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   /** Only needed for the gutter photo, which comes from the city's set. */
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const { tenant } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 ---
 
 <section class="sec" id="what">

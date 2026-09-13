@@ -4,7 +4,7 @@ import Logo from "../components/Logo.astro";
 import { buildableCities } from "../tenants";
 import { stickers } from "../data/stickers";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 import "../styles/tokens.css";
 // base.css carries the reset and the rule that hides the inline sprite.
 import "../styles/base.css";
@@ -27,7 +27,7 @@ export async function getStaticPaths() {
 
 const { site } = Astro.props;
 const { event, tagline } = site;
-const t = messages(language);
+const t = messages(currentLanguage());
 const glyphs = [
   {
     name: "slashes",

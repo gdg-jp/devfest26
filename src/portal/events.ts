@@ -5,7 +5,7 @@ import { eventDates } from "../tenants/eventDates";
 import { discoverCities } from "../tenants/discovery";
 import { reject } from "../preview/problems";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * Every DevFest the front page lists, from two kinds of source.
@@ -69,9 +69,9 @@ export interface PortalEvents {
  * a running order.
  */
 function dateLabel(startsAt: string, endsAt: string) {
-  const t = messages(language);
-  const from = eventDates(startsAt, startsAt, language);
-  const to = eventDates(endsAt, endsAt, language);
+  const t = messages(currentLanguage());
+  const from = eventDates(startsAt, startsAt, currentLanguage());
+  const to = eventDates(endsAt, endsAt, currentLanguage());
   const start = t.dates.withDow(from.dateLabel, from.dayOfWeek);
 
   return {

@@ -4,7 +4,7 @@ import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import type { ResolvedTenant } from "../tenants";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
@@ -12,7 +12,7 @@ interface Props {
 
 const { site } = Astro.props;
 const { event, stats } = site;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 const rows = [
   {

@@ -5,14 +5,14 @@ import Sticker from "./Sticker.astro";
 import { inlineMarkdown } from "../lib/inlineMarkdown";
 import { byTenant } from "../data/collections";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   tenant: string;
 }
 
 const { tenant } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 // At most one per city; a city that has not written its pitch renders nothing.
 const entry = (await byTenant("about", tenant))[0];

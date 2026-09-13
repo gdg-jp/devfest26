@@ -6,7 +6,11 @@ import { previewMode } from "../preview/mode";
 import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
 import { messages } from "../i18n";
-import { alternatePath, DEFAULT_LANGUAGE, language } from "../i18n/language";
+import {
+  alternatePath,
+  currentLanguage,
+  DEFAULT_LANGUAGE,
+} from "../i18n/language";
 
 /**
  * The shell for the front page.
@@ -40,7 +44,7 @@ interface Props {
 const { jsonLd } = Astro.props;
 const title = clean(Astro.props.title);
 const description = clean(Astro.props.description);
-const t = messages(language);
+const t = messages(currentLanguage());
 
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
@@ -48,8 +52,9 @@ const canonical = Astro.site
 const alternateUrl = Astro.site
   ? new URL(alternatePath(Astro.url.pathname), Astro.site).href
   : undefined;
-const jaUrl = language === DEFAULT_LANGUAGE ? canonical : alternateUrl;
-const enUrl = language === DEFAULT_LANGUAGE ? alternateUrl : canonical;
+const isDefault = currentLanguage() === DEFAULT_LANGUAGE;
+const jaUrl = isDefault ? canonical : alternateUrl;
+const enUrl = isDefault ? alternateUrl : canonical;
 
 // The four core colours belong to the cities. The hub takes the DevFest
 // primary rather than borrowing whichever city happens to be first.

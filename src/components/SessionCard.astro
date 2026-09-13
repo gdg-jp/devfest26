@@ -4,7 +4,7 @@ import SpeakerRow from "./SpeakerRow.astro";
 import { pastelCycle } from "../data/tracks";
 import type { ProgramSession } from "../data/program";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   session: ProgramSession;
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { session, pastelFrom } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 const { entry, label, href, talks } = session;
 const { Content } = await render(entry);
 

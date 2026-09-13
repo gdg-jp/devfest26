@@ -5,10 +5,10 @@ import { photoCredits } from "../lib/photos";
 import { isHome, tenantHome } from "../lib/url";
 import { messages } from "../i18n";
 import {
-  alternateLanguage,
   alternatePath,
+  currentAlternateLanguage,
+  currentLanguage,
   LANGUAGE_NAMES,
-  language,
 } from "../i18n/language";
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 }
 
 const { site } = Astro.props;
-const t = messages(language);
+const t = messages(currentLanguage());
 const { event } = site;
 const year = new Date().getFullYear();
 
@@ -27,8 +27,9 @@ const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
 // Decorative use does not waive the photographer's credit.
 const credits = await photoCredits(site.tenant);
 
+const switchTo = currentAlternateLanguage();
 const switchHref = alternatePath(Astro.url.pathname);
-const switchLabel = LANGUAGE_NAMES[alternateLanguage];
+const switchLabel = LANGUAGE_NAMES[switchTo];
 ---
 
 <footer>
@@ -70,7 +71,7 @@ const switchLabel = LANGUAGE_NAMES[alternateLanguage];
           >
             GDG Chapter
           </a>
-          <a class="tag link" href={switchHref} hreflang={alternateLanguage}>
+          <a class="tag link" href={switchHref} hreflang={switchTo}>
             {switchLabel}
           </a>
         </div>

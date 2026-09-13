@@ -13,7 +13,7 @@ import {
 } from "../data/program";
 import { getTimetable } from "../data/timetable";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * Every session has a page, whether or not the city splits it into talks: it
@@ -44,7 +44,7 @@ interface Props {
 // See `src/city/params.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await sessionProps(Astro.params);
-const t = messages(language);
+const t = messages(currentLanguage());
 if (!props) return notFound(t.notFound.session(Astro.params.slug ?? ""));
 
 const { site, session } = props;

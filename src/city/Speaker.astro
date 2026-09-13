@@ -7,7 +7,7 @@ import { notFound, speakerProps } from "./params";
 import { tenantHome } from "../lib/url";
 import { getProgramSpeakers, type SpeakerProgram } from "../data/program";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * One page per speaker who is on the programme.
@@ -36,7 +36,7 @@ type Props = SpeakerProgram & { site: ResolvedTenant };
 // See `src/city/params.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await speakerProps(Astro.params);
-const t = messages(language);
+const t = messages(currentLanguage());
 if (!props) return notFound(t.notFound.speaker(Astro.params.slug ?? ""));
 
 const { site, speaker, appearances } = props;

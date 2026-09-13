@@ -1,7 +1,7 @@
 ---
 import { render, type CollectionEntry } from "astro:content";
 import { messages } from "../i18n";
-import { language } from "../i18n/language";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   meetup: CollectionEntry<"meetups">;
@@ -10,7 +10,7 @@ interface Props {
 const { meetup } = Astro.props;
 const d = meetup.data;
 const { Content } = await render(meetup);
-const t = messages(language);
+const t = messages(currentLanguage());
 
 const DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 

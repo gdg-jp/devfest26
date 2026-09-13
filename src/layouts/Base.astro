@@ -9,7 +9,11 @@ import PreviewBar from "../preview/Bar.astro";
 import type { ResolvedTenant } from "../tenants";
 import { tenantPath } from "../lib/url";
 import { messages } from "../i18n";
-import { alternatePath, DEFAULT_LANGUAGE, language } from "../i18n/language";
+import {
+  alternatePath,
+  currentLanguage,
+  DEFAULT_LANGUAGE,
+} from "../i18n/language";
 
 interface Props {
   /** The city this page belongs to. Every page under `/[tenant]/` has one. */
@@ -36,7 +40,7 @@ interface Props {
 */
 const { site, jsonLd } = Astro.props;
 const { event, links } = site;
-const t = messages(language);
+const t = messages(currentLanguage());
 
 const siteName = clean(site.fullTitle ?? site.title);
 const title = clean(Astro.props.title ?? site.fullTitle ?? site.title);
@@ -52,8 +56,9 @@ const canonical = Astro.site
 const alternateUrl = Astro.site
   ? new URL(alternatePath(Astro.url.pathname), Astro.site).href
   : undefined;
-const jaUrl = language === DEFAULT_LANGUAGE ? canonical : alternateUrl;
-const enUrl = language === DEFAULT_LANGUAGE ? alternateUrl : canonical;
+const isDefault = currentLanguage() === DEFAULT_LANGUAGE;
+const jaUrl = isDefault ? canonical : alternateUrl;
+const enUrl = isDefault ? alternateUrl : canonical;
 
 /*
   `public/og/` is shared by every city and served from the site root, so the
