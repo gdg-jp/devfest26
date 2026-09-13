@@ -110,9 +110,18 @@ export interface TenantConfig {
   stats: readonly Stat[];
 
   links: {
+    /**
+     * Where the register buttons point. Localized in Sanity — connpass for
+     * Japanese, Luma for English — and already resolved to this build's (or
+     * this request's) language by the time it arrives here; see `LINKS` in
+     * `src/lib/sanity/queries.ts`.
+     */
     register: string;
     community: string;
+    /** The chapter's connpass page. Shown in the footer beside `luma`. */
     connpass: string;
+    /** The chapter's Luma page, for the chapters that have one. */
+    luma?: string;
     cocJa: string;
     cocEn: string;
   };

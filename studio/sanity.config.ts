@@ -84,7 +84,7 @@ export default defineConfig({
     internationalizedArray({
       languages: LANGUAGES,
       defaultLanguages: ["ja"],
-      fieldTypes: ["string", "text", "stringList", "richText"],
+      fieldTypes: ["string", "text", "stringList", "richText", "url"],
       /*
         The default (true) reorders an internationalized array's items to
         match `languages` the moment a document is opened — which, for a

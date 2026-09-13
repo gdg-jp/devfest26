@@ -47,7 +47,7 @@ export const en = {
   },
 
   hero: {
-    registerCta: "Register on connpass",
+    registerCta: "Register",
     sessionsCta: "View sessions",
     feeLabel: "Fee",
     preeventBefore: "Pre-event:",
@@ -144,17 +144,17 @@ export const en = {
       `join us in ${city} on ${monthDay}.`,
     lede: (title: string) =>
       `Whether you want to deepen your expertise, get a new perspective, or build something with AI — everyone is welcome. Let's think together about the future people and AI build together, at ${title}.`,
-    ctaRegister: "Register on connpass",
+    ctaRegister: "Register",
     ctaCommunity: (host: string) => `About ${host}`,
     note: (fee: string) =>
-      `The fee is ${fee} for both in-person and online attendance. Register on connpass.`,
+      `The fee is ${fee} for both in-person and online attendance. Use the button above to register.`,
   },
 
   meetupCard: {
     statusOpen: "Open",
     statusClosed: "Closed",
     statusDone: "Held",
-    ctaDefault: "Register on connpass",
+    ctaDefault: "Register",
     ctaCompletedDefault: "View event page",
     factVenue: "Venue",
     factCapacity: "Capacity",

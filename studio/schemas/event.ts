@@ -220,9 +220,18 @@ export const event = defineType({
       title: "Links",
       type: "object",
       fields: [
+        /*
+          The only link on the site that differs by language rather than being
+          translated: a Japanese reader is sent to connpass and an English one
+          to Luma, because those are different audiences on different platforms
+          rather than two renderings of one page. Localizing the URL itself is
+          what says that — the projection coalesces to the Japanese value, so a
+          city with no Luma listing sends everyone to connpass instead of to a
+          link that does not exist.
+        */
         defineField({
           name: "register",
-          type: "url",
+          type: "internationalizedArrayUrl",
           validation: (Rule) => Rule.required(),
         }),
         defineField({
@@ -230,10 +239,21 @@ export const event = defineType({
           type: "url",
           validation: (Rule) => Rule.required(),
         }),
+        /*
+          The chapter's own pages, in the footer. Both are shown side by side
+          when both exist, rather than one standing in for the other: this is a
+          list of where the chapter can be found, and a reader of either
+          language may want either. `luma` is optional because a chapter that
+          only uses connpass is the normal case.
+        */
         defineField({
           name: "connpass",
           type: "url",
           validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: "luma",
+          type: "url",
         }),
         defineField({
           name: "cocJa",

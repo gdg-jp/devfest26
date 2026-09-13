@@ -74,6 +74,8 @@ const eventDoc = z.object({
     register: z.url(),
     community: z.url(),
     connpass: z.url(),
+    // Optional: most chapters have only the connpass page.
+    luma: z.url().nullish().transform(blank),
     cocJa: z.url(),
     cocEn: z.url(),
   }),

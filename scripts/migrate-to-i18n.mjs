@@ -2,9 +2,14 @@ import { createClient } from "@sanity/client";
 import { randomUUID } from "node:crypto";
 
 /**
- * Wraps the plain-string fields this project used to store in Japanese only
- * into the internationalized-array shape `sanity-plugin-internationalized-array`
- * expects: `[{ _key, _type, language, value }]`.
+ * Wraps the plain fields this project used to store in Japanese only into the
+ * internationalized-array shape `sanity-plugin-internationalized-array`
+ * expects: `[{ _key, _type, language, value }]`. Mostly strings and rich text,
+ * plus two URLs — `event.links.register` and `meetup.url` — which are
+ * localized because the destination differs by language rather than the
+ * wording: connpass for Japanese, Luma for English. Those migrate to a
+ * one-item `ja` array like everything else; the Luma URL is added later, in
+ * the Studio, by whoever creates the listing.
  *
  * A field that had an `*En` sibling (only `event.titleEn` / `event.subtitleEn`)
  * becomes a two-item array — one `ja` item from the old field, one `en` item
@@ -80,6 +85,7 @@ const VALUE_TYPE = {
   text: "internationalizedArrayTextValue",
   richText: "internationalizedArrayRichTextValue",
   stringList: "internationalizedArrayStringListValue",
+  url: "internationalizedArrayUrlValue",
 };
 
 const isI18nArray = (value) =>
@@ -189,6 +195,13 @@ function planEvent(doc) {
     fee: "string",
   });
 
+  if (doc.links) {
+    // Only `register`. The others are one link each, not one per language —
+    // see `LINKS` in `src/lib/sanity/queries.ts`.
+    const register = wrap("url", doc.links.register);
+    if (register) set["links.register"] = register;
+  }
+
   if (doc.venue) {
     const venueSet = {};
     wrapFields(doc.venue, venueSet, {
@@ -286,7 +299,10 @@ function planTrack(doc) {
 
 function planMeetup(doc) {
   const set = {};
+  // `url` is the registration link, localized for the same reason
+  // `event.links.register` is.
   wrapFields(doc, set, {
+    url: "url",
     title: "string",
     subtitle: "string",
     venue: "string",

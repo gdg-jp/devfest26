@@ -79,10 +79,16 @@ export const meetup = defineType({
       title: "Fee",
       type: "internationalizedArrayString",
     }),
+    /*
+      Localized for the same reason `event.links.register` is: a pre-event takes
+      registrations too, and one listed on both connpass and Luma should send
+      each reader to the listing written in their language. Left blank for
+      English, both go to connpass.
+    */
     defineField({
       name: "url",
       title: "URL",
-      type: "url",
+      type: "internationalizedArrayUrl",
     }),
     defineField({
       name: "cta",

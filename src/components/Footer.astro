@@ -63,6 +63,28 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
           >
             connpass
           </a>
+          {
+            /*
+              Beside connpass rather than instead of it, and in both languages.
+              These are the two places the chapter publishes its events, not two
+              translations of one place — an English reader may well want the
+              connpass page, and a Japanese reader the Luma one. The register
+              button is the one that does choose; see `links.register`.
+
+              The names are not translated because they are not words: they are
+              what the two sites call themselves.
+            */
+            site.links.luma && (
+              <a
+                class="tag link"
+                href={site.links.luma}
+                target="_blank"
+                rel="noopener"
+              >
+                Luma
+              </a>
+            )
+          }
           <a
             class="tag link"
             href={site.links.community}

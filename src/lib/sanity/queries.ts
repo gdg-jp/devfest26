@@ -98,7 +98,7 @@ export const TALKS = `*[_type == "talk" && ${SCOPE}]{
 
 export const MEETUPS = `*[_type == "meetup" && ${SCOPE}]{
   _id, no, ${t("title")}, ${t("subtitle")}, status, date, doorsAt, startsAt, endsAt,
-  ${t("venue")}, ${t("capacity")}, ${t("fee")}, url, ${t("cta")},
+  ${t("venue")}, ${t("capacity")}, ${t("fee")}, ${t("url")}, ${t("cta")},
   "program": program[]{at, ${t("what")}, ${t("who")}, talk, break},
   ${t("description")},
   ${TENANT}
@@ -123,6 +123,27 @@ export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
 }`;
 
 /**
+ * A city's outward links, of which exactly one is localized.
+ *
+ * `register` is the only link on the site whose *destination* is a language
+ * rather than a translation of one: a Japanese reader is sent to the connpass
+ * listing and an English reader to the Luma one, because those are two
+ * audiences on two platforms rather than one page written twice. `t` coalesces
+ * to the Japanese value, so a city that has filled in only that one sends both
+ * languages there — which is the right answer, since the alternative is a
+ * button pointing at nothing.
+ *
+ * `connpass` and `luma` are the chapter's own pages rather than this event's,
+ * and the footer shows both side by side instead of choosing between them — so
+ * neither is localized. `community`, `cocJa` and `cocEn` name their language in
+ * the field, or have none.
+ *
+ * Written as its own constant because a comment cannot live inside the template
+ * literal below: it would be GROQ, not TypeScript.
+ */
+const LINKS = `"links": links{${t("register")}, community, connpass, luma, cocJa, cocEn}`;
+
+/**
  * One city's own configuration — matched on its own slug, not a reference.
  *
  * This is tier 2: everything a city's pages need and the front page does not.
@@ -140,7 +161,7 @@ const EVENT_FIELDS = `
     addressLocality, addressRegion, streetAddress, postalCode
   },
   ${t("format")}, ${t("formatShort")}, ${t("fee")}, host, coHosts,
-  stats, links,
+  stats, ${LINKS},
   "nav": nav[]{href, ${t("label")}},
   "footerNav": footerNav[]{href, ${t("label")}},
   "fixtures": fixtures[]{start, end, ${t("label")}, ${t("note")}, "tracks": tracks[]->_id},

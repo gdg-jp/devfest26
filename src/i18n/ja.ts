@@ -59,7 +59,18 @@ export const ja = {
   },
 
   hero: {
-    registerCta: "connpass で参加登録",
+    /**
+     * No platform name in any of the register labels, here or in `register`
+     * and `meetupCard` below.
+     *
+     * `links.register` is localized — connpass for Japanese, Luma for English
+     * — and falls back to the Japanese URL for a city that has only that one.
+     * A label naming the destination would therefore be wrong for whichever
+     * city had not set the other up yet, and these strings are per-language,
+     * not per-city, so there is nowhere to correct it. See `LINKS` in
+     * `src/lib/sanity/queries.ts`.
+     */
+    registerCta: "参加登録",
     sessionsCta: "セッションを見る",
     feeLabel: "参加費",
     preeventBefore: "プレイベント",
@@ -155,17 +166,17 @@ export const ja = {
       `${monthDay}に${city}で。`,
     lede: (title: string) =>
       `技術を深めたい方も、新しい分野の視点に触れたい方も、これから AI を使って何かをつくりたい方も歓迎します。AI と人がともにつくる未来を、${title} で一緒に考えてみませんか。`,
-    ctaRegister: "connpass で参加登録する",
+    ctaRegister: "参加登録する",
     ctaCommunity: (host: string) => `${host} について`,
     note: (fee: string) =>
-      `現地参加・オンライン参加ともに${fee}です。お申し込みは connpass から。`,
+      `現地参加・オンライン参加ともに${fee}です。お申し込みは上のボタンから。`,
   },
 
   meetupCard: {
     statusOpen: "受付中",
     statusClosed: "受付終了",
     statusDone: "開催済み",
-    ctaDefault: "connpass で申し込む",
+    ctaDefault: "申し込む",
     ctaCompletedDefault: "イベントページを見る",
     factVenue: "会場",
     factCapacity: "定員",
