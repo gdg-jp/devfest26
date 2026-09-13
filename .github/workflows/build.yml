@@ -239,6 +239,21 @@ jobs:
           # listing would eventually mistake one for the other.
           mapfile -t published < <(cat site/.cities 2>/dev/null || true)
 
+          # An empty `cities` is a claim that the CMS holds no events at all.
+          # That is a real answer for a new dataset, and it is also what a
+          # query that stopped matching looks like — a field renamed, a
+          # localization migration applied to the schema but not yet to the
+          # documents. The two are indistinguishable from here, but the
+          # published site is not: if it was serving cities a moment ago,
+          # every one of them is about to be deleted, and that is not a
+          # decision an automatic run should take on its own. Run the deploy
+          # again once discovery finds them, or once they are genuinely gone
+          # and `.cities` has caught up.
+          if [ "${#cities[@]}" -eq 0 ] && [ "${#published[@]}" -gt 0 ]; then
+            echo "::error::discovery found no cities, but ${#published[@]} are published (${published[*]}). Refusing to publish."
+            exit 1
+          fi
+
           # A city deleted from the CMS should stop being served, in both
           # languages. Against `cities` and not `builds`: a city left out of
           # this deploy is still a city, and its pages stay exactly where
