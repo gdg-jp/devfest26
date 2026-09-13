@@ -1,6 +1,7 @@
 import { z } from "astro/zod";
 import { sanityClient } from "../lib/sanity/client";
 import { EVENT } from "../lib/sanity/queries";
+import { language } from "../i18n/language";
 import type { TenantConfig } from "./types";
 
 /**
@@ -31,8 +32,6 @@ const eventDoc = z.object({
   theme: tone,
   isPublic: z.boolean().nullish(),
 
-  lang: nonEmpty.default("ja"),
-  locale: nonEmpty.default("ja_JP"),
   title: nonEmpty,
   subtitle: z.string().nullish().transform(blank),
   titleEn: nonEmpty,
@@ -103,7 +102,10 @@ const eventDoc = z.object({
 });
 
 export async function tenantFromSanity(slug: string): Promise<TenantConfig> {
-  return parseEvent(await sanityClient().fetch(EVENT, { tenant: slug }), slug);
+  return parseEvent(
+    await sanityClient().fetch(EVENT, { tenant: slug, lang: language }),
+    slug,
+  );
 }
 
 /**
@@ -137,8 +139,6 @@ export function parseEvent(raw: unknown, slug: string): TenantConfig {
     tenant: d.tenant,
     theme: d.theme,
     isPublic: d.isPublic ?? true,
-    lang: d.lang,
-    locale: d.locale,
     title: d.title,
     subtitle: d.subtitle,
     titleEn: d.titleEn,

@@ -5,8 +5,6 @@ export const kansai = {
   tenant: "kansai",
   theme: "blue",
 
-  lang: "ja",
-  locale: "ja_JP",
   title: "DevFest 2026 in Kansai",
   titleEn: "DevFest 2026 in Kansai",
   description:

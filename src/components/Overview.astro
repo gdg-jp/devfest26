@@ -3,6 +3,8 @@ import PhotoSticker from "./PhotoSticker.astro";
 import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import type { ResolvedTenant } from "../tenants";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
@@ -10,28 +12,36 @@ interface Props {
 
 const { site } = Astro.props;
 const { event, stats } = site;
+const t = messages(language);
 
 const rows = [
   {
     rail: "blue",
-    dt: "開催日",
-    dd: `${event.dateLabel}（${event.dayOfWeek}）`,
+    dt: t.overview.dtDate,
+    dd: t.dates.withDow(event.dateLabel, event.dayOfWeek),
   },
   {
     rail: "green",
-    dt: "開催時間",
+    dt: t.overview.dtHours,
     dd: event.hours,
     // A city that runs no after-party simply omits `social` in its config.
-    note: event.social && `${event.social.hours} に${event.social.label}を予定`,
+    note:
+      event.social &&
+      t.overview.socialNote(event.social.hours, event.social.label),
   },
-  { rail: "red", dt: "会場", dd: event.venue.name, note: event.venue.area },
-  { rail: "yellow", dt: "開催形式", dd: event.format },
-  { rail: "blue", dt: "参加費", dd: event.fee },
+  {
+    rail: "red",
+    dt: t.overview.dtVenue,
+    dd: event.venue.name,
+    note: event.venue.area,
+  },
+  { rail: "yellow", dt: t.overview.dtFormat, dd: event.format },
+  { rail: "blue", dt: t.overview.dtFee, dd: event.fee },
   {
     rail: "green",
-    dt: "主催",
+    dt: t.overview.dtHost,
     dd: event.host,
-    note: `共催・協力：${event.coHosts}`,
+    note: t.overview.coHostsNote(event.coHosts),
   },
 ];
 ---
@@ -66,10 +76,9 @@ const rows = [
 
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Overview</p>
-    <h2 class="sec-h" data-reveal="up">開催概要</h2>
+    <h2 class="sec-h" data-reveal="up">{t.overview.heading}</h2>
     <p class="sec-lede" data-reveal="up">
-      {event.venue.region}で開催する DevFest {event.isoDate.slice(0, 4)}
-      の基本情報です。詳細が固まりしだい順次更新します。
+      {t.overview.lede(event.venue.region, event.isoDate.slice(0, 4))}
     </p>
 
     <div class="split">
@@ -103,7 +112,7 @@ const rows = [
           ))
         }
         <p class="disclaimer">
-          ※イベント内容や開催時間は、今後変更となる場合があります。
+          {t.overview.disclaimer}
         </p>
       </div>
     </div>

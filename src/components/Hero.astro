@@ -4,6 +4,9 @@ import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import type { ResolvedTenant } from "../tenants";
 import { byTenant } from "../data/collections";
+import { eventDates } from "../tenants/eventDates";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
@@ -11,6 +14,7 @@ interface Props {
 
 const { site } = Astro.props;
 const { event, links, tagline } = site;
+const t = messages(language);
 
 // The hero only advertises a pre-event while one is actually taking bookings.
 const meetups = await byTenant("meetups", site.tenant);
@@ -18,12 +22,15 @@ const openMeetup = meetups
   .filter((m) => m.data.status === "open" && m.data.date)
   .sort((a, b) => a.data.no - b.data.no)[0];
 
-const meetupDate = openMeetup?.data.date
-  ? `${openMeetup.data.date.getMonth() + 1}/${openMeetup.data.date.getDate()}`
+// Pinned to JST via `eventDates`, the same as every other date on the page —
+// reading `.getDate()` / `.getDay()` straight off the Date would answer in
+// the build machine's timezone instead.
+const meetupIso = openMeetup?.data.date?.toISOString();
+const meetupDates = meetupIso
+  ? eventDates(meetupIso, meetupIso, language)
   : null;
-const meetupDow = openMeetup?.data.date
-  ? ["日", "月", "火", "水", "木", "金", "土"][openMeetup.data.date.getDay()]
-  : null;
+const meetupDate = meetupDates?.dateShort ?? null;
+const meetupDow = meetupDates?.dayOfWeek ?? null;
 ---
 
 <section class="hero" id="top">
@@ -76,7 +83,7 @@ const meetupDow = openMeetup?.data.date
       <span class="pill"
         ><span class="dot" style="background:var(--blue)"></span><b
           >{event.dateLabel}</b
-        >（{event.dayOfWeek}）{event.hoursCompact}</span
+        >{t.dates.dowSuffix(event.dayOfWeek)}{event.hoursCompact}</span
       >
       <span class="pill"
         ><span class="dot" style="background:var(--green)"></span>{
@@ -89,23 +96,25 @@ const meetupDow = openMeetup?.data.date
         }</span
       >
       <span class="pill"
-        ><span class="dot" style="background:var(--yellow)"></span>参加費 <b
-          >{event.fee}</b
-        ></span
+        ><span class="dot" style="background:var(--yellow)"></span>{
+          t.hero.feeLabel
+        }{" "}<b>{event.fee}</b></span
       >
     </div>
 
     <div class="cta-row" data-intro="5">
       <a class="btn" href={links.register} target="_blank" rel="noopener"
-        >connpass で参加登録</a
+        >{t.hero.registerCta}</a
       >
-      <a class="btn ghost" href="#sessions">セッションを見る</a>
+      <a class="btn ghost" href="#sessions">{t.hero.sessionsCta}</a>
       {
         openMeetup && (
           <span class="cta-note">
-            プレイベント{" "}
-            <a href="#preevent">DevFest Meetup #{openMeetup.data.no}</a> は{" "}
-            {meetupDate}（{meetupDow}）開催、受付中です
+            {t.hero.preeventBefore}{" "}
+            <a href="#preevent">
+              {t.hero.preeventLinkLabel(openMeetup.data.no)}
+            </a>{" "}
+            {t.hero.preeventAfter(meetupDate ?? "", meetupDow ?? "")}
           </span>
         )
       }

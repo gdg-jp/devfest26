@@ -182,11 +182,11 @@ pnpm preview:build
 ```
 
 ```bash
-cp preview/.dev.vars dist/all/server/.dev.vars
+cp preview/.dev.vars dist/ja-all/server/.dev.vars
 ```
 
 ```bash
-pnpm exec wrangler dev -c dist/all/server/wrangler.json
+pnpm exec wrangler dev -c dist/ja-all/server/wrangler.json
 ```
 
 `wrangler` は設定ファイルの隣で `.dev.vars` を探すので、コピーが要ります（`dist/` は gitignore 済みです）。こちらなら `/studio` も本番と同じ形で確認できます — ただし Studio が Sanity に繋がるには、そのオリジン（`http://localhost:4321`）を CORS origins に足す必要があります。足していなければ Studio は「Connect this Studio to your project」を表示します。

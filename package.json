@@ -16,7 +16,7 @@
     "build:portal": "cross-env TARGETS=portal dotenv -- astro build",
     "preview:build": "cross-env PREVIEW=1 dotenv -- astro build",
     "preview:dev": "cross-env PREVIEW=1 dotenv -- astro dev",
-    "preview:deploy": "wrangler deploy -c dist/all/server/wrangler.json",
+    "preview:deploy": "wrangler deploy -c dist/ja-all/server/wrangler.json",
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "dotenv -- astro check && tsc --noEmit",
@@ -29,7 +29,9 @@
     "format:fix": "prettier --write .",
     "type-check:preview": "tsc --noEmit -p preview/tsconfig.json",
     "migrate:talks": "dotenv -- node scripts/migrate-talks-to-sessions.mjs",
-    "migrate:talks:dry": "dotenv -- node scripts/migrate-talks-to-sessions.mjs --dry-run"
+    "migrate:talks:dry": "dotenv -- node scripts/migrate-talks-to-sessions.mjs --dry-run",
+    "migrate:i18n": "dotenv -- node scripts/migrate-to-i18n.mjs",
+    "migrate:i18n:dry": "dotenv -- node scripts/migrate-to-i18n.mjs --dry-run"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.5",

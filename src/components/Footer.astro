@@ -3,12 +3,20 @@ import Logo from "./Logo.astro";
 import type { ResolvedTenant } from "../tenants";
 import { photoCredits } from "../lib/photos";
 import { isHome, tenantHome } from "../lib/url";
+import { messages } from "../i18n";
+import {
+  alternateLanguage,
+  alternatePath,
+  LANGUAGE_NAMES,
+  language,
+} from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
+const t = messages(language);
 const { event } = site;
 const year = new Date().getFullYear();
 
@@ -18,6 +26,9 @@ const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
 
 // Decorative use does not waive the photographer's credit.
 const credits = await photoCredits(site.tenant);
+
+const switchHref = alternatePath(Astro.url.pathname);
+const switchLabel = LANGUAGE_NAMES[alternateLanguage];
 ---
 
 <footer>
@@ -32,7 +43,7 @@ const credits = await photoCredits(site.tenant);
         </p>
       </div>
       <div>
-        <nav class="foot-nav" aria-label="フッターナビゲーション">
+        <nav class="foot-nav" aria-label={t.footer.navAria}>
           {
             site.footerNav.map((item) => (
               <a href={prefix + item.href}>{item.label}</a>
@@ -59,13 +70,21 @@ const credits = await photoCredits(site.tenant);
           >
             GDG Chapter
           </a>
+          <a class="tag link" href={switchHref} hreflang={alternateLanguage}>
+            {switchLabel}
+          </a>
         </div>
       </div>
     </div>
 
     <p class="copy colophon">
       © {year}
-      {event.host}{credits.length > 0 && <> ／ Photos: {credits.join("、")}</>}
+      {event.host}
+      {
+        credits.length > 0 && (
+          <> ／ Photos: {credits.join(t.common.nameSeparator)}</>
+        )
+      }
     </p>
   </div>
 </footer>

@@ -34,6 +34,7 @@ import {
 } from "../lib/sanity/env.ts";
 import { previewMode } from "../preview/mode.ts";
 import { reject, report } from "../preview/problems.ts";
+import { language } from "../i18n/language.ts";
 import { LOCAL_TENANT_IDS, PORTAL_TARGET } from "./ids.ts";
 
 /** Everything the front page needs to draw a card for a city. */
@@ -49,13 +50,26 @@ export interface CityCard {
 }
 
 /**
+ * One field of an internationalized array, read directly rather than through
+ * `src/lib/sanity/queries.ts`'s `t()` — this module deliberately imports
+ * nothing from `src/lib/sanity/`, so `scripts/discover-targets.mjs` can run
+ * it without a Sanity client. Same expression, written twice on purpose.
+ */
+const t = (field: string) =>
+  `"${field}": coalesce(${field}[language == $lang][0].value, ${field}[language == "ja"][0].value)`;
+
+/**
  * The tier-1 projection. Deliberately short: every field here is one a card
  * prints, so a document missing any of them has nothing to show.
  */
 const CITY_QUERY = `*[_type == "event" && coalesce(isPublic, true) == true] | order(startsAt asc){
   "slug": slug.current,
-  title, subtitle, theme, startsAt, endsAt,
-  "venue": { "name": venue.name, "city": venue.city, "region": venue.region }
+  ${t("title")}, ${t("subtitle")}, theme, startsAt, endsAt,
+  "venue": venue{
+    ${t("name")},
+    ${t("city")},
+    ${t("region")}
+  }
 }`;
 
 type Unknown = Record<string, unknown>;
@@ -146,7 +160,9 @@ async function query<T>(groq: string): Promise<T> {
   const perspective = token ? "drafts" : "published";
   const url =
     `https://${projectId()}.api.sanity.io/v${apiVersion()}/data/query/${dataset()}` +
-    `?perspective=${perspective}&query=${encodeURIComponent(groq)}`;
+    `?perspective=${perspective}&query=${encodeURIComponent(groq)}` +
+    // The REST API takes GROQ parameters as `$name=<JSON-encoded value>`.
+    `&$lang=${encodeURIComponent(JSON.stringify(language))}`;
 
   const response = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},

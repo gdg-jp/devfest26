@@ -2,6 +2,7 @@ import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 import type { AstroIntegration } from "astro";
 import { previewMode } from "./src/preview/mode";
+import { langPrefix } from "./src/i18n/language";
 import {
   anyCity,
   portalSelected,
@@ -46,20 +47,29 @@ const routes: AstroIntegration = {
         injectRoute({ pattern, entrypoint });
 
       if (portalSelected) {
-        inject("/", "./src/portal/Home.astro");
+        inject(langPrefix || "/", "./src/portal/Home.astro");
       }
 
       if (anyCity) {
-        inject("/[tenant]", "./src/city/Home.astro");
-        inject("/[tenant]/sessions/[slug]", "./src/city/Session.astro");
-        inject("/[tenant]/speakers/[slug]", "./src/city/Speaker.astro");
-        inject("/[tenant]/talks/[slug]", "./src/city/Talk.astro");
-        inject("/[tenant]/favicon.svg", "./src/city/favicon.ts");
+        inject(`${langPrefix}/[tenant]`, "./src/city/Home.astro");
+        inject(
+          `${langPrefix}/[tenant]/sessions/[slug]`,
+          "./src/city/Session.astro",
+        );
+        inject(
+          `${langPrefix}/[tenant]/speakers/[slug]`,
+          "./src/city/Speaker.astro",
+        );
+        inject(`${langPrefix}/[tenant]/talks/[slug]`, "./src/city/Talk.astro");
+        inject(`${langPrefix}/[tenant]/favicon.svg`, "./src/city/favicon.ts");
         // Only built with OG_PREVIEW set; see the route itself. The preview
         // renders on demand, where `getStaticPaths` decides nothing and the
         // route would answer for every city — so it is left out entirely.
         if (!previewMode) {
-          inject("/[tenant]/og-preview", "./src/city/OgPreview.astro");
+          inject(
+            `${langPrefix}/[tenant]/og-preview`,
+            "./src/city/OgPreview.astro",
+          );
         }
       }
 
@@ -159,7 +169,9 @@ export default defineConfig({
      *
      * See the `publish` job in `.github/workflows/build.yml`.
      */
-    assets: soleCity ? `${soleCity}/_astro` : "_astro",
+    assets: soleCity
+      ? [langPrefix.slice(1), soleCity, "_astro"].filter(Boolean).join("/")
+      : "_astro",
     // The OG card is screenshotted straight off disk, where a `/_astro/...`
     // stylesheet href resolves to nothing. Inlining makes that build
     // self-contained; normal builds keep the default split.

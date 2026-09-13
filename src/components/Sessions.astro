@@ -3,12 +3,15 @@ import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import SessionCard from "./SessionCard.astro";
 import { getProgram } from "../data/program";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 interface Props {
   tenant: string;
 }
 
 const { tenant } = Astro.props;
+const t = messages(language);
 
 // One pastel rotation running through the whole section, so no two adjacent
 // speaker blocks land on the same colour regardless of how tracks are filled.
@@ -48,9 +51,9 @@ const grouped = (await getProgram(tenant)).map(({ track, sessions }) => ({
 
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Sessions &amp; Speakers</p>
-    <h2 class="sec-h" data-reveal="up">セッション</h2>
+    <h2 class="sec-h" data-reveal="up">{t.sessions.heading}</h2>
     <p class="sec-lede" data-reveal="up">
-      登壇が確定したセッションをご紹介します。
+      {t.sessions.lede}
     </p>
 
     {
@@ -82,8 +85,7 @@ const grouped = (await getProgram(tenant)).map(({ track, sessions }) => ({
     }
 
     <p class="note">
-      ※
-      セッションタイトル・内容・登壇形式・トラックは、今後変更となる場合があります。確定した情報から順次更新します。
+      {t.sessions.note}
     </p>
   </div>
 </section>

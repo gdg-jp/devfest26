@@ -8,12 +8,15 @@ import {
   isRemotePhoto,
 } from "../lib/photo";
 import { countdownBackdrop } from "../lib/photos";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
+const t = messages(language);
 
 const backdrop = await countdownBackdrop(site.tenant);
 const backdropHeight = Math.round(BACKDROP_WIDTH * COUNTDOWN_BACKDROP_RATIO);
@@ -54,7 +57,7 @@ const cells = [
 
   <div class="countdown wrap">
     <div class="cd-head">
-      <h2>開催まで</h2>
+      <h2>{t.countdown.heading}</h2>
       <span class="when">{site.event.countdownLabel}</span>
     </div>
     <div

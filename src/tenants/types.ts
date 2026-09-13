@@ -81,8 +81,6 @@ export interface TenantConfig {
   theme: Theme;
   isPublic?: boolean;
 
-  lang: string;
-  locale: string;
   title: string;
   /** サブタイトル（副題）。設定した場合、ヒーローセクションでタイトルの下に改行して表示されます。 */
   subtitle?: string;

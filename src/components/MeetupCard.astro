@@ -1,5 +1,7 @@
 ---
 import { render, type CollectionEntry } from "astro:content";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 interface Props {
   meetup: CollectionEntry<"meetups">;
@@ -8,6 +10,7 @@ interface Props {
 const { meetup } = Astro.props;
 const d = meetup.data;
 const { Content } = await render(meetup);
+const t = messages(language);
 
 const DOW = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -22,9 +25,9 @@ const dated = d.date
 const span = d.startsAt && d.endsAt ? `${d.startsAt}–${d.endsAt}` : null;
 
 const STATUS: Record<string, string | null> = {
-  open: "受付中",
-  closed: "受付終了",
-  done: "開催済み",
+  open: t.meetupCard.statusOpen,
+  closed: t.meetupCard.statusClosed,
+  done: t.meetupCard.statusDone,
   planned: null,
 };
 
@@ -37,22 +40,23 @@ if (eventDate) eventDate.setHours(0, 0, 0, 0);
 const isPast = eventDate ? eventDate < today : false;
 const isCompleted = d.status === "done" || (!isPlanned && isPast);
 
-const status = isCompleted ? "開催済み" : STATUS[d.status];
+const status = isCompleted ? t.meetupCard.statusDone : STATUS[d.status];
 const ctaLabel =
-  d.cta ?? (isCompleted ? "イベントページを見る" : "connpass で申し込む");
+  d.cta ??
+  (isCompleted ? t.meetupCard.ctaCompletedDefault : t.meetupCard.ctaDefault);
 const isGhostCta = isPlanned || isCompleted;
 
 const facts = [
-  d.venue && { k: "会場", v: d.venue },
-  d.capacity && { k: "定員", v: d.capacity },
-  d.fee && { k: "参加費", v: d.fee },
+  d.venue && { k: t.meetupCard.factVenue, v: d.venue },
+  d.capacity && { k: t.meetupCard.factCapacity, v: d.capacity },
+  d.fee && { k: t.meetupCard.factFee, v: d.fee },
 ].filter(Boolean) as { k: string; v: string }[];
 
 const doneFacts = [
-  span && { k: "時間", v: span },
-  d.venue && { k: "会場", v: d.venue },
-  d.capacity && { k: "定員", v: d.capacity },
-  d.fee && { k: "参加費", v: d.fee },
+  span && { k: t.meetupCard.factTime, v: span },
+  d.venue && { k: t.meetupCard.factVenue, v: d.venue },
+  d.capacity && { k: t.meetupCard.factCapacity, v: d.capacity },
+  d.fee && { k: t.meetupCard.factFee, v: d.fee },
 ].filter(Boolean) as { k: string; v: string }[];
 
 const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
@@ -105,8 +109,8 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
           {d.program && d.program.length > 0 && (
             <details class="lt-wrap">
               <summary>
-                当日のタイムテーブル
-                {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+                {t.meetupCard.programHeading}
+                {t.meetupCard.programCount(talkCount)}
               </summary>
               <ol class="lt">
                 {d.program.map((p) => (
@@ -185,8 +189,8 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
         {d.program && d.program.length > 0 && (
           <details class="lt-wrap">
             <summary>
-              当日のタイムテーブル
-              {talkCount > 0 && `（LT ${talkCount} 本 ＋ 懇親会）`}
+              {t.meetupCard.programHeading}
+              {t.meetupCard.programCount(talkCount)}
             </summary>
             <ol class="lt">
               {d.program.map((p) => (
@@ -210,7 +214,7 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
               target="_blank"
               rel="noopener"
             >
-              {d.cta ?? "connpass で申し込む"}
+              {d.cta ?? t.meetupCard.ctaDefault}
             </a>
           </div>
         )}

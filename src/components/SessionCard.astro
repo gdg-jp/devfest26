@@ -3,6 +3,8 @@ import { render } from "astro:content";
 import SpeakerRow from "./SpeakerRow.astro";
 import { pastelCycle } from "../data/tracks";
 import type { ProgramSession } from "../data/program";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 interface Props {
   session: ProgramSession;
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const { session, pastelFrom } = Astro.props;
+const t = messages(language);
 const { entry, label, href, talks } = session;
 const { Content } = await render(entry);
 
@@ -48,7 +51,7 @@ const blocks = talks.map((talk) => ({
           <Content />
         </div>
       ) : (
-        !listsTalks && <p class="abst tbd">セッション概要は調整中です。</p>
+        !listsTalks && <p class="abst tbd">{t.sessionCard.pendingAbstract}</p>
       )
     }
   </div>

@@ -4,6 +4,7 @@ import { sanityClient } from "../lib/sanity/client";
 import { sources } from "../lib/sanity/sources";
 import { everyCity, EVENTS } from "../lib/sanity/queries";
 import { parseEvent } from "../tenants/fromSanity";
+import { language } from "../i18n/language";
 import type { TenantConfig } from "../tenants/types";
 import { recordInto, recording, report, type Recording } from "./problems";
 
@@ -118,8 +119,17 @@ async function take(): Promise<Snapshot> {
   const found = recording();
 
   return recordInto(found, async () => {
-    const raw =
-      await sanityClient().fetch<Record<string, unknown[]>>(batchQuery());
+    /*
+      `$lang` is this Worker build's own language for now — see
+      `src/i18n/language.ts`. The preview serves every city from one
+      deployment, so a request-time language (the `/en/` prefix on the URL
+      it is answering) is a Stage 6 concern; until then every preview build
+      answers in the one language it was built for.
+    */
+    const raw = await sanityClient().fetch<Record<string, unknown[]>>(
+      batchQuery(),
+      { lang: language },
+    );
 
     const entries = new Map<CollectionName, Entry[]>();
     for (const key of Object.keys(sources) as CollectionName[]) {

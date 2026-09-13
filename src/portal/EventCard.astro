@@ -1,6 +1,8 @@
 ---
 import type { PortalEvent } from "./events";
 import { previewMode } from "../preview/mode";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 /**
  * One DevFest in the front-page list.
@@ -17,6 +19,7 @@ interface Props {
 }
 
 const { event, past = false } = Astro.props;
+const t = messages(language);
 ---
 
 <li
@@ -28,7 +31,7 @@ const { event, past = false } = Astro.props;
     <span class="region">{event.region}</span>
     {
       previewMode && event.isPublic === false && (
-        <span class="badge-private">非公開</span>
+        <span class="badge-private">{t.eventCard.privateBadge}</span>
       )
     }
   </p>
@@ -43,7 +46,7 @@ const { event, past = false } = Astro.props;
         event.external && (
           <>
             <span aria-hidden="true"> ↗</span>
-            <span class="visually-hidden">（外部サイト）</span>
+            <span class="visually-hidden">{t.eventCard.externalSiteLabel}</span>
           </>
         )
       }

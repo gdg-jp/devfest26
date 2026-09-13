@@ -4,6 +4,13 @@ import Sprite from "../components/Sprite.astro";
 import Hub from "../layouts/Hub.astro";
 import EventCard from "./EventCard.astro";
 import { getPortalEvents } from "./events";
+import { messages } from "../i18n";
+import {
+  alternateLanguage,
+  alternatePath,
+  LANGUAGE_NAMES,
+  language,
+} from "../i18n/language";
 
 /**
  * The front page: every DevFest this site knows about, in time order.
@@ -14,10 +21,10 @@ import { getPortalEvents } from "./events";
  */
 
 const { upcoming, past } = await getPortalEvents();
+const t = messages(language);
 
-const title = "DevFest 開催地一覧";
-const description =
-  "各地の Google Developer Groups が開催する DevFest の一覧です。開催地ごとのページで、セッション・登壇者・タイムテーブルを見られます。";
+const title = t.portal.title;
+const description = t.portal.description;
 
 /** A card's link as an absolute URL. External ones already are. */
 const absolute = (href: string) =>
@@ -48,6 +55,9 @@ const jsonLd = {
     };
   }),
 };
+
+const switchHref = alternatePath(Astro.url.pathname);
+const switchLabel = LANGUAGE_NAMES[alternateLanguage];
 ---
 
 <Hub title={title} description={description} jsonLd={jsonLd}>
@@ -56,6 +66,9 @@ const jsonLd = {
   <header class="bar">
     <div class="wrap">
       <Logo variant="primary" class="mark" />
+      <a class="lang-switch" href={switchHref} hreflang={alternateLanguage}>
+        {switchLabel}
+      </a>
     </div>
   </header>
 
@@ -65,8 +78,7 @@ const jsonLd = {
         <p class="eyebrow">Google Developer Groups</p>
         <h1 class="sec-h">DevFest</h1>
         <p class="sec-lede">
-          DevFest は、世界各地の Google Developer Groups
-          がそれぞれの地域で開催する、コミュニティ主導のテクノロジーカンファレンスです。開催地を選ぶと、その年のセッションと登壇者を見られます。
+          {t.portal.introLede}
         </p>
       </div>
     </section>
@@ -76,7 +88,7 @@ const jsonLd = {
         <section class="sec tint band" aria-labelledby="upcoming">
           <div class="wrap">
             <h2 class="sec-h sub" id="upcoming">
-              開催予定
+              {t.portal.upcomingHeading}
             </h2>
             <ul class="list">
               {upcoming.map((event) => (
@@ -93,7 +105,7 @@ const jsonLd = {
         <section class="sec" aria-labelledby="past">
           <div class="wrap">
             <h2 class="sec-h sub" id="past">
-              終了したイベント
+              {t.portal.pastHeading}
             </h2>
             <ul class="list">
               {past.map((event) => (
@@ -109,7 +121,7 @@ const jsonLd = {
       upcoming.length === 0 && past.length === 0 && (
         <section class="sec">
           <div class="wrap">
-            <p class="empty">開催予定の DevFest はまだ公開されていません。</p>
+            <p class="empty">{t.portal.emptyMessage}</p>
           </div>
         </section>
       )
@@ -119,13 +131,12 @@ const jsonLd = {
   <footer>
     <div class="wrap">
       <p>
-        DevFest は Google Developer Groups
-        によるコミュニティイベントです。ブランドとプログラムについては
+        {t.portal.footerBefore}
         <a
           href="https://developers.google.com/community/devfest"
           target="_blank"
           rel="noopener">developers.google.com</a
-        > をご覧ください。
+        >{" "}{t.portal.footerAfter}
       </p>
     </div>
   </footer>
@@ -138,11 +149,31 @@ const jsonLd = {
   }
 
   .bar :global(.wrap) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 14px 0;
   }
 
   .bar :global(.mark) {
     width: 170px;
+  }
+
+  .lang-switch {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-decoration: none;
+    border: 1.5px solid var(--stroke);
+    border-radius: 999px;
+    padding: 5px 13px;
+    transition: background-color 0.16s var(--ease-out);
+  }
+
+  .lang-switch:hover {
+    background: var(--t-pa);
   }
 
   .intro {

@@ -12,6 +12,8 @@ import {
   type ProgramSession,
 } from "../data/program";
 import { getTimetable } from "../data/timetable";
+import { messages } from "../i18n";
+import { language } from "../i18n/language";
 
 /**
  * Every session has a page, whether or not the city splits it into talks: it
@@ -42,7 +44,8 @@ interface Props {
 // See `src/city/params.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await sessionProps(Astro.params);
-if (!props) return notFound(`セッション「${Astro.params.slug}」`);
+const t = messages(language);
+if (!props) return notFound(t.notFound.session(Astro.params.slug ?? ""));
 
 const { site, session } = props;
 const { entry, track, label, talks } = session;
@@ -69,11 +72,13 @@ const everyone = [
       .map((speaker) => [speaker.id, speaker]),
   ).values(),
 ];
-const names = everyone.map((speaker) => speaker.data.name).join("、");
+const names = everyone
+  .map((speaker) => speaker.data.name)
+  .join(t.common.nameSeparator);
 
 const description = abstract
   ? abstract.replace(/\s+/g, " ").slice(0, 110)
-  : `${title ?? label}／登壇：${names}`;
+  : t.detail.metaFallback(title ?? label, names);
 
 const url = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
@@ -113,7 +118,7 @@ const jsonLd = title
   jsonLd={jsonLd}
   back={{
     href: `${tenantHome(site.tenant)}#sessions`,
-    label: "← セッション一覧",
+    label: t.detail.backToList,
   }}
 >
   <p class="d-meta">
@@ -142,7 +147,7 @@ const jsonLd = title
   {
     listsTalks ? (
       <>
-        <h2 class="d-h">このセッションのトーク（{talks.length}）</h2>
+        <h2 class="d-h">{t.detail.talksHeading(talks.length)}</h2>
         <ol class="d-list">
           {talks.map((talk, i) => (
             <li
@@ -167,7 +172,7 @@ const jsonLd = title
       </>
     ) : (
       <>
-        <h2 class="d-h">登壇者</h2>
+        <h2 class="d-h">{t.detail.speakersHeading}</h2>
         <ul class="d-list">
           {everyone.map((speaker) => (
             <li class="d-card linkbox">
