@@ -1,17 +1,20 @@
 /**
- * The build matrix, as two JSON arrays:
+ * The build matrix, as JSON:
  *
  *   node --experimental-strip-types scripts/discover-targets.mjs
  *   cities=["kansai","tokyo"]
- *   targets=["portal","kansai"]
+ *   builds=[{"lang":"ja","target":"portal"},{"lang":"ja","target":"kansai"},{"lang":"en","target":"portal"},...]
  *
- * Run by the `discover` job in `.github/workflows/build.yml`. The difference
- * between the two lists is the whole point of the file:
+ * Run by the `discover` job in `.github/workflows/build.yml`. The two outputs
+ * answer different questions:
  *
  * - `cities` is every city the CMS holds. `publish` deletes the published
  *   directories that are *not* in it, because a city missing from this list is
  *   a city someone deleted in the Studio.
- * - `targets` is the subset this run rebuilds, which is what the matrix reads.
+ * - `builds` is every (language, target) pair this run rebuilds — one matrix
+ *   job per pair, so an English build failing never takes the Japanese one
+ *   down with it, or the other way round. Drives the matrix directly via
+ *   `include:`.
  *
  * Narrowing `cities` to the subset would therefore take the other cities off
  * the site. They are kept apart deliberately.
@@ -19,11 +22,13 @@
  * Deliberately runs on a bare checkout with no `pnpm install` behind it, which
  * is why it goes through `src/tenants/discovery.ts` — plain `fetch`, no
  * dependencies — rather than the Sanity client the site itself uses.
+ * `src/i18n/language.ts` is the same kind of dependency-free module.
  */
 
 import { appendFileSync } from "node:fs";
 import { discoverCitySlugs } from "../src/tenants/discovery.ts";
 import { PORTAL_TARGET } from "../src/tenants/ids.ts";
+import { LANGUAGES } from "../src/i18n/language.ts";
 
 /**
  * What the caller asked to rebuild, or `null` for everything.
@@ -86,9 +91,16 @@ for (const name of asked ?? []) {
 // leave the card describing the previous version.
 const targets = [PORTAL_TARGET, ...chosen];
 
+// Every language rebuilds every target: one build is one (language, city)
+// pair, so a bilingual deploy of 関西 is two matrix jobs, not one job that
+// somehow produces two languages. See `src/i18n/language.ts`.
+const builds = LANGUAGES.flatMap((lang) =>
+  targets.map((target) => ({ lang, target })),
+);
+
 const outputs = {
   cities: JSON.stringify(cities),
-  targets: JSON.stringify(targets),
+  builds: JSON.stringify(builds),
 };
 
 for (const [name, json] of Object.entries(outputs))
