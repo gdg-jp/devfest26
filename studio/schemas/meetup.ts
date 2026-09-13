@@ -1,4 +1,5 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 export const meetup = defineType({
   name: "meetup",
@@ -21,13 +22,13 @@ export const meetup = defineType({
     defineField({
       name: "title",
       title: "Title",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "subtitle",
       title: "Subtitle",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "status",
@@ -66,17 +67,17 @@ export const meetup = defineType({
     defineField({
       name: "venue",
       title: "Venue",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "capacity",
       title: "Capacity",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "fee",
       title: "Fee",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "url",
@@ -86,7 +87,7 @@ export const meetup = defineType({
     defineField({
       name: "cta",
       title: "CTA",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "program",
@@ -103,10 +104,10 @@ export const meetup = defineType({
             }),
             defineField({
               name: "what",
-              type: "string",
+              type: "internationalizedArrayString",
               validation: (Rule) => Rule.required(),
             }),
-            defineField({ name: "who", type: "string" }),
+            defineField({ name: "who", type: "internationalizedArrayString" }),
             defineField({
               name: "talk",
               type: "boolean",
@@ -126,8 +127,7 @@ export const meetup = defineType({
     defineField({
       name: "description",
       title: "Description",
-      type: "array",
-      of: [{ type: "block" }],
+      type: "internationalizedArrayRichText",
     }),
   ],
   preview: {
@@ -137,7 +137,7 @@ export const meetup = defineType({
     },
     prepare({ title, no }) {
       return {
-        title: title,
+        title: pickI18n(title),
         subtitle: `Meetup #${no}`,
       };
     },

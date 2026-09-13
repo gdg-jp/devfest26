@@ -9,6 +9,8 @@ import { aboutPage } from "./aboutPage";
 import { photoSet } from "./photoSet";
 import { externalEvent } from "./externalEvent";
 import { deploy } from "./deploy";
+import { stringList } from "./types/stringList";
+import { richText } from "./types/richText";
 
 export const schemaTypes = [
   event,
@@ -22,4 +24,8 @@ export const schemaTypes = [
   photoSet,
   externalEvent,
   deploy,
+  // Alias types named in `internationalizedArray`'s `fieldTypes`, in
+  // sanity.config.ts — not documents, but registered the same way.
+  stringList,
+  richText,
 ];

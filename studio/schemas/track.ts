@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 /**
  * A track is a document rather than a row inside `event`, so that a session can
@@ -28,14 +29,14 @@ export const track = defineType({
     defineField({
       name: "label",
       title: "Label",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "sub",
       title: "Sub",
       description: "ラベルの下に出る一行説明。",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -70,7 +71,7 @@ export const track = defineType({
       title: "Card Label",
       description:
         "各カードの上に、セッション番号の代わりに出す文字列（例: Unscheduled）。",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
   ],
   orderings: [
@@ -84,6 +85,12 @@ export const track = defineType({
     select: {
       title: "label",
       subtitle: "sub",
+    },
+    prepare({ title, subtitle }) {
+      return {
+        title: pickI18n(title) ?? "(no label)",
+        subtitle: pickI18n(subtitle),
+      };
     },
   },
 });
