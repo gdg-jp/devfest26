@@ -10,6 +10,8 @@ import {
   type ProgramSession,
   type ProgramTalk,
 } from "../data/program";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * One page per talk that is an entry in its own right.
@@ -42,19 +44,22 @@ interface Props {
 // See `src/city/params.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await talkProps(Astro.params);
-if (!props) return notFound(`トーク「${Astro.params.slug}」`);
+const t = messages(currentLanguage());
+if (!props) return notFound(t.notFound.talk(Astro.params.slug ?? ""));
 
 const { site, session, talk } = props;
 const { track, label } = session;
 const { Content } = await render(talk.entry);
 
 const abstract = talk.entry.body?.trim();
-const names = talk.speakers.map((speaker) => speaker.data.name).join("、");
+const names = talk.speakers
+  .map((speaker) => speaker.data.name)
+  .join(t.common.nameSeparator);
 const sessionTitle = session.entry.data.title ?? label;
 
 const description = abstract
   ? abstract.replace(/\s+/g, " ").slice(0, 110)
-  : `${talk.title ?? "TBD"}／登壇：${names}`;
+  : t.detail.metaFallback(talk.title ?? "TBD", names);
 
 const url = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
@@ -110,7 +115,7 @@ const jsonLd = talk.title
 
   <h1 class:list={["d-title", { tbd: !talk.title }]}>{talk.title ?? "TBD"}</h1>
   <p class="d-sub">
-    セッション：<a href={session.href}>{sessionTitle}</a>
+    {t.detail.sessionPrefix}<a href={session.href}>{sessionTitle}</a>
   </p>
 
   {
@@ -121,7 +126,7 @@ const jsonLd = talk.title
     )
   }
 
-  <h2 class="d-h">登壇者</h2>
+  <h2 class="d-h">{t.detail.speakersHeading}</h2>
   <ul class="d-list">
     {
       talk.speakers.map((speaker) => (

@@ -2,6 +2,7 @@ import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { presentationTool } from "sanity/presentation";
 import { visionTool } from "@sanity/vision";
+import { internationalizedArray } from "sanity-plugin-internationalized-array";
 import { schemaTypes } from "./schemas";
 import { structure } from "./structure";
 import { CITY_SCOPED_TYPES } from "./structure";
@@ -25,6 +26,28 @@ import { deployTool } from "./tools/deploy";
  * better answer than broken.
  */
 const previewOrigin = process.env.SANITY_STUDIO_PREVIEW_ORIGIN?.trim();
+
+/**
+ * Kept in this one place because it has to match `src/i18n/language.ts` on
+ * the site side — this is the CMS's half of the same two languages.
+ */
+const LANGUAGES = [
+  { id: "ja", title: "日本語" },
+  { id: "en", title: "English" },
+];
+
+/** Every document type with at least one internationalized-array field. */
+const I18N_DOCUMENT_TYPES = [
+  "event",
+  "aboutPage",
+  "session",
+  "talk",
+  "speaker",
+  "track",
+  "meetup",
+  "partner",
+  "externalEvent",
+];
 
 export default defineConfig({
   name: "default",
@@ -58,6 +81,24 @@ export default defineConfig({
         ]
       : []),
     visionTool(),
+    internationalizedArray({
+      languages: LANGUAGES,
+      defaultLanguages: ["ja"],
+      fieldTypes: ["string", "text", "stringList", "richText", "url"],
+      /*
+        The default (true) reorders an internationalized array's items to
+        match `languages` the moment a document is opened — which, for a
+        published document whose stored order differs, patches it and leaves
+        a no-op draft sitting next to the published version. This site has
+        its own "publish everything" batch tool (see tools/batchPublish),
+        and a pile of ghost drafts with no real content change is exactly
+        what it would then have to sift through.
+      */
+      restoreOrder: false,
+      languageFilter: {
+        documentTypes: I18N_DOCUMENT_TYPES,
+      },
+    }),
   ],
 
   /*

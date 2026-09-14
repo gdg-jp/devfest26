@@ -27,8 +27,8 @@ pnpm dev
 | :------------------ | :---------------------------------------------------------- |
 | `pnpm dev`          | 開発サーバー（トップページ＋全都市・http://localhost:4321） |
 | `pnpm dev:portal`   | 開発サーバー（トップページだけ）                            |
-| `pnpm build`        | 全部を `./dist/all/` にビルド                               |
-| `pnpm build:portal` | トップページだけを `./dist/portal/` にビルド                |
+| `pnpm build`        | 全部を `./dist/ja-all/` にビルド                            |
+| `pnpm build:portal` | トップページだけを `./dist/ja-portal/` にビルド             |
 | `pnpm preview`      | ビルド結果をローカルで確認                                  |
 | `pnpm preview:dev`  | 下書きプレビュー（SSR＋認証ゲート・[preview/](preview/)）   |
 | `pnpm type-check`   | 型・コンテンツスキーマの検証                                |
@@ -44,9 +44,15 @@ TARGETS=kansai pnpm build
 TARGETS=portal,kansai pnpm build
 ```
 
-出力は `dist/<TARGETS を正規化した名前>/`（未指定なら `dist/all/`）、キャッシュも同じ名前で分かれます。コンテンツストアはコレクション名でキーされていて都市を区別しないので、共有すると前のビルドの都市が混ざります。
+**どの言語で作るかは `SITE_LANG` で決めます。** `ja`（既定）か `en` です。`LANG` ではありません — POSIX の標準変数で、ビルドマシンのロケールが入っていることが多いためです。
 
-**URL は本番と同じ形で出ます。** `/kansai`、`/kansai/sessions/a-01` — 開発サーバーでもビルド結果でも同じです。
+```bash
+SITE_LANG=en TARGETS=kansai pnpm build
+```
+
+出力は `dist/<言語>-<TARGETS を正規化した名前>/`（未指定なら `dist/ja-all/`）、キャッシュも同じ名前で分かれます。コンテンツストアはコレクション名でキーされていて言語も都市も区別しないので、共有すると前のビルドのものが混ざります。
+
+**URL は本番と同じ形で出ます。** `/kansai`、`/kansai/sessions/a-01` — 開発サーバーでもビルド結果でも同じです。英語版は頭に `/en` が付きます（`/en/kansai`、`/en/kansai/sessions/a-01`）。
 
 **Sanity を使わない場合、1 回のビルドで作れる都市は 1 つだけです。** Markdown のローダーは 1 都市のディレクトリを読み、その中のエントリ id はファイル名そのもの（`tracks/a.md` があるから `track: a` が解決する）なので、2 都市を同じストアに入れると id がぶつかります。`TARGETS` 未指定なら `kansai`、他の都市は `TARGETS=tokyo pnpm dev` のように指定してください。トップページには**両方のカードが出ます** — カードはビルドしたかどうかではなく、都市が存在するかどうかで決まるからです。
 
@@ -64,32 +70,35 @@ SITE_URL=https://example.org pnpm exec astro build
 
 **GitHub Pages の Source は `gh-pages` ブランチ（`/` root）です。** リポジトリ設定 → Pages で「Deploy from a branch」を選んでください。ブランチ自体は CI が最初の実行時に作るので、手で用意する必要はありません。
 
-`.github/workflows/build.yml` は 3 段構えです。
+`.github/workflows/build.yml` は 3 段構えです。1 ビルド = 1 (言語, ターゲット) の組み合わせで、`discover` が言語 × ターゲットの直積を matrix に流し込みます（`src/i18n/language.ts` の `LANGUAGES`）。
 
 ```text
 discover ──▶ build (matrix, fail-fast: false) ──▶ publish
-                ├ portal   ✅
-                ├ kansai   ❌  ← アーティファクトを出さない
-                └ tokyo    ✅
+                ├ ja/portal    ✅
+                ├ ja/kansai    ❌  ← アーティファクトを出さない
+                ├ en/portal    ✅
+                └ en/kansai    ✅
 ```
 
 - **discover** — Sanity に「どんな都市があるか」を訊いて matrix を作ります。`pnpm install` すら走りません（`scripts/discover-targets.mjs` は依存ゼロで動きます）
-- **build** — 1 ターゲット 1 ジョブ。`fail-fast: false` なので、1 都市が落ちても他は最後まで走ります。**落ちたジョブはアーティファクトを出しません**
-- **publish** — `gh-pages` を取ってきて、**アーティファクトがある都市だけ**そのディレクトリを丸ごと差し替え、無い都市には触りません。Sanity から消えた都市は削除します
+- **build** — 1 (言語, ターゲット) 1 ジョブ。`fail-fast: false` なので、英語版が落ちても日本語版は最後まで走ります（逆も同様）。**落ちたジョブはアーティファクトを出しません**
+- **publish** — `gh-pages` を取ってきて、**アーティファクトがある (言語, 都市) だけ**そのディレクトリを丸ごと差し替え、無いものには触りません。Sanity から消えた都市は両言語とも削除します
 
 公開されるレイアウトはこうなります。
 
 ```text
-gh-pages/            ← トップページ（portal のビルド）と public/ の共有ファイル
-gh-pages/kansai/     ← kansai のビルド（CSS も画像もこの下）
-gh-pages/tokyo/      ← tokyo のビルド
+gh-pages/            ← トップページ（ja/portal のビルド）と public/ の共有ファイル
+gh-pages/kansai/     ← kansai の日本語ビルド（CSS も画像もこの下）
+gh-pages/tokyo/      ← tokyo の日本語ビルド
+gh-pages/en/         ← 英語版トップページ（en/portal のビルド）
+gh-pages/en/kansai/  ← kansai の英語ビルド
 gh-pages/.nojekyll   ← Astro は _astro/ に資産を出すので必須
 gh-pages/.cities     ← どのディレクトリが都市かの記録。publish が読み書きします
 ```
 
-**1 都市だけのビルド（`TARGETS=kansai`）は、その都市の下で完結します。** バンドルの出力先も `kansai/_astro/` になるので（`astro.config.ts` の `build.assets`）、ディレクトリごと差し替えれば済みます。`public/` の共有ファイル（OG 画像・`.ico`）だけはルートにあり、portal のジョブが公開します。
+**1 都市だけのビルド（`TARGETS=kansai SITE_LANG=en`）は、その都市の下で完結します。** バンドルの出力先も `en/kansai/_astro/` になるので（`astro.config.ts` の `build.assets`）、ディレクトリごと差し替えれば済みます。`public/` の共有ファイル（OG 画像・`.ico`）だけはルートにあり、`ja/portal` のジョブが公開します（`en/portal` の `_astro/` は内容が同じなら同じハッシュ名になるので、無ければ足すだけです）。
 
-ローカルで同じ形を作るには `pnpm build` を実行してください。`dist/all/` が公開されるサイトそのものです。
+ローカルで同じ形を作るには `pnpm build` を実行してください。`dist/ja-all/` が公開されるサイトの日本語側そのものです（英語側は `SITE_LANG=en pnpm build` で `dist/en-all/`）。
 
 ## コンテンツの編集
 

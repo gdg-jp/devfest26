@@ -3,6 +3,8 @@ import { Image } from "astro:assets";
 import type { ResolvedTenant } from "../tenants";
 import { BACKDROP_QUALITY, BACKDROP_WIDTH, isRemotePhoto } from "../lib/photo";
 import { registerBackdrop } from "../lib/photos";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
@@ -10,6 +12,7 @@ interface Props {
 
 const { site } = Astro.props;
 const { event, links } = site;
+const t = messages(currentLanguage());
 
 const backdrop = await registerBackdrop(site.tenant);
 ---
@@ -42,17 +45,16 @@ const backdrop = await registerBackdrop(site.tenant);
   <div class="wrap">
     <p class="eyebrow mid" data-reveal="up">Join us</p>
     <h2 data-reveal="up">
-      それぞれの専門を持ち寄って、<br />{event.monthDay}に{event.venue.city}で。
+      {t.register.headingLine1}<br />{
+        t.register.headingLine2(event.monthDay, event.venue.city)
+      }
     </h2>
     <p data-reveal="up">
-      技術を深めたい方も、新しい分野の視点に触れたい方も、これから AI
-      を使って何かをつくりたい方も歓迎します。AI と人がともにつくる未来を、{
-        site.title
-      } で一緒に考えてみませんか。
+      {t.register.lede(site.title)}
     </p>
     <div class="cta-row" data-reveal="up">
       <a class="btn" href={links.register} target="_blank" rel="noopener">
-        connpass で参加登録する
+        {t.register.ctaRegister}
       </a>
       <a
         class="btn ghost"
@@ -60,12 +62,11 @@ const backdrop = await registerBackdrop(site.tenant);
         target="_blank"
         rel="noopener"
       >
-        {event.host} について
+        {t.register.ctaCommunity(event.host)}
       </a>
     </div>
     <p class="reg-note" data-reveal="up">
-      現地参加・オンライン参加ともに{event.fee}です。お申し込みは connpass
-      から。
+      {t.register.note(event.fee)}
     </p>
   </div>
 </section>

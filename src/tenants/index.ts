@@ -1,4 +1,5 @@
 import { eventDates } from "./eventDates";
+import { currentLanguage } from "../i18n/language";
 import { previewMode } from "../preview/mode";
 import { report } from "../preview/problems";
 import { fromSanityIfEnabled } from "./source";
@@ -50,7 +51,11 @@ function resolve(config: TenantConfig) {
     editionEn: editionEn(config),
     event: {
       ...event,
-      ...eventDates(config.event.startsAt, config.event.endsAt),
+      ...eventDates(
+        config.event.startsAt,
+        config.event.endsAt,
+        currentLanguage(),
+      ),
       social: social && { ...social, hours: `${social.start} – ${social.end}` },
     },
   };

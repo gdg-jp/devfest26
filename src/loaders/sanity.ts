@@ -1,5 +1,6 @@
 import type { Loader } from "astro/loaders";
 import { sanityClient } from "../lib/sanity/client";
+import { language } from "../i18n/language";
 
 export interface SanityEntry {
   /** Unique within the collection. Sessions reference speakers by this. */
@@ -51,10 +52,10 @@ export function sanityLoader({
 
     load: async ({ store, parseData, generateDigest, logger }) => {
       const scope = tenants ? await tenants() : undefined;
-      const docs = await sanityClient().fetch<never[]>(
-        query,
-        scope ? { tenants: scope } : {},
-      );
+      const docs = await sanityClient().fetch<never[]>(query, {
+        lang: language,
+        ...(scope ? { tenants: scope } : {}),
+      });
 
       // A full replace: entries deleted in the Studio have to disappear here
       // too, and there is no cheap way to diff against the previous run.

@@ -19,6 +19,7 @@
 
 import { sanityEnabled } from "../lib/sanity/env";
 import { previewMode } from "../preview/mode";
+import { language, DEFAULT_LANGUAGE } from "../i18n/language";
 import { discoverCitySlugs } from "./discovery";
 import { DEFAULT_TENANT, LOCAL_TENANT_IDS, PORTAL_TARGET } from "./ids";
 
@@ -61,16 +62,21 @@ export const soleCity =
     : undefined;
 
 /**
- * Output and cache directory name. Distinct per target set, because the
- * content store is keyed by collection name and would otherwise carry one
- * build's cities into the next one's.
+ * Output and cache directory name. Distinct per target set *and* per
+ * language: the content store is keyed by collection name, not by language,
+ * so a shared cache would carry one language's entries into the other's
+ * build. Prefixed even for the default language, so the key always says which
+ * language it is rather than leaving that implicit for `ja` alone.
  */
-export const targetKey = requested
-  ? [...requested]
-      .sort()
-      .join("-")
-      .replace(/[^A-Za-z0-9._-]/g, "_")
-  : "all";
+export const targetKey = (() => {
+  const targets = requested
+    ? [...requested]
+        .sort()
+        .join("-")
+        .replace(/[^A-Za-z0-9._-]/g, "_")
+    : "all";
+  return `${language}-${targets}`;
+})();
 
 /**
  * Whether a city whose configuration does not validate should fail the build.
@@ -91,6 +97,15 @@ export const strictTenants = Boolean(process.env.STRICT_TENANTS?.trim());
  */
 export const LOCAL_TENANT: string = (() => {
   if (sanityEnabled()) return requestedCities?.[0] ?? DEFAULT_TENANT;
+
+  if (language !== DEFAULT_LANGUAGE) {
+    throw new Error(
+      `SITE_LANG=${language} was requested, but a build with no SANITY_PROJECT_ID ` +
+        `reads the tenant configs in src/tenants/, which are Japanese-only. Set ` +
+        `SANITY_PROJECT_ID to build an English site, or drop SITE_LANG to build ` +
+        `the default Japanese one.`,
+    );
+  }
 
   const asked = requestedCities;
   if (!asked || asked.length === 0) return DEFAULT_TENANT;

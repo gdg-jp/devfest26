@@ -1,4 +1,4 @@
-import { defineType, defineField, defineArrayMember } from "sanity";
+import { defineType, defineField } from "sanity";
 
 export const aboutPage = defineType({
   name: "aboutPage",
@@ -15,39 +15,48 @@ export const aboutPage = defineType({
     defineField({
       name: "lead",
       title: "Lead",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "body",
       title: "Body",
-      type: "array",
-      of: [{ type: "block" }],
+      type: "internationalizedArrayRichText",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "callout",
       title: "Callout",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "audienceEyebrow",
       title: "Audience Eyebrow",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "audienceHeading",
       title: "Audience Heading",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "audienceItems",
       title: "Audience Items",
       description: "**強調**で該当部分をハイライトできます。",
-      type: "array",
-      of: [defineArrayMember({ type: "string" })],
-      // Optional as a whole, but an empty list would render an empty panel.
-      validation: (Rule) => Rule.min(1),
+      type: "internationalizedArrayStringList",
+      // Optional as a whole, but a language whose list is empty would render
+      // an empty panel. `Rule.min(1)` on the array itself would only say
+      // "at least one language", which is a different thing.
+      validation: (Rule) =>
+        Rule.custom((items?: { language?: string; value?: string[] }[]) => {
+          const empty = (items ?? [])
+            .filter((item) => !item?.value?.length)
+            .map((item) => item?.language ?? "?");
+
+          return empty.length === 0
+            ? true
+            : `Give ${empty.join(", ")} at least one item, or remove the language entirely — an empty list renders an empty panel.`;
+        }),
     }),
   ],
 });

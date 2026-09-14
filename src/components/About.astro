@@ -4,12 +4,15 @@ import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import { inlineMarkdown } from "../lib/inlineMarkdown";
 import { byTenant } from "../data/collections";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   tenant: string;
 }
 
 const { tenant } = Astro.props;
+const t = messages(currentLanguage());
 
 // At most one per city; a city that has not written its pitch renders nothing.
 const entry = (await byTenant("about", tenant))[0];
@@ -44,7 +47,7 @@ const Content = entry ? (await render(entry)).Content : null;
           About
         </p>
         <h2 class="sec-h" data-reveal="up">
-          イベントについて
+          {t.about.heading}
         </h2>
 
         <div class="split">

@@ -6,10 +6,25 @@
  * could drift out of sync with them. Formatting is pinned to Asia/Tokyo so the
  * output does not depend on the build machine's timezone.
  */
+import type { Language } from "../i18n";
 
 const JST = "Asia/Tokyo";
 const DOW_JA = ["日", "月", "火", "水", "木", "金", "土"];
 const DOW_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 interface Parts {
   year: string;
@@ -78,20 +93,35 @@ export interface EventDates {
   countdownLabel: string;
 }
 
-export function eventDates(startsAt: string, endsAt: string): EventDates {
+/**
+ * `lang` has no default on purpose: every caller reaches these labels from a
+ * build that already knows its language, and a default here would have let
+ * one of them quietly print Japanese dates on the English site.
+ */
+export function eventDates(
+  startsAt: string,
+  endsAt: string,
+  lang: Language,
+): EventDates {
   const s = partsInJst(startsAt);
   const e = partsInJst(endsAt);
 
   const startTime = `${s.hour}:${s.minute}`;
   const endTime = `${e.hour}:${e.minute}`;
   const dowEn = DOW_EN[s.dow];
+  const month = Number(s.month);
+  const day = Number(s.day);
 
   return {
     isoDate: `${s.year}-${s.month}-${s.day}`,
-    dateLabel: `${s.year}年${Number(s.month)}月${Number(s.day)}日`,
-    dateShort: `${Number(s.month)}/${Number(s.day)}`,
-    monthDay: `${Number(s.month)}月${Number(s.day)}日`,
-    dayOfWeek: DOW_JA[s.dow],
+    dateLabel:
+      lang === "en"
+        ? `${MONTH_EN[month - 1]} ${day}, ${s.year}`
+        : `${s.year}年${month}月${day}日`,
+    dateShort: `${month}/${day}`,
+    monthDay:
+      lang === "en" ? `${MONTH_EN[month - 1]} ${day}` : `${month}月${day}日`,
+    dayOfWeek: lang === "en" ? dowEn : DOW_JA[s.dow],
     dayOfWeekEn: dowEn,
     startTime,
     endTime,

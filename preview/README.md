@@ -16,15 +16,22 @@ Sanity の **draft**（未公開の下書き）を含んだサイトを、GDG �
        └─ 通過 → @astrojs/cloudflare
                    ├─ /_astro/*, /og/* … → ASSETS（サイトのクライアントビルド）
                    └─ ページ → SSR → Sanity（drafts）を今読む
+                        ├─ /kansai      → 日本語
+                        └─ /en/kansai   → 英語
 ```
 
 Worker は 1 つです。`wrangler.jsonc` の `main` がゲートを指していて、アダプタは `main` が空のときだけ自分のエントリを入れるので、こう書くだけでゲートが前に立ちます。**この順番でなければいけません** — アダプタのハンドラは静的アセットを自分で返してしまうので、Astro のミドルウェアに置いたゲートは `/kansai/_astro/*.css` を素通りさせます。
 
-サイト側のコードで下書き対応をしているのは 3 ファイルだけです。
+**日本語と英語が同じ Worker に載っています。** 公開サイトは 1 ビルド = 1 言語（`SITE_LANG`）ですが、プレビューは都市と同じ扱いで言語もリクエスト時に解決します。`astro.config.ts` が両方の接頭辞でルートを注入し、`src/middleware.ts` が URL から言語を読んで、そのレンダーの間だけ有効なスコープを開きます。
+
+Worker を言語ごとに分けなかったのは、そのほうが高くつくからです — ホスト名が増えれば GDG Accounts に 2 つ目の redirect URI を登録することになり、セッション Cookie はオリジン単位なのでサインインも 2 回、Presentation の `SANITY_STUDIO_PREVIEW_ORIGIN` は 1 つしか指せず、言語スイッチャが「接頭辞を足し引きするだけ」でなくなります。
+
+サイト側のコードで下書き対応をしているのは 4 ファイルだけです。
 
 - [`src/preview/mode.ts`](../src/preview/mode.ts) — どちらのモードか。ビルド時に定数へ置き換わるので、本番ビルドにプレビュー用の分岐は 1 行も残りません
-- [`src/preview/drafts.ts`](../src/preview/drafts.ts) — **1 レンダー = Sanity へ 1 往復**。全コレクションと全都市の `event` を 1 本の GROQ にまとめて取り、既存のマッパーと既存の zod スキーマにそのまま通します
+- [`src/preview/drafts.ts`](../src/preview/drafts.ts) — **1 レンダー = Sanity へ 1 往復**。全コレクションと全都市の `event` を 1 本の GROQ にまとめて取り、既存のマッパーと既存の zod スキーマにそのまま通します。スナップショットは言語ごとに持ちます（`$lang` がクエリに入っているので、1 つのスナップショットは 1 つの言語です）
 - [`src/preview/problems.ts`](../src/preview/problems.ts) — 本番ビルドなら落ちる不備を、記録してそのカードだけ落とす
+- [`src/middleware.ts`](../src/middleware.ts) — リクエストの言語を [`src/preview/requestLanguage.ts`](../src/preview/requestLanguage.ts) の `AsyncLocalStorage` に入れる。モジュールスコープの変数では駄目です — workerd は 1 つの isolate でリクエストを並行に処理するので、Sanity の fetch を待っている日本語のレンダーが、英語のリクエストに書き換えられた後で再開します
 
 ## 誰が見られるか
 
@@ -182,11 +189,11 @@ pnpm preview:build
 ```
 
 ```bash
-cp preview/.dev.vars dist/all/server/.dev.vars
+cp preview/.dev.vars dist/ja-all/server/.dev.vars
 ```
 
 ```bash
-pnpm exec wrangler dev -c dist/all/server/wrangler.json
+pnpm exec wrangler dev -c dist/ja-all/server/wrangler.json
 ```
 
 `wrangler` は設定ファイルの隣で `.dev.vars` を探すので、コピーが要ります（`dist/` は gitignore 済みです）。こちらなら `/studio` も本番と同じ形で確認できます — ただし Studio が Sanity に繋がるには、そのオリジン（`http://localhost:4321`）を CORS origins に足す必要があります。足していなければ Studio は「Connect this Studio to your project」を表示します。
@@ -208,4 +215,5 @@ pnpm exec wrangler dev -c dist/all/server/wrangler.json
 - `run_worker_first` により、HTML だけでなく CSS・画像・favicon まですべてゲートを通ります。ここを外すと `/kansai/_astro/*.css` が誰でも読める状態になります。除外しているのは Vite の開発用パスだけで、デプロイ先にはそこに置かれるファイルが 1 つもありません
 - プレビューのビルドは Sanity を一切読みません。コレクションは空で登録され、内容はレンダリング時に取りに行きます。ビルド成果物の中に CMS のコピーは存在しません
 - ビルドが失敗した回はデプロイまで到達しないので、**前回のプレビューがそのまま残ります**
+- **`/en` は予約パスです。** `/studio` や `portal` と同じで、slug が `en` の都市は作れません
 - サインアウトは `/auth/logout` です。GDG Accounts 側のセッションは残るので、アカウントを切り替えたい場合は GDG Accounts でもサインアウトしてください

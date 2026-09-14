@@ -1,4 +1,5 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 export const session = defineType({
   name: "session",
@@ -33,14 +34,17 @@ export const session = defineType({
     defineField({
       name: "title",
       title: "Title",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
       description: "The URL: /sessions/<slug>.",
-      options: { source: "title", maxLength: 96 },
+      options: {
+        source: (doc) => pickI18n(doc.title) ?? "",
+        maxLength: 96,
+      },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -105,8 +109,7 @@ export const session = defineType({
     defineField({
       name: "abstract",
       title: "Abstract",
-      type: "array",
-      of: [{ type: "block" }],
+      type: "internationalizedArrayRichText",
     }),
   ],
   preview: {
@@ -117,8 +120,8 @@ export const session = defineType({
     },
     prepare({ title, track, start }) {
       return {
-        title: title || "TBD",
-        subtitle: `${track ?? "No track"} - ${start || "時間未定"}`,
+        title: pickI18n(title) || "TBD",
+        subtitle: `${pickI18n(track) ?? "No track"} - ${start || "時間未定"}`,
       };
     },
   },

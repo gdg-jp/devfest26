@@ -3,6 +3,8 @@ import Sprite from "../components/Sprite.astro";
 import Logo from "../components/Logo.astro";
 import { buildableCities } from "../tenants";
 import { stickers } from "../data/stickers";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 import "../styles/tokens.css";
 // base.css carries the reset and the rule that hides the inline sprite.
 import "../styles/base.css";
@@ -25,6 +27,7 @@ export async function getStaticPaths() {
 
 const { site } = Astro.props;
 const { event, tagline } = site;
+const t = messages(currentLanguage());
 const glyphs = [
   {
     name: "slashes",
@@ -43,7 +46,7 @@ const glyphs = [
 ---
 
 <!doctype html>
-<html lang={site.lang} data-theme={site.theme}>
+<html lang={t.meta.htmlLang} data-theme={site.theme}>
   <head>
     <meta charset="utf-8" />
     <title>{site.fullTitle ?? site.title} — OG</title>
@@ -95,7 +98,7 @@ const glyphs = [
               {event.dayOfWeekEn.toUpperCase()}
             </span>
             <span class="pill">{event.venue.name}</span>
-            <span class="pill">参加費{event.fee}</span>
+            <span class="pill">{t.og.fee(event.fee)}</span>
           </div>
           <p class="host">HOSTED BY {event.host.toUpperCase()}</p>
         </div>

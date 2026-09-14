@@ -1,45 +1,39 @@
 ---
 import type { ResolvedTenant } from "../tenants";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
+const t = messages(currentLanguage());
 ---
 
 <section class="sec" id="coc">
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Safety</p>
-    <h2 class="sec-h" data-reveal="up">安心して参加いただくために</h2>
+    <h2 class="sec-h" data-reveal="up">{t.codeOfConduct.heading}</h2>
 
     <div class="rules" data-stagger>
       <div class="panel harassment" data-reveal="up">
-        <h3>アンチハラスメントポリシー</h3>
+        <h3>{t.codeOfConduct.harassmentTitle}</h3>
         <p>
-          ハラスメントとは、性差、性同一性と表現、性的指向、障害、外見や身体的特徴、人種、宗教、公共な場での性的な画像や類する表現、脅迫、ストーカー行為、望まない写真撮影や録音・録画、不適切な接触、およびそれらに関連した不快な言動を含みます。
+          {t.codeOfConduct.harassmentIntro}
         </p>
         <ul>
-          <li>
-            GDG
-            では、すべての参加者が安心してナレッジ共有に集中できる環境を重視しています
-          </li>
-          <li>ハラスメント行為は一切許容されません</li>
-          <li>
-            不適切な参加目的と判断された場合、参加をお断りすることがあります
-          </li>
+          {t.codeOfConduct.harassmentItems.map((item) => <li>{item}</li>)}
         </ul>
         <p>
-          また、イベント会場だけでなく、SNS
-          やブログ等での発信においても、上記ポリシーを遵守してください。万が一ハラスメント行為を見聞きした場合は、主催者までご連絡ください。
+          {t.codeOfConduct.harassmentFooter}
         </p>
       </div>
 
       <div class="panel" data-reveal="up">
-        <h3>Code of Conduct</h3>
+        <h3>{t.codeOfConduct.cocTitle}</h3>
         <p>
-          GDG では、すべての参加者が楽しく安心して参加できるよう行動規範（Code
-          of Conduct）を定めています。
+          {t.codeOfConduct.cocDesc}
         </p>
         <div class="cta-row">
           <a
@@ -48,7 +42,7 @@ const { site } = Astro.props;
             target="_blank"
             rel="noopener"
           >
-            行動規範（日本語）
+            {t.codeOfConduct.cocJaLabel}
           </a>
           <a
             class="btn sm ghost"
@@ -56,7 +50,7 @@ const { site } = Astro.props;
             target="_blank"
             rel="noopener"
           >
-            Code of Conduct (English)
+            {t.codeOfConduct.cocEnLabel}
           </a>
         </div>
       </div>

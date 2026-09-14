@@ -1,4 +1,5 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 /**
  * One presentation inside a session.
@@ -22,7 +23,7 @@ export const talk = defineType({
     defineField({
       name: "title",
       title: "Title",
-      type: "string",
+      type: "internationalizedArrayString",
       description: "Leave empty to inherit the session's title.",
     }),
     defineField({
@@ -30,7 +31,10 @@ export const talk = defineType({
       title: "Slug",
       type: "slug",
       description: "The URL: /talks/<slug>.",
-      options: { source: "title", maxLength: 96 },
+      options: {
+        source: (doc) => pickI18n(doc.title) ?? "",
+        maxLength: 96,
+      },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -49,8 +53,7 @@ export const talk = defineType({
     defineField({
       name: "abstract",
       title: "Abstract",
-      type: "array",
-      of: [{ type: "block" }],
+      type: "internationalizedArrayRichText",
     }),
   ],
   preview: {
@@ -61,8 +64,10 @@ export const talk = defineType({
     },
     prepare({ title, speaker0, start }) {
       return {
-        title: title || "TBD",
-        subtitle: [speaker0, start].filter(Boolean).join(" - ") || "No speaker",
+        title: pickI18n(title) || "TBD",
+        subtitle:
+          [pickI18n(speaker0), start].filter(Boolean).join(" - ") ||
+          "No speaker",
       };
     },
   },

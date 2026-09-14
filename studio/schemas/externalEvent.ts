@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 /**
  * A DevFest the front page links to but this codebase does not build: another
@@ -15,7 +16,7 @@ export const externalEvent = defineType({
     defineField({
       name: "title",
       title: "Title",
-      type: "string",
+      type: "internationalizedArrayString",
       description: "カードの見出し。例: DevFest 2025 in Kansai",
       validation: (Rule) => Rule.required(),
     }),
@@ -23,7 +24,9 @@ export const externalEvent = defineType({
       name: "slug",
       title: "Slug",
       type: "slug",
-      options: { source: "title" },
+      options: {
+        source: (doc) => pickI18n(doc.title) ?? "",
+      },
       description:
         "一覧の中で重複しない識別子。都市の slug（kansai など）とも重複させないでください。",
       validation: (Rule) => Rule.required(),
@@ -31,7 +34,7 @@ export const externalEvent = defineType({
     defineField({
       name: "region",
       title: "Region",
-      type: "string",
+      type: "internationalizedArrayString",
       description: "日付の横に出る地域名。例: 関西 / 東京 / 福岡",
       validation: (Rule) => Rule.required(),
     }),
@@ -51,13 +54,13 @@ export const externalEvent = defineType({
     defineField({
       name: "city",
       title: "City",
-      type: "string",
+      type: "internationalizedArrayString",
       description: "例: 大阪",
     }),
     defineField({
       name: "venue",
       title: "Venue",
-      type: "string",
+      type: "internationalizedArrayString",
       description: "会場名。未定なら空のままで構いません。",
     }),
     defineField({
@@ -86,8 +89,7 @@ export const externalEvent = defineType({
     defineField({
       name: "note",
       title: "Note",
-      type: "text",
-      rows: 2,
+      type: "internationalizedArrayText",
       description: "会場の下に 1 行。他の項目で表せないことがあれば。",
     }),
   ],
@@ -103,8 +105,10 @@ export const externalEvent = defineType({
   preview: {
     select: { title: "title", subtitle: "region", date: "startsAt" },
     prepare: ({ title, subtitle, date }) => ({
-      title,
-      subtitle: [subtitle, date?.slice(0, 10)].filter(Boolean).join(" ／ "),
+      title: pickI18n(title) ?? "(no title)",
+      subtitle: [pickI18n(subtitle), date?.slice(0, 10)]
+        .filter(Boolean)
+        .join(" ／ "),
     }),
   },
 });

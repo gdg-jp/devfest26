@@ -13,6 +13,7 @@ import {
 } from "@sanity/ui";
 import { useToast } from "@sanity/ui/toast";
 import { useClient, useCurrentUser, type SanityDocument } from "sanity";
+import { pickI18n } from "../../lib/i18nPreview";
 import { DEPLOY_ID } from "../../schemas/deploy";
 import { BuildStatus } from "./BuildStatus";
 import {
@@ -280,7 +281,9 @@ export function DeployTool() {
                         {row.slug}
                       </Text>
                       <Box flex={1} style={{ minWidth: 0 }}>
-                        <Text textOverflow="ellipsis">{row.title}</Text>
+                        <Text textOverflow="ellipsis">
+                          {pickI18n(row.title) ?? "(無題)"}
+                        </Text>
                       </Box>
                       <Text size={1} muted>
                         最終 {formatWhen(row.lastAt)}

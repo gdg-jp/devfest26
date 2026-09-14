@@ -2,6 +2,7 @@ import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 import type { AstroIntegration } from "astro";
 import { previewMode } from "./src/preview/mode";
+import { LANGUAGES, langPrefix, langPrefixOf } from "./src/i18n/language";
 import {
   anyCity,
   portalSelected,
@@ -45,21 +46,52 @@ const routes: AstroIntegration = {
       const inject = (pattern: string, entrypoint: string) =>
         injectRoute({ pattern, entrypoint });
 
+      /*
+        The language prefixes this build answers on.
+
+        A static build has exactly one — it *is* a language, the same way it is
+        a set of cities, and `/en/kansai` belongs to the English build's
+        output. The preview has both, for the same reason it has every city
+        rather than the one `TARGETS` asked for: it is a single deployment
+        resolving each request as it arrives, so the language is a segment of
+        the URL rather than a property of the build.
+
+        Injecting a pattern twice against the same entrypoint is how that is
+        said. Astro keeps both routes and shares the component between them, so
+        this widens the route table without widening the bundle. Which of the
+        two a request is in is then read back off the URL, once, by
+        `src/middleware.ts`.
+      */
+      const prefixes = previewMode ? LANGUAGES.map(langPrefixOf) : [langPrefix];
+
       if (portalSelected) {
-        inject("/", "./src/portal/Home.astro");
+        for (const prefix of prefixes)
+          inject(prefix || "/", "./src/portal/Home.astro");
       }
 
       if (anyCity) {
-        inject("/[tenant]", "./src/city/Home.astro");
-        inject("/[tenant]/sessions/[slug]", "./src/city/Session.astro");
-        inject("/[tenant]/speakers/[slug]", "./src/city/Speaker.astro");
-        inject("/[tenant]/talks/[slug]", "./src/city/Talk.astro");
-        inject("/[tenant]/favicon.svg", "./src/city/favicon.ts");
+        for (const prefix of prefixes) {
+          inject(`${prefix}/[tenant]`, "./src/city/Home.astro");
+          inject(
+            `${prefix}/[tenant]/sessions/[slug]`,
+            "./src/city/Session.astro",
+          );
+          inject(
+            `${prefix}/[tenant]/speakers/[slug]`,
+            "./src/city/Speaker.astro",
+          );
+          inject(`${prefix}/[tenant]/talks/[slug]`, "./src/city/Talk.astro");
+          inject(`${prefix}/[tenant]/favicon.svg`, "./src/city/favicon.ts");
+        }
         // Only built with OG_PREVIEW set; see the route itself. The preview
         // renders on demand, where `getStaticPaths` decides nothing and the
-        // route would answer for every city — so it is left out entirely.
+        // route would answer for every city — so it is left out entirely, and
+        // with it any question of which language it would be in.
         if (!previewMode) {
-          inject("/[tenant]/og-preview", "./src/city/OgPreview.astro");
+          inject(
+            `${langPrefix}/[tenant]/og-preview`,
+            "./src/city/OgPreview.astro",
+          );
         }
       }
 
@@ -159,7 +191,9 @@ export default defineConfig({
      *
      * See the `publish` job in `.github/workflows/build.yml`.
      */
-    assets: soleCity ? `${soleCity}/_astro` : "_astro",
+    assets: soleCity
+      ? [langPrefix.slice(1), soleCity, "_astro"].filter(Boolean).join("/")
+      : "_astro",
     // The OG card is screenshotted straight off disk, where a `/_astro/...`
     // stylesheet href resolves to nothing. Inlining makes that build
     // self-contained; normal builds keep the default split.

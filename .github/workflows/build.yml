@@ -70,8 +70,10 @@ jobs:
       # directories that are *not* in here, so it is deliberately not narrowed
       # to the cities being rebuilt.
       cities: ${{ steps.list.outputs.cities }}
-      # The subset this run rebuilds, plus the front page. Drives the matrix.
-      targets: ${{ steps.list.outputs.targets }}
+      # Every (language, target) pair this run rebuilds — the subset of
+      # cities plus the front page, crossed with every language. Drives the
+      # matrix directly via `include:`.
+      builds: ${{ steps.list.outputs.builds }}
 
     steps:
       - uses: actions/checkout@v7
@@ -92,19 +94,21 @@ jobs:
         run: node --experimental-strip-types scripts/discover-targets.mjs
 
   build:
-    name: build (${{ matrix.target }})
+    name: build (${{ matrix.lang }}/${{ matrix.target }})
     needs: discover
     runs-on: ubuntu-latest
 
     strategy:
-      # The requirement, in one line: one city's failure must not cancel
-      # another city's build.
+      # The requirement, in one line: one (language, city) pair's failure
+      # must not cancel another's build — a broken English translation must
+      # not take the Japanese build down with it, or the other way round.
       fail-fast: false
       matrix:
-        target: ${{ fromJSON(needs.discover.outputs.targets) }}
+        include: ${{ fromJSON(needs.discover.outputs.builds) }}
 
     env:
       TARGETS: ${{ matrix.target }}
+      SITE_LANG: ${{ matrix.lang }}
       # A city whose configuration does not validate fails the job rather than
       # being quietly skipped. The red job is the signal `publish` reads as
       # "leave that city's published pages where they are".
@@ -145,15 +149,17 @@ jobs:
         env:
           # Not `${{ matrix.target }}` in an argument: the slug comes from the
           # CMS, and the environment is where CMS strings belong.
-          TARGET: ${{ matrix.target }}
+          TARGET: ${{ matrix.lang }}/${{ matrix.target }}
         run: node scripts/annotate-failure.mjs build.log
 
       # A failed job uploads nothing, and that absence is how `publish` tells
-      # the two apart. Nothing else reports per-target success.
+      # the two apart. Nothing else reports per-target success. Named and
+      # pathed by both lang and target, matching `targetKey` in
+      # `src/tenants/selection.ts` — that is what decides `outDir`.
       - uses: actions/upload-artifact@v7
         with:
-          name: site-${{ matrix.target }}
-          path: dist/${{ matrix.target }}
+          name: site-${{ matrix.lang }}-${{ matrix.target }}
+          path: dist/${{ matrix.lang }}-${{ matrix.target }}
           if-no-files-found: error
 
   # The publish branch is the site: repository Settings → Pages serves
@@ -201,11 +207,11 @@ jobs:
         env:
           # Two lists, and telling them apart is what makes a deploy of one city
           # safe. `cities` is every city the CMS holds and decides what comes
-          # *down*. `targets` is what this run actually rebuilt and decides what
-          # goes *up*. Reading the second where the first belongs would take
-          # every city nobody asked for off the site.
+          # *down*. `builds` is what this run actually rebuilt — every (language,
+          # target) pair — and decides what goes *up*. Reading the second where
+          # the first belongs would take every city nobody asked for off the site.
           CITIES_JSON: ${{ needs.discover.outputs.cities }}
-          TARGETS_JSON: ${{ needs.discover.outputs.targets }}
+          BUILDS_JSON: ${{ needs.discover.outputs.builds }}
         run: |
           set -euo pipefail
 
@@ -214,61 +220,117 @@ jobs:
           # silently came out empty would make every step below read as "the
           # CMS has no cities" and delete all of them.
           jq -r '.[]' <<< "$CITIES_JSON" > cities.txt
-          jq -r '.[]' <<< "$TARGETS_JSON" > targets.txt
+          jq -r '.[] | "\(.lang) \(.target)"' <<< "$BUILDS_JSON" > builds.txt
           mapfile -t cities < cities.txt
-          mapfile -t targets < targets.txt
-          if [ "${#targets[@]}" -eq 0 ]; then
-            echo "::error::discover produced no targets; refusing to publish"
+          mapfile -t builds < builds.txt
+          if [ "${#builds[@]}" -eq 0 ]; then
+            echo "::error::discover produced no builds; refusing to publish"
             exit 1
           fi
 
-          # Was this city part of what the deploy asked for? The answer is how
-          # a missing artifact is read: a city nobody asked for did not build
-          # because there was nothing to build, and that is not a failure.
-          rebuilt() { printf '%s\n' "${targets[@]}" | grep -qxF "$1"; }
+          # Was this (language, target) pair part of what the deploy asked
+          # for? The answer is how a missing artifact is read: a pair nobody
+          # asked for did not build because there was nothing to build, and
+          # that is not a failure.
+          rebuilt() { printf '%s\n' "${builds[@]}" | grep -qxF "$1 $2"; }
 
           # Which root directories are cities rather than the front page's own
           # output, as recorded by the previous run. Inferring it from the
           # listing would eventually mistake one for the other.
           mapfile -t published < <(cat site/.cities 2>/dev/null || true)
 
-          # A city deleted from the CMS should stop being served. Against
-          # `cities` and not `targets`: a city left out of this deploy is still
-          # a city, and its pages stay exactly where they are.
+          # An empty `cities` is a claim that the CMS holds no events at all.
+          # That is a real answer for a new dataset, and it is also what a
+          # query that stopped matching looks like — a field renamed, a
+          # localization migration applied to the schema but not yet to the
+          # documents. The two are indistinguishable from here, but the
+          # published site is not: if it was serving cities a moment ago,
+          # every one of them is about to be deleted, and that is not a
+          # decision an automatic run should take on its own. Run the deploy
+          # again once discovery finds them, or once they are genuinely gone
+          # and `.cities` has caught up.
+          if [ "${#cities[@]}" -eq 0 ] && [ "${#published[@]}" -gt 0 ]; then
+            echo "::error::discovery found no cities, but ${#published[@]} are published (${published[*]}). Refusing to publish."
+            exit 1
+          fi
+
+          # A city deleted from the CMS should stop being served, in both
+          # languages. Against `cities` and not `builds`: a city left out of
+          # this deploy is still a city, and its pages stay exactly where
+          # they are.
           for slug in "${published[@]}"; do
             if [ -n "$slug" ] && ! printf '%s\n' "${cities[@]}" | grep -qxF "$slug"; then
-              echo "removing /$slug — no longer an event in the CMS"
-              rm -rf "site/$slug"
+              echo "removing /$slug and /en/$slug — no longer an event in the CMS"
+              rm -rf "site/$slug" "site/en/$slug"
             fi
           done
 
-          # Each city, if its job produced anything. A `TARGETS=<slug>` build
-          # writes that city under `<slug>/` with its own assets inside it, so
-          # the directory is self-contained and swaps in whole.
+          # Each city, in each language, if its job produced anything. A
+          # `TARGETS=<slug> SITE_LANG=<lang>` build writes that city under
+          # `<slug>/` (or `en/<slug>/`) with its own assets inside it — see
+          # `soleCity` in `src/tenants/selection.ts` — so the directory is
+          # self-contained and swaps in whole.
           for slug in "${cities[@]}"; do
-            if [ -d "artifacts/site-$slug/$slug" ]; then
+            if [ -d "artifacts/site-ja-$slug/$slug" ]; then
               echo "replacing /$slug"
               rm -rf "site/$slug"
-              cp -r "artifacts/site-$slug/$slug" "site/$slug"
-            elif ! rebuilt "$slug"; then
+              cp -r "artifacts/site-ja-$slug/$slug" "site/$slug"
+            elif ! rebuilt ja "$slug"; then
               echo "leaving /$slug as it was — not part of this deploy"
             else
-              echo "::warning::$slug did not build; leaving the published copy in place"
+              echo "::warning::$slug (ja) did not build; leaving the published copy in place"
+            fi
+
+            if [ -d "artifacts/site-en-$slug/en/$slug" ]; then
+              echo "replacing /en/$slug"
+              mkdir -p site/en
+              rm -rf "site/en/$slug"
+              cp -r "artifacts/site-en-$slug/en/$slug" "site/en/$slug"
+            elif ! rebuilt en "$slug"; then
+              echo "leaving /en/$slug as it was — not part of this deploy"
+            else
+              echo "::warning::$slug (en) did not build; leaving the published copy in place"
             fi
           done
 
           # The front page owns the root, which is also where the files every
           # city shares live (public/og, public/favicon). It is replaced
           # wholesale so a deleted file actually disappears; the city
-          # directories, the git metadata and the two markers are what survive.
-          if [ -d artifacts/site-portal ]; then
+          # directories, `en/`, the git metadata and the two markers are what
+          # survive the prune.
+          if [ -d artifacts/site-ja-portal ]; then
             echo "replacing the front page and the shared assets"
-            prune=(! -name .git ! -name .nojekyll ! -name .cities ! -name CNAME)
+            prune=(! -name .git ! -name .nojekyll ! -name .cities ! -name CNAME ! -name en)
             for slug in "${cities[@]}"; do prune+=(! -name "$slug"); done
             find site -mindepth 1 -maxdepth 1 "${prune[@]}" -exec rm -rf {} +
-            cp -r artifacts/site-portal/. site/
+            cp -r artifacts/site-ja-portal/. site/
           else
-            echo "::warning::the front page did not build; leaving the published copy in place"
+            echo "::warning::the front page (ja) did not build; leaving the published copy in place"
+          fi
+
+          # The English front page. Pruned the same way the Japanese one is,
+          # and for the same reason: `site/en/<city>` was just grafted by the
+          # loop above, and a plain `rm -rf site/en` here would take it
+          # straight back out.
+          #
+          # Its own `_astro/` (and `og/`, `favicon/`, …) are the same public
+          # assets the Japanese build just published, content-hashed the same
+          # way if their content matches — `cp -n` only adds what is not
+          # already there rather than risking two different files landing on
+          # the same hashed name.
+          if [ -d artifacts/site-en-portal/en ]; then
+            echo "replacing /en (front page)"
+            mkdir -p site/en
+            prune=(! -name .git ! -name .nojekyll ! -name .cities ! -name CNAME)
+            for slug in "${cities[@]}"; do prune+=(! -name "$slug"); done
+            find site/en -mindepth 1 -maxdepth 1 "${prune[@]}" -exec rm -rf {} +
+            cp -r artifacts/site-en-portal/en/. site/en/
+            if [ -d artifacts/site-en-portal/_astro ]; then
+              mkdir -p site/_astro
+              cp -rn artifacts/site-en-portal/_astro/. site/_astro/
+            fi
+          else
+            echo "::warning::the front page (en) did not build; leaving the published copy in place"
           fi
 
           # Astro writes its assets to `_astro/`, and Jekyll drops every path
@@ -276,7 +338,7 @@ jobs:
           touch site/.nojekyll
           printf '%s\n' "${cities[@]}" > site/.cities
 
-          find site -mindepth 1 -maxdepth 2 -name index.html | sort
+          find site -mindepth 1 -maxdepth 3 -name index.html | sort
 
       - name: Push
         working-directory: site

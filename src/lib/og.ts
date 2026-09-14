@@ -14,10 +14,11 @@ import { previewMode } from "../preview/mode";
  *
  * The path is resolved from the working directory rather than from
  * `import.meta.url`, and that is the whole reason this is a module of its own.
- * A build bundles this code into a chunk under `dist/<target>/.prerender/`, so
- * a URL relative to the module resolves to `dist/<target>/public/og/…` — which
- * never exists, and so quietly suppressed the tag in every build while working
- * perfectly in `astro dev`. `astro build` runs from the project root.
+ * A build bundles this code into a chunk under `dist/<targetKey>/.prerender/`,
+ * so a URL relative to the module resolves to `dist/<targetKey>/public/og/…`
+ * — which never exists, and so quietly suppressed the tag in every build
+ * while working perfectly in `astro dev`. `astro build` runs from the
+ * project root.
  *
  * Asynchronous because of where the check has to happen. In a build there is a
  * filesystem and the file either exists or does not. In the draft preview the

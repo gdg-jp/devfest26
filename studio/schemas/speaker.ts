@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 export const speaker = defineType({
   name: "speaker",
@@ -15,13 +16,15 @@ export const speaker = defineType({
     defineField({
       name: "name",
       title: "Name",
-      type: "string",
+      description:
+        "漢字表記とローマ字表記が違う場合に備え、言語ごとに入力できます。",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "role",
       title: "Role",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -29,7 +32,10 @@ export const speaker = defineType({
       title: "Slug",
       type: "slug",
       description: "The URL: /speakers/<slug>.",
-      options: { source: "name", maxLength: 96 },
+      options: {
+        source: (doc) => pickI18n(doc.name) ?? "",
+        maxLength: 96,
+      },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -51,8 +57,7 @@ export const speaker = defineType({
     defineField({
       name: "bio",
       title: "Bio",
-      type: "array",
-      of: [{ type: "block" }],
+      type: "internationalizedArrayRichText",
     }),
   ],
   preview: {
@@ -60,6 +65,13 @@ export const speaker = defineType({
       title: "name",
       subtitle: "role",
       media: "photo",
+    },
+    prepare({ title, subtitle, media }) {
+      return {
+        title: pickI18n(title) ?? "(no name)",
+        subtitle: pickI18n(subtitle),
+        media,
+      };
     },
   },
 });

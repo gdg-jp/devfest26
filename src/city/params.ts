@@ -7,6 +7,8 @@ import {
   type ProgramTalk,
   type SpeakerProgram,
 } from "../data/program";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * The other half of `getStaticPaths`.
@@ -99,17 +101,18 @@ export async function themeProps(params: Params) {
  * `/preview/status` next door has the detail.
  */
 export function notFound(what: string): Response {
+  const t = messages(currentLanguage());
   return new Response(
-    `<!doctype html><html lang="ja"><meta charset="utf-8">` +
+    `<!doctype html><html lang="${t.meta.htmlLang}"><meta charset="utf-8">` +
       `<meta name="viewport" content="width=device-width, initial-scale=1">` +
       `<meta name="robots" content="noindex, nofollow">` +
-      `<title>見つかりません — DevFest 2026 Preview</title>` +
+      `<title>${escapeHtml(t.notFound.title)}</title>` +
       `<style>body{background:#f7f8fc;color:#172033;font:16px/1.7 system-ui,"Noto Sans JP",sans-serif;margin:0}` +
       `main{background:#fff;border:1px solid #dde1eb;border-radius:16px;max-width:640px;margin:8vh auto;padding:32px}` +
       `h1{font-size:1.3rem;margin-top:0}a{color:#235bd8}</style>` +
-      `<main><h1>${escapeHtml(what)}はここにありません</h1>` +
-      `<p>下書きにまだ無いか、スラッグが変わったか、公開されていない都市のページです。</p>` +
-      `<p><a href="/preview/status">プレビューの状態を見る</a></p></main></html>`,
+      `<main><h1>${escapeHtml(t.notFound.heading(what))}</h1>` +
+      `<p>${escapeHtml(t.notFound.body)}</p>` +
+      `<p><a href="/preview/status">${escapeHtml(t.notFound.statusLink)}</a></p></main></html>`,
     {
       headers: { "Content-Type": "text/html; charset=UTF-8" },
       status: 404,

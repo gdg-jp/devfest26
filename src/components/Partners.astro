@@ -2,12 +2,15 @@
 import { render } from "astro:content";
 import type { ResolvedTenant } from "../tenants";
 import { byTenant } from "../data/collections";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
+const t = messages(currentLanguage());
 
 const partners = (await byTenant("partners", site.tenant)).sort(
   (a, b) => a.data.order - b.data.order,
@@ -29,10 +32,10 @@ const rendered = await Promise.all(
           Partners
         </p>
         <h2 class="sec-h" data-reveal="up">
-          共催・協力団体
+          {t.partners.heading}
         </h2>
         <p class="sec-lede" data-reveal="up">
-          {site.event.venue.region}のコミュニティと一緒につくります。
+          {t.partners.lede(site.event.venue.region)}
         </p>
 
         <div class="orgs" data-stagger>

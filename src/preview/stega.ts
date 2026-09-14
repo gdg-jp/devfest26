@@ -37,18 +37,22 @@ import { previewMode } from "./mode";
  *
  * Deliberately absent, each for a reason worth keeping written down:
  * `initial` (`max(2)`), `tone` / `rail` / `theme` / `status` (enums),
- * `textColor` / `darkInk` (CSS), `lang` and `locale` (attribute values),
- * `description` (only ever `<meta>` and Open Graph, so an overlay would have
- * nothing to point at), the address fields under `venue` (JSON-LD), and every
- * time-of-day string — `start`, `end`, `at`, `doorsAt` — where a hundred
- * invisible characters on "13:00" buys an overlay nobody is aiming for.
+ * `textColor` / `darkInk` (CSS), `description` (only ever `<meta>` and Open
+ * Graph, so an overlay would have nothing to point at), the address fields
+ * under `venue` (JSON-LD), and every time-of-day string — `start`, `end`,
+ * `at`, `doorsAt` — where a hundred invisible characters on "13:00" buys an
+ * overlay nobody is aiming for.
+ *
+ * `titleEn` is absent because the field is gone: `titleEn` is now a *query*
+ * alias for the English item of `title` (see `en()` in
+ * `src/lib/sanity/queries.ts`), and a source map names the document path, not
+ * the projection — so it arrives here as `title`.
  */
 const ENCODABLE = new Set([
   // Portable Text, whatever field it came from.
   "text",
   // event
   "title",
-  "titleEn",
   "taglineLead",
   "taglineAccent",
   "socialLabel",
@@ -56,9 +60,12 @@ const ENCODABLE = new Set([
   "fee",
   "host",
   "coHosts",
-  "value",
   "label",
   "note",
+  // `stats[].value` — the big number on the overview, judged by its container
+  // because the field itself is spelt like a localization wrapper. See
+  // `field()`.
+  "stats",
   // event.venue, and the plain `venue` string on meetups and external events
   "venue",
   "name",
@@ -100,12 +107,41 @@ const ENCODABLE = new Set([
  * the field inside the object, which is the one that should be judged. Walking
  * back to the last *named* segment answers both — `audienceItems` for the
  * first, `tone` for `stats[].tone`.
+ *
+ * And one step further when that segment is `value`, because localization made
+ * `value` the last name on almost every path there is. An internationalized
+ * array stores `[{ _key, language, value }]` (see `internationalizedArray` in
+ * `studio/sanity.config.ts`), so the string under `title` now lives at
+ * `title[_key].value` — and stopping at the last name would judge every
+ * localized field in the CMS as `value`, which is one answer for all of them
+ * and makes the list below do nothing. Stepping back past it restores the
+ * question this file is asking:
+ *
+ *     title[_key].value        → title
+ *     nav[_key].label[_key].value → label
+ *     audienceItems[_key].value[0] → audienceItems
+ *     stats[_key].value        → stats   (a real field that is spelt `value`)
+ *
+ * Portable Text is unaffected: its runs end in `text`, not `value`, however
+ * many arrays they sit inside.
  */
 function field(path: ContentSourceMapParsedPath): string | undefined {
+  let steppedPastValue = false;
+
   for (let i = path.length - 1; i >= 0; i--) {
     const segment = path[i];
-    if (typeof segment === "string") return segment;
+    if (typeof segment !== "string") continue;
+
+    // Only ever once: nothing nests a `value` inside a `value`, and skipping
+    // further would start answering with the field's container.
+    if (segment === "value" && !steppedPastValue) {
+      steppedPastValue = true;
+      continue;
+    }
+
+    return segment;
   }
+
   return undefined;
 }
 

@@ -4,7 +4,11 @@ import type { SanityDocument } from "sanity";
 export interface City {
   publishedId: string;
   slug: string;
-  title: string;
+  /**
+   * Raw, because `event.title` is an internationalized array: the list reads a
+   * language out of it with `pickI18n` rather than rendering it.
+   */
+  title: unknown;
 }
 
 /** One city's entry in the deploy document's history. */

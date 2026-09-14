@@ -81,6 +81,10 @@ jobs:
       # the Studio answers at the moment someone asks — not one this build
       # freezes in.
       #
+      # No SITE_LANG either, so this is a Japanese build and its output lands
+      # in `dist/ja-all/` — `targetKey` in `src/tenants/selection.ts` names the
+      # directory after both axes. Every path below has to agree with it.
+      #
       # `astro check` is deliberately skipped: `build.yml` already ran it on
       # this commit, and what differs here is content, which nothing at build
       # time even reads.
@@ -121,7 +125,7 @@ jobs:
           # and would be a second prefix on top of this one.
           SANITY_STUDIO_BASEPATH: /studio
           SANITY_STUDIO_PREVIEW_ORIGIN: ${{ vars.PREVIEW_URL }}
-        run: pnpm exec sanity build ../dist/all/client/studio
+        run: pnpm exec sanity build ../dist/ja-all/client/studio
 
       # The CLI applies the base path to its scripts and stylesheets but not to
       # the four links in the head — favicons and the web manifest — which come
@@ -131,9 +135,9 @@ jobs:
       # correctly.
       - name: Point the Studio's icons at the Studio
         run: |
-          sed -i 's|href="/static/|href="/studio/static/|g'             dist/all/client/studio/index.html
+          sed -i 's|href="/static/|href="/studio/static/|g'             dist/ja-all/client/studio/index.html
 
-      # `dist/all/server/wrangler.json` is what the adapter wrote: the gate as
+      # `dist/ja-all/server/wrangler.json` is what the adapter wrote: the gate as
       # `main`, the client build as the asset directory, and everything from
       # `preview/wrangler.jsonc` carried through. Deploying the source config
       # instead would upload the gate with no site behind it.
@@ -150,7 +154,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           pnpm exec wrangler deploy \
-            --config dist/all/server/wrangler.json \
+            --config dist/ja-all/server/wrangler.json \
             --var SANITY_PROJECT_ID:'${{ vars.SANITY_PROJECT_ID }}' \
             --var SANITY_DATASET:'${{ vars.SANITY_DATASET }}'
 
@@ -168,4 +172,4 @@ jobs:
         run: |
           set -euo pipefail
           printf '%s' "$SANITY_READ_TOKEN" | pnpm exec wrangler secret put \
-            SANITY_READ_TOKEN --config dist/all/server/wrangler.json
+            SANITY_READ_TOKEN --config dist/ja-all/server/wrangler.json

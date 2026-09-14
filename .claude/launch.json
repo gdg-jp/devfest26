@@ -21,7 +21,7 @@
         "wrangler",
         "dev",
         "-c",
-        "dist/all/server/wrangler.json",
+        "dist/ja-all/server/wrangler.json",
         "--port",
         "4321"
       ],

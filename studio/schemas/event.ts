@@ -1,4 +1,5 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 export const event = defineType({
   name: "event",
@@ -8,32 +9,25 @@ export const event = defineType({
     defineField({
       name: "title",
       title: "Title",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "subtitle",
       title: "Subtitle",
-      type: "string",
+      type: "internationalizedArrayString",
       description:
         "サブタイトル（副題）。設定した場合、ヒーローセクションでタイトルの下に改行して表示されます。",
-    }),
-    defineField({
-      name: "titleEn",
-      title: "Title (English)",
-      type: "string",
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "subtitleEn",
-      title: "Subtitle (English)",
-      type: "string",
     }),
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
-      options: { source: "title" },
+      // `title` is now an array, so the slugify source has to read the
+      // Japanese value out of it directly.
+      options: {
+        source: (doc) => pickI18n(doc.title) ?? "",
+      },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -45,25 +39,9 @@ export const event = defineType({
         "サイトへの公開・非公開を切り替えます。オフにするとサイトや開催地一覧に表示されません。",
     }),
     defineField({
-      name: "lang",
-      title: "Language",
-      type: "string",
-      initialValue: "ja",
-      description: "<html lang>。日本語なら ja。",
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "locale",
-      title: "Locale",
-      type: "string",
-      initialValue: "ja_JP",
-      description: "og:locale。日本語なら ja_JP。",
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
       name: "description",
       title: "Description",
-      type: "text",
+      type: "internationalizedArrayText",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -83,13 +61,13 @@ export const event = defineType({
     defineField({
       name: "taglineLead",
       title: "Tagline Lead",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "taglineAccent",
       title: "Tagline Accent",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -107,7 +85,7 @@ export const event = defineType({
     defineField({
       name: "socialLabel",
       title: "Social Label",
-      type: "string",
+      type: "internationalizedArrayString",
     }),
     defineField({
       name: "socialStart",
@@ -126,27 +104,35 @@ export const event = defineType({
       fields: [
         defineField({
           name: "name",
-          type: "string",
+          type: "internationalizedArrayString",
           validation: (Rule) => Rule.required(),
         }),
         defineField({
           name: "area",
-          type: "string",
+          type: "internationalizedArrayString",
           validation: (Rule) => Rule.required(),
         }),
         defineField({
           name: "cityEn",
+          title: "City (English, full form)",
           type: "string",
+          description:
+            '"Osaka, Japan" — the OG card / Hero label. Not a translation of ' +
+            '"City" below: that one is the short place name used mid-sentence ' +
+            '("held in Osaka on..."), this is the fuller form used for a ' +
+            "standalone lockup. Shared across languages; edit it once here.",
           validation: (Rule) => Rule.required(),
         }),
         defineField({
           name: "city",
-          type: "string",
+          title: "City",
+          type: "internationalizedArrayString",
+          description: "大阪 — the short place name, used mid-sentence.",
           validation: (Rule) => Rule.required(),
         }),
         defineField({
           name: "region",
-          type: "string",
+          type: "internationalizedArrayString",
           validation: (Rule) => Rule.required(),
         }),
         defineField({ name: "addressLocality", type: "string" }),
@@ -159,36 +145,40 @@ export const event = defineType({
     defineField({
       name: "format",
       title: "Format",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "formatShort",
       title: "Format (Short)",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "fee",
       title: "Fee",
-      type: "string",
+      type: "internationalizedArrayString",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "host",
       title: "Host",
       type: "string",
+      description: "組織名。言語をまたいで同じ表記を使うので翻訳しません。",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "coHosts",
       title: "Co-Hosts",
       type: "string",
+      description: "組織名。言語をまたいで同じ表記を使うので翻訳しません。",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "stats",
       title: "Stats",
+      description:
+        "ラベルは Tracks / Sessions のように、言語を問わず英語のまま表示します。",
       type: "array",
       of: [
         defineArrayMember({
@@ -227,9 +217,18 @@ export const event = defineType({
       title: "Links",
       type: "object",
       fields: [
+        /*
+          The only link on the site that differs by language rather than being
+          translated: a Japanese reader is sent to connpass and an English one
+          to Luma, because those are different audiences on different platforms
+          rather than two renderings of one page. Localizing the URL itself is
+          what says that — the projection coalesces to the Japanese value, so a
+          city with no Luma listing sends everyone to connpass instead of to a
+          link that does not exist.
+        */
         defineField({
           name: "register",
-          type: "url",
+          type: "internationalizedArrayUrl",
           validation: (Rule) => Rule.required(),
         }),
         defineField({
@@ -237,10 +236,21 @@ export const event = defineType({
           type: "url",
           validation: (Rule) => Rule.required(),
         }),
+        /*
+          The chapter's own pages, in the footer. Both are shown side by side
+          when both exist, rather than one standing in for the other: this is a
+          list of where the chapter can be found, and a reader of either
+          language may want either. `luma` is optional because a chapter that
+          only uses connpass is the normal case.
+        */
         defineField({
           name: "connpass",
           type: "url",
           validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: "luma",
+          type: "url",
         }),
         defineField({
           name: "cocJa",
@@ -270,7 +280,7 @@ export const event = defineType({
             }),
             defineField({
               name: "label",
-              type: "string",
+              type: "internationalizedArrayString",
               validation: (Rule) => Rule.required(),
             }),
           ],
@@ -292,7 +302,7 @@ export const event = defineType({
             }),
             defineField({
               name: "label",
-              type: "string",
+              type: "internationalizedArrayString",
               validation: (Rule) => Rule.required(),
             }),
           ],
@@ -328,10 +338,14 @@ export const event = defineType({
             defineField({
               name: "label",
               title: "Label",
-              type: "string",
+              type: "internationalizedArrayString",
               validation: (Rule) => Rule.required(),
             }),
-            defineField({ name: "note", title: "Note", type: "string" }),
+            defineField({
+              name: "note",
+              title: "Note",
+              type: "internationalizedArrayString",
+            }),
             defineField({
               name: "tracks",
               title: "Tracks",
@@ -362,7 +376,10 @@ export const event = defineType({
           preview: {
             select: { label: "label", start: "start", end: "end" },
             prepare({ label, start, end }) {
-              return { title: label, subtitle: `${start} - ${end}` };
+              return {
+                title: pickI18n(label) ?? "(no label)",
+                subtitle: `${start} - ${end}`,
+              };
             },
           },
         }),
@@ -377,7 +394,7 @@ export const event = defineType({
     },
     prepare({ title, subtitle, isPublic }) {
       return {
-        title,
+        title: pickI18n(title) ?? "(no title)",
         subtitle: `${subtitle || ""}${isPublic === false ? " (非公開)" : ""}`,
       };
     },

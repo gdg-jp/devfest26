@@ -18,6 +18,28 @@ const SCOPE = "event->slug.current in $tenants";
 const TENANT = `"tenant": event->slug.current`;
 
 /**
+ * One field of an internationalized array (see
+ * `sanity-plugin-internationalized-array`), in the build's language —
+ * falling back to Japanese when that language's item is missing, so a
+ * session that has not been translated yet still has a title rather than a
+ * blank one. `$lang` is bound by every query that uses this; see
+ * `src/loaders/sanity.ts` and `src/tenants/discovery.ts`.
+ */
+const t = (field: string) =>
+  `"${field}": coalesce(${field}[language == $lang][0].value, ${field}[language == "ja"][0].value)`;
+
+/**
+ * The same field, always in English rather than the build's language —
+ * still falling back to Japanese if English is not filled in yet. For the
+ * handful of things that are English regardless of which site is building:
+ * the OG card (`src/city/OgPreview.astro`) and the topbar's compact city
+ * badge (`editionEn` in `src/tenants/index.ts`), both drawn from
+ * `titleEn`/`subtitleEn` below.
+ */
+const en = (field: string, as: string) =>
+  `"${as}": coalesce(${field}[language == "en"][0].value, ${field}[language == "ja"][0].value)`;
+
+/**
  * The same query with the city filter taken back out.
  *
  * The draft preview is one deployment holding every city at once, and it reads
@@ -42,13 +64,13 @@ export function everyCity(query: string): string {
 }
 
 export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
-  _id, name, role, initial, photo, bio,
+  _id, ${t("name")}, ${t("role")}, initial, photo, ${t("bio")},
   "slug": slug.current,
   ${TENANT}
 }`;
 
 export const TRACKS = `*[_type == "track" && ${SCOPE}]{
-  _id, order, label, sub, color, textColor, darkInk, pending, cardLabel,
+  _id, order, ${t("label")}, ${t("sub")}, color, textColor, darkInk, pending, ${t("cardLabel")},
   ${TENANT}
 }`;
 
@@ -58,7 +80,7 @@ export const TRACKS = `*[_type == "track" && ${SCOPE}]{
  * `slug` is separate and only ever a URL segment.
  */
 export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
-  _id, title, abstract, start, end,
+  _id, ${t("title")}, ${t("abstract")}, start, end,
   "slug": slug.current,
   "track": track->_id,
   "speakers": speakers[]->_id,
@@ -67,7 +89,7 @@ export const SESSIONS = `*[_type == "session" && ${SCOPE}]{
 }`;
 
 export const TALKS = `*[_type == "talk" && ${SCOPE}]{
-  _id, order, title, abstract, start,
+  _id, order, ${t("title")}, ${t("abstract")}, start,
   "slug": slug.current,
   "session": session->_id,
   "speakers": speakers[]->_id,
@@ -75,18 +97,20 @@ export const TALKS = `*[_type == "talk" && ${SCOPE}]{
 }`;
 
 export const MEETUPS = `*[_type == "meetup" && ${SCOPE}]{
-  _id, no, title, subtitle, status, date, doorsAt, startsAt, endsAt,
-  venue, capacity, fee, url, cta, program, description,
+  _id, no, ${t("title")}, ${t("subtitle")}, status, date, doorsAt, startsAt, endsAt,
+  ${t("venue")}, ${t("capacity")}, ${t("fee")}, ${t("url")}, ${t("cta")},
+  "program": program[]{at, ${t("what")}, ${t("who")}, talk, break},
+  ${t("description")},
   ${TENANT}
 }`;
 
 export const PARTNERS = `*[_type == "partner" && ${SCOPE}]{
-  _id, name, url, handle, order, rail, description,
+  _id, name, url, handle, order, rail, ${t("description")},
   ${TENANT}
 }`;
 
 export const ABOUT = `*[_type == "aboutPage" && ${SCOPE}]{
-  _id, lead, body, callout, audienceEyebrow, audienceHeading, audienceItems,
+  _id, ${t("lead")}, ${t("body")}, ${t("callout")}, ${t("audienceEyebrow")}, ${t("audienceHeading")}, ${t("audienceItems")},
   ${TENANT}
 }`;
 
@@ -99,6 +123,27 @@ export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
 }`;
 
 /**
+ * A city's outward links, of which exactly one is localized.
+ *
+ * `register` is the only link on the site whose *destination* is a language
+ * rather than a translation of one: a Japanese reader is sent to the connpass
+ * listing and an English reader to the Luma one, because those are two
+ * audiences on two platforms rather than one page written twice. `t` coalesces
+ * to the Japanese value, so a city that has filled in only that one sends both
+ * languages there — which is the right answer, since the alternative is a
+ * button pointing at nothing.
+ *
+ * `connpass` and `luma` are the chapter's own pages rather than this event's,
+ * and the footer shows both side by side instead of choosing between them — so
+ * neither is localized. `community`, `cocJa` and `cocEn` name their language in
+ * the field, or have none.
+ *
+ * Written as its own constant because a comment cannot live inside the template
+ * literal below: it would be GROQ, not TypeScript.
+ */
+const LINKS = `"links": links{${t("register")}, community, connpass, luma, cocJa, cocEn}`;
+
+/**
  * One city's own configuration — matched on its own slug, not a reference.
  *
  * This is tier 2: everything a city's pages need and the front page does not.
@@ -107,14 +152,19 @@ export const PHOTOS = `*[_type == "photoSet" && ${SCOPE}]{
  * ask what cities exist before installing anything.
  */
 const EVENT_FIELDS = `
-  theme, title, subtitle, titleEn, subtitleEn, description,
-  taglineLead, taglineAccent,
-  lang, locale,
+  theme, ${t("title")}, ${t("subtitle")}, ${en("title", "titleEn")}, ${en("subtitle", "subtitleEn")}, ${t("description")},
+  ${t("taglineLead")}, ${t("taglineAccent")},
   startsAt, endsAt,
-  socialLabel, socialStart, socialEnd,
-  venue, format, formatShort, fee, host, coHosts,
-  stats, links, nav, footerNav,
-  fixtures[]{start, end, label, note, "tracks": tracks[]->_id},
+  ${t("socialLabel")}, socialStart, socialEnd,
+  "venue": venue{
+    ${t("name")}, ${t("area")}, cityEn, ${t("city")}, ${t("region")},
+    addressLocality, addressRegion, streetAddress, postalCode
+  },
+  ${t("format")}, ${t("formatShort")}, ${t("fee")}, host, coHosts,
+  stats, ${LINKS},
+  "nav": nav[]{href, ${t("label")}},
+  "footerNav": footerNav[]{href, ${t("label")}},
+  "fixtures": fixtures[]{start, end, ${t("label")}, ${t("note")}, "tracks": tracks[]->_id},
   isPublic`;
 
 export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
@@ -142,6 +192,6 @@ export const EVENTS = `*[_type == "event"] | order(startsAt asc){
  * to no city, so they carry no `event` reference and no scope filter.
  */
 export const EXTERNAL_EVENTS = `*[_type == "externalEvent"]{
-  _id, title, region, startsAt, endsAt, city, venue, theme, url, note,
+  _id, ${t("title")}, ${t("region")}, startsAt, endsAt, ${t("city")}, ${t("venue")}, theme, url, ${t("note")},
   "slug": slug.current
 }`;

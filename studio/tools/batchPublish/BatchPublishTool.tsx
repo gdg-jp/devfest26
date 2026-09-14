@@ -26,6 +26,7 @@ import {
   type ObjectSchemaType,
   type SanityDocument,
 } from "sanity";
+import { pickI18n } from "../../lib/i18nPreview";
 import { DocumentDiff } from "./DocumentDiff";
 import {
   buildPublishTransaction,
@@ -138,8 +139,14 @@ export function BatchPublishTool() {
       const preview = schema.get(draft._type)?.preview as
         { select?: Record<string, string> } | undefined;
       const path = preview?.select?.title;
-      const title = path ? valueAtPath(draft, path) : undefined;
-      return typeof title === "string" && title.trim() ? title : "(無題)";
+      /*
+        Through `pickI18n` rather than read straight off the draft: the path a
+        preview selects for its title now lands on an internationalized array
+        for most types, and the bare value is a list of objects rather than the
+        heading an author would recognise.
+      */
+      const title = path ? pickI18n(valueAtPath(draft, path)) : undefined;
+      return title?.trim() ? title : "(無題)";
     },
     [schema],
   );
@@ -170,7 +177,7 @@ export function BatchPublishTool() {
         `*[_id in $ids]{_id, _rev}`,
         { ids: wanted },
       ),
-      client.fetch<{ _id: string; title?: string }[]>(
+      client.fetch<{ _id: string; title?: unknown }[]>(
         `*[_type == "event"]{_id, title}`,
       ),
     ]);
@@ -183,7 +190,7 @@ export function BatchPublishTool() {
         name its author is working with, not the stale published one.
       */
       if (event._id.startsWith("drafts.") || !eventTitles.has(id)) {
-        eventTitles.set(id, event.title?.trim() || id);
+        eventTitles.set(id, pickI18n(event.title)?.trim() || id);
       }
     }
 

@@ -3,12 +3,20 @@ import Logo from "./Logo.astro";
 import type { ResolvedTenant } from "../tenants";
 import { photoCredits } from "../lib/photos";
 import { isHome, tenantHome } from "../lib/url";
+import { messages } from "../i18n";
+import {
+  alternatePath,
+  currentAlternateLanguage,
+  currentLanguage,
+  LANGUAGE_NAMES,
+} from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
+const t = messages(currentLanguage());
 const { event } = site;
 const year = new Date().getFullYear();
 
@@ -18,6 +26,10 @@ const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
 
 // Decorative use does not waive the photographer's credit.
 const credits = await photoCredits(site.tenant);
+
+const switchTo = currentAlternateLanguage();
+const switchHref = alternatePath(Astro.url.pathname);
+const switchLabel = LANGUAGE_NAMES[switchTo];
 ---
 
 <footer>
@@ -32,7 +44,7 @@ const credits = await photoCredits(site.tenant);
         </p>
       </div>
       <div>
-        <nav class="foot-nav" aria-label="フッターナビゲーション">
+        <nav class="foot-nav" aria-label={t.footer.navAria}>
           {
             site.footerNav.map((item) => (
               <a href={prefix + item.href}>{item.label}</a>
@@ -51,6 +63,28 @@ const credits = await photoCredits(site.tenant);
           >
             connpass
           </a>
+          {
+            /*
+              Beside connpass rather than instead of it, and in both languages.
+              These are the two places the chapter publishes its events, not two
+              translations of one place — an English reader may well want the
+              connpass page, and a Japanese reader the Luma one. The register
+              button is the one that does choose; see `links.register`.
+
+              The names are not translated because they are not words: they are
+              what the two sites call themselves.
+            */
+            site.links.luma && (
+              <a
+                class="tag link"
+                href={site.links.luma}
+                target="_blank"
+                rel="noopener"
+              >
+                Luma
+              </a>
+            )
+          }
           <a
             class="tag link"
             href={site.links.community}
@@ -59,13 +93,21 @@ const credits = await photoCredits(site.tenant);
           >
             GDG Chapter
           </a>
+          <a class="tag link" href={switchHref} hreflang={switchTo}>
+            {switchLabel}
+          </a>
         </div>
       </div>
     </div>
 
     <p class="copy colophon">
       © {year}
-      {event.host}{credits.length > 0 && <> ／ Photos: {credits.join("、")}</>}
+      {event.host}
+      {
+        credits.length > 0 && (
+          <> ／ Photos: {credits.join(t.common.nameSeparator)}</>
+        )
+      }
     </p>
   </div>
 </footer>

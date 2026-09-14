@@ -15,12 +15,15 @@ import SpeakerAvatar from "./SpeakerAvatar.astro";
 import { getTimetable } from "../data/timetable";
 import { getTracks } from "../data/tracks";
 import type { ResolvedTenant } from "../tenants";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
+const t = messages(currentLanguage());
 
 // "3 トラック" is a fact about this city's configuration, not a constant.
 const trackCount = (await getTracks(site.tenant)).filter(
@@ -83,13 +86,9 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 <section class="sec" id="timetable">
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">Timetable</p>
-    <h2 class="sec-h" data-reveal="up">タイムテーブル</h2>
+    <h2 class="sec-h" data-reveal="up">{t.timetable.heading}</h2>
     <p class="sec-lede" data-reveal="up">
-      現在 {trackCount} トラックでの開催を予定しています。{
-        timetable
-          ? "確定したセッションから順に掲載しています。"
-          : "各セッションの時間割は調整中です。"
-      }
+      {t.timetable.lede(trackCount, Boolean(timetable))}
     </p>
 
     {
@@ -204,7 +203,7 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
     {
       timetable && timetable.undated.length > 0 && (
         <div class="tbd" data-reveal="up">
-          <b>時間調整中</b>
+          <b>{t.timetable.tbdHeading}</b>
           <ul>
             {timetable.undated.map((session) => (
               <li>
@@ -221,7 +220,7 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
       )
     }
 
-    <p class="note">※ タイムテーブルは変更となる場合があります。</p>
+    <p class="note">{t.timetable.note}</p>
   </div>
 </section>
 

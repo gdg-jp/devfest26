@@ -14,8 +14,6 @@ export const tokyo = {
   tenant: "tokyo",
   theme: "red",
 
-  lang: "ja",
-  locale: "ja_JP",
   title: "DevFest 2026 in Tokyo",
   // subtitle: "サブタイトルがある場合はここに指定（ヒーローセクションで改行表示されます）",
   titleEn: "DevFest 2026 in Tokyo",

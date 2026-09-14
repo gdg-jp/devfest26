@@ -4,6 +4,8 @@ import { tenantHome } from "../lib/url";
 import { eventDates } from "../tenants/eventDates";
 import { discoverCities } from "../tenants/discovery";
 import { reject } from "../preview/problems";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * Every DevFest the front page lists, from two kinds of source.
@@ -67,16 +69,17 @@ export interface PortalEvents {
  * a running order.
  */
 function dateLabel(startsAt: string, endsAt: string) {
-  const from = eventDates(startsAt, startsAt);
-  const to = eventDates(endsAt, endsAt);
-  const start = `${from.dateLabel}（${from.dayOfWeek}）`;
+  const t = messages(currentLanguage());
+  const from = eventDates(startsAt, startsAt, currentLanguage());
+  const to = eventDates(endsAt, endsAt, currentLanguage());
+  const start = t.dates.withDow(from.dateLabel, from.dayOfWeek);
 
   return {
     isoDate: from.isoDate,
     label:
       from.isoDate === to.isoDate
         ? start
-        : `${start} – ${to.monthDay}（${to.dayOfWeek}）`,
+        : `${start} – ${t.dates.withDow(to.monthDay, to.dayOfWeek)}`,
   };
 }
 

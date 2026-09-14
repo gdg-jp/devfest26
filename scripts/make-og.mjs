@@ -21,6 +21,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import sharp from "sharp";
 import { discoverCitySlugs } from "../src/tenants/discovery.ts";
+import { DEFAULT_LANGUAGE } from "../src/i18n/language.ts";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -68,13 +69,25 @@ for (const tenant of targets) {
     ["node_modules/astro/bin/astro.mjs", "build"],
     {
       stdio: "inherit",
-      env: { ...process.env, TARGETS: tenant, OG_PREVIEW: "1" },
+      // SITE_LANG is pinned rather than inherited: one card per city is
+      // shared by both language builds (its title and date are drawn from
+      // `titleEn` either way), so which language produced it should not
+      // depend on the shell this happens to run in.
+      env: {
+        ...process.env,
+        TARGETS: tenant,
+        SITE_LANG: DEFAULT_LANGUAGE,
+        OG_PREVIEW: "1",
+      },
     },
   );
 
-  // `TARGETS=<city>` puts the build in dist/<city>/, and the route inside it
-  // is /<city>/og-preview.
-  const page = resolve(`dist/${tenant}/${tenant}/og-preview/index.html`);
+  // `TARGETS=<city>` puts the build in dist/<lang>-<city>/ — `targetKey` in
+  // `src/tenants/selection.ts` — and the route inside it is
+  // /<city>/og-preview.
+  const page = resolve(
+    `dist/${DEFAULT_LANGUAGE}-${tenant}/${tenant}/og-preview/index.html`,
+  );
   if (!existsSync(page)) throw new Error(`Card was not built for ${tenant}`);
 
   const raw = join(shots, `${tenant}.png`);

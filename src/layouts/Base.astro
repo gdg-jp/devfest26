@@ -8,6 +8,12 @@ import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
 import type { ResolvedTenant } from "../tenants";
 import { tenantPath } from "../lib/url";
+import { messages } from "../i18n";
+import {
+  alternatePath,
+  currentLanguage,
+  DEFAULT_LANGUAGE,
+} from "../i18n/language";
 
 interface Props {
   /** The city this page belongs to. Every page under `/[tenant]/` has one. */
@@ -34,6 +40,7 @@ interface Props {
 */
 const { site, jsonLd } = Astro.props;
 const { event, links } = site;
+const t = messages(currentLanguage());
 
 const siteName = clean(site.fullTitle ?? site.title);
 const title = clean(Astro.props.title ?? site.fullTitle ?? site.title);
@@ -42,6 +49,16 @@ const description = clean(Astro.props.description ?? site.description);
 const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
+
+// Field-level localization means every page exists at the same slug in both
+// languages (see the localization plan), so the alternate URL is a prefix
+// swap rather than a lookup — see `alternatePath`.
+const alternateUrl = Astro.site
+  ? new URL(alternatePath(Astro.url.pathname), Astro.site).href
+  : undefined;
+const isDefault = currentLanguage() === DEFAULT_LANGUAGE;
+const jaUrl = isDefault ? canonical : alternateUrl;
+const enUrl = isDefault ? alternateUrl : canonical;
 
 /*
   `public/og/` is shared by every city and served from the site root, so the
@@ -98,13 +115,16 @@ const eventSchema = clean({
 ---
 
 <!doctype html>
-<html lang={site.lang} data-theme={site.theme}>
+<html lang={t.meta.htmlLang} data-theme={site.theme}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}
+    {jaUrl && <link rel="alternate" hreflang="ja" href={jaUrl} />}
+    {enUrl && <link rel="alternate" hreflang="en" href={enUrl} />}
+    {jaUrl && <link rel="alternate" hreflang="x-default" href={jaUrl} />}
 
     {
       /* /kansai/favicon.svg is an endpoint, generated in this city's theme
@@ -124,7 +144,7 @@ const eventSchema = clean({
     <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:locale" content={site.locale} />
+    <meta property="og:locale" content={t.meta.ogLocale} />
     {canonical && <meta property="og:url" content={canonical} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
     {ogImage && <meta property="og:image:width" content="1200" />}
@@ -200,7 +220,7 @@ const eventSchema = clean({
   </head>
 
   <body>
-    <a class="skip" href="#top">本文へスキップ</a>
+    <a class="skip" href="#top">{t.meta.skipToContent}</a>
     <slot />
     {previewMode && <PreviewBar />}
     <script>

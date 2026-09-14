@@ -12,12 +12,14 @@
     "@sanity/color": "^3.0.8",
     "@sanity/diff": "^6.11.0",
     "@sanity/icons": "^5.2.1",
+    "@sanity/language-filter": "5.0.18",
     "@sanity/ui": "^4.0.6",
     "@sanity/vision": "^6.11.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "rxjs": "^7.8.2",
     "sanity": "^6.11.0",
+    "sanity-plugin-internationalized-array": "5.2.4",
     "styled-components": "^6.5.3"
   },
   "devDependencies": {
