@@ -1,6 +1,11 @@
 name: Build
 
 on:
+  # A check, not a deploy. Merging to `main` proves the merge result still
+  # builds — two pull requests that were each green apart can break together —
+  # and stops there. What the site serves is decided in the Studio with
+  #「サイトに反映」, so code lands here and goes out with the next deploy. The
+  # `publish` job below is where that line is drawn.
   push:
     branches: [main]
   pull_request:
@@ -26,13 +31,17 @@ on:
 # One production deploy at a time, and they queue rather than cancel each other.
 # Cancelling would be cheaper but wrong now that a run carries the set of cities
 # someone asked for: press 関西, then 東京 ten seconds later, and the newer run
-# would take 関西's build down with it and never put it back. Builds only start
-# when a person asks for one, so the queue stays short. Pull requests are keyed
-# by their own ref and do cancel, because there the newest push really does
-# subsume the ones before it.
+# would take 関西's build down with it and never put it back. Deploys only start
+# when a person asks for one, so the queue stays short.
+#
+# The runs that only check — pull requests, and merges to `main` — are keyed by
+# their own ref instead, and do cancel: there the newest commit really does
+# subsume the ones before it. Keying them away from 'production' is also what
+# keeps a merge from delaying someone's「サイトに反映」, which it would if a
+# check and a deploy shared a queue.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.event_name == 'push') && github.ref || 'production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 permissions:
   contents: read
@@ -184,9 +193,14 @@ jobs:
   publish:
     name: publish
     needs: [discover, build]
-    # Not `always()` on its own: this job deletes the cities that discovery did
-    # not name, so it must not run on a discovery that never answered.
-    if: ${{ always() && needs.discover.result == 'success' && github.event_name != 'pull_request' }}
+    # Not `always()` on its own, for two reasons. This job deletes the cities
+    # that discovery did not name, so it must not run on a discovery that never
+    # answered. And it runs only for the two events that mean a person asked
+    # for a deploy —「サイトに反映」 (`repository_dispatch`) and the Run workflow
+    # button (`workflow_dispatch`). A pull request and a merge to `main` build
+    # and stop: what the site serves is a decision someone takes in the Studio,
+    # not something a merge takes on the way past.
+    if: ${{ always() && needs.discover.result == 'success' && (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
 
     permissions:
