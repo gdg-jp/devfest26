@@ -49,6 +49,18 @@ env:
   # published build.
   SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
   SANITY_DATASET: ${{ vars.SANITY_DATASET }}
+  # Google Analytics — the site-wide property every page reports to. A city's
+  # own property, if its chapter runs one, is a field on its `event` document
+  # instead, so a chapter can set one up without repository access.
+  #
+  # A repository variable for the same reason the two above are: a measurement
+  # id is printed into every page of the published HTML, so it is not a secret.
+  # Unset is not an error — the tag is then absent entirely rather than
+  # pointing at nothing, which is what keeps local builds and pull request
+  # builds out of the numbers without anyone remembering to. `preview.yml`
+  # deliberately has no counterpart: the draft preview is behind a sign-in gate
+  # and is not measured. See `src/lib/analytics.ts`.
+  GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
 
 # One job per target the deploy asked for: those cities, plus the front page
 # that lists them. They are independent builds of the same commit, and that is

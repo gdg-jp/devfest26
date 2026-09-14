@@ -1,4 +1,5 @@
 import { z } from "astro/zod";
+import { isMeasurementId } from "../lib/analytics";
 import { sanityClient } from "../lib/sanity/client";
 import { EVENT } from "../lib/sanity/queries";
 import { language } from "../i18n/language";
@@ -31,6 +32,25 @@ const eventDoc = z.object({
   tenant: nonEmpty,
   theme: tone,
   isPublic: z.boolean().nullish(),
+
+  /*
+    The city's own GA4 property. Optional — a city with none still reports to
+    the site-wide roll-up — but checked when it is there, because `gtag` does
+    nothing at all with an id of the wrong kind and the chapter would find out
+    a month later. The throw fails this one city's job, which leaves its
+    published pages where they are; see the note at the top of this file.
+  */
+  gaMeasurementId: z
+    .string()
+    .nullish()
+    .transform(blank)
+    .refine((id) => id === undefined || isMeasurementId(id), {
+      message:
+        'is not a GA4 measurement id. Expected the form "G-XXXXXXXXXX" — a ' +
+        'Universal Analytics property ("UA-…") or a Tag Manager container ' +
+        '("GTM-…") will not work here. Clear the field to report only to the ' +
+        "site-wide property.",
+    }),
 
   title: nonEmpty,
   subtitle: z.string().nullish().transform(blank),
@@ -141,6 +161,7 @@ export function parseEvent(raw: unknown, slug: string): TenantConfig {
     tenant: d.tenant,
     theme: d.theme,
     isPublic: d.isPublic ?? true,
+    gaMeasurementId: d.gaMeasurementId,
     title: d.title,
     subtitle: d.subtitle,
     titleEn: d.titleEn,
