@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { pickI18n } from "../lib/i18nPreview";
 
 /**
  * One photo set per city.
@@ -65,9 +66,11 @@ export const photoSet = defineType({
       event: "event.title",
       media: "registerBackdrop",
     },
+    // The city's own title, which is an internationalized array: the raw items
+    // would arrive here as objects and go straight to React. See `pickI18n`.
     prepare: ({ event, media }) => ({
       title: "Photos",
-      subtitle: event,
+      subtitle: pickI18n(event),
       media,
     }),
   },

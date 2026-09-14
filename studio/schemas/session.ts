@@ -42,10 +42,7 @@ export const session = defineType({
       type: "slug",
       description: "The URL: /sessions/<slug>.",
       options: {
-        source: (doc) =>
-          pickI18n(
-            doc.title as { language: string; value: string }[] | undefined,
-          ) ?? "",
+        source: (doc) => pickI18n(doc.title) ?? "",
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),

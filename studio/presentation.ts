@@ -5,6 +5,7 @@ import {
   type DocumentLocationResolver,
   type DocumentLocationsState,
 } from "sanity/presentation";
+import { pickI18n } from "./lib/i18nPreview";
 
 /**
  * Which URL each document appears at, and which document each URL is showing.
@@ -43,7 +44,9 @@ import {
  *
  * `coalesce(title, name)` because a speaker is the one type whose heading is
  * called something else, and one query for all of them is worth more than an
- * exactly-shaped one per type.
+ * exactly-shaped one per type. What comes back is the raw internationalized
+ * array rather than a string, so `pickI18n` reads one language out of it before
+ * it becomes a location title — an object on screen is a crash.
  */
 const QUERY = `*[_id == $id][0]{
   "title": coalesce(title, name),
@@ -52,7 +55,8 @@ const QUERY = `*[_id == $id][0]{
 }`;
 
 interface Doc {
-  title?: string | null;
+  /** Raw, because the field is an internationalized array. See `pickI18n`. */
+  title?: unknown;
   slug?: string | null;
   tenant?: string | null;
 }
@@ -91,7 +95,7 @@ const ownPage =
       ? {
           locations: [
             {
-              title: doc.title || kind,
+              title: pickI18n(doc.title) || kind,
               href: `/${doc.tenant}/${path}/${doc.slug || id}`,
             },
             cityHome(doc.tenant),
@@ -117,7 +121,11 @@ const citySection =
 const PLACES: Record<string, Place> = {
   event: (doc) =>
     doc.slug
-      ? { locations: [{ title: doc.title || doc.slug, href: `/${doc.slug}` }] }
+      ? {
+          locations: [
+            { title: pickI18n(doc.title) || doc.slug, href: `/${doc.slug}` },
+          ],
+        }
       : {
           message: "スラッグが未設定のため、まだ URL がありません。",
           tone: "caution",
@@ -136,7 +144,7 @@ const PLACES: Record<string, Place> = {
   // The one type with no city: it belongs to the front page, which lists the
   // DevFests this site does not host.
   externalEvent: (doc) => ({
-    locations: [{ title: doc.title || "トップページ", href: "/" }],
+    locations: [{ title: pickI18n(doc.title) || "トップページ", href: "/" }],
   }),
 };
 

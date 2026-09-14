@@ -33,10 +33,7 @@ export const speaker = defineType({
       type: "slug",
       description: "The URL: /speakers/<slug>.",
       options: {
-        source: (doc) =>
-          pickI18n(
-            doc.name as { language: string; value: string }[] | undefined,
-          ) ?? "",
+        source: (doc) => pickI18n(doc.name) ?? "",
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),

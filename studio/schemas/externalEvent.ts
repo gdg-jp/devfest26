@@ -25,10 +25,7 @@ export const externalEvent = defineType({
       title: "Slug",
       type: "slug",
       options: {
-        source: (doc) =>
-          pickI18n(
-            doc.title as { language: string; value: string }[] | undefined,
-          ) ?? "",
+        source: (doc) => pickI18n(doc.title) ?? "",
       },
       description:
         "一覧の中で重複しない識別子。都市の slug（kansai など）とも重複させないでください。",

@@ -26,10 +26,7 @@ export const event = defineType({
       // `title` is now an array, so the slugify source has to read the
       // Japanese value out of it directly.
       options: {
-        source: (doc) =>
-          pickI18n(
-            doc.title as { language: string; value: string }[] | undefined,
-          ) ?? "",
+        source: (doc) => pickI18n(doc.title) ?? "",
       },
       validation: (Rule) => Rule.required(),
     }),
