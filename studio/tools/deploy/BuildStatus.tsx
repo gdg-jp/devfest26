@@ -35,12 +35,11 @@ import {
 const POLL_MS = 20_000;
 const LOW_BUDGET = 8;
 
-/* No `pull_request`: those runs never reach the site, so `./github.ts` does
-   not ask for them. */
+/* Two entries because two events deploy. `./github.ts` asks only for the runs
+   that did, and neither `pull_request` nor `push` ever does. */
 const EVENT_LABEL: Record<string, string> = {
   repository_dispatch: "サイトに反映",
   workflow_dispatch: "手動実行",
-  push: "コードの更新",
 };
 
 type Tone = "primary" | "positive" | "critical" | "caution" | "default";
@@ -75,8 +74,8 @@ const WHEN = new Intl.DateTimeFormat("ja-JP", {
  *
  * Deliberately one run and not a history: the question this answers is "did
  * what I just asked for work", and a list of the last ten would bury it. For
- * the same reason it is the last run *of the site* — pull request builds are
- * filtered out in `./github.ts`, because they never publish.
+ * the same reason it is the last run *of the site* — pull request and merge
+ * builds are filtered out in `./github.ts`, because they never publish.
  *
  * What it can and cannot say is also decided there — status and which city
  * failed come free, the cause comes from an annotation the workflow writes for
@@ -218,7 +217,7 @@ export function BuildStatus(props: { nonce: number }) {
 
         {!loading && !run && !error && (
           <Text size={1} muted>
-            まだ 1 度もビルドされていません。
+            まだ 1 度もサイトに反映されていません。
           </Text>
         )}
 
