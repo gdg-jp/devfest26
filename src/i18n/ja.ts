@@ -211,9 +211,17 @@ export const ja = {
     upcomingHeading: "開催予定",
     pastHeading: "終了したイベント",
     emptyMessage: "開催予定の DevFest はまだ公開されていません。",
+    /*
+      The space around the link is part of these strings rather than of the
+      template, because it is a property of the language. Japanese sets no
+      space before a Latin run that a particle already binds to
+      （「については」）but does take one after it; English needs one on both
+      sides of the link or the sentence runs together. A `{" "}` in the
+      template could only ever be right for one of them.
+    */
     footerBefore:
       "DevFest は Google Developer Groups によるコミュニティイベントです。ブランドとプログラムについては",
-    footerAfter: "をご覧ください。",
+    footerAfter: " をご覧ください。",
   },
 
   eventCard: {

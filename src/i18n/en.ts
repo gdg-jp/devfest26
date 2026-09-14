@@ -6,6 +6,15 @@ import { ja } from "./ja";
  * `satisfies typeof ja` means a key missing here — or shaped differently from
  * its Japanese counterpart — is a type error at build time, not a blank
  * label discovered on the English site later.
+ *
+ * **Section headings are not translations of the Japanese ones.** Each section
+ * carries a hard-coded English eyebrow above its heading — `Overview`,
+ * `Timetable`, `Partners` — which is a Japanese typographic idiom: a short
+ * Latin kicker over a Japanese heading. In Japanese the two never collide
+ * because the heading is Japanese. In English they would say the same word
+ * twice, one line apart, so the headings here are written to be the line that
+ * follows the kicker rather than a literal rendering of `ja.ts`. The eyebrows
+ * stay in the components because they are identical in both languages.
  */
 
 export const en = {
@@ -61,13 +70,13 @@ export const en = {
   },
 
   overview: {
-    heading: "Overview",
+    heading: "Event details",
     lede: (region: string, year: string) =>
       `The essentials for DevFest ${year} in ${region}. We'll keep this updated as details are confirmed.`,
     dtDate: "Date",
     dtHours: "Hours",
     socialNote: (hours: string, label: string) =>
-      `${label} planned at ${hours}`,
+      `${label} planned for ${hours}`,
     dtVenue: "Venue",
     dtFormat: "Format",
     dtFee: "Fee",
@@ -77,7 +86,9 @@ export const en = {
   },
 
   preEvents: {
-    heading: "Pre-event announced!",
+    // Not "Pre-event announced!": the section renders however many meetups a
+    // city has, and Japanese leaves the number open. This does too.
+    heading: "Before the main event",
     lede: (monthDay: string) =>
       `Ahead of ${monthDay}, we're holding a "DevFest Meetup" pre-event — a smaller-scale chance to talk through the day's themes beforehand. Registration for the pre-event is separate from the main event.`,
   },
@@ -87,9 +98,9 @@ export const en = {
   },
 
   timetable: {
-    heading: "Timetable",
+    heading: "How the day runs",
     lede: (trackCount: number, hasTimetable: boolean) =>
-      `We're planning for ${trackCount} tracks. ${
+      `We're planning for ${trackCount} ${trackCount === 1 ? "track" : "tracks"}. ${
         hasTimetable
           ? "Confirmed sessions are listed in order."
           : "Session times are still being finalized."
@@ -105,7 +116,7 @@ export const en = {
   },
 
   whatIsDevFest: {
-    heading: "What is DevFest",
+    heading: "A community-run tech conference",
     body1:
       "DevFest is a community-driven technology conference held by Google Developer Groups (GDG) in regions around the world.",
     body2:
@@ -115,7 +126,7 @@ export const en = {
   },
 
   partners: {
-    heading: "Partners",
+    heading: "Co-hosts and supporters",
     lede: (region: string) => `Made together with the ${region} community.`,
   },
 
@@ -153,7 +164,7 @@ export const en = {
   meetupCard: {
     statusOpen: "Open",
     statusClosed: "Closed",
-    statusDone: "Held",
+    statusDone: "Past",
     ctaDefault: "Register",
     ctaCompletedDefault: "View event page",
     factVenue: "Venue",
@@ -193,7 +204,7 @@ export const en = {
     pastHeading: "Past events",
     emptyMessage: "No upcoming DevFest events have been published yet.",
     footerBefore:
-      "DevFest is a community event by Google Developer Groups. For brand and program details, see",
+      "DevFest is a community event by Google Developer Groups. For brand and program details, see ",
     footerAfter: ".",
   },
 
