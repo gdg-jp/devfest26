@@ -59,8 +59,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     <a class="lang-switch" href={switchHref} hreflang={switchTo}>
       {switchLabel}
     </a>
-    <a class="btn sm" href={site.links.register} target="_blank" rel="noopener"
-      >{t.topbar.registerCta}</a
+    <a
+      class="btn sm"
+      href={site.links.register}
+      target="_blank"
+      rel="noopener"
+      data-analytics="register_click"
+      data-placement="topbar">{t.topbar.registerCta}</a
     >
   </div>
   <div class="progress" aria-hidden="true"><span data-progress></span></div>
