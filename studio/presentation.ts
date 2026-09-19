@@ -54,6 +54,20 @@ const QUERY = `*[_id == $id][0]{
   "tenant": event->slug.current
 }`;
 
+/**
+ * What the subscription *listens* on, which is not what it reads.
+ *
+ * The query above is perspective-aware: `$id` is the published id, and the
+ * Studio's drafts perspective hands back the draft's content under it. The
+ * listener behind it is not — it matches documents by the id they are stored
+ * under — so `_id == $id` alone matches none of the mutations that editing
+ * actually produces, every one of which lands on `drafts.<id>`. The panel
+ * would then keep whatever it resolved to when it first subscribed: a session
+ * whose city was picked a moment ago still reads "no city", until the page is
+ * reloaded.
+ */
+const LISTEN = `*[_id == $id || _id == "drafts." + $id]`;
+
 interface Doc {
   /** Raw, because the field is an internationalized array. See `pickI18n`. */
   title?: unknown;
@@ -162,7 +176,7 @@ export const locations: DocumentLocationResolver = (params, context) => {
 
   return context.documentStore
     .listenQuery(
-      QUERY,
+      { fetch: QUERY, listen: LISTEN },
       { id },
       {
         // The Studio's own perspective, so an unpublished draft resolves to
