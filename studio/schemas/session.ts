@@ -1,5 +1,42 @@
-import { defineType, defineField, defineArrayMember } from "sanity";
+import {
+  defineType,
+  defineField,
+  defineArrayMember,
+  getPublishedId,
+} from "sanity";
 import { pickI18n } from "../lib/i18nPreview";
+
+/**
+ * Only what belongs to the city this session is attached to, for the reference
+ * fields that offer the city's own documents: a Kansai session cannot land on
+ * a Tokyo track.
+ *
+ * The city is looked up in the dataset, through the session's own `_id`,
+ * rather than read off the `document` handed to this callback. Studio binds
+ * that document once, when the reference field mounts, and never rebinds it —
+ * so on a session created before a city was picked it stays empty for as long
+ * as the pane is open, and the field kept searching for a `$eventId` that was
+ * never sent. A parameter with no value is dropped on the way to the search
+ * API, which then rejects a query that mentions it, and the field read
+ * "Invalid reference filter" until the page was reloaded. `_id` is the one
+ * part of the document that cannot go stale, and the search already runs under
+ * the drafts perspective, so the lookup sees the draft's city as soon as it is
+ * saved.
+ *
+ * The `coalesce` covers the moment before that. A session created from a
+ * city's list has its `event` filled in by a template (see
+ * `sanity.config.ts`) and is not in the dataset yet, and the document as it
+ * was at mount is then the only place that city exists.
+ */
+const sameCity = (document: { _id: string; event?: unknown }) => ({
+  filter:
+    "defined(event._ref) && " +
+    "event._ref == coalesce(*[_id == $docId][0].event._ref, $eventId)",
+  params: {
+    docId: getPublishedId(document._id),
+    eventId: (document.event as { _ref?: string } | undefined)?._ref ?? null,
+  },
+});
 
 export const session = defineType({
   name: "session",
@@ -18,16 +55,10 @@ export const session = defineType({
       title: "Track",
       type: "reference",
       to: [{ type: "track" }],
-      // The dropdown offers only the tracks belonging to the city this session
-      // is already attached to, so a Kansai session cannot land on a Tokyo
-      // track. Pick the event first and the list fills itself in.
+      // The dropdown offers only this city's tracks. Pick the event first and
+      // the list fills itself in — see `sameCity`.
       options: {
-        filter: ({ document }) => ({
-          filter: "event._ref == $eventId",
-          params: {
-            eventId: (document.event as { _ref?: string } | undefined)?._ref,
-          },
-        }),
+        filter: ({ document }) => sameCity(document),
       },
       validation: (Rule) => Rule.required(),
     }),
@@ -91,14 +122,9 @@ export const session = defineType({
         defineArrayMember({
           type: "reference",
           to: [{ type: "talk" }],
+          // This city's talks only, the same way the track field is filtered.
           options: {
-            filter: ({ document }) => ({
-              filter: "event._ref == $eventId",
-              params: {
-                eventId: (document.event as { _ref?: string } | undefined)
-                  ?._ref,
-              },
-            }),
+            filter: ({ document }) => sameCity(document),
           },
         }),
       ],
