@@ -100,7 +100,7 @@ const blocks = talks.map((talk) => ({
   }
 
   /* While the reveal is still running, the hover lift must not fight it. */
-  .card:not(:global(.is-revealed)):hover {
+  .card:not(.is-revealed):hover {
     transform: none;
     box-shadow: none;
   }
