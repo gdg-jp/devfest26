@@ -32,7 +32,7 @@ const t = (field: string) =>
  * The same field, always in English rather than the build's language —
  * still falling back to Japanese if English is not filled in yet. For the
  * handful of things that are English regardless of which site is building:
- * the OG card (`src/city/OgPreview.astro`) and the topbar's compact city
+ * the OG card (`src/routes/[tenant]/og-preview.astro`) and the topbar's compact city
  * badge (`editionEn` in `src/tenants/index.ts`), both drawn from
  * `titleEn`/`subtitleEn` below.
  */

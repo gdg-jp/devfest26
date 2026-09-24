@@ -1,5 +1,5 @@
-import type { Theme } from "../data/themes";
-import { entries } from "../data/collections";
+import type { Theme } from "./themes";
+import { entries } from "./collections";
 import { tenantHome } from "../lib/url";
 import { eventDates } from "../tenants/eventDates";
 import { discoverCities } from "../tenants/discovery";

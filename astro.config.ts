@@ -1,10 +1,14 @@
 import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 import type { AstroIntegration } from "astro";
+import { fileURLToPath } from "node:url";
 import { previewMode } from "./src/preview/mode";
 import { LANGUAGES, langPrefix, langPrefixOf } from "./src/i18n/language";
+import { routeTable, type RouteFile } from "./src/lib/routeTable";
+import { offBrandColors } from "./src/lib/brandColors";
 import {
   anyCity,
+  mayBuildCity,
   portalSelected,
   soleCity,
   targetKey,
@@ -23,28 +27,44 @@ const site = process.env.SITE_URL;
 /**
  * Every route this build produces, chosen by what it was asked for.
  *
- * They are injected rather than filed under `src/pages/` because a page in
- * that directory is built whether or not it renders anything. A front-page
- * build with the city routes present emits every city stylesheet and the whole
- * motion bundle beside a page that references none of it; a one-city build
- * with the front page present emits a second, unwanted copy of the site's
- * front door into output that is grafted on under `/kansai`. Selecting the
- * entrypoints keeps one module graph per build, which is the property the
- * three separate builds used to give.
+ * The pages are in `src/routes/`, laid out the way `src/pages/` would lay them
+ * out — the path of a file is its URL — and read into a table by
+ * `src/lib/routeTable.ts`. They are injected from there rather than filed
+ * under `src/pages/` because a page in that directory is built whether or not
+ * it renders anything:
  *
- * The city pages live in `src/city/`. `getStaticPaths` on each one expands
- * `[tenant]` over the cities this build resolved — see `buildableCities` in
- * `src/tenants/index.ts`. In the draft preview there is nothing to expand at
- * build time, so those exports are ignored (Astro says so, once per route) and
- * each page resolves its own props from `Astro.params` instead — see
- * `src/city/params.ts`.
+ * - A front-page build with the city routes present emits every city
+ *   stylesheet and the whole motion bundle beside a page that references none
+ *   of it.
+ * - A one-city build with the front page present emits a second, unwanted copy
+ *   of the site's front door into output that is grafted on under `/kansai`.
+ * - A city's own page, `src/routes/kansai/index.astro`, is a static route. In
+ *   `src/pages/` every build would render it — Tokyo's included, which has
+ *   not fetched a single Kansai document.
+ *
+ * Selecting the entrypoints keeps one module graph per build, which is the
+ * property the separate per-city builds used to give.
+ *
+ * The shared city pages are in `src/routes/[tenant]/`. `getStaticPaths` on
+ * each one expands `[tenant]` over the cities this build resolved — see
+ * `buildableCities` in `src/tenants/index.ts`. In the draft preview there is
+ * nothing to expand at build time, so those exports are ignored (Astro says
+ * so, once per route) and each page resolves its own props from
+ * `Astro.params` instead — see `src/lib/cityRoutes.ts`.
  */
 const routes: AstroIntegration = {
   name: "devfest:routes",
   hooks: {
-    "astro:config:setup": ({ injectRoute, injectScript }) => {
-      const inject = (pattern: string, entrypoint: string) =>
-        injectRoute({ pattern, entrypoint });
+    "astro:config:setup": ({
+      command,
+      config,
+      injectRoute,
+      injectScript,
+      logger,
+      updateConfig,
+    }) => {
+      const root = fileURLToPath(config.root);
+      const table = routeTable(root);
 
       /*
         The language prefixes this build answers on.
@@ -64,45 +84,104 @@ const routes: AstroIntegration = {
       */
       const prefixes = previewMode ? LANGUAGES.map(langPrefixOf) : [langPrefix];
 
-      if (portalSelected) {
-        for (const prefix of prefixes)
-          inject(prefix || "/", "./src/portal/Home.astro");
-      }
+      const inject = ({ pattern, entrypoint }: RouteFile) => {
+        for (const prefix of prefixes) {
+          injectRoute({
+            pattern: pattern === "/" ? prefix || "/" : `${prefix}${pattern}`,
+            entrypoint,
+          });
+        }
+      };
+
+      if (portalSelected) table.portal.forEach(inject);
 
       if (anyCity) {
-        for (const prefix of prefixes) {
-          inject(`${prefix}/[tenant]`, "./src/city/Home.astro");
-          inject(
-            `${prefix}/[tenant]/sessions/[slug]`,
-            "./src/city/Session.astro",
-          );
-          inject(
-            `${prefix}/[tenant]/speakers/[slug]`,
-            "./src/city/Speaker.astro",
-          );
-          inject(`${prefix}/[tenant]/talks/[slug]`, "./src/city/Talk.astro");
-          inject(`${prefix}/[tenant]/favicon.svg`, "./src/city/favicon.ts");
+        for (const route of table.shared) {
+          // Only built with OG_PREVIEW set; see the route itself. The preview
+          // renders on demand, where `getStaticPaths` decides nothing and the
+          // route would answer for every city — so it is left out entirely,
+          // and with it any question of which language it would be in.
+          if (previewMode && route.pattern === "/[tenant]/og-preview") continue;
+          inject(route);
         }
-        // Only built with OG_PREVIEW set; see the route itself. The preview
-        // renders on demand, where `getStaticPaths` decides nothing and the
-        // route would answer for every city — so it is left out entirely, and
-        // with it any question of which language it would be in.
-        if (!previewMode) {
-          inject(
-            `${langPrefix}/[tenant]/og-preview`,
-            "./src/city/OgPreview.astro",
+
+        /*
+          Each city's own directory, if this build may be making that city.
+
+          The preview takes every one, as it takes every city. A static build
+          takes the ones `TARGETS` names — so a Tokyo job never compiles
+          Kansai's pages, its components or its stylesheet — or, with no
+          `TARGETS`, all of them, and a page whose city turns out not to exist
+          writes nothing; see `missingCity` in `src/lib/cityRoutes.ts`.
+        */
+        for (const [slug, city] of table.cities) {
+          if (!previewMode && !mayBuildCity(slug)) continue;
+
+          city.routes.forEach(inject);
+
+          // Into every page, not just the city's own: its session and speaker
+          // pages are the shared ones, and they are that city's pages too. The
+          // rules are scoped by `data-city`, so where several cities share a
+          // build, each stylesheet only ever matches its own.
+          if (city.stylesheet) {
+            injectScript(
+              "page-ssr",
+              `import ${JSON.stringify(city.stylesheet)};`,
+            );
+          }
+
+          // Held to the brand palette — see `src/lib/brandColors.ts`. A
+          // warning while working on it, so a stray colour does not take the
+          // dev server down mid-edit; an error in a build, so it is never
+          // published.
+          const problems = city.styled.flatMap((file) =>
+            offBrandColors(root, file),
           );
+          if (problems.length > 0) {
+            const message =
+              `src/routes/${slug}/ uses colours outside the DevFest palette:\n` +
+              problems.map((problem) => `  ${problem}`).join("\n") +
+              `\nUse the tokens in src/styles/tokens.css. A colour the brand ` +
+              `does not have is a decision to make first, not a line of CSS.`;
+            if (command === "build") throw new Error(message);
+            logger.warn(message);
+          }
         }
       }
+
+      updateConfig({
+        vite: {
+          define: {
+            /**
+             * Every path some city answers from its own directory, so that the
+             * shared routes can leave those out of `getStaticPaths` — see
+             * `exceptOwned` in `src/lib/cityRoutes.ts`. All of them, not just
+             * this build's: a city outside the build is absent from the shared
+             * routes' paths as well, so listing it changes nothing.
+             */
+            __CITY_ROUTES__: JSON.stringify(
+              [...table.cities.values()].flatMap((city) =>
+                city.routes.map((route) => route.pattern),
+              ),
+            ),
+          },
+        },
+      });
 
       if (previewMode) {
         // What could not be rendered, and when the content was read. Read by
         // the bar at the foot of every preview page.
-        inject("/preview/status", "./src/preview/status.ts");
+        injectRoute({
+          pattern: "/preview/status",
+          entrypoint: "./src/preview/status.ts",
+        });
         // Astro serves this for anything that still throws. There is no
         // equivalent in a static build — a page that failed there failed the
         // build — so it exists only here.
-        inject("/500", "./src/preview/Error.astro");
+        injectRoute({
+          pattern: "/500",
+          entrypoint: "./src/preview/Error.astro",
+        });
 
         /*
           Sanity's click-to-edit overlays, on every preview page.
@@ -114,8 +193,8 @@ const routes: AstroIntegration = {
           so the chunk is still *emitted*: three orphan files and 734 kB of
           React and overlay code, published to a static host where nothing
           would ever load them. Injecting keeps the module out of the
-          published graph entirely, which is the same reason the two routes
-          above are injected rather than filed under `src/pages/`.
+          published graph entirely, which is the same reason the pages are
+          injected rather than filed under `src/pages/`.
         */
         injectScript(
           "page",
@@ -131,6 +210,14 @@ export default defineConfig({
   site,
   integrations: [routes],
   trailingSlash: "never",
+  /**
+   * Two routes rendering the same path is always a mistake here, never a
+   * choice: the shared city routes step aside for a city's own pages rather
+   * than lose to them (`exceptOwned` in `src/lib/cityRoutes.ts`), so a
+   * collision that is left means something was missed. Astro's default is to
+   * warn and carry on with whichever route ranks higher.
+   */
+  prerenderConflictBehavior: "error",
   /**
    * The published site is a directory of files; the draft preview is a
    * Cloudflare Worker that renders each request from whatever is in the Studio

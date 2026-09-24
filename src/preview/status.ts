@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { buildableCities } from "../tenants";
 import { getProgramSessions, getProgramSpeakers } from "../data/program";
-import { getPortalEvents } from "../portal/events";
+import { getPortalEvents } from "../data/portalEvents";
 import { readToken } from "../lib/sanity/env";
 import { draftProblems, draftsTakenAt } from "./drafts";
 import { combine, recordInto, recording, report } from "./problems";

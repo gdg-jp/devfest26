@@ -1,13 +1,14 @@
 ---
-import Sprite from "../components/Sprite.astro";
-import Logo from "../components/Logo.astro";
-import { buildableCities } from "../tenants";
-import { stickers } from "../data/stickers";
-import { messages } from "../i18n";
-import { currentLanguage } from "../i18n/language";
-import "../styles/tokens.css";
+import Sprite from "../../components/Sprite.astro";
+import Logo from "../../components/Logo.astro";
+import { buildableCities } from "../../tenants";
+import { exceptOwned } from "../../lib/cityRoutes";
+import { stickers } from "../../data/stickers";
+import { messages } from "../../i18n";
+import { currentLanguage } from "../../i18n/language";
+import "../../styles/tokens.css";
 // base.css carries the reset and the rule that hides the inline sprite.
-import "../styles/base.css";
+import "../../styles/base.css";
 
 /**
  * The source artwork for `public/og/<tenant>.png`, rendered from the same
@@ -19,10 +20,13 @@ import "../styles/base.css";
  */
 export async function getStaticPaths() {
   const cities = process.env.OG_PREVIEW ? await buildableCities() : [];
-  return cities.map(({ slug, site }) => ({
-    params: { tenant: slug },
-    props: { site },
-  }));
+  return exceptOwned(
+    "/[tenant]/og-preview",
+    cities.map(({ slug, site }) => ({
+      params: { tenant: slug },
+      props: { site },
+    })),
+  );
 }
 
 const { site } = Astro.props;
