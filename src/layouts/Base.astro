@@ -115,7 +115,13 @@ const eventSchema = clean({
 ---
 
 <!doctype html>
-<html lang={t.meta.htmlLang} data-theme={site.theme}>
+{
+  /* `data-city` is what a city's own stylesheet hangs from —
+    `src/routes/<slug>/_style.css`. In a build or a preview with more than one
+    city, every city's stylesheet is on every page, so each has to say which
+    city it is for. */
+}
+<html lang={t.meta.htmlLang} data-theme={site.theme} data-city={site.tenant}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

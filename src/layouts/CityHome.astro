@@ -1,0 +1,35 @@
+---
+import Base from "./Base.astro";
+import Sprite from "../components/Sprite.astro";
+import Preloader from "../components/Preloader.astro";
+import TopBar from "../components/TopBar.astro";
+import Footer from "../components/Footer.astro";
+import type { ResolvedTenant } from "../tenants";
+
+/**
+ * The frame of a city's home page: the intro curtain, the top bar and the
+ * footer. The sections between them are the page's own, passed in as
+ * children.
+ *
+ * Split out so that a city writing its own home page, in
+ * `src/routes/<slug>/index.astro`, chooses only what goes between — which
+ * sections, in what order, and what of its own — and keeps the same frame as
+ * every other city without copying it.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+---
+
+<Base site={site}>
+  <Sprite />
+  <Preloader />
+
+  <TopBar site={site} />
+  <main>
+    <slot />
+  </main>
+  <Footer site={site} />
+</Base>

@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
-import { faviconSvg } from "../lib/favicon";
-import { buildableCities } from "../tenants";
-import { themeProps } from "./params";
-import type { Theme } from "../data/themes";
+import { faviconSvg } from "../../lib/favicon";
+import { buildableCities } from "../../tenants";
+import { exceptOwned, themeProps } from "../../lib/cityRoutes";
+import type { Theme } from "../../data/themes";
 
 /**
  * Served at /<city>/favicon.svg, in that city's theme colour.
@@ -13,15 +13,18 @@ import type { Theme } from "../data/themes";
  */
 export async function getStaticPaths() {
   const cities = await buildableCities();
-  return cities.map(({ slug, site }) => ({
-    params: { tenant: slug },
-    props: { theme: site.theme },
-  }));
+  return exceptOwned(
+    "/[tenant]/favicon.svg",
+    cities.map(({ slug, site }) => ({
+      params: { tenant: slug },
+      props: { theme: site.theme },
+    })),
+  );
 }
 
 export const GET: APIRoute<{ theme: Theme }> = async ({ params, props }) => {
   // Static builds carry the theme in as a prop; on demand there is only the
-  // path. See `src/city/params.ts`.
+  // path. See `src/lib/cityRoutes.ts`.
   const theme = props.theme ?? (await themeProps(params))?.theme;
   if (!theme) return new Response(null, { status: 404 });
 

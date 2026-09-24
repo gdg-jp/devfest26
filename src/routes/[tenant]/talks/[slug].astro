@@ -1,17 +1,17 @@
 ---
 import { render } from "astro:content";
-import Page from "../layouts/Page.astro";
-import SpeakerRow from "../components/SpeakerRow.astro";
-import { buildableCities, type ResolvedTenant } from "../tenants";
-import { notFound, talkProps } from "./params";
+import Page from "../../../layouts/Page.astro";
+import SpeakerRow from "../../../components/SpeakerRow.astro";
+import { buildableCities, type ResolvedTenant } from "../../../tenants";
+import { exceptOwned, notFound, talkProps } from "../../../lib/cityRoutes";
 import {
   getStandaloneTalks,
   jstTimestamp,
   type ProgramSession,
   type ProgramTalk,
-} from "../data/program";
-import { messages } from "../i18n";
-import { currentLanguage } from "../i18n/language";
+} from "../../../data/program";
+import { messages } from "../../../i18n";
+import { currentLanguage } from "../../../i18n/language";
 
 /**
  * One page per talk that is an entry in its own right.
@@ -23,7 +23,7 @@ import { currentLanguage } from "../i18n/language";
 export async function getStaticPaths() {
   const cities = await buildableCities();
 
-  return (
+  const paths = (
     await Promise.all(
       cities.map(async ({ slug, site }) =>
         (await getStandaloneTalks(slug)).map(({ session, talk }) => ({
@@ -33,6 +33,8 @@ export async function getStaticPaths() {
       ),
     )
   ).flat();
+
+  return exceptOwned("/[tenant]/talks/[slug]", paths);
 }
 
 interface Props {
@@ -41,7 +43,7 @@ interface Props {
   talk: ProgramTalk;
 }
 
-// See `src/city/params.ts`: the static build filled these in from
+// See `src/lib/cityRoutes.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await talkProps(Astro.params);
 const t = messages(currentLanguage());

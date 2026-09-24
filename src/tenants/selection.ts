@@ -128,6 +128,24 @@ export const LOCAL_TENANT: string = (() => {
   return asked[0];
 })();
 
+/**
+ * Whether `slug` could be one of this build's cities, as far as can be told
+ * before anything is fetched.
+ *
+ * For `astro.config.ts`, which decides whether to take in a city's own
+ * directory under `src/routes/` before any request to Sanity has been made. A
+ * yes is only a maybe — with no `TARGETS` the answer is "whichever cities
+ * exist", which only discovery knows — so a page in that directory still asks
+ * `buildableCities` for its city and renders nothing when it is not there. A
+ * no is certain, and is what keeps `TARGETS=tokyo` from compiling a line of
+ * Kansai's.
+ */
+export function mayBuildCity(slug: string): boolean {
+  if (noCities) return false;
+  if (!sanityEnabled()) return slug === LOCAL_TENANT;
+  return !requestedCities || requestedCities.includes(slug);
+}
+
 let cached: Promise<string[]> | undefined;
 
 /**

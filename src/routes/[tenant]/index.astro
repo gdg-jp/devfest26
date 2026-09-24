@@ -1,0 +1,71 @@
+---
+import CityHome from "../../layouts/CityHome.astro";
+import Hero from "../../components/Hero.astro";
+import Countdown from "../../components/Countdown.astro";
+import PreEvents from "../../components/PreEvents.astro";
+import Overview from "../../components/Overview.astro";
+import About from "../../components/About.astro";
+import Timetable from "../../components/Timetable.astro";
+import Sessions from "../../components/Sessions.astro";
+import WhatIsDevFest from "../../components/WhatIsDevFest.astro";
+import Partners from "../../components/Partners.astro";
+import CodeOfConduct from "../../components/CodeOfConduct.astro";
+import Register from "../../components/Register.astro";
+import { buildableCities, type ResolvedTenant } from "../../tenants";
+import { cityProps, exceptOwned, notFound } from "../../lib/cityRoutes";
+import { messages } from "../../i18n";
+import { currentLanguage } from "../../i18n/language";
+
+/**
+ * A city's home page — the long scrolling one, at `/kansai`.
+ *
+ * This is where a city enters the render. `buildableCities` is the one list
+ * every route in this directory builds its paths from, so they cannot disagree
+ * about which cities exist, and the configuration it resolved travels down
+ * from here as a prop rather than being read again by each section.
+ *
+ * A city with a home page of its own, `src/routes/<slug>/index.astro`, is left
+ * out here and answered by that one instead. Copying this file there is the way
+ * to start one: everything below the frontmatter carries over as it is.
+ */
+export async function getStaticPaths() {
+  const cities = await buildableCities();
+  return exceptOwned(
+    "/[tenant]",
+    cities.map(({ slug, site }) => ({
+      params: { tenant: slug },
+      props: { site },
+    })),
+  );
+}
+
+interface Props {
+  site: ResolvedTenant;
+}
+
+/*
+  Built statically, this arrived from `getStaticPaths` above. Rendered on
+  demand — the draft preview — nothing expanded those paths and the URL is all
+  there is, so the same lookup happens here for the one city being asked for.
+  See `src/lib/cityRoutes.ts`.
+*/
+const props = Astro.props.site ? Astro.props : await cityProps(Astro.params);
+const t = messages(currentLanguage());
+if (!props) return notFound(t.notFound.city(Astro.params.tenant ?? ""));
+
+const { site } = props;
+---
+
+<CityHome site={site}>
+  <Hero site={site} />
+  <Countdown site={site} />
+  <PreEvents site={site} />
+  <Overview site={site} />
+  <About tenant={site.tenant} />
+  <Timetable site={site} />
+  <Sessions tenant={site.tenant} />
+  <WhatIsDevFest tenant={site.tenant} />
+  <Partners site={site} />
+  <CodeOfConduct site={site} />
+  <Register site={site} />
+</CityHome>

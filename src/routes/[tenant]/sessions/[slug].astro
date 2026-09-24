@@ -1,19 +1,19 @@
 ---
 import { render } from "astro:content";
-import Page from "../layouts/Page.astro";
-import SpeakerRow from "../components/SpeakerRow.astro";
-import { buildableCities, type ResolvedTenant } from "../tenants";
-import { notFound, sessionProps } from "./params";
-import { tenantHome } from "../lib/url";
-import { pastelCycle } from "../data/tracks";
+import Page from "../../../layouts/Page.astro";
+import SpeakerRow from "../../../components/SpeakerRow.astro";
+import { buildableCities, type ResolvedTenant } from "../../../tenants";
+import { exceptOwned, notFound, sessionProps } from "../../../lib/cityRoutes";
+import { tenantHome } from "../../../lib/url";
+import { pastelCycle } from "../../../data/tracks";
 import {
   getProgramSessions,
   jstTimestamp,
   type ProgramSession,
-} from "../data/program";
-import { getTimetable } from "../data/timetable";
-import { messages } from "../i18n";
-import { currentLanguage } from "../i18n/language";
+} from "../../../data/program";
+import { getTimetable } from "../../../data/timetable";
+import { messages } from "../../../i18n";
+import { currentLanguage } from "../../../i18n/language";
 
 /**
  * Every session has a page, whether or not the city splits it into talks: it
@@ -24,7 +24,7 @@ import { currentLanguage } from "../i18n/language";
 export async function getStaticPaths() {
   const cities = await buildableCities();
 
-  return (
+  const paths = (
     await Promise.all(
       cities.map(async ({ slug, site }) =>
         (await getProgramSessions(slug)).map((session) => ({
@@ -34,6 +34,8 @@ export async function getStaticPaths() {
       ),
     )
   ).flat();
+
+  return exceptOwned("/[tenant]/sessions/[slug]", paths);
 }
 
 interface Props {
@@ -41,7 +43,7 @@ interface Props {
   session: ProgramSession;
 }
 
-// See `src/city/params.ts`: the static build filled these in from
+// See `src/lib/cityRoutes.ts`: the static build filled these in from
 // `getStaticPaths`, the preview has only the URL.
 const props = Astro.props.site ? Astro.props : await sessionProps(Astro.params);
 const t = messages(currentLanguage());

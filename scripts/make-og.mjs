@@ -4,7 +4,7 @@
  *   pnpm og            # every city
  *   pnpm og kansai     # just one
  *
- * The card itself is `src/pages/[tenant]/og-preview.astro`, which reads the
+ * The card itself is `src/routes/[tenant]/og-preview.astro`, which reads the
  * same tenant config the site does — so the image cannot drift from the page.
  * That route only exists when OG_PREVIEW is set, so it never ships.
  *

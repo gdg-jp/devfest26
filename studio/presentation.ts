@@ -14,7 +14,7 @@ import { pickI18n } from "./lib/i18nPreview";
  * move the preview to that session's page (`locations`), and navigating the
  * preview to a page should select the document behind it in the form beside it
  * (`mainDocuments`). Neither is inferable: the site's routes live in
- * `astro.config.ts` and are resolved by `src/city/params.ts`, which the Studio
+ * `src/routes/` and are resolved by `src/lib/cityRoutes.ts`, which the Studio
  * cannot see.
  *
  * So this file is a copy of the site's URL shapes, and the thing to keep true:

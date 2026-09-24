@@ -14,7 +14,7 @@ import type { TenantConfig } from "./types";
  * This used to be a singleton — one module, one city, decided by an
  * environment variable — because one build produced one city. A build now
  * produces several, so the city arrives as an argument and travels down as a
- * prop. `src/pages/[tenant]/index.astro` is where it enters.
+ * prop. `src/routes/[tenant]/index.astro` is where it enters.
  */
 
 /**
