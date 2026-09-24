@@ -33,20 +33,35 @@ const WORKFLOW = "build.yml";
 /**
  * Only the runs that can change the site.
  *
- * A pull request builds every city too, and its `publish` job is skipped —
- * `github.event_name != 'pull_request'` in `build.yml` — so a green PR run
- * says nothing at all about what is being served, and a red one is a problem
- * for the branch rather than for the site. Showing either here would answer a
- * different question than the one this panel is for.
+ * Most runs of `build.yml` cannot. A pull request builds every city and stops
+ * there, and so does a merge to `main`: `publish` runs for the two events that
+ * mean a person asked for a deploy, and neither of those is one of them. A
+ * green check run says nothing at all about what is being served, and a red
+ * one is a problem for the branch rather than for the site. Showing either
+ * here would answer a different question than the one this panel is for.
  *
- * Filtering by branch is what separates them: a pull request run carries the
- * topic branch as its `head_branch`, while a push, a `repository_dispatch`
- * (which GitHub runs on the default branch) and a `workflow_dispatch` started
- * from main all carry this. The one thing it also hides is a
- * `workflow_dispatch` started from a topic branch, which does publish — rare
- * enough, and visible on GitHub, to be worth the simpler rule.
+ * Which takes both filters. The branch drops pull requests, which carry their
+ * topic branch as `head_branch`, while a `repository_dispatch` (GitHub runs it
+ * on the default branch) and a `workflow_dispatch` started from main carry
+ * this one; the event then drops the merges. What the branch filter also hides
+ * is a `workflow_dispatch` started from a topic branch, which does publish —
+ * rare enough, and visible on GitHub, to be worth the simpler rule.
  */
 const BRANCH = "main";
+
+/**
+ * The events `build.yml` publishes for — the `if:` on its `publish` job, kept
+ * in step by hand.
+ *
+ * GitHub's runs endpoint takes one `event` at a time and there are two of
+ * them, so the filtering happens here instead: a page of recent runs on the
+ * branch, and the newest of them that deployed. A page rather than a single
+ * run, because merges to `main` now sit in between — thirty covers a busy
+ * afternoon of them, and the alternative of one request per event would spend
+ * the scarcer thing (sixty requests an hour) to save the cheaper one.
+ */
+const PUBLISHING_EVENTS = new Set(["repository_dispatch", "workflow_dispatch"]);
+const PAGE = 30;
 
 const HEADERS = {
   Accept: "application/vnd.github+json",
@@ -122,15 +137,21 @@ interface RunPayload {
 }
 
 /**
- * The most recent run of the build workflow that could have changed the site,
- * or null if there has never been one.
+ * The most recent run of the build workflow that deployed, or null when none
+ * of the last `PAGE` runs on the branch did.
+ *
+ * `exclude_pull_requests` only trims the payload: it drops the `pull_requests`
+ * array from each run, which nothing here reads and which is most of what a
+ * page of thirty would otherwise carry.
  */
 export async function latestRun(repo: string): Promise<Run | null> {
   const { data, remaining } = await get<{ workflow_runs: RunPayload[] }>(
-    `${API}/repos/${repo}/actions/workflows/${WORKFLOW}/runs?branch=${BRANCH}&per_page=1`,
+    `${API}/repos/${repo}/actions/workflows/${WORKFLOW}/runs?branch=${BRANCH}&per_page=${PAGE}&exclude_pull_requests=true`,
   );
 
-  const run = data.workflow_runs?.[0];
+  const run = data.workflow_runs?.find((candidate) =>
+    PUBLISHING_EVENTS.has(candidate.event),
+  );
   if (!run) return null;
 
   return {

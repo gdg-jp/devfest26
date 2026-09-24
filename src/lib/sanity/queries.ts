@@ -165,7 +165,7 @@ const EVENT_FIELDS = `
   "nav": nav[]{href, ${t("label")}},
   "footerNav": footerNav[]{href, ${t("label")}},
   "fixtures": fixtures[]{start, end, ${t("label")}, ${t("note")}, "tracks": tracks[]->_id},
-  isPublic`;
+  isPublic, gaMeasurementId`;
 
 export const EVENT = `*[_type == "event" && slug.current == $tenant][0]{
   "tenant": slug.current,${EVENT_FIELDS}

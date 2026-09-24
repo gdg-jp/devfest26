@@ -1,3 +1,4 @@
+import { initAnalytics } from "./analytics";
 import { initCountdown } from "./countdown";
 import { initIntro } from "./intro";
 import { initMeetupAccordion } from "./meetup-accordion";
@@ -23,6 +24,7 @@ if (window.__dfMotionFallback) {
  * Each module decides for itself what `prefers-reduced-motion` means for it,
  * so this stays a plain list rather than a set of conditionals.
  */
+initAnalytics();
 initCountdown();
 initMeetupAccordion();
 initNav();

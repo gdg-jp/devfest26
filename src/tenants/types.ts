@@ -81,6 +81,16 @@ export interface TenantConfig {
   theme: Theme;
   isPublic?: boolean;
 
+  /**
+   * The city's own GA4 property, if its chapter runs one.
+   *
+   * Optional, and absence is the ordinary case rather than a misconfiguration:
+   * a city with nothing here still reports to the site-wide roll-up, so adding
+   * a city never has to wait on a property being created. See
+   * `src/lib/analytics.ts` for why a chapter would want one at all.
+   */
+  gaMeasurementId?: string;
+
   title: string;
   /** サブタイトル（副題）。設定した場合、ヒーローセクションでタイトルの下に改行して表示されます。 */
   subtitle?: string;

@@ -1,0 +1,115 @@
+---
+import { measurementIds } from "../lib/analytics";
+import { previewMode } from "../preview/mode";
+import { PORTAL_TARGET } from "../tenants/ids";
+import { currentLanguage } from "../i18n/language";
+
+/**
+ * The Google Analytics tag, for the two heads that want it.
+ *
+ * `Base.astro` and `Hub.astro` do not share a shell on purpose — one is built
+ * around a city and the other belongs to none — so this is the seam, the same
+ * one `PreviewBar` uses to appear in both.
+ *
+ * A page reports to the site-wide roll-up and, when its chapter runs one, to
+ * the city's own property as well. `src/lib/analytics.ts` says why there are
+ * two. Which city a page belongs to and which language it is in are both in the
+ * URL and therefore in GA's page path, but a path is a string to be
+ * pattern-matched rather than a dimension to group by, and
+ * `/en/kansai/sessions/a-01` would have to be taken apart in the report to
+ * answer "how did Kansai do". They are sent as parameters instead — to both
+ * properties, because a report built on one works unchanged on the other.
+ */
+
+interface Props {
+  /** The city this page belongs to. Omitted by the front page. */
+  tenant?: string;
+  /** The city's own GA4 property, if its chapter runs one. */
+  measurementId?: string;
+}
+
+const { tenant = PORTAL_TARGET, measurementId } = Astro.props;
+
+/*
+  Never in the draft preview. That deployment is a Worker behind a sign-in
+  gate, and everyone past the gate is an organiser looking at their own drafts
+  — a handful of people reloading the same page all afternoon, which is exactly
+  the traffic that makes a small site's numbers meaningless. `previewMode` is
+  substituted at build time, so this is not a branch there: `ids` is empty and
+  the whole tag is absent from the preview's output rather than merely
+  unreached.
+*/
+const ids = previewMode ? [] : measurementIds(measurementId);
+
+/*
+  Parameters set on `config` ride every event that follows, page_view included.
+
+  Neither is named for what it is. GA4 already has a `City` dimension (the
+  visitor's, from their IP) and a `Language` one (their browser's), and a
+  custom dimension colliding with either would put two different questions
+  under one word in the reports. Both have to be registered as event-scoped
+  custom definitions in the GA4 admin before they appear there at all — in
+  every property that is to report on them. See the README.
+
+  `devfest_city` is sent to a city's own property too, where it never varies.
+  It costs nothing, and it means a report or an audience built in one property
+  can be copied into another without being rewritten.
+*/
+const params = {
+  devfest_city: tenant,
+  site_language: currentLanguage(),
+  // Local verification lands in DebugView instead of being indistinguishable
+  // from a visitor. `astro dev` only; a build never takes this branch.
+  ...(import.meta.env.DEV ? { debug_mode: true } : {}),
+};
+
+/*
+  Google's snippet, with the values substituted as JSON rather than pasted.
+
+  `set:html` does not escape — that is what it is for — and the city slug is a
+  string an organiser typed into the Studio. JSON quoting handles quotes and
+  backslashes; the `<` is the one it leaves alone, and it is the one that ends
+  a script element early. See the same `set:html` on the JSON-LD in
+  `src/layouts/Base.astro`.
+*/
+const json = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
+
+/*
+  One `config` per property. The loader is fetched once, for the first id; the
+  rest are destinations registered against the library it brings.
+
+  Events need no such list — `gtag("event", …)` goes to every configured
+  destination, so the register-button clicks in `src/scripts/analytics.ts`
+  reach both properties without that file knowing either one exists.
+*/
+const snippet =
+  ids.length > 0 &&
+  [
+    `window.dataLayer=window.dataLayer||[];`,
+    `function gtag(){window.dataLayer.push(arguments)}`,
+    `window.gtag=gtag;`,
+    `gtag("js",new Date());`,
+    ...ids.map((id) => `gtag("config",${json(id)},${json(params)});`),
+  ].join("\n");
+---
+
+{
+  /* `is:inline` on both, so Astro leaves the third-party URL alone instead of
+    trying to resolve it as a local module, and leaves the snippet where it is
+    instead of bundling it behind the rest of the page's JavaScript. */
+}
+{
+  ids.length > 0 && (
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+  )
+}
+{
+  ids.length > 0 && (
+    <script
+      is:inline
+      async
+      src={`https://www.googletagmanager.com/gtag/js?id=${ids[0]}`}
+    />
+  )
+}
+{snippet && <script is:inline set:html={snippet} />}

@@ -45,6 +45,26 @@ export const event = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "gaMeasurementId",
+      title: "Google Analytics Measurement ID",
+      type: "string",
+      description:
+        "この開催地専用の GA4 測定 ID（G- で始まるもの）。設定すると、この開催地の" +
+        "ページのアクセスがサイト全体のプロパティに加えてこちらにも送られます。" +
+        "自分のチャプターの数字だけを自分たちで見たい場合に設定してください。" +
+        "空のままでも計測は止まりません（サイト全体のプロパティにだけ送られます）。" +
+        "サイト全体の測定 ID をここに入れないでください — 同じプロパティに二重に" +
+        "送られ、数字が倍になります。",
+      validation: (Rule) =>
+        Rule.custom((value?: string) =>
+          !value?.trim() || /^G-[A-Z0-9]+$/.test(value.trim())
+            ? true
+            : 'GA4 の測定 ID は "G-XXXXXXXXXX" の形です。ユニバーサル ' +
+              'アナリティクスの "UA-…" やタグ マネージャーの "GTM-…" は' +
+              "ここでは動きません。",
+        ),
+    }),
+    defineField({
       name: "theme",
       title: "Theme",
       type: "string",
