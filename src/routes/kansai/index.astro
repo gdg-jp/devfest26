@@ -1,0 +1,100 @@
+---
+import CityHome from "../../layouts/CityHome.astro";
+import Countdown from "../../components/Countdown.astro";
+import Timetable from "../../components/Timetable.astro";
+import About from "../../components/About.astro";
+import Partners from "../../components/Partners.astro";
+import WhatIsDevFest from "../../components/WhatIsDevFest.astro";
+import CodeOfConduct from "../../components/CodeOfConduct.astro";
+import Register from "../../components/Register.astro";
+import Hero from "./_components/Hero.astro";
+import News from "./_components/News.astro";
+import FeaturedSpeakers from "./_components/FeaturedSpeakers.astro";
+import Overview from "./_components/Overview.astro";
+import Faq from "./_components/Faq.astro";
+import PreEventBanner from "./_components/PreEventBanner.astro";
+import StickyCta from "./_components/StickyCta.astro";
+import { getProgramSessions, slugOf } from "../../data/program";
+import { missingCity, ownCity } from "../../lib/cityRoutes";
+import { currentLanguage } from "../../i18n/language";
+import { FEATURED_SPEAKERS, copy } from "./_content";
+
+/**
+ * Kansai's home page, laid out for one job: getting a visitor from "what is
+ * this" to the register button.
+ *
+ *   interest   hero → news → featured speakers
+ *   substance  timetable (every speaker is one tap from here) → about
+ *   doubts     overview (venue and access folded in) → FAQ
+ *   decision   closing register section
+ *
+ * Everything that is not part of that path — partners, the pre-events, what
+ * DevFest is, the code of conduct — follows the FAQ, still on the page for
+ * whoever looks, and out of the way of whoever does not.
+ */
+const site = await ownCity(Astro.url);
+if (!site) return missingCity(Astro.url);
+
+const lang = currentLanguage();
+const c = copy(lang);
+
+// The featured speakers' sessions are the ones badged on the timetable, so
+// the two stay in step through the one list in `_content.ts`.
+const featuredSessions = (await getProgramSessions(site.tenant))
+  .filter((session) =>
+    session.talks.some((talk) =>
+      talk.speakers.some((speaker) =>
+        FEATURED_SPEAKERS.includes(slugOf(speaker)),
+      ),
+    ),
+  )
+  .map((session) => session.slug);
+---
+
+<CityHome site={site}>
+  <Hero site={site} />
+  <Countdown site={site} />
+  <News />
+  <FeaturedSpeakers tenant={site.tenant} />
+
+  {
+    /*
+      The session and speaker pages link back to `#sessions` — the list this
+      page no longer has, since every session is reached from the timetable.
+      The anchor lands them there instead.
+    */
+  }
+  <span id="sessions" class="anchor" aria-hidden="true"></span>
+  <Timetable
+    site={site}
+    featured={featuredSessions}
+    featuredLabel={c.featuredBadge}
+  />
+
+  <About tenant={site.tenant} />
+  <Overview site={site} />
+  <Faq />
+
+  <Partners site={site} />
+  <PreEventBanner tenant={site.tenant} />
+  <WhatIsDevFest tenant={site.tenant} />
+  <CodeOfConduct site={site} />
+
+  <Register
+    site={site}
+    heading={c.closingHeading(site.event.monthDay)}
+    lede={c.closingLede}
+    cta={c.heroRegister}
+    note={c.closingNote}
+  />
+  <StickyCta site={site} />
+</CityHome>
+
+<style>
+  /* Holds the old anchor clear of the top bar, the way a section's own heading
+     would be. */
+  .anchor {
+    display: block;
+    scroll-margin-top: var(--topbar-h);
+  }
+</style>

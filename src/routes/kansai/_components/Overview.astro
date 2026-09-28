@@ -1,0 +1,296 @@
+---
+import PhotoSticker from "../../../components/PhotoSticker.astro";
+import Gutter from "../../../components/Gutter.astro";
+import Sticker from "../../../components/Sticker.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { messages } from "../../../i18n";
+import { currentLanguage } from "../../../i18n/language";
+import { ACCESS, copy, localized } from "../_content";
+
+/**
+ * Kansai's own Overview: the shared spec panel and stats, plus the venue's
+ * full address and how to get there folded into the 会場 row rather than
+ * split into a section of their own further down the page. "How do I get
+ * there" is one of the last questions between wanting to come and
+ * registering, so it stays where the rest of the facts already are.
+ *
+ * `#access` keeps working as a link target — the footer still points to it —
+ * by way of the anchor just above the venue row, the same trick `#sessions`
+ * uses on the home page itself.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event, stats } = site;
+const { venue } = event;
+const t = messages(currentLanguage());
+const lang = currentLanguage();
+const c = copy(lang);
+
+const address = [
+  venue.postalCode && `〒${venue.postalCode}`,
+  [venue.addressRegion, venue.addressLocality, venue.streetAddress]
+    .filter(Boolean)
+    .join(""),
+]
+  .filter(Boolean)
+  .join(" ");
+
+const query = [venue.name, address].filter(Boolean).join(" ");
+const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+const rows = [
+  {
+    rail: "blue",
+    dt: t.overview.dtDate,
+    dd: t.dates.withDow(event.dateLabel, event.dayOfWeek),
+  },
+  {
+    rail: "green",
+    dt: t.overview.dtHours,
+    dd: event.hours,
+    // A city that runs no after-party simply omits `social` in its config.
+    note:
+      event.social &&
+      t.overview.socialNote(event.social.hours, event.social.label),
+  },
+  { rail: "yellow", dt: t.overview.dtFormat, dd: event.format },
+  { rail: "blue", dt: t.overview.dtFee, dd: event.fee },
+  {
+    rail: "green",
+    dt: t.overview.dtHost,
+    dd: event.host,
+    note: t.overview.coHostsNote(event.coHosts),
+  },
+];
+---
+
+<section class="sec" id="overview">
+  <Gutter>
+    <Sticker
+      name="semicolon"
+      width={44}
+      top="16%"
+      left="1.5%"
+      rotate={-10}
+      speed={0.7}
+    />
+    <PhotoSticker
+      tenant={site.tenant}
+      index={0}
+      top="30%"
+      right="16px"
+      rotate={-5}
+      speed={-0.6}
+    />
+    <PhotoSticker
+      tenant={site.tenant}
+      index={2}
+      top="40%"
+      left="16px"
+      rotate={7}
+      speed={0.55}
+    />
+  </Gutter>
+
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">Overview</p>
+    <h2 class="sec-h" data-reveal="up">{t.overview.heading}</h2>
+    <p class="sec-lede" data-reveal="up">
+      {t.overview.lede(event.venue.region, event.isoDate.slice(0, 4))}
+    </p>
+
+    <div class="split">
+      <div class="panel spec-panel" data-reveal="up">
+        <dl class="spec">
+          {
+            rows.map((r) => (
+              <div class="spec-row" style={`--rail:var(--${r.rail})`}>
+                <dt>{r.dt}</dt>
+                <dd>
+                  {r.dd}
+                  {r.note && <small>{r.note}</small>}
+                </dd>
+              </div>
+            ))
+          }
+          <div class="spec-row venue" style="--rail:var(--red)">
+            <span id="access" class="anchor" aria-hidden="true"></span>
+            <dt>{t.overview.dtVenue}</dt>
+            <dd>
+              {venue.name}
+              {address && <small>{address}</small>}
+              <ul class="access-list">
+                {ACCESS.map((line) => <li>{localized(line, lang)}</li>)}
+              </ul>
+              <a class="map-link" href={map} target="_blank" rel="noopener">
+                {c.accessMap}
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="stats" data-stagger>
+        {
+          stats.map((s) => (
+            <div
+              class="stat"
+              style={`background:var(--pa-${s.tone})`}
+              data-reveal="scale"
+            >
+              <b>{s.value}</b>
+              <span>{s.label}</span>
+            </div>
+          ))
+        }
+        <p class="disclaimer">
+          {t.overview.disclaimer}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Purely a scroll target for the old `#access` link — sized to nothing so
+     it cannot disturb the venue row's two-column grid. */
+  .anchor {
+    position: absolute;
+    width: 0;
+    height: 0;
+    scroll-margin-top: var(--topbar-h);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: clamp(18px, 2.6vw, 30px);
+    align-items: start;
+  }
+
+  @media (width <= 880px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .spec-panel {
+    padding: 8px 0;
+    overflow: hidden;
+  }
+
+  .spec {
+    display: grid;
+    gap: 0;
+    margin: 0;
+  }
+
+  .spec-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 14px 16px;
+    border-bottom: 1.5px solid var(--rule);
+    border-left: 7px solid var(--rail, var(--t));
+  }
+
+  .spec-row:last-child {
+    border-bottom: 0;
+  }
+
+  .spec-row dt {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+
+  .spec-row dd {
+    margin: 0;
+    font-size: 15.5px;
+  }
+
+  .spec-row dd small {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .access-list {
+    margin: 10px 0 0;
+    padding-left: 1.2em;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .map-link {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 12px;
+    padding: 7px 18px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 13.5px;
+    text-decoration: none;
+    transition: background-color 0.16s var(--ease-out);
+  }
+
+  .map-link:hover {
+    background: var(--t-pa);
+  }
+
+  @media (width <= 520px) {
+    .spec-row {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat {
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    padding: 16px 18px;
+    background: var(--surface);
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  .stat b {
+    display: block;
+    font-family: var(--f-display);
+    font-size: clamp(24px, 3.4vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .stat span {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-family: var(--f-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .disclaimer {
+    grid-column: span 2;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 2px 0 0;
+  }
+</style>

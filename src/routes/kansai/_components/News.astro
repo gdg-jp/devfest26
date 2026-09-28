@@ -1,0 +1,131 @@
+---
+import { currentLanguage } from "../../../i18n/language";
+import { NEWS, copy, localized } from "../_content";
+
+/**
+ * The latest three items from `NEWS`, with anything older folded away. A list
+ * that keeps growing in the weeks before the day is itself the message: this
+ * event is moving.
+ */
+const SHOWN = 3;
+
+const lang = currentLanguage();
+const c = copy(lang);
+
+// Newest first. Items on the same day keep the order they are written in.
+const items = [...NEWS].sort((a, b) => b.date.localeCompare(a.date));
+const latest = items.slice(0, SHOWN);
+const past = items.slice(SHOWN);
+
+// `2026-09-28` → `2026.09.28`, the same in both languages.
+const dotted = (date: string) => date.replaceAll("-", ".");
+// Off-site links open in a new tab, as every other outbound link here does.
+const linkAttrs = (href: string) =>
+  /^https?:/.test(href) ? { target: "_blank", rel: "noopener" } : {};
+---
+
+{
+  items.length > 0 && (
+    <section class="sec news" id="news">
+      <div class="wrap">
+        <p class="eyebrow" data-reveal="up">
+          News
+        </p>
+        <h2 class="visually-hidden">{c.newsHeading}</h2>
+
+        <ul class="list" data-reveal="up">
+          {latest.map((item) => (
+            <li>
+              <time datetime={item.date}>{dotted(item.date)}</time>
+              {item.href ? (
+                <a href={item.href} {...linkAttrs(item.href)}>
+                  {localized(item.text, lang)}
+                </a>
+              ) : (
+                <span>{localized(item.text, lang)}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        {past.length > 0 && (
+          <details class="past">
+            <summary>{c.newsPast}</summary>
+            <ul class="list">
+              {past.map((item) => (
+                <li>
+                  <time datetime={item.date}>{dotted(item.date)}</time>
+                  {item.href ? (
+                    <a href={item.href} {...linkAttrs(item.href)}>
+                      {localized(item.text, lang)}
+                    </a>
+                  ) : (
+                    <span>{localized(item.text, lang)}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* A short strip rather than a full section: it sits between the hero and
+     the speakers, and should read as a ticker, not as a stop. */
+  .news {
+    padding: clamp(28px, 4vw, 44px) 0;
+    border-top: var(--bw) solid var(--stroke);
+  }
+
+  .list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 18px;
+    padding: 13px 20px;
+    border-top: 1.5px solid var(--rule);
+    font-size: 15px;
+  }
+
+  .list li:first-child {
+    border-top: 0;
+  }
+
+  time {
+    flex: none;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--t-deep);
+  }
+
+  .list a {
+    color: var(--ink);
+  }
+
+  .past {
+    margin-top: 12px;
+  }
+
+  .past summary {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+</style>

@@ -1,0 +1,96 @@
+---
+import { byTenant } from "../../../data/collections";
+import { eventDates } from "../../../tenants/eventDates";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * The pre-events, cut down to one line per meetup that is still taking
+ * sign-ups. With three weeks to go the main event is the only thing this page
+ * should be asking for, so the meetups keep a mention and give up the section.
+ *
+ * "Still ahead" is judged when the page is built. Once a meetup's day has
+ * passed, the next build drops it — and with none left, the banner itself.
+ */
+interface Props {
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+// The start of today in JST, so a meetup stays up on its own day.
+const today = new Date(
+  new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" }),
+);
+
+const upcoming = (await byTenant("meetups", tenant))
+  .filter(
+    (m) => m.data.status === "open" && m.data.date && m.data.date >= today,
+  )
+  .sort((a, b) => a.data.no - b.data.no)
+  .map((m) => {
+    const iso = m.data.date!.toISOString();
+    const { dateShort, dayOfWeek } = eventDates(iso, iso, lang);
+    return { meetup: m, when: `${dateShort} (${dayOfWeek})` };
+  });
+---
+
+{
+  upcoming.length > 0 && (
+    <section class="pre" id="preevent">
+      <div class="wrap">
+        {upcoming.map(({ meetup, when }) => (
+          <p class="line" data-reveal="up">
+            <span class="tag">Pre-event</span>
+            <span class="text">{c.preEvent(meetup.data.title, when)}</span>
+            {meetup.data.url && (
+              <a
+                class="btn sm ghost"
+                href={meetup.data.url}
+                target="_blank"
+                rel="noopener"
+              >
+                {c.preEventCta}
+              </a>
+            )}
+          </p>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .pre {
+    padding: clamp(28px, 4vw, 44px) 0;
+  }
+
+  .line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin: 0;
+    padding: 14px 20px;
+    border: var(--bw) dashed var(--dash);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  .line + .line {
+    margin-top: 10px;
+  }
+
+  .text {
+    font-size: 15px;
+  }
+
+  .line .btn {
+    margin-left: auto;
+  }
+</style>

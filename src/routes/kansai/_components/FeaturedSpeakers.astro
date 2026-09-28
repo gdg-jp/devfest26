@@ -1,0 +1,159 @@
+---
+import Gutter from "../../../components/Gutter.astro";
+import Sticker from "../../../components/Sticker.astro";
+import SpeakerAvatar from "../../../components/SpeakerAvatar.astro";
+import { getProgramSpeakers, speakerHref } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import { FEATURED_SPEAKERS, copy } from "../_content";
+
+/**
+ * The speakers a visitor is most likely to know, large, right after the hero.
+ * The rest of the programme is one click away on the timetable; this is the
+ * part that makes that click worth it.
+ *
+ * Picked by slug in `_content.ts`. A slug the programme does not have yet is
+ * left out rather than drawn as an empty card.
+ */
+interface Props {
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
+const c = copy(currentLanguage());
+
+const programme = await getProgramSpeakers(tenant);
+const picked = FEATURED_SPEAKERS.flatMap((slug) => {
+  const found = programme.find((entry) => entry.slug === slug);
+  return found ? [found] : [];
+});
+
+const pastels = ["blue", "red", "green", "yellow"];
+---
+
+{
+  picked.length > 0 && (
+    <section class="sec tint featured" id="featured">
+      <Gutter>
+        <Sticker name="dot" width={34} top="8%" right="4%" speed={1.3} />
+        <Sticker
+          name="braces"
+          width={84}
+          bottom="10%"
+          left="1.5%"
+          rotate={-8}
+          speed={-0.8}
+        />
+      </Gutter>
+
+      <div class="wrap">
+        <p class="eyebrow" data-reveal="up">
+          Featured Speakers
+        </p>
+        <h2 class="sec-h" data-reveal="up">
+          {c.featuredHeading}
+        </h2>
+        <p class="sec-lede" data-reveal="up">
+          {c.featuredLede}
+        </p>
+
+        <ul class="cards" data-stagger>
+          {picked.map(({ speaker, appearances }, index) => (
+            <li
+              class="card linkbox"
+              style={`--pa:var(--pa-${pastels[index % pastels.length]})`}
+              data-reveal="up"
+            >
+              <SpeakerAvatar speaker={speaker} size={132} />
+              <h3>
+                <a class="stretch" href={speakerHref(speaker)}>
+                  {speaker.data.name}
+                </a>
+              </h3>
+              <p class="role">{speaker.data.role}</p>
+              {appearances[0]?.talk.title && (
+                <p class="talk">「{appearances[0].talk.title}」</p>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <div class="cta-row more" data-reveal="up">
+          <a class="btn ghost" href="#timetable">
+            {c.featuredCta}
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .featured {
+    border-top: var(--bw) solid var(--stroke);
+  }
+
+  .cards {
+    display: grid;
+    /* Capped and centred, so two or three cards read as a row of portraits
+       rather than stretching into banners. */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 350px));
+    justify-content: center;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 28px 22px 24px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-lg);
+    background: var(--pa);
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out),
+      box-shadow 0.18s var(--ease-out);
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 0 var(--stroke);
+  }
+
+  h3 {
+    margin: 16px 0 6px;
+    font-size: clamp(20px, 2.4vw, 24px);
+  }
+
+  h3 a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .card:hover h3 a {
+    text-decoration: underline;
+  }
+
+  .role {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .talk {
+    margin: 12px 0 0;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .more {
+    justify-content: center;
+    margin-top: 28px;
+  }
+</style>

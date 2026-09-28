@@ -1,0 +1,217 @@
+---
+import Logo from "../../../components/Logo.astro";
+import Gutter from "../../../components/Gutter.astro";
+import Sticker from "../../../components/Sticker.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { messages } from "../../../i18n";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * Kansai's first screen. It says what the shared hero says — title, tagline,
+ * date, venue, format, fee, one register button.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event, links, tagline } = site;
+const lang = currentLanguage();
+const t = messages(lang);
+const c = copy(lang);
+---
+
+<section class="hero" id="top">
+  <Gutter>
+    <Sticker
+      name="slashes"
+      width={60}
+      bottom="30%"
+      left="1%"
+      rotate={-8}
+      speed={0.9}
+    />
+    <Sticker name="dot" width={30} top="12%" right="1.5%" speed={1.4} />
+  </Gutter>
+
+  <div class="wrap">
+    <div class="lockup" data-intro="1">
+      <Logo variant="brackets" class="brackets" />
+      {
+        /* The date belongs to the pill below, in full and in Japanese —
+           saying it again here in short English would be the same fact
+           twice before the visitor has read either. */
+      }
+      <span class="yr">{event.isoDate.slice(0, 4)}</span>
+    </div>
+
+    <h1 data-intro="2">
+      <span class="hero-title">{site.title}</span>
+      {site.subtitle && <span class="hero-subtitle">{site.subtitle}</span>}
+    </h1>
+    <p class="tagline" data-intro="3">
+      {tagline.lead}<em>{tagline.accent}</em>
+    </p>
+
+    <div class="metas" data-intro="4">
+      <span class="pill"
+        ><span class="dot" style="background:var(--blue)"></span><b
+          >{event.dateLabel}</b
+        >{t.dates.dowSuffix(event.dayOfWeek)}{event.hoursCompact}</span
+      >
+      <span class="pill"
+        ><span class="dot" style="background:var(--green)"></span>{
+          event.venue.name
+        }</span
+      >
+      <span class="pill"
+        ><span class="dot" style="background:var(--red)"></span>{
+          event.formatShort
+        }</span
+      >
+      <span class="pill"
+        ><span class="dot" style="background:var(--yellow)"></span>{
+          t.hero.feeLabel
+        }{" "}<b>{event.fee}</b></span
+      >
+    </div>
+
+    <div class="cta-row" data-intro="5">
+      {
+        /* The note belongs to the register button, and stays under it when
+          the buttons stack on a phone. */
+      }
+      <div class="primary">
+        <a
+          class="btn big"
+          href={links.register}
+          target="_blank"
+          rel="noopener"
+          data-analytics="register_click"
+          data-placement="hero">{c.heroRegister}</a
+        >
+        <p class="cta-note">{c.heroRegisterNote}</p>
+      </div>
+      <a class="btn ghost" href="#timetable">{c.heroTimetable}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(30px, 5vw, 56px) 0 clamp(36px, 5vw, 60px);
+  }
+
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 1.8vw, 22px);
+    flex-wrap: wrap;
+    margin-bottom: clamp(20px, 2.6vw, 28px);
+  }
+
+  .lockup :global(.brackets) {
+    width: clamp(170px, 22vw, 260px);
+    flex: none;
+  }
+
+  .yr {
+    font-family: var(--f-display);
+    border: var(--bw) solid var(--stroke);
+    border-radius: 999px;
+    line-height: 1.6;
+    font-weight: 700;
+    font-size: clamp(15px, 2vw, 20px);
+    background: var(--yellow);
+    padding: 4px 18px;
+  }
+
+  h1 {
+    font-size: clamp(32px, 5.6vw, 64px);
+    letter-spacing: -0.03em;
+    margin: 0 0 6px;
+  }
+
+  .hero-title,
+  .hero-subtitle {
+    display: block;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(22px, 3.8vw, 42px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-top: clamp(2px, 0.4vw, 6px);
+  }
+
+  .tagline {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(20px, 3vw, 34px);
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    margin: 0 0 clamp(18px, 2.4vw, 26px);
+  }
+
+  .tagline em {
+    font-style: normal;
+    color: var(--t-deep);
+  }
+
+  .metas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: clamp(20px, 2.8vw, 28px);
+  }
+
+  .metas :global(.pill b) {
+    font-weight: 700;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  /* The one button on the screen that matters, a size up from the rest. */
+  .btn.big {
+    font-size: 19px;
+    padding: 16px 36px;
+  }
+
+  .cta-row {
+    align-items: flex-start;
+  }
+
+  .primary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cta-note {
+    margin: 12px 0 0 6px;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  /* Entrance state. Cleared by the intro script; never applied without JS. */
+  :global(html.js) [data-intro] {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.js) [data-intro] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
