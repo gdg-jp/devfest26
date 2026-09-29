@@ -3,56 +3,282 @@ import type { Language } from "../../i18n";
 /**
  * Everything on the Kansai home page that is written by hand rather than read
  * from the programme: the news, the speakers picked out for the top of the
- * page, the FAQ, how to reach the venue, and the page's own wording.
+ * page, the programmes around the talks, sponsors, the FAQ and the page's
+ * own wording.
  *
- * It is all in this one file so that whoever is updating the site in the week
- * before the event has one place to look. Most edits are a line in `NEWS` or a
- * number in the city's `stats`; neither needs a component touched.
+ * It is all in this one file so that whoever is updating the site in the weeks
+ * before the event has one place to look. Most edits are a line in `NEWS`,
+ * which needs no component touched.
  */
 
 type Localized = Record<Language, string>;
 
+export const localized = (text: Localized, lang: Language) => text[lang];
+
+/* -------------------------------------------------------------------------- */
+/* News                                                                       */
+/* -------------------------------------------------------------------------- */
+
 export interface NewsItem {
-  /** `YYYY-MM-DD`. Newest first is not required — the list sorts itself. */
+  /** `YYYY-MM-DD`. Order does not matter — the list sorts itself. */
   date: string;
   text: Localized;
   /** Optional. An anchor on this page (`#timetable`) or a full URL. */
   href?: string;
 }
 
-/**
- * News, newest first on the page. The three most recent are shown; the rest
- * fold away under "past news".
- */
+/** The three most recent are shown near the top of the page. */
 export const NEWS: readonly NewsItem[] = [
   {
-    date: "2026-09-28",
+    date: "2026-09-29",
     text: {
-      ja: "参加登録者数が 450 名を超えました。現地参加は先着順です。",
-      en: "Over 450 people have registered. On-site seats are first come, first served.",
+      ja: "参加登録者数が 460 名を超えました。現地参加は先着 500 名です。",
+      en: "Over 460 people have registered. On-site seats are capped at 500.",
     },
+    href: "https://gdgkwansai.connpass.com/event/388434/",
+  },
+  {
+    date: "2026-09-29",
+    text: {
+      ja: "タイムテーブルを更新し、落合陽一氏・今村孝矢氏ほか全登壇者を掲載しました。",
+      en: "The timetable is updated with every speaker, including Yoichi Ochiai and Takaya Imamura.",
+    },
+    href: "#timetable",
+  },
+  {
+    date: "2026-09-29",
+    text: {
+      ja: "学生展示ブースの出展者を募集しています。",
+      en: "Student demo booths are open for applications.",
+    },
+    href: "#programs",
   },
   {
     date: "2026-09-28",
     text: {
-      ja: "タイムテーブルを公開中です。セッション概要は決まりしだい順次掲載します。",
-      en: "The timetable is up. Session details are added as they are confirmed.",
+      ja: "タイムテーブルを公開しました。",
+      en: "The timetable is up.",
     },
     href: "#timetable",
   },
 ];
 
+/* -------------------------------------------------------------------------- */
+/* Speakers                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export interface Featured {
+  /** The slug of the speaker's page. Skipped if the programme lacks it. */
+  slug: string;
+  /** One line on why the name matters, drawn from the speaker's own bio. */
+  hook: Localized;
+  /** Which of the four brand colours frames the portrait. */
+  tone: "blue" | "green" | "yellow" | "red";
+}
+
 /**
- * Speakers shown large right under the hero, in this order, by the slug of
- * their speaker page. A slug with no speaker behind it is skipped rather than
- * failing the build, so a name can be listed here before its entry is
- * published. Their sessions are also the ones badged on the timetable.
+ * The carousel under the key visual, in this order: Track A's speakers,
+ * bar the opening, the sponsor slot and the closing. Their sessions are the
+ * ones badged on the timetable. Every hook restates something the speaker's
+ * published profile already says — nothing here is ours to claim.
  */
-export const FEATURED_SPEAKERS: readonly string[] = [
-  "hiroshi-ishiguro",
-  "yoichi-ochiai",
-  "llion-jones",
+export const FEATURED: readonly Featured[] = [
+  {
+    slug: "llion-jones",
+    tone: "blue",
+    hook: {
+      ja: "Transformer 論文「Attention Is All You Need」共著者",
+      en: 'Co-author of "Attention Is All You Need"',
+    },
+  },
+  {
+    slug: "hiroshi-ishiguro",
+    tone: "green",
+    hook: {
+      ja: "アンドロイド研究の第一人者",
+      en: "A leading figure in android research",
+    },
+  },
+  {
+    slug: "yoichi-ochiai",
+    tone: "red",
+    hook: {
+      ja: "メディアアーティスト／大阪・関西万博 シグネチャー事業プロデューサー",
+      en: "Media artist; Expo 2025 Osaka signature-pavilion producer",
+    },
+  },
+  {
+    slug: "heiga",
+    tone: "yellow",
+    hook: {
+      ja: "Google DeepMind 東京拠点リード",
+      en: "Tokyo site lead, Google DeepMind",
+    },
+  },
+  {
+    slug: "takaya-imamura",
+    tone: "red",
+    hook: {
+      ja: "任天堂で『F-ZERO』『スターフォックス』『ゼルダの伝説』に携わったゲームクリエイター",
+      en: "Game creator behind F-ZERO, Star Fox and Zelda titles at Nintendo",
+    },
+  },
+  {
+    slug: "ikuo-takeuchi",
+    tone: "blue",
+    hook: {
+      ja: "未踏事業 統括 PM／東京大学名誉教授",
+      en: "Lead PM of the MITOU programme; professor emeritus, University of Tokyo",
+    },
+  },
+  {
+    slug: "minoru-asada",
+    tone: "green",
+    hook: {
+      ja: "認知発達ロボティクスの第一人者",
+      en: "A founder of cognitive developmental robotics",
+    },
+  },
 ];
+
+/** The featured speaker the carousel opens on, centred. */
+export const FEATURED_START = "hiroshi-ishiguro";
+
+/* -------------------------------------------------------------------------- */
+/* On-site gift                                                               */
+/* -------------------------------------------------------------------------- */
+
+/** Which gift the on-site ticket comes with — one of these, picked on the day. */
+export const SWAG: readonly Localized[] = [
+  { ja: "モニタークリーナー", en: "Screen cleaner" },
+  { ja: "キャンバスポーチ", en: "Canvas pouch" },
+  { ja: "キーキャップストラップ", en: "Keycap strap" },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Programmes around the talks                                                */
+/* -------------------------------------------------------------------------- */
+
+export interface Program {
+  key: string;
+  tone: "blue" | "green" | "yellow" | "red" | "ink";
+  label: Localized;
+  title: Localized;
+  body: Localized;
+  when?: string;
+  cta?: { href: string; label: Localized; analytics?: string };
+}
+
+export const PROGRAMS: readonly Program[] = [
+  {
+    key: "handson",
+    tone: "red",
+    label: { ja: "Track D", en: "Track D" },
+    title: { ja: "手を動かすハンズオン", en: "Hands-on labs" },
+    body: {
+      ja: "Antigravity と Gemini で、AI アプリや AI エージェントをその場で構築。聞くだけでなく、手を動かして持ち帰れます。",
+      en: "Build AI apps and agents with Antigravity and Gemini on the spot — don't just listen, make something.",
+    },
+    when: "13:50 – 16:00",
+  },
+  {
+    key: "fashion",
+    tone: "yellow",
+    label: { ja: "Workshop", en: "Workshop" },
+    title: {
+      ja: "ファッション × AI ワークショップ",
+      en: "Fashion × AI workshop",
+    },
+    body: {
+      ja: "未来の社会を想定し、AI と共創して服をデザインする。朝には Fashion runway も。",
+      en: "Design clothes for a future society, together with AI. Plus a fashion runway in the morning.",
+    },
+    when: "16:20 – 17:40",
+  },
+  {
+    key: "panel",
+    tone: "green",
+    label: { ja: "Panel", en: "Panel" },
+    title: { ja: "元 Googler たちのパネル", en: "Panels with ex-Googlers" },
+    body: {
+      ja: "「面接で人は見抜けるのか？ Google 採用改革の舞台裏」と「ソフトウェアエンジニアリングについて」の 2 本。",
+      en: "Two panels: inside Google's hiring reform, and on software engineering itself.",
+    },
+    when: "12:25 / 16:20",
+  },
+  {
+    key: "booth",
+    tone: "blue",
+    label: { ja: "学生募集", en: "For students" },
+    title: { ja: "学生展示ブース", en: "Student demo booths" },
+    body: {
+      ja: "個人開発や研究のプロダクトを会場で展示。登壇者や参加者から、リアルな反応とフィードバックをもらえます。",
+      en: "Show your side project or research on the floor, and get real reactions from speakers and attendees.",
+    },
+    cta: {
+      href: "https://gdgs.jp/df26form-demo",
+      label: { ja: "出展を申し込む", en: "Apply for a booth" },
+      analytics: "booth_click",
+    },
+  },
+  {
+    key: "roundtable",
+    tone: "ink",
+    label: { ja: "学生向け", en: "For students" },
+    title: { ja: "学生エンジニア座談会", en: "Student roundtable" },
+    body: {
+      ja: "Google 認定技術者の登壇者と少人数で対話。開発の現場やキャリアを、第一線のプロに直接聞けます。詳細は近日公開。",
+      en: "A small-group conversation with Google-certified experts about real-world development and careers. Details soon.",
+    },
+  },
+  {
+    key: "party",
+    tone: "yellow",
+    label: { ja: "After party", en: "After party" },
+    title: { ja: "懇親会", en: "After party" },
+    body: {
+      ja: "登壇者・参加者と直接話せる時間。ビールスポンサーは転職ドラフトさん。",
+      en: "Talk with speakers and attendees. Beer courtesy of Tenshoku Draft.",
+    },
+    when: "18:25 – 20:25",
+  },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Sponsors                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export interface Sponsor {
+  name: string;
+  url: string;
+  logo: string;
+  /** Intrinsic size of `logo`, so it can be reserved before it loads. */
+  width: number;
+  height: number;
+  note?: Localized;
+}
+
+export const SPONSORS: readonly Sponsor[] = [
+  {
+    name: "Findy株式会社",
+    url: "https://findy.co.jp/",
+    logo: "https://img.gdgs.jp/ueP38FwZ?w=320&f=webp",
+    width: 320,
+    height: 373,
+  },
+  {
+    name: "転職ドラフト株式会社",
+    url: "https://job-draft.jp/",
+    logo: "https://img.gdgs.jp/W8tJx10T?w=640&f=webp",
+    width: 640,
+    height: 161,
+    note: { ja: "ビールスポンサー", en: "Beer sponsor" },
+  },
+];
+
+/* -------------------------------------------------------------------------- */
+/* FAQ                                                                        */
+/* -------------------------------------------------------------------------- */
 
 export interface Faq {
   q: Localized;
@@ -61,13 +287,10 @@ export interface Faq {
 
 export const FAQ: readonly Faq[] = [
   {
-    q: {
-      ja: "参加費はかかりますか？",
-      en: "Is there a fee?",
-    },
+    q: { ja: "参加費はかかりますか？", en: "Is there a fee?" },
     a: {
-      ja: "無料です。現地参加・オンライン参加のどちらも参加費はかかりません。",
-      en: "No. Both on-site and online attendance are free.",
+      ja: "無料です。現地参加・オンライン参加のどちらも参加費はかかりません。現地参加の方には限定グッズを 1 点プレゼントします。",
+      en: "No. Both on-site and online attendance are free, and on-site attendees get a gift.",
     },
   },
   {
@@ -76,18 +299,15 @@ export const FAQ: readonly Faq[] = [
       en: "I'm not an engineer. Can I still come?",
     },
     a: {
-      ja: "もちろんです。デザイナー、プロダクトマネージャー、研究者、ビジネス職の方など、専門を問わず歓迎します。「専門を越える」が今年のテーマです。",
-      en: "Of course. Designers, product managers, researchers, people in business — everyone is welcome. Crossing disciplines is this year's theme.",
+      ja: "もちろんです。デザイナー、プロダクトマネージャー、研究者、ビジネス職の方、ファッションやものづくりに関わる方など、専門を問わず歓迎します。異分野との越境が今年のテーマです。",
+      en: "Of course. Designers, PMs, researchers, people in business, fashion or making — everyone is welcome. Crossing disciplines is this year's theme.",
     },
   },
   {
-    q: {
-      ja: "学生でも参加できますか？",
-      en: "Can students attend?",
-    },
+    q: { ja: "学生でも参加できますか？", en: "Can students attend?" },
     a: {
-      ja: "はい。学年や専攻を問わず参加いただけます。",
-      en: "Yes, whatever your year or field of study.",
+      ja: "はい。学年や専攻を問わず参加いただけます。学生展示ブースや学生エンジニア座談会など、学生向けの企画もあります。",
+      en: "Yes, whatever your year or field. There are student demo booths and a student roundtable too.",
     },
   },
   {
@@ -96,8 +316,8 @@ export const FAQ: readonly Faq[] = [
       en: "What if I can't make it to the venue?",
     },
     a: {
-      ja: "オンライン配信があります。参加登録ページで「オンライン参加」の枠を選んでお申し込みください。",
-      en: "The event is streamed online. Choose the online ticket on the registration page.",
+      ja: "オンライン配信があります。connpass で「オンライン参加」の枠を選んでお申し込みください。",
+      en: "The event is streamed online. Choose the online ticket on connpass.",
     },
   },
   {
@@ -106,80 +326,143 @@ export const FAQ: readonly Faq[] = [
       en: "When does registration close?",
     },
     a: {
-      ja: "当日 18:00 までです。ただし各枠とも先着順のため、定員に達した時点で締め切ります。",
-      en: "At 18:00 on the day, unless a ticket type fills up first — all are first come, first served.",
+      ja: "当日 10 月 18 日 18:00 までです。ただし各枠とも先着順のため、定員に達した時点で締め切ります。",
+      en: "At 18:00 on October 18, unless a ticket type fills up first — all are first come, first served.",
     },
   },
   {
-    q: {
-      ja: "懇親会はありますか？",
-      en: "Is there an after-party?",
-    },
+    q: { ja: "懇親会はありますか？", en: "Is there an after-party?" },
     a: {
-      ja: "18:30 から懇親会を予定しています。登壇者や参加者と直接話せる時間です。",
-      en: "Yes, from 18:30 — a chance to talk with the speakers and other attendees.",
+      ja: "18:25 から懇親会を予定しています。登壇者や参加者と直接話せる時間です。",
+      en: "Yes, from 18:25 — a chance to talk with the speakers and other attendees.",
     },
   },
 ];
 
-/** How to get there, one line each. The address comes from the city config. */
-export const ACCESS: readonly Localized[] = [
-  {
-    ja: "JR「大阪」駅・各線「梅田」駅から徒歩圏内",
-    en: "Walking distance from JR Osaka Station and the Umeda stations",
-  },
-];
+export const SOCIAL = {
+  hashtag: "#DevFestKansai",
+  x: "https://x.com/gdgkwansai",
+  instagram: "https://www.instagram.com/gdg_greater_kwansai/",
+};
 
-/** The page's own wording — what the shared i18n files have no place for. */
+/* -------------------------------------------------------------------------- */
+/* The page's own wording                                                     */
+/* -------------------------------------------------------------------------- */
+
 export const COPY = {
   ja: {
-    heroRegister: "無料で参加登録",
-    heroRegisterNote: "オンライン視聴も可",
-    heroTimetable: "タイムテーブルを見る",
-    newsHeading: "お知らせ",
-    newsPast: "過去のお知らせ",
-    featuredHeading: "注目スピーカー",
-    featuredLede:
-      "研究・アート・AI の第一線から。分野を越えた登壇者が、同じ一日に集まります。",
-    featuredCta: "全セッションを見る",
+    featuredLabel: "Featured",
+    featuredHeading: "注目のスピーカー",
+    speakersLabel: "スピーカー",
+    programsLabel: "企画",
+    timetableLabel: "タイムテーブル",
+    sponsorsLabel: "スポンサー",
+    faqLabel: "よくある質問",
+    factDate: "日時",
+    factVenue: "会場",
+    venueArea: "大阪・梅田",
+    prev: "前へ",
+    next: "次へ",
+    kicker: "異分野と越境の AI カンファレンス",
+    catchLead: "AI 時代の",
+    catchMark: "「考える」",
+    catchTail: "を取り戻す。",
+    register: "無料で参加登録",
+    registerShort: "参加登録",
+    disciplines: ["AI", "Robotics", "Fashion", "Game"],
+    marquee: [
+      "Gemini",
+      "Robotics",
+      "Fashion",
+      "Game",
+      "Agents",
+      "Flutter",
+      "Web UI",
+      "Kubernetes",
+      "UX",
+      "Product",
+      "Android",
+      "Cloud",
+    ],
+    newsHeading: "News",
+    newsSub: "お知らせ",
     featuredBadge: "注目",
+    timetableNote:
+      "※ タイムテーブル、セッション内容、登壇形式は変更となる場合があります。",
+    undated: "時間調整中",
     tabsAria: "トラックを選ぶ",
-    accessMap: "Google マップで開く",
-    faqHeading: "よくある質問",
-    preEvent: (title: string, date: string) =>
-      `プレイベント「${title}」を ${date} に開催します。`,
+    onsiteGift: "限定グッズを 1 点プレゼント",
+    partnersHeading: "共催・協力団体",
+    preEventHeading: "Pre-event",
     preEventCta: "詳細・申し込み",
-    closingHeading: (monthDay: string) => `${monthDay}、会場で会いましょう。`,
-    closingLede:
-      "参加費は無料です。会場に来られない方も、オンライン配信で参加できます。",
-    closingNote: "各枠とも先着順です。定員に達しだい締め切ります。",
-    stickyNote: (date: string) => `${date} 開催`,
+    faqHeading: "FAQ",
+    cocHeading: "安心して参加いただくために",
+    cocLede:
+      "GDG では、すべての参加者が安心してナレッジ共有に集中できる環境を重視しています。ハラスメント行為は一切許容されません。会場だけでなく、SNS やブログ等での発信においても行動規範を遵守してください。",
+    cocJa: "行動規範（日本語）",
+    cocEn: "Code of Conduct (English)",
+    stickyNote: (date: string) => `${date} 開催・参加無料`,
+    menu: "メニュー",
+    close: "閉じる",
+    skipSplash: "スキップ",
+    footerFollow: "最新情報",
   },
   en: {
-    heroRegister: "Register for free",
-    heroRegisterNote: "Online viewing available",
-    heroTimetable: "View timetable",
-    newsHeading: "News",
-    newsPast: "Past news",
+    featuredLabel: "Featured",
     featuredHeading: "Featured speakers",
-    featuredLede:
-      "From the front lines of research, art and AI — speakers from different fields, on the same day.",
-    featuredCta: "View all sessions",
+    speakersLabel: "Everyone on stage",
+    programsLabel: "Beyond the talks",
+    timetableLabel: "Schedule",
+    sponsorsLabel: "Sponsors & partners",
+    faqLabel: "Questions",
+    factDate: "Date",
+    factVenue: "Venue",
+    venueArea: "Umeda, Osaka",
+    prev: "Previous",
+    next: "Next",
+    kicker: "An AI conference across disciplines",
+    catchLead: "Take back ",
+    catchMark: "thinking",
+    catchTail: " in the age of AI.",
+    register: "Register for free",
+    registerShort: "Register",
+    disciplines: ["AI", "Robotics", "Fashion", "Game"],
+    marquee: [
+      "Gemini",
+      "Robotics",
+      "Fashion",
+      "Game",
+      "Agents",
+      "Flutter",
+      "Web UI",
+      "Kubernetes",
+      "UX",
+      "Product",
+      "Android",
+      "Cloud",
+    ],
+    newsHeading: "News",
+    newsSub: "Latest",
     featuredBadge: "Pick",
+    timetableNote: "The timetable, sessions and formats may change.",
+    undated: "Time to be confirmed",
     tabsAria: "Choose a track",
-    accessMap: "Open in Google Maps",
-    faqHeading: "FAQ",
-    preEvent: (title: string, date: string) =>
-      `Pre-event "${title}" is on ${date}.`,
+    onsiteGift: "A gift of your choice",
+    partnersHeading: "Co-hosts & partners",
+    preEventHeading: "Pre-event",
     preEventCta: "Details & sign-up",
-    closingHeading: (monthDay: string) => `See you there on ${monthDay}.`,
-    closingLede:
-      "Admission is free. If you can't come in person, join the online stream.",
-    closingNote: "All tickets are first come, first served.",
-    stickyNote: (date: string) => date,
+    faqHeading: "FAQ",
+    cocHeading: "A safe place for everyone",
+    cocLede:
+      "GDG events are harassment-free. Please follow the Code of Conduct at the venue and when posting online.",
+    cocJa: "行動規範（日本語）",
+    cocEn: "Code of Conduct (English)",
+    stickyNote: (date: string) => `${date} · Free`,
+    menu: "Menu",
+    close: "Close",
+    skipSplash: "Skip",
+    footerFollow: "Follow",
   },
 } satisfies Record<Language, Record<string, unknown>>;
 
 export const copy = (lang: Language) => COPY[lang];
-
-export const localized = (text: Localized, lang: Language) => text[lang];

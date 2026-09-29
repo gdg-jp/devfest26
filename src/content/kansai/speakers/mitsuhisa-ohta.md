@@ -1,6 +1,6 @@
 ---
 name: "太田 満久 氏"
-role: "ユビー株式会社 Ubie Lab 所長／Google Developers Expert（AI・Cloud AI）"
+role: "ユビー株式会社 Ubie Lab 所長／Google Developers Expert（AI／Cloud AI）"
 photo: ./mitsuhisa-ohta.jpg
 ---
 

@@ -1,0 +1,54 @@
+---
+import Base from "../../../layouts/Base.astro";
+import Sprite from "../../../components/Sprite.astro";
+import Splash from "../_components/Splash.astro";
+import Header from "../_components/Header.astro";
+import Footer from "../_components/Footer.astro";
+import type { ResolvedTenant } from "../../../tenants";
+
+/**
+ * Kansai's frame: Base's head (meta, Open Graph, JSON-LD, analytics), the
+ * city's own header and footer, and — on the home page only — the splash.
+ *
+ * The motion for everything inside is one bundle, `_scripts/index.ts`. Each
+ * module in it looks for its own `data-k-*` hooks and does nothing when the
+ * page it is on has none, so detail pages can share the frame as they are
+ * redesigned without a second entry point.
+ */
+interface Props {
+  site: ResolvedTenant;
+  title?: string;
+  description?: string;
+  jsonLd?: Record<string, unknown>;
+  splash?: boolean;
+}
+
+const { site, title, description, jsonLd, splash = false } = Astro.props;
+---
+
+<Base site={site} title={title} description={description} jsonLd={jsonLd}>
+  {
+    /* Base's own fallback only knows about the shared bundle. This one covers
+       Kansai's: if it has not run within three seconds, nothing waits on it. */
+  }
+  <script is:inline>
+    setTimeout(function () {
+      if (!window.__k26Ready) {
+        document.documentElement.classList.add("no-motion");
+        document.documentElement.classList.remove("is-loading");
+      }
+    }, 3000);
+  </script>
+  <Sprite />
+  {splash && <Splash site={site} />}
+  <Header site={site} />
+  <main id="top" class="k-main">
+    <slot />
+  </main>
+  <Footer site={site} />
+  <slot name="after" />
+</Base>
+
+<script>
+  import "../_scripts/index";
+</script>

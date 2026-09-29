@@ -1,0 +1,140 @@
+---
+import Arrow from "./Arrow.astro";
+import { byTenant } from "../../../data/collections";
+import { eventDates } from "../../../tenants/eventDates";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * The meetups still taking sign-ups, one line each. "Still ahead" is judged
+ * when the page is built: once a meetup's day has passed the next build drops
+ * it, and with none left, the strip itself.
+ */
+interface Props {
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const today = new Date(
+  new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" }),
+);
+
+const upcoming = (await byTenant("meetups", tenant))
+  .filter(
+    (m) => m.data.status === "open" && m.data.date && m.data.date >= today,
+  )
+  .sort((a, b) => a.data.no - b.data.no)
+  .map((m) => {
+    const iso = m.data.date!.toISOString();
+    const { dateShort, dayOfWeek } = eventDates(iso, iso, lang);
+    return { m, when: `${dateShort} (${dayOfWeek})` };
+  });
+---
+
+{
+  upcoming.length > 0 && (
+    <aside class="k-pre k-wrap" aria-label={c.preEventHeading}>
+      {upcoming.map(({ m, when }) => (
+        <a
+          class="k-pre__row"
+          href={m.data.url}
+          target="_blank"
+          rel="noopener"
+          data-k-reveal="up"
+        >
+          <span class="k-pre__tag">
+            {c.preEventHeading} #{m.data.no}
+          </span>
+          <span class="k-pre__when">
+            {when} {m.data.startsAt}
+          </span>
+          <span class="k-pre__title">{m.data.title}</span>
+          <span class="k-pre__cta">
+            {c.preEventCta}
+            <Arrow />
+          </span>
+        </a>
+      ))}
+    </aside>
+  )
+}
+
+<style>
+  .k-pre {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .k-pre__row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 14px 12px 12px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--pa-yellow);
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.3s var(--k-ease);
+  }
+
+  .k-pre__row:hover {
+    background: var(--ht-yellow);
+  }
+
+  .k-pre__tag {
+    padding: 2px 12px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .k-pre__when {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .k-pre__title {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .k-pre__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .k-pre__cta :global(svg) {
+    width: 16px;
+  }
+
+  @media (width < 760px) {
+    .k-pre__row {
+      grid-template-columns: auto 1fr;
+      border-radius: var(--k-r-md);
+      gap: 6px 12px;
+    }
+
+    .k-pre__title {
+      grid-column: 1 / -1;
+    }
+
+    .k-pre__cta {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

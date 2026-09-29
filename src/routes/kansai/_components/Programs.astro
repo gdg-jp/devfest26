@@ -1,0 +1,285 @@
+---
+import Arrow from "./Arrow.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { stickers } from "../../../data/stickers";
+import { copy, localized, PROGRAMS, SWAG } from "../_content";
+
+/**
+ * What there is to *do*, as opposed to listen to — the reason to be in the
+ * room rather than watching the stream. A bento of unequal tiles so the eye
+ * lands on the ones with a call to action.
+ */
+const lang = currentLanguage();
+const c = copy(lang);
+
+const FILL: Record<string, { bg: string; ink: string }> = {
+  blue: { bg: "var(--blue)", ink: "var(--surface)" },
+  green: { bg: "var(--pa-green)", ink: "var(--ink)" },
+  yellow: { bg: "var(--ht-yellow)", ink: "var(--ink)" },
+  red: { bg: "var(--pa-red)", ink: "var(--ink)" },
+  ink: { bg: "var(--ink)", ink: "var(--surface)" },
+};
+const GLYPH: Record<string, keyof typeof stickers> = {
+  handson: "slashes",
+  fashion: "cross",
+  panel: "ellipsis",
+  booth: "braces",
+  roundtable: "semicolon",
+  party: "plus",
+};
+---
+
+<section
+  class="k-sec k-programs"
+  id="programs"
+  style="--k-accent:var(--red)"
+  aria-labelledby="k-programs-h"
+>
+  <div class="k-wrap k-wrap--wide">
+    <header class="k-head">
+      <p class="k-head__no">{c.programsLabel}</p>
+      <h2 class="k-head__title" id="k-programs-h" data-k-split>Programs</h2>
+    </header>
+
+    <ul class="k-bento" data-k-stagger>
+      {
+        PROGRAMS.map((p) => {
+          const fill = FILL[p.tone];
+          return (
+            <li
+              class:list={["k-bento__tile", `k-bento__tile--${p.key}`]}
+              style={`--tile:${fill.bg};--tile-ink:${fill.ink}`}
+              data-k-reveal="up"
+            >
+              <svg
+                class="k-bento__glyph"
+                viewBox={stickers[GLYPH[p.key] ?? "dot"]}
+                aria-hidden="true"
+              >
+                <use href="#stickersheet" />
+              </svg>
+              <p class="k-bento__label">
+                <span>{localized(p.label, lang)}</span>
+                {p.when && <time>{p.when}</time>}
+              </p>
+              <h3 class="k-bento__title">{localized(p.title, lang)}</h3>
+              <p class="k-bento__body">{localized(p.body, lang)}</p>
+              {p.cta && (
+                <a
+                  class="k-btn k-btn--sm k-btn--light k-bento__cta"
+                  href={p.cta.href}
+                  target="_blank"
+                  rel="noopener"
+                  data-analytics={p.cta.analytics}
+                  data-placement="programs"
+                >
+                  {localized(p.cta.label, lang)}
+                  <span class="k-btn__disc">
+                    <Arrow />
+                  </span>
+                </a>
+              )}
+            </li>
+          );
+        })
+      }
+      <li
+        class="k-bento__tile k-bento__tile--swag"
+        style="--tile:var(--surface);--tile-ink:var(--ink)"
+        data-k-reveal="up"
+      >
+        <p class="k-bento__label">
+          <span>{lang === "ja" ? "現地参加特典" : "On-site gift"}</span>
+        </p>
+        <h3 class="k-bento__title">{c.onsiteGift}</h3>
+        <ul class="k-bento__swag">
+          {SWAG.map((item) => <li>{localized(item, lang)}</li>)}
+        </ul>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .k-bento {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-rows: minmax(120px, auto);
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-bento__tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: clamp(20px, 2.2vw, 26px);
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-lg);
+    background: var(--tile);
+    color: var(--tile-ink);
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform 0.5s var(--k-ease);
+  }
+
+  .k-bento__tile:hover {
+    transform: translateY(-4px);
+  }
+
+  .k-bento__tile--handson {
+    grid-column: span 3;
+    grid-row: span 2;
+  }
+
+  .k-bento__tile--fashion {
+    grid-column: span 3;
+  }
+
+  .k-bento__tile--panel {
+    grid-column: span 3;
+  }
+
+  .k-bento__tile--booth {
+    grid-column: span 4;
+    grid-row: span 2;
+  }
+
+  .k-bento__tile--roundtable {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .k-bento__tile--party {
+    grid-column: span 3;
+  }
+
+  .k-bento__tile--swag {
+    grid-column: span 3;
+  }
+
+  .k-bento__glyph {
+    position: absolute;
+    z-index: -1;
+    right: -14px;
+    top: -14px;
+    width: 88px;
+    height: auto;
+    opacity: 0.95;
+    transform: rotate(-8deg);
+    transition: transform 0.8s var(--k-ease-back);
+  }
+
+  .k-bento__tile:hover .k-bento__glyph {
+    transform: rotate(6deg) scale(1.08);
+  }
+
+  .k-bento__tile--roundtable .k-bento__glyph {
+    width: 64px;
+  }
+
+  .k-bento__tile--handson .k-bento__glyph,
+  .k-bento__tile--booth .k-bento__glyph {
+    width: 132px;
+  }
+
+  .k-bento__label {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 0;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .k-bento__label span {
+    padding: 2px 10px;
+    border: 1.5px solid currentcolor;
+    border-radius: 999px;
+  }
+
+  .k-bento__title {
+    margin-top: auto;
+    font-size: clamp(21px, 2.2vw, 25px);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .k-bento__tile--handson .k-bento__title,
+  .k-bento__tile--booth .k-bento__title {
+    font-size: clamp(28px, 3.4vw, 38px);
+  }
+
+  .k-bento__body {
+    max-width: 30em;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .k-bento__cta {
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+
+  .k-bento__swag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-bento__swag li {
+    padding: 4px 14px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--pa-blue);
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  .k-bento__swag li:nth-child(2) {
+    background: var(--pa-yellow);
+  }
+
+  .k-bento__swag li:nth-child(3) {
+    background: var(--pa-red);
+  }
+
+  @media (width < 720px) {
+    .k-bento {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .k-bento__tile,
+    .k-bento__tile--handson,
+    .k-bento__tile--booth,
+    .k-bento__tile--roundtable {
+      grid-column: span 1;
+      grid-row: auto;
+    }
+
+    .k-bento__tile--handson,
+    .k-bento__tile--booth {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (width < 600px) {
+    .k-bento {
+      grid-template-columns: 1fr;
+    }
+
+    .k-bento__tile {
+      grid-column: 1 / -1 !important;
+    }
+  }
+</style>

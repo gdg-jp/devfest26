@@ -1,0 +1,546 @@
+---
+import Portrait from "./Portrait.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { getTimetable, type TimetableCell } from "../../../data/timetable";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * The day at a glance, drawn from the same model as every other city's
+ * timetable (`src/data/timetable.ts`) — only the drawing is Kansai's.
+ *
+ * Wide screens get the whole grid, one column per track, rows cut wherever
+ * something starts or ends. A phone gets one track at a time behind tabs,
+ * because four columns of 90px are four columns nobody can read.
+ */
+interface Props {
+  site: ResolvedTenant;
+  featured: readonly string[];
+}
+
+const { site, featured } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const table = await getTimetable(site);
+const featuredSet = new Set(featured);
+
+const minutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
+const rows = table
+  ? table.boundaries.slice(0, -1).map((start, i) => {
+      const span = minutes(table.boundaries[i + 1]) - minutes(start);
+      return `minmax(${Math.max(30, Math.round(span * 2.6))}px, auto)`;
+    })
+  : [];
+
+const cellsFor = (column: number) =>
+  (table?.cells ?? [])
+    .filter((cell) => cell.columnStart <= column && column < cell.columnEnd)
+    .sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+
+const sessionSlug = (cell: TimetableCell) => cell.key.replace(/^session:/, "");
+const isFeatured = (cell: TimetableCell) =>
+  cell.kind === "session" && featuredSet.has(sessionSlug(cell));
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+---
+
+{
+  table && (
+    <section
+      class="k-sec k-tt"
+      id="timetable"
+      style="--k-accent:var(--blue)"
+      aria-labelledby="k-tt-h"
+    >
+      <div class="k-wrap k-wrap--wide">
+        <header class="k-head">
+          <p class="k-head__no">{c.timetableLabel}</p>
+          <h2 class="k-head__title" id="k-tt-h" data-k-split>
+            Timetable
+          </h2>
+        </header>
+
+        {/* ---- phone: one track at a time ------------------------------ */}
+        <div
+          class="k-tt__tabs"
+          role="tablist"
+          aria-label={c.tabsAria}
+          data-k-tabs
+        >
+          {table.tracks.map((track, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`k-tt-tab-${track.id}`}
+              aria-controls={`k-tt-panel-${track.id}`}
+              aria-selected={i === 0 ? "true" : "false"}
+              tabindex={i === 0 ? 0 : -1}
+              style={`--trk:${track.data.color};--trk-ink:${track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+              data-k-tab
+            >
+              <b>{track.data.label.replace(/^Track\s*/i, "")}</b>
+              <span>{track.data.sub}</span>
+            </button>
+          ))}
+          <span class="k-tt__tab-ind" aria-hidden="true" data-k-tab-ind />
+        </div>
+
+        <div class="k-tt__panels">
+          {table.tracks.map((track, i) => (
+            <ol
+              class="k-tt__list"
+              role="tabpanel"
+              id={`k-tt-panel-${track.id}`}
+              aria-labelledby={`k-tt-tab-${track.id}`}
+              data-k-panel
+              data-active={i === 0 ? "" : undefined}
+              style={`--trk:${track.data.color};--fill:${"var(--surface)"}`}
+            >
+              {cellsFor(i + 2).map((cell) => (
+                <li
+                  class:list={[
+                    "k-tt__row",
+                    `k-tt__row--${cell.kind}`,
+                    { "is-featured": isFeatured(cell) },
+                  ]}
+                >
+                  <time class="k-tt__when">
+                    {cell.start}
+                    <span>{cell.end}</span>
+                  </time>
+                  {cell.kind === "session" && cell.href ? (
+                    <a
+                      class="k-tt__card"
+                      href={cell.href}
+                      style={`--fill:${cell.fill}`}
+                    >
+                      {isFeatured(cell) && (
+                        <span class="k-tt__badge">{c.featuredBadge}</span>
+                      )}
+                      <span
+                        class:list={[
+                          "k-tt__title",
+                          {
+                            "is-tbd":
+                              !cell.label || cell.label.startsWith("Session"),
+                          },
+                        ]}
+                      >
+                        {cell.label || "TBA"}
+                      </span>
+                      <span class="k-tt__who">
+                        {cell.speakers.map((s) => (
+                          <span class="k-tt__person">
+                            <Portrait speaker={s} size={26} class="k-tt__av" />
+                            {bare(s.data.name)}
+                          </span>
+                        ))}
+                      </span>
+                    </a>
+                  ) : (
+                    <div class="k-tt__fixture">
+                      {cell.label}
+                      {cell.note && <small>{cell.note}</small>}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          ))}
+        </div>
+
+        {/* ---- wide: the whole grid ------------------------------------ */}
+        <div
+          class="k-tt__grid"
+          style={`--tracks:${table.tracks.length};grid-template-rows:auto ${rows.join(" ")}`}
+          data-k-reveal="fade"
+        >
+          {table.tracks.map((track, i) => (
+            <div
+              class="k-tt__head"
+              style={`grid-column:${i + 2};--trk:${track.data.color};--trk-ink:${track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+            >
+              <b>{track.data.label}</b>
+              <span>{track.data.sub}</span>
+            </div>
+          ))}
+
+          {table.boundaries.slice(0, -1).map((time, i) => (
+            <time class="k-tt__tick" style={`grid-row:${i + 2}`}>
+              {time}
+            </time>
+          ))}
+
+          {table.cells.map((cell) => (
+            <div
+              class:list={[
+                "k-tt__cell",
+                `k-tt__cell--${cell.kind}`,
+                { "is-featured": isFeatured(cell) },
+              ]}
+              style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd};--fill:${cell.fill ?? "var(--surface)"}`}
+            >
+              {cell.kind === "session" && cell.href ? (
+                <a class="k-tt__card" href={cell.href}>
+                  <span class="k-tt__time">
+                    {cell.start} – {cell.end}
+                    {isFeatured(cell) && (
+                      <span class="k-tt__badge">{c.featuredBadge}</span>
+                    )}
+                  </span>
+                  <span class="k-tt__title">{cell.label || "TBA"}</span>
+                  <span class="k-tt__who">
+                    {cell.speakers.map((s) => (
+                      <span class="k-tt__person">
+                        <Portrait speaker={s} size={26} class="k-tt__av" />
+                        {bare(s.data.name)}
+                      </span>
+                    ))}
+                  </span>
+                </a>
+              ) : (
+                <div class="k-tt__fixture">
+                  <span>{cell.label}</span>
+                  {cell.note && <small>{cell.note}</small>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {table.undated.length > 0 && (
+          <div class="k-tt__undated">
+            <h3>{c.undated}</h3>
+            <ul>
+              {table.undated.map((session) => (
+                <li>
+                  <a href={session.href}>
+                    {session.entry.data.title ?? session.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <p class="k-tt__note">{c.timetableNote}</p>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .k-tt {
+    background: var(--ground);
+    border-top: var(--k-line) solid var(--ink);
+  }
+
+  /* ---- grid (wide) -------------------------------------------------- */
+
+  .k-tt__grid {
+    display: grid;
+    grid-template-columns: 64px repeat(var(--tracks), minmax(0, 1fr));
+    gap: 6px 10px;
+  }
+
+  .k-tt__head {
+    position: sticky;
+    top: calc(var(--topbar-h, 76px) + 6px);
+    z-index: 3;
+    grid-row: 1;
+    display: grid;
+    gap: 0;
+    padding: 10px 18px;
+    margin-bottom: 8px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--trk);
+    color: var(--trk-ink);
+    line-height: 1.3;
+  }
+
+  .k-tt__head b {
+    font-family: var(--k-f-display);
+    font-size: 17px;
+  }
+
+  .k-tt__head span {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+
+  .k-tt__tick {
+    grid-column: 1;
+    padding-top: 4px;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    border-top: 1.5px solid var(--k-hair);
+  }
+
+  .k-tt__cell {
+    display: flex;
+    min-width: 0;
+  }
+
+  .k-tt__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 12px 14px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 16px;
+    background: var(--fill);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      transform 0.35s var(--k-ease),
+      box-shadow 0.35s var(--k-ease);
+  }
+
+  .k-tt__card:hover,
+  .k-tt__card:focus-visible {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .is-featured .k-tt__card {
+    border-width: 3px;
+  }
+
+  .k-tt__time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  /* Pinned to the card's top edge, so it never squeezes the time beside it. */
+  .k-tt__badge {
+    position: absolute;
+    right: 10px;
+    top: -10px;
+    border: 1.5px solid var(--ink);
+    white-space: nowrap;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--ht-yellow);
+    font-family: var(--k-f-display);
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+
+  .k-tt__title {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+
+  .is-featured .k-tt__title {
+    font-size: 16px;
+  }
+
+  .k-tt__who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: auto;
+  }
+
+  .k-tt__person {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .k-tt__person :global(.k-tt__av) {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 11px;
+  }
+
+  .k-tt__fixture {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    width: 100%;
+    padding: 6px 12px;
+    border: 1.5px dashed var(--dash);
+    border-radius: 12px;
+    color: var(--muted);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .k-tt__fixture small {
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  /* ---- tabs (narrow) ------------------------------------------------ */
+
+  .k-tt__tabs,
+  .k-tt__panels {
+    display: none;
+  }
+
+  @media (width < 900px) {
+    .k-tt__grid {
+      display: none;
+    }
+
+    .k-tt__tabs {
+      position: sticky;
+      top: calc(var(--topbar-h, 64px) + 6px);
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 5px;
+      margin-bottom: 18px;
+      border: var(--k-line) solid var(--ink);
+      border-radius: 999px;
+      background: var(--surface);
+      isolation: isolate;
+    }
+
+    .k-tt__tabs button {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      padding: 7px 4px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .k-tt__tabs button b {
+      font-family: var(--k-f-display);
+      font-size: 16px;
+    }
+
+    .k-tt__tabs button span {
+      font-size: 10px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .k-tt__tabs button[aria-selected="true"] {
+      color: var(--trk-ink);
+    }
+
+    .k-tt__tab-ind {
+      position: absolute;
+      z-index: 0;
+      left: 5px;
+      top: 5px;
+      bottom: 5px;
+      width: calc((100% - 10px) / 4);
+      border-radius: 999px;
+      background: var(--blue);
+      transform: translateX(calc(var(--k-tab, 0) * 100%));
+    }
+
+    .k-tt__panels {
+      display: block;
+    }
+
+    :global(html.js) .k-tt__list:not([data-active]) {
+      display: none;
+    }
+
+    .k-tt__list {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 24px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .k-tt__row {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .k-tt__when {
+      display: grid;
+      align-content: start;
+      padding-top: 10px;
+      font-family: var(--f-mono);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .k-tt__when span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .k-tt__row--fixture .k-tt__when {
+      padding-top: 6px;
+      color: var(--muted);
+    }
+
+    .k-tt__list .k-tt__card {
+      border-left: 8px solid var(--trk);
+    }
+
+    .k-tt__fixture {
+      justify-content: flex-start;
+      text-align: left;
+    }
+  }
+
+  /* ---- after the grid ----------------------------------------------- */
+
+  .k-tt__undated {
+    margin-top: 32px;
+  }
+
+  .k-tt__undated h3 {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+
+  .k-tt__note {
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+</style>

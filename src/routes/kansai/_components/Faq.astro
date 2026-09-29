@@ -1,106 +1,182 @@
 ---
+import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
-import { FAQ, copy, localized } from "../_content";
+import { copy, FAQ, localized } from "../_content";
 
 /**
- * The questions someone asks themselves just before registering — is it for
- * me, what does it cost, what if I can't come — answered where they are asked.
- * Native <details>, so it opens without JavaScript and the answers are in the
- * page for search.
+ * The doubts that stop someone registering, answered before they have to ask.
+ * `<details>` so it works with no script at all; `_scripts/faq.ts` only adds
+ * the height animation. The safety policy sits beside it — it is the answer to
+ * the one question people do not ask out loud.
  */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
 const lang = currentLanguage();
 const c = copy(lang);
 ---
 
-<section class="sec tint faq" id="faq">
-  <div class="wrap">
-    <p class="eyebrow" data-reveal="up">FAQ</p>
-    <h2 class="sec-h" data-reveal="up">{c.faqHeading}</h2>
+<section
+  class="k-sec k-faq"
+  id="faq"
+  style="--k-accent:var(--blue)"
+  aria-labelledby="k-faq-h"
+>
+  <div class="k-wrap">
+    <header class="k-head">
+      <p class="k-head__no">{c.faqLabel}</p>
+      <h2 class="k-head__title" id="k-faq-h" data-k-split>{c.faqHeading}</h2>
+    </header>
 
-    <div class="list" data-reveal="up">
+    <div class="k-faq__list" data-k-stagger>
       {
         FAQ.map((item) => (
-          <details>
-            <summary>{localized(item.q, lang)}</summary>
-            <p>{localized(item.a, lang)}</p>
+          <details class="k-faq__item" data-k-faq data-k-reveal="up">
+            <summary>
+              <span>{localized(item.q, lang)}</span>
+              <i aria-hidden="true" />
+            </summary>
+            <div class="k-faq__a" data-k-faq-body>
+              <p>{localized(item.a, lang)}</p>
+            </div>
           </details>
         ))
       }
     </div>
+
+    <aside class="k-coc" id="coc" data-k-reveal="up">
+      <h3>{c.cocHeading}</h3>
+      <p>{c.cocLede}</p>
+      <div class="k-coc__links">
+        <a
+          href={site.links.cocJa}
+          target="_blank"
+          rel="noopener"
+          class="k-link"
+        >
+          {c.cocJa} ↗
+        </a>
+        <a
+          href={site.links.cocEn}
+          target="_blank"
+          rel="noopener"
+          class="k-link"
+        >
+          {c.cocEn} ↗
+        </a>
+      </div>
+    </aside>
   </div>
 </section>
 
 <style>
-  .faq {
-    border-top: var(--bw) solid var(--stroke);
+  .k-faq {
+    background: var(--ground);
+    border-top: var(--k-line) solid var(--ink);
   }
 
-  .list {
+  .k-faq__list {
     display: grid;
     gap: 10px;
-    max-width: 820px;
-    transition:
-      opacity 0.5s var(--ease-out),
-      transform 0.5s var(--ease-out);
   }
 
-  details {
-    border: var(--bw) solid var(--stroke);
-    border-radius: var(--r-md);
-    background: var(--ground);
+  .k-faq__item {
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-md);
+    background: var(--surface);
+    overflow: hidden;
   }
 
-  details[open] {
-    background: var(--t-pa);
-  }
-
-  summary {
+  .k-faq__item summary {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
-    font-family: var(--f-display);
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 18px 24px;
+    font-family: var(--k-f-display);
     font-weight: 700;
-    font-size: 16px;
+    font-size: clamp(16px, 1.4vw, 18px);
+    line-height: 1.5;
     cursor: pointer;
     list-style: none;
   }
 
-  summary::-webkit-details-marker {
+  .k-faq__item summary::-webkit-details-marker {
     display: none;
   }
 
-  summary::before {
-    content: "Q";
+  .k-faq__item summary i {
+    position: relative;
+    display: block;
     flex: none;
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    border: 2px solid var(--stroke);
+    width: 32px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
     border-radius: 50%;
-    background: var(--t);
-    color: var(--t-on);
-    font-size: 13px;
+    background: var(--ground);
+    transition:
+      transform 0.45s var(--k-ease),
+      background 0.3s;
   }
 
-  /* A plus that turns into a cross, the brand's own glyphs for open/close. */
-  summary::after {
-    content: "+";
-    margin-left: auto;
-    font-size: 22px;
-    line-height: 1;
-    transition: transform 0.2s var(--ease-out);
+  .k-faq__item summary i::before,
+  .k-faq__item summary i::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 2.4px;
+    border-radius: 2px;
+    background: var(--ink);
+    translate: -50% -50%;
   }
 
-  details[open] summary::after {
-    transform: rotate(45deg);
+  .k-faq__item summary i::after {
+    rotate: 90deg;
   }
 
-  details p {
+  .k-faq__item[open] summary i {
+    transform: rotate(135deg);
+    background: var(--ht-yellow);
+  }
+
+  .k-faq__a {
+    padding: 0 24px 22px;
+    color: var(--ink);
+    line-height: 1.9;
+  }
+
+  .k-faq__a p {
     margin: 0;
-    padding: 0 20px 18px 60px;
-    font-size: 15px;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--k-hair);
+  }
+
+  .k-coc {
+    margin-top: 28px;
+    padding: 24px 26px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-md);
+    background: var(--pa-blue);
+  }
+
+  .k-coc h3 {
+    font-size: 19px;
+    margin-bottom: 8px;
+  }
+
+  .k-coc p {
+    font-size: 14px;
     line-height: 1.85;
+  }
+
+  .k-coc__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-size: 14px;
   }
 </style>

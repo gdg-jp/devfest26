@@ -1,217 +1,386 @@
 ---
-import Logo from "../../../components/Logo.astro";
-import Gutter from "../../../components/Gutter.astro";
-import Sticker from "../../../components/Sticker.astro";
+import Crossing from "./Crossing.astro";
+import Wordmark from "./Wordmark.astro";
+import Arrow from "./Arrow.astro";
 import type { ResolvedTenant } from "../../../tenants";
-import { messages } from "../../../i18n";
 import { currentLanguage } from "../../../i18n/language";
+import { stickers } from "../../../data/stickers";
 import { copy } from "../_content";
 
 /**
- * Kansai's first screen. It says what the shared hero says — title, tagline,
- * date, venue, format, fee, one register button.
+ * The key visual: the crossing, the name, when and where, one button. All on
+ * one axis down the middle of the screen, and nothing else.
  */
 interface Props {
   site: ResolvedTenant;
 }
 
 const { site } = Astro.props;
-const { event, links, tagline } = site;
+const { event, links } = site;
 const lang = currentLanguage();
-const t = messages(lang);
 const c = copy(lang);
+
+const [, month, day] = event.isoDate.split("-");
 ---
 
-<section class="hero" id="top">
-  <Gutter>
-    <Sticker
-      name="slashes"
-      width={60}
-      bottom="30%"
-      left="1%"
-      rotate={-8}
-      speed={0.9}
-    />
-    <Sticker name="dot" width={30} top="12%" right="1.5%" speed={1.4} />
-  </Gutter>
+<section class="k-hero" aria-labelledby="k-hero-title">
+  <div class="k-hero__deco" aria-hidden="true">
+    <svg
+      class="k-hero__glyph k-hero__glyph--a"
+      viewBox={stickers.slashes}
+      data-k-depth="1.6"><use href="#stickersheet"></use></svg
+    >
+    <svg
+      class="k-hero__glyph k-hero__glyph--b"
+      viewBox={stickers.semicolon}
+      data-k-depth="-1.2"><use href="#stickersheet"></use></svg
+    >
+    <svg
+      class="k-hero__glyph k-hero__glyph--c"
+      viewBox={stickers.plus}
+      data-k-depth="2.2"><use href="#stickersheet"></use></svg
+    >
+    <svg
+      class="k-hero__glyph k-hero__glyph--d"
+      viewBox={stickers.dot}
+      data-k-depth="-2"><use href="#stickersheet"></use></svg
+    >
+  </div>
 
-  <div class="wrap">
-    <div class="lockup" data-intro="1">
-      <Logo variant="brackets" class="brackets" />
-      {
-        /* The date belongs to the pill below, in full and in Japanese —
-           saying it again here in short English would be the same fact
-           twice before the visitor has read either. */
-      }
-      <span class="yr">{event.isoDate.slice(0, 4)}</span>
+  <div class="k-hero__inner">
+    <div class="k-hero__visual" data-k-hero-visual>
+      <Crossing labels={c.disciplines} mode="hero" class="k-hero__x" />
     </div>
 
-    <h1 data-intro="2">
-      <span class="hero-title">{site.title}</span>
-      {site.subtitle && <span class="hero-subtitle">{site.subtitle}</span>}
+    <h1 class="k-hero__title" id="k-hero-title" data-k-intro="0">
+      <span class="visually-hidden">{site.title}</span>
+      <Wordmark class="k-hero__wm" label="" />
     </h1>
-    <p class="tagline" data-intro="3">
-      {tagline.lead}<em>{tagline.accent}</em>
+
+    <p class="k-hero__catch" data-k-intro="1">
+      <span class="k-hero__catch-main">
+        {c.catchLead}<mark class="k-hero__mark" data-k-mark>{c.catchMark}</mark
+        >{c.catchTail}
+      </span>
+      <span class="k-hero__kicker">{c.kicker}</span>
     </p>
 
-    <div class="metas" data-intro="4">
-      <span class="pill"
-        ><span class="dot" style="background:var(--blue)"></span><b
-          >{event.dateLabel}</b
-        >{t.dates.dowSuffix(event.dayOfWeek)}{event.hoursCompact}</span
-      >
-      <span class="pill"
-        ><span class="dot" style="background:var(--green)"></span>{
-          event.venue.name
-        }</span
-      >
-      <span class="pill"
-        ><span class="dot" style="background:var(--red)"></span>{
-          event.formatShort
-        }</span
-      >
-      <span class="pill"
-        ><span class="dot" style="background:var(--yellow)"></span>{
-          t.hero.feeLabel
-        }{" "}<b>{event.fee}</b></span
-      >
-    </div>
-
-    <div class="cta-row" data-intro="5">
-      {
-        /* The note belongs to the register button, and stays under it when
-          the buttons stack on a phone. */
-      }
-      <div class="primary">
-        <a
-          class="btn big"
-          href={links.register}
-          target="_blank"
-          rel="noopener"
-          data-analytics="register_click"
-          data-placement="hero">{c.heroRegister}</a
-        >
-        <p class="cta-note">{c.heroRegisterNote}</p>
+    <dl class="k-hero__facts" data-k-intro="2">
+      <div class="k-hero__fact">
+        <dt>{c.factDate}</dt>
+        <dd>
+          <time datetime={event.startsAt}>
+            <span class="k-hero__md">{Number(month)}.{Number(day)}</span>
+            <span class="k-hero__dow">{event.dayOfWeekEn}</span>
+          </time>
+          <span class="k-hero__hours">{event.hours.replace(" – ", "–")}</span>
+        </dd>
       </div>
-      <a class="btn ghost" href="#timetable">{c.heroTimetable}</a>
+      <div class="k-hero__fact k-hero__fact--venue">
+        <dt>{c.factVenue}</dt>
+        <dd>
+          <span class="k-hero__venue">{event.venue.name}</span>
+          <span class="k-hero__area">{c.venueArea}</span>
+        </dd>
+      </div>
+    </dl>
+
+    <div class="k-hero__actions" data-k-intro="3">
+      <a
+        class="k-btn k-btn--lg"
+        href={links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="hero"
+        data-k-magnet
+      >
+        {c.register}
+        <span class="k-btn__disc"><Arrow /></span>
+      </a>
     </div>
   </div>
 </section>
 
 <style>
-  .hero {
+  .k-hero {
     position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    padding: clamp(30px, 5vw, 56px) 0 clamp(36px, 5vw, 60px);
+    overflow: clip;
+    display: grid;
+    place-items: center;
+    min-height: min(100svh, 1080px);
+    padding: calc(var(--k-header-h) + clamp(12px, 3vh, 40px)) var(--k-gutter)
+      clamp(40px, 7vh, 80px);
+    background-color: var(--ground);
+    background-image: radial-gradient(var(--k-dots) 1.3px, transparent 1.7px);
+    background-size: 26px 26px;
+    background-position: 13px 13px;
   }
 
-  .lockup {
+  .k-hero__inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    width: min(100%, var(--k-max));
+    text-align: center;
+  }
+
+  /* ---- visual ------------------------------------------------------- */
+
+  .k-hero__visual {
+    display: grid;
+    place-items: center;
+    --vis: min(clamp(200px, 31vh, 360px), 66vw);
+    width: var(--vis);
+    aspect-ratio: 1;
+    /* The arms reach 14% past the box; this keeps them off the name. */
+    margin-bottom: calc(var(--vis) * 0.15);
+    perspective: 1100px;
+  }
+
+  .k-hero__visual :global(.k-hero__x) {
+    --size: 100%;
+  }
+
+  /* ---- name --------------------------------------------------------- */
+
+  .k-hero__title {
+    width: min(100%, 580px);
+    margin: 0 0 clamp(14px, 2.2vh, 24px);
+  }
+
+  /* ---- catch -------------------------------------------------------- */
+
+  .k-hero__catch {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 clamp(22px, 3.6vh, 40px);
+  }
+
+  .k-hero__catch-main {
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(20px, 2.6vw, 30px);
+    line-height: 1.4;
+  }
+
+  .k-hero__kicker {
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(14px, 1.6vw, 18px);
+    color: var(--blue);
+  }
+
+  .k-hero__mark {
+    position: relative;
+    z-index: 0;
+    background: none;
+    color: inherit;
+    white-space: nowrap;
+  }
+
+  /* The marker stroke under 「考える」 draws itself in once the hero lands. */
+  .k-hero__mark::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: -0.08em;
+    right: -0.08em;
+    bottom: 0.04em;
+    height: 0.42em;
+    border-radius: 0.2em;
+    background: var(--ht-blue);
+    transform-origin: 0 50%;
+    transform: scaleX(var(--k-mark, 1));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) .k-hero__mark::before {
+      --k-mark: 0;
+    }
+
+    :global(html.js:not(.no-motion)) .k-hero__mark.is-drawn::before {
+      --k-mark: 1;
+      transition: transform 0.9s var(--k-ease);
+    }
+  }
+
+  /* ---- when and where ----------------------------------------------- */
+
+  .k-hero__facts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 14px clamp(20px, 3.6vw, 32px);
+    margin: 0 0 clamp(22px, 3.6vh, 36px);
+  }
+
+  .k-hero__fact {
     display: flex;
     align-items: center;
-    gap: clamp(10px, 1.8vw, 22px);
-    flex-wrap: wrap;
-    margin-bottom: clamp(20px, 2.6vw, 28px);
+    gap: 12px;
   }
 
-  .lockup :global(.brackets) {
-    width: clamp(170px, 22vw, 260px);
-    flex: none;
+  .k-hero__fact + .k-hero__fact {
+    padding-left: clamp(20px, 3.6vw, 32px);
+    border-left: var(--k-line) solid var(--k-hair);
   }
 
-  .yr {
-    font-family: var(--f-display);
-    border: var(--bw) solid var(--stroke);
+  .k-hero__fact dt {
+    display: grid;
+    place-items: center;
+    padding: 6px 3px;
+    border: 1.5px solid var(--ink);
     border-radius: 999px;
-    line-height: 1.6;
+    font-family: var(--k-f-jp);
     font-weight: 700;
-    font-size: clamp(15px, 2vw, 20px);
-    background: var(--yellow);
-    padding: 4px 18px;
+    font-size: 11px;
+    line-height: 1.1;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.1em;
   }
 
-  h1 {
-    font-size: clamp(32px, 5.6vw, 64px);
+  .k-hero__fact dd {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    text-align: left;
+  }
+
+  .k-hero__md {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(34px, 4.2vw, 44px);
     letter-spacing: -0.03em;
-    margin: 0 0 6px;
+    line-height: 1;
   }
 
-  .hero-title,
-  .hero-subtitle {
-    display: block;
-  }
-
-  .hero-subtitle {
-    font-size: clamp(22px, 3.8vw, 42px);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    margin-top: clamp(2px, 0.4vw, 6px);
-  }
-
-  .tagline {
-    font-family: var(--f-display);
+  .k-hero__dow {
+    margin-left: 4px;
+    font-family: var(--k-f-display);
     font-weight: 700;
-    font-size: clamp(20px, 3vw, 34px);
+    font-size: 17px;
+  }
+
+  .k-hero__hours {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(17px, 2vw, 22px);
     letter-spacing: -0.01em;
-    line-height: 1.4;
-    margin: 0 0 clamp(18px, 2.4vw, 26px);
   }
 
-  .tagline em {
-    font-style: normal;
-    color: var(--t-deep);
-  }
-
-  .metas {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 9px;
-    margin-bottom: clamp(20px, 2.8vw, 28px);
-  }
-
-  .metas :global(.pill b) {
-    font-weight: 700;
-  }
-
-  .dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    flex: none;
-  }
-
-  /* The one button on the screen that matters, a size up from the rest. */
-  .btn.big {
-    font-size: 19px;
-    padding: 16px 36px;
-  }
-
-  .cta-row {
-    align-items: flex-start;
-  }
-
-  .primary {
-    display: flex;
+  .k-hero__fact--venue dd {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: start;
+    gap: 2px;
   }
 
-  .cta-note {
-    margin: 12px 0 0 6px;
-    font-size: 13.5px;
+  .k-hero__venue {
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(18px, 2vw, 21px);
+    line-height: 1.3;
+  }
+
+  .k-hero__area {
+    font-weight: 700;
+    font-size: 13px;
     color: var(--muted);
+    white-space: nowrap;
   }
 
-  /* Entrance state. Cleared by the intro script; never applied without JS. */
-  :global(html.js) [data-intro] {
-    opacity: 0;
-    transform: translateY(14px);
+  /* ---- decoration --------------------------------------------------- */
+
+  .k-hero__deco {
+    position: absolute;
+    inset: calc(var(--k-header-h) + 24px) var(--k-gutter) 24px;
+    z-index: 1;
+    pointer-events: none;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    :global(html.js) [data-intro] {
-      opacity: 1;
-      transform: none;
+  .k-hero__glyph {
+    position: absolute;
+    height: auto;
+    will-change: transform;
+  }
+
+  .k-hero__glyph--a {
+    width: clamp(56px, 7vw, 110px);
+    left: 4%;
+    top: 12%;
+  }
+
+  .k-hero__glyph--b {
+    width: clamp(22px, 2.6vw, 40px);
+    right: 9%;
+    top: 8%;
+  }
+
+  .k-hero__glyph--c {
+    width: clamp(48px, 5.4vw, 88px);
+    right: 5%;
+    bottom: 18%;
+  }
+
+  .k-hero__glyph--d {
+    width: clamp(26px, 3vw, 48px);
+    left: 10%;
+    bottom: 12%;
+  }
+
+  /* ---- entrance states ---------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) [data-k-intro] {
+      opacity: 0;
+    }
+  }
+
+  /* ---- narrow ------------------------------------------------------- */
+
+  @media (width < 640px) {
+    .k-hero {
+      min-height: 0;
+    }
+
+    .k-hero__facts {
+      display: grid;
+      justify-items: start;
+      gap: 12px;
+    }
+
+    .k-hero__fact + .k-hero__fact {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .k-hero__fact dd {
+      flex-wrap: wrap;
+      row-gap: 2px;
+    }
+
+    .k-hero__actions,
+    .k-hero__actions :global(.k-btn) {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .k-hero__glyph--a {
+      top: 0;
+      left: 0;
+    }
+
+    .k-hero__glyph--b {
+      top: 0;
+      right: 4%;
+    }
+
+    .k-hero__glyph--c,
+    .k-hero__glyph--d {
+      display: none;
     }
   }
 </style>

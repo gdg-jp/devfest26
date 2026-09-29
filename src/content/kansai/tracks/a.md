@@ -1,7 +1,7 @@
 ---
 order: 1
 label: "Track A"
-sub: "メイントーク"
+sub: "メインホール・キーノート"
 color: "var(--blue)"
 textColor: "var(--blue)"
 ---

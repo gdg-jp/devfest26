@@ -1,0 +1,328 @@
+---
+import Portrait from "./Portrait.astro";
+import Arrow from "./Arrow.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, FEATURED_START, localized } from "../_content";
+import type { FeaturedSpeaker } from "../_data";
+
+/**
+ * The headliners, straight after the key visual, as an endless carousel that
+ * snaps each card to the middle of the column — neighbours peek in at either
+ * side, cut off at the column's edge, and the last runs round to the first.
+ * It opens on `FEATURED_START`. Swipe, drag or use the arrows;
+ * `_scripts/carousel.ts`.
+ */
+interface Props {
+  featured: FeaturedSpeaker[];
+}
+
+const { featured } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const start = Math.max(
+  0,
+  featured.findIndex((f) => f.slug === FEATURED_START),
+);
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+const TONES: Record<string, string> = {
+  blue: "var(--blue)",
+  green: "var(--green)",
+  yellow: "var(--yellow)",
+  red: "var(--red)",
+};
+---
+
+<section
+  class="k-sec k-dark on-dark k-featured"
+  id="featured"
+  style="--k-accent:var(--ht-yellow)"
+  aria-labelledby="k-featured-h"
+  data-k-car
+>
+  <div class="k-wrap">
+    <header class="k-head">
+      <p class="k-head__no">{c.featuredLabel}</p>
+      <h2
+        class="k-head__title k-head__title--ja"
+        id="k-featured-h"
+        data-k-split
+      >
+        {c.featuredHeading}
+      </h2>
+    </header>
+  </div>
+
+  <div class="k-wrap">
+    <ul
+      class="k-car"
+      data-k-car-track
+      data-k-car-start={start}
+      data-k-reveal="rise"
+    >
+      {
+        featured.map((f, i) => {
+          const { speaker } = f.program;
+          return (
+            <li class="k-car__item" style={`--tone:${TONES[f.tone]}`}>
+              <a class="k-card" href={f.talk.href} draggable="false">
+                <span class="k-card__frame">
+                  <span class="k-card__pan" data-k-car-pan>
+                    <Portrait
+                      speaker={speaker}
+                      size={320}
+                      class="k-card__img"
+                      tone={TONES[f.tone]}
+                      eager={Math.abs(i - start) < 2}
+                    />
+                  </span>
+                  {f.talk.start && (
+                    <span class="k-card__time">{f.talk.start}</span>
+                  )}
+                </span>
+                <span class="k-card__name">{bare(speaker.data.name)}</span>
+                <span class="k-card__hook">{localized(f.hook, lang)}</span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    <div class="k-car__foot">
+      <div class="k-car__bar" aria-hidden="true">
+        <span data-k-car-progress></span>
+      </div>
+      <div class="k-car__nav">
+        <button
+          type="button"
+          class="k-car__btn k-car__btn--prev"
+          aria-label={c.prev}
+          data-k-car-prev
+        >
+          <Arrow />
+        </button>
+        <button
+          type="button"
+          class="k-car__btn"
+          aria-label={c.next}
+          data-k-car-next
+        >
+          <Arrow />
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .k-featured {
+    overflow: clip;
+  }
+
+  /* ---- arrows ------------------------------------------------------- */
+
+  .k-car__foot {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: clamp(24px, 3.4vw, 36px);
+  }
+
+  .k-car__nav {
+    display: flex;
+    gap: 10px;
+    flex: none;
+  }
+
+  .k-car__btn {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--surface);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--surface);
+    cursor: pointer;
+    transition:
+      background 0.3s var(--k-ease),
+      color 0.3s var(--k-ease),
+      opacity 0.3s,
+      transform 0.4s var(--k-ease-back);
+  }
+
+  .k-car__btn :global(svg) {
+    width: 20px;
+  }
+
+  .k-car__btn--prev :global(svg) {
+    transform: scaleX(-1);
+  }
+
+  .k-car__btn:hover:not(:disabled) {
+    background: var(--ht-yellow);
+    border-color: var(--ht-yellow);
+    color: var(--ink);
+    transform: scale(1.08);
+  }
+
+  .k-car__btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* ---- track -------------------------------------------------------- */
+
+  /* Clipped to the column. The padding lets the first and last cards reach
+     the middle, where every card snaps. */
+  .k-car {
+    --card: clamp(220px, 34vw, 270px);
+    position: relative;
+    display: flex;
+    gap: clamp(12px, 2vw, 20px);
+    margin: 0;
+    padding: 4px calc(50% - var(--card) / 2) 8px;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    cursor: grab;
+  }
+
+  .k-car::-webkit-scrollbar {
+    display: none;
+  }
+
+  .k-car:global(.is-dragging) {
+    cursor: grabbing;
+    scroll-snap-type: none;
+  }
+
+  .k-car:global(.is-dragging) .k-card {
+    pointer-events: none;
+  }
+
+  .k-car__item {
+    flex: none;
+    width: var(--card);
+    scroll-snap-align: center;
+  }
+
+  /* ---- card --------------------------------------------------------- */
+
+  .k-card {
+    display: grid;
+    transform-origin: 50% 40%;
+    gap: 6px;
+    color: var(--surface);
+    text-decoration: none;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+
+  .k-card__frame {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 5;
+    margin-bottom: 10px;
+    border: var(--k-line) solid var(--surface);
+    border-radius: var(--k-r-lg);
+    background: var(--tone);
+    overflow: hidden;
+    transition: border-radius 0.5s var(--k-ease);
+  }
+
+  /* Its own background, because the transform that pans it also isolates it:
+     the photo multiplies onto this, not the frame behind. */
+  .k-card__pan {
+    position: absolute;
+    inset: 0 -8%;
+    display: block;
+    background: var(--tone);
+  }
+
+  .k-card__pan :global(.k-card__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-size: 72px;
+    filter: grayscale(1) contrast(1.05);
+    mix-blend-mode: multiply;
+    transition:
+      filter 0.6s var(--k-ease),
+      transform 0.8s var(--k-ease);
+  }
+
+  .k-card:hover .k-card__frame,
+  .k-card:focus-visible .k-card__frame {
+    border-radius: var(--k-r-md);
+  }
+
+  .k-card:hover :global(.k-card__img),
+  .k-card:focus-visible :global(.k-card__img) {
+    filter: grayscale(0);
+    mix-blend-mode: normal;
+    transform: scale(1.05);
+  }
+
+  .k-card__time {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    padding: 2px 12px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--f-mono);
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+  }
+
+  .k-card__name {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(22px, 2.4vw, 28px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .k-card__hook {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--k-on-dark-muted);
+  }
+
+  /* ---- progress ----------------------------------------------------- */
+
+  .k-car__bar {
+    flex: 1;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--k-on-dark-hair);
+    overflow: hidden;
+  }
+
+  /* One segment per speaker, sliding to whichever is in the middle. */
+  .k-car__bar span {
+    display: block;
+    width: var(--seg, 30%);
+    height: 100%;
+    border-radius: 3px;
+    background: var(--ht-yellow);
+  }
+
+  @media (width < 560px) {
+    .k-car__btn {
+      width: 44px;
+    }
+
+    .k-car {
+      --card: 68vw;
+    }
+  }
+</style>
