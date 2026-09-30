@@ -72,6 +72,8 @@ export interface Featured {
   slug: string;
   /** One line on why the name matters, drawn from the speaker's own bio. */
   hook: Localized;
+  /** The hook cut to a name tag's length, for the key visual. */
+  short: Localized;
   /** Which of the four brand colours frames the portrait. */
   tone: "blue" | "green" | "yellow" | "red";
 }
@@ -90,6 +92,7 @@ export const FEATURED: readonly Featured[] = [
       ja: "Transformer 論文「Attention Is All You Need」共著者",
       en: 'Co-author of "Attention Is All You Need"',
     },
+    short: { ja: "Transformer 共著者", en: "Transformer co-author" },
   },
   {
     slug: "hiroshi-ishiguro",
@@ -98,6 +101,7 @@ export const FEATURED: readonly Featured[] = [
       ja: "アンドロイド研究の第一人者",
       en: "A leading figure in android research",
     },
+    short: { ja: "アンドロイド研究", en: "Android researcher" },
   },
   {
     slug: "yoichi-ochiai",
@@ -106,6 +110,7 @@ export const FEATURED: readonly Featured[] = [
       ja: "メディアアーティスト／大阪・関西万博 シグネチャー事業プロデューサー",
       en: "Media artist; Expo 2025 Osaka signature-pavilion producer",
     },
+    short: { ja: "メディアアーティスト", en: "Media artist" },
   },
   {
     slug: "heiga",
@@ -114,6 +119,7 @@ export const FEATURED: readonly Featured[] = [
       ja: "Google DeepMind 東京拠点リード",
       en: "Tokyo site lead, Google DeepMind",
     },
+    short: { ja: "Google DeepMind", en: "Google DeepMind" },
   },
   {
     slug: "takaya-imamura",
@@ -121,6 +127,10 @@ export const FEATURED: readonly Featured[] = [
     hook: {
       ja: "任天堂で『F-ZERO』『スターフォックス』『ゼルダの伝説』に携わったゲームクリエイター",
       en: "Game creator behind F-ZERO, Star Fox and Zelda titles at Nintendo",
+    },
+    short: {
+      ja: "元任天堂 ゲームクリエイター",
+      en: "Ex-Nintendo game creator",
     },
   },
   {
@@ -130,6 +140,7 @@ export const FEATURED: readonly Featured[] = [
       ja: "未踏事業 統括 PM／東京大学名誉教授",
       en: "Lead PM of the MITOU programme; professor emeritus, University of Tokyo",
     },
+    short: { ja: "未踏 統括 PM", en: "Lead PM, MITOU" },
   },
   {
     slug: "minoru-asada",
@@ -138,6 +149,7 @@ export const FEATURED: readonly Featured[] = [
       ja: "認知発達ロボティクスの第一人者",
       en: "A founder of cognitive developmental robotics",
     },
+    short: { ja: "認知発達ロボティクス", en: "Developmental robotics" },
   },
 ];
 
@@ -147,6 +159,13 @@ export const FEATURED_START = "hiroshi-ishiguro";
 /* -------------------------------------------------------------------------- */
 /* On-site gift                                                               */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Seats per ticket type on connpass (現地参加 / オンライン参加), as of
+ * 2026-09-30. Capacities, not counts — they only change if the organisers
+ * change the event page.
+ */
+export const CAPACITY = { onsite: 500, online: 200 } as const;
 
 /** Which gift the on-site ticket comes with — one of these, picked on the day. */
 export const SWAG: readonly Localized[] = [
@@ -367,6 +386,16 @@ export const COPY = {
     catchLead: "AI 時代の",
     catchMark: "「考える」",
     catchTail: "を取り戻す。",
+    kvFree: "参加無料",
+    kvOnsite: (n: number) => `現地 先着 ${n} 名`,
+    kvOnline: "オンライン配信あり",
+    kvMore: (n: number) => `ほか ${n} 名`,
+    kvDaysLeft: (n: number) => `あと ${n} 日`,
+    kvToday: "本日開催",
+    kvAdmission: "入場券",
+    kvLineup: "出演",
+    kvTicketCta: "参加登録する",
+    kvTheme: ["DevFest Kansai", "AI × Robotics", "AI × Fashion", "AI × Game"],
     register: "無料で参加登録",
     registerShort: "参加登録",
     disciplines: ["AI", "Robotics", "Fashion", "Game"],
@@ -424,6 +453,16 @@ export const COPY = {
     catchLead: "Take back ",
     catchMark: "thinking",
     catchTail: " in the age of AI.",
+    kvFree: "Free",
+    kvOnsite: (n: number) => `${n} seats on site`,
+    kvOnline: "Streamed online",
+    kvMore: (n: number) => `+${n} more`,
+    kvDaysLeft: (n: number) => `${n} days to go`,
+    kvToday: "Today",
+    kvAdmission: "Admission",
+    kvLineup: "Lineup",
+    kvTicketCta: "Get your ticket",
+    kvTheme: ["DevFest Kansai", "AI × Robotics", "AI × Fashion", "AI × Game"],
     register: "Register for free",
     registerShort: "Register",
     disciplines: ["AI", "Robotics", "Fashion", "Game"],

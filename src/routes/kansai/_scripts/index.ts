@@ -1,5 +1,6 @@
 import { initSplash } from "./splash";
 import { initHero } from "./hero";
+import { initKv } from "./kv";
 import { initReveal, initSplit } from "./reveal";
 import { initCarousels } from "./carousel";
 import {
@@ -27,6 +28,7 @@ declare global {
 window.__k26Ready = true;
 
 initHero();
+initKv();
 initSplit();
 initReveal();
 initCarousels();

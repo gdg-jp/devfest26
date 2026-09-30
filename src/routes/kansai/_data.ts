@@ -13,6 +13,12 @@ import { FEATURED, type Featured } from "./_content";
  * the timetable underneath it is worse than no number.
  */
 
+/**
+ * Which key visual the home page opens on: `current` is the one in
+ * production, `a`–`d` are the proposals under `kv/[variant].astro`.
+ */
+export type KvName = "current" | "a" | "b" | "c" | "d";
+
 export interface FeaturedSpeaker extends Featured {
   program: SpeakerProgram;
   /** The first talk they give, which is the one a card names. */

@@ -1,0 +1,27 @@
+---
+import Home from "../_components/Home.astro";
+import type { KvName } from "../_data";
+import { missingCity, notFound, ownCity } from "../../../lib/cityRoutes";
+
+/**
+ * The key-visual proposals, each on the full home page: `/kansai/kv/a` to
+ * `/kansai/kv/d`. Rendered by the dev server and the draft preview only — a
+ * static build gets no paths here, so none of this reaches the public site.
+ * Delete the directory once one of them has replaced `Hero.astro`.
+ */
+export function getStaticPaths() {
+  // Hoisted out of this file's scope by Astro, so the list is spelled here.
+  return import.meta.env.DEV
+    ? ["a", "b", "c", "d"].map((variant) => ({ params: { variant } }))
+    : [];
+}
+
+const variant = Astro.params.variant as KvName;
+if (!["a", "b", "c", "d"].includes(variant))
+  return notFound(`No key visual "${variant}"`);
+
+const site = await ownCity(Astro.url);
+if (!site) return missingCity(Astro.url);
+---
+
+<Home site={site} kv={variant} />

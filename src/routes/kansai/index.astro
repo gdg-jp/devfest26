@@ -1,55 +1,9 @@
 ---
-import Shell from "./_layout/Shell.astro";
-import Hero from "./_components/Hero.astro";
-import Featured from "./_components/Featured.astro";
-import Marquee from "./_components/Marquee.astro";
-import News from "./_components/News.astro";
-import PreEvent from "./_components/PreEvent.astro";
-import Programs from "./_components/Programs.astro";
-import Timetable from "./_components/Timetable.astro";
-import Speakers from "./_components/Speakers.astro";
-import Sponsors from "./_components/Sponsors.astro";
-import Faq from "./_components/Faq.astro";
-import StickyCta from "./_components/StickyCta.astro";
+import Home from "./_components/Home.astro";
 import { missingCity, ownCity } from "../../lib/cityRoutes";
-import { homeData } from "./_data";
 
-/**
- * Kansai's home page: the key visual, the headliners, then the programme
- * from the top down. The register button is in the header throughout and
- * follows the reader down the page once the hero's own has gone.
- */
 const site = await ownCity(Astro.url);
 if (!site) return missingCity(Astro.url);
-
-const { featured, featuredSessions, speakers } = await homeData(site.tenant);
 ---
 
-<Shell site={site} splash>
-  <Hero site={site} />
-  <Featured featured={featured} />
-  <Marquee />
-  <News />
-  <PreEvent tenant={site.tenant} />
-  {
-    /*
-      The session and speaker pages link back to `#sessions`, a list this page
-      no longer has — every session is reached from the timetable, so the
-      anchor lands there.
-    */
-  }
-  <span id="sessions" class="k-anchor" aria-hidden="true"></span>
-  <Timetable site={site} featured={featuredSessions} />
-  <Programs />
-  <Speakers speakers={speakers} />
-  <Sponsors site={site} />
-  <Faq site={site} />
-  <StickyCta site={site} slot="after" />
-</Shell>
-
-<style>
-  .k-anchor {
-    display: block;
-    scroll-margin-top: var(--k-header-h);
-  }
-</style>
+<Home site={site} />

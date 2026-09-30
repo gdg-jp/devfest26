@@ -330,7 +330,7 @@ export function initMenu() {
  */
 export function initSticky() {
   const bar = document.querySelector<HTMLElement>("[data-k-sticky]");
-  const hero = document.querySelector<HTMLElement>(".k-hero");
+  const hero = document.querySelector<HTMLElement>(".k-hero, [data-k-hero]");
   if (!bar || !hero) return;
 
   const blockers = new Set<Element>();
