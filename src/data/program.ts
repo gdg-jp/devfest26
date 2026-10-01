@@ -19,7 +19,9 @@
  *
  * Every rule this file states is a rule a published build dies on: a reference
  * that crosses cities, a slot with nobody on it, two entries claiming one URL.
- * That is deliberate and unchanged. The draft preview is the one caller that
+ * That is deliberate and unchanged. The one exception is a talk listed in
+ * several sessions, which a provisional programme full of "TBA" needs; that
+ * only warns. The draft preview is the one caller that
  * cannot afford it — half-written content is what it exists to show — so there
  * the same checks drop the entry and say so instead. See `reject` in
  * `src/preview/problems.ts`.
@@ -29,7 +31,7 @@ import type { CollectionEntry } from "astro:content";
 import { getTracks, type Track } from "./tracks";
 import { byTenant, partitionByTenant } from "./collections";
 import { previewMode } from "../preview/mode";
-import { reject, report } from "../preview/problems";
+import { reject, report, warn } from "../preview/problems";
 import { tenantPath } from "../lib/url";
 
 export type Session = CollectionEntry<"sessions">;
@@ -213,7 +215,8 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       : `unknown ${kind} "${ref}"`;
   };
 
-  // Track which session claimed each talk, to enforce exactly-one-session semantics.
+  // The first session to claim each talk. Every talk needs one; a second is
+  // only a warning.
   const claimedBy = new Map<string, Session>();
 
   // 1. Resolve talks from sessions that define their own `talks` array.
@@ -244,16 +247,19 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
         continue;
       }
 
+      // Allowed, but said out loud: a provisional programme can put one "TBA"
+      // talk in several slots until the real ones are known. The talk is
+      // listed in every session naming it; its own page goes with the first
+      // session the programme prints (see `getStandaloneTalks`).
       const previous = claimedBy.get(talk.id);
       if (previous) {
-        reject(
+        warn(
           "programme",
-          `Talk "${talk.id}" is referenced by both Session "${previous.id}" and Session "${session.id}". A talk belongs to exactly one session.`,
+          `Talk "${talk.id}" is referenced by both Session "${previous.id}" and Session "${session.id}". It is listed in both.`,
         );
-        continue;
+      } else {
+        claimedBy.set(talk.id, session);
       }
-
-      claimedBy.set(talk.id, session);
       resolved.push(talk);
     }
 
@@ -268,7 +274,10 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     // If talk was already claimed by a session via session.talks:
     const claimedSession = claimedBy.get(talk.id);
     if (claimedSession) {
-      if (talk.data.session.id !== claimedSession.id) {
+      const listedThere = talksBySession
+        .get(talk.data.session.id)
+        ?.some((listed) => listed.id === talk.id);
+      if (!listedThere) {
         reject(
           "programme",
           `Talk "${talk.id}" is listed in Session "${claimedSession.id}"'s "talks", but its legacy "session" field points to Session "${talk.data.session.id}". Remove the legacy "session" field or resolve the conflict.`,
@@ -452,8 +461,10 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
   }
 
   const all = program.flatMap((group) => group.sessions);
-  const standalone = all.flatMap((session) =>
-    session.talks.filter((talk) => talk.standalone),
+  // One per talk entry: a talk listed in two sessions is still one URL, not
+  // two entries fighting over it.
+  const standalone = firstOfEachTalk(
+    all.flatMap((session) => session.talks.filter((talk) => talk.standalone)),
   );
 
   const keptSessions = keepUniqueSlugs("sessions", all);
@@ -468,7 +479,21 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     return program;
   }
 
-  return withoutDuplicates(program, new Set(keptSessions), new Set(keptTalks));
+  return withoutDuplicates(
+    program,
+    new Set(keptSessions),
+    new Set(keptTalks.map((talk) => talk.entry)),
+  );
+}
+
+/** The first appearance of each talk entry, in programme order. */
+function firstOfEachTalk<T extends { entry: Talk | Session }>(items: T[]): T[] {
+  const seen = new Set<Talk | Session>();
+  return items.filter((item) => {
+    if (seen.has(item.entry)) return false;
+    seen.add(item.entry);
+    return true;
+  });
 }
 
 /**
@@ -481,7 +506,7 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
 function withoutDuplicates(
   program: ProgramTrack[],
   sessions: Set<ProgramSession>,
-  talks: Set<ProgramTalk>,
+  talks: Set<Talk | Session>,
 ): ProgramTrack[] {
   return program
     .map((group) => ({
@@ -491,7 +516,7 @@ function withoutDuplicates(
         .map((session) => ({
           ...session,
           talks: session.talks.filter(
-            (talk) => !talk.standalone || talks.has(talk),
+            (talk) => !talk.standalone || talks.has(talk.entry),
           ),
         }))
         .filter((session) => session.talks.length > 0),
@@ -509,16 +534,22 @@ export async function getProgramSessions(
 /**
  * The talks that are entries of their own — the ones with a page. A city that
  * does not use talks returns nothing here, and so publishes no `/talks/` route.
+ *
+ * A talk listed in several sessions gets one page, under the first of them.
  */
 export async function getStandaloneTalks(
   tenant: string,
 ): Promise<Appearance[]> {
   const sessions = await getProgramSessions(tenant);
-  return sessions.flatMap((session) =>
+  const appearances = sessions.flatMap((session) =>
     session.talks
       .filter((talk) => talk.standalone)
-      .map((talk) => ({ session, talk })),
+      .map((talk) => ({ session, talk, entry: talk.entry })),
   );
+  return firstOfEachTalk(appearances).map(({ session, talk }) => ({
+    session,
+    talk,
+  }));
 }
 
 /**

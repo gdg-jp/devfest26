@@ -137,3 +137,21 @@ export function reject(where: string, message: string): void {
   if (!previewMode) throw new Error(message);
   report(where, message);
 }
+
+/** What `warn` has already printed, so a build says each thing once. */
+const warned = new Set<string>();
+
+/**
+ * Something worth knowing that is not worth stopping for.
+ *
+ * Unlike `reject`, nothing is dropped and nothing throws: the caller renders
+ * the entry as written. A build prints it once — every page runs the same
+ * programme through the same checks, so without the set it would print once
+ * per page — and the preview records it for `/preview/status` as usual.
+ */
+export function warn(where: string, message: string): void {
+  report(where, message);
+  if (warned.has(message)) return;
+  warned.add(message);
+  console.warn(`[${where}] ${message}`);
+}
