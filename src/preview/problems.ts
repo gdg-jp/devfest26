@@ -132,8 +132,45 @@ function add(into: Recording, problem: Problem): void {
  *
  * `previewMode` is substituted at build time, so a published build carries the
  * throw and none of this.
+ *
+ * `IGNORE_CONTENT_WARNINGS` is the one way out of the throw for a published
+ * build: the「すべての警告を無視して公開」checkbox on a manual run of
+ * `.github/workflows/build.yml`, for the day a half-written session must not
+ * hold the rest of the city back. The entry is dropped the way the preview
+ * drops it, and the reason goes to the log instead of nowhere.
  */
 export function reject(where: string, message: string): void {
-  if (!previewMode) throw new Error(message);
-  report(where, message);
+  if (previewMode) return report(where, message);
+  if (!ignoreWarnings) throw new Error(message);
+  warnOnce(where, message);
+}
+
+const ignoreWarnings = Boolean(process.env.IGNORE_CONTENT_WARNINGS?.trim());
+
+/**
+ * Every page of a city runs the same checks, so one unfinished session would
+ * otherwise be logged once per section that lists it — the same reason
+ * `report()` collapses repeats. A module-level set is fine here and only here:
+ * a static build is one walk, with no second request to interleave with.
+ */
+const warned = new Set<string>();
+
+function warnOnce(where: string, message: string): void {
+  const key = `${where}\0${message}`;
+  if (warned.has(key)) return;
+  warned.add(key);
+
+  // On GitHub Actions, as a warning annotation, so what was left out shows on
+  // the run's summary rather than only somewhere in the middle of the log. The
+  // Studio reads only failure annotations, so these do not turn「サイトに反映」
+  // red.
+  if (process.env.GITHUB_ACTIONS) {
+    const escaped = message
+      .replaceAll("%", "%25")
+      .replaceAll("\r", "%0D")
+      .replaceAll("\n", "%0A");
+    console.warn(`::warning title=${where} (ignored)::${escaped}`);
+  } else {
+    console.warn(`[${where}] ignored: ${message}`);
+  }
 }
