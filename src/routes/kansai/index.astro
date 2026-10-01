@@ -1,16 +1,15 @@
 ---
 import CityHome from "../../layouts/CityHome.astro";
-import Countdown from "../../components/Countdown.astro";
 import Timetable from "../../components/Timetable.astro";
 import About from "../../components/About.astro";
 import Partners from "../../components/Partners.astro";
-import WhatIsDevFest from "../../components/WhatIsDevFest.astro";
 import CodeOfConduct from "../../components/CodeOfConduct.astro";
 import Register from "../../components/Register.astro";
 import Hero from "./_components/Hero.astro";
+import Speakers from "./_components/Speakers.astro";
+import Why from "./_components/Why.astro";
 import News from "./_components/News.astro";
-import FeaturedSpeakers from "./_components/FeaturedSpeakers.astro";
-import Overview from "./_components/Overview.astro";
+import Access from "./_components/Access.astro";
 import Faq from "./_components/Faq.astro";
 import PreEventBanner from "./_components/PreEventBanner.astro";
 import StickyCta from "./_components/StickyCta.astro";
@@ -23,10 +22,24 @@ import { FEATURED_SPEAKERS, copy } from "./_content";
  * Kansai's home page, laid out for one job: getting a visitor from "what is
  * this" to the register button.
  *
- *   interest   hero → news → featured speakers
- *   substance  timetable (every speaker is one tap from here) → about
- *   doubts     overview (venue and access folded in) → FAQ
+ *   claim      hero — what it is, when, what it costs, one button
+ *   news       what has moved lately, which is itself a sign the day is real
+ *   proof      every speaker on the programme, then the whole running order
+ *   substance  what the day is about, in the city's own words
+ *   reason     why it is worth a Sunday, answered once and concretely
+ *   doubts     venue and access → FAQ
  *   decision   closing register section
+ *
+ * The order is that of the decision rather than that of the organisers'
+ * announcements: the question "why would I go" is asked and answered above the
+ * timetable, because somebody who has not been given a reason never reaches it.
+ *
+ * The countdown is no longer a section — it is in the hero's date card, where
+ * urgency reaches a visitor before they have made up their mind rather than
+ * after. 開催概要 has gone the same way: date, hours, format and fee are all on
+ * the first screen now, so what was left of it is the venue and how to reach
+ * it, which is what `Access` is. "What DevFest is" is answered in `Why`'s lede
+ * rather than in a section of its own.
  *
  * Everything that is not part of that path — partners, the pre-events, what
  * DevFest is, the code of conduct — follows the FAQ, still on the page for
@@ -51,11 +64,10 @@ const featuredSessions = (await getProgramSessions(site.tenant))
   .map((session) => session.slug);
 ---
 
-<CityHome site={site}>
+<CityHome site={site} stage nav={c.nav} footerNav={c.footerNav}>
   <Hero site={site} />
-  <Countdown site={site} />
   <News />
-  <FeaturedSpeakers tenant={site.tenant} />
+  <Speakers tenant={site.tenant} />
 
   {
     /*
@@ -72,12 +84,12 @@ const featuredSessions = (await getProgramSessions(site.tenant))
   />
 
   <About tenant={site.tenant} />
-  <Overview site={site} />
+  <Why />
+  <Access site={site} />
   <Faq />
 
   <Partners site={site} />
   <PreEventBanner tenant={site.tenant} />
-  <WhatIsDevFest tenant={site.tenant} />
   <CodeOfConduct site={site} />
 
   <Register

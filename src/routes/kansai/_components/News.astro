@@ -75,9 +75,10 @@ const linkAttrs = (href: string) =>
 <style>
   /* A short strip rather than a full section: it sits between the hero and
      the speakers, and should read as a ticker, not as a stop. */
+  /* First thing under the hero, whose scalloped hem is already the boundary —
+     a rule across the top here would draw a second one a few pixels below it. */
   .news {
-    padding: clamp(28px, 4vw, 44px) 0;
-    border-top: var(--bw) solid var(--stroke);
+    padding: clamp(34px, 4.4vw, 50px) 0 clamp(28px, 4vw, 44px);
   }
 
   .list {

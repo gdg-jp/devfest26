@@ -107,6 +107,8 @@ export const en = {
       }`,
     tbdHeading: "Time TBD",
     note: "Note: the timetable is subject to change.",
+    filterAria: "Filter by track",
+    filterAll: "All tracks",
   },
 
   sessions: {

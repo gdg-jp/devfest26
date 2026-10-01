@@ -133,14 +133,91 @@ export const ACCESS: readonly Localized[] = [
 /** The page's own wording — what the shared i18n files have no place for. */
 export const COPY = {
   ja: {
+    /*
+      The top bar's own nav, in the order the page runs. Written here rather
+      than read from the city's `nav`, which is edited in Sanity and still
+      names sections this page no longer has.
+
+      What earns a place is a destination somebody would otherwise have to
+      hunt for. The speakers and the timetable are what they came to see; the
+      news is what changes; Why is the case for the day. Access and the FAQ are
+      here because they are the last two questions before registering and they
+      sit furthest down the page, which is the worst place to have to scroll
+      to. About is deliberately left out — it says the same kind of thing as
+      Why, one section away from it, and two entries for that would only make
+      the bar harder to read. The fuller list stays in the footer.
+    */
+    nav: [
+      { href: "#news", label: "お知らせ" },
+      { href: "#featured", label: "登壇者" },
+      { href: "#timetable", label: "タイムテーブル" },
+      { href: "#why", label: "Why DevFest" },
+      { href: "#access", label: "アクセス" },
+      { href: "#faq", label: "FAQ" },
+    ],
+    /*
+      The footer's list, which is the header's plus the destinations that did
+      not earn a place in a bar that also carries a register button. Same
+      reason as `nav` for not reading the city's: that one is edited in Sanity
+      and still points at `#preevent`, a section this page does not render.
+    */
+    footerNav: [
+      { href: "#news", label: "お知らせ" },
+      { href: "#featured", label: "登壇者" },
+      { href: "#timetable", label: "タイムテーブル" },
+      { href: "#about", label: "イベントについて" },
+      { href: "#why", label: "Why DevFest" },
+      { href: "#access", label: "会場・アクセス" },
+      { href: "#faq", label: "よくある質問" },
+      { href: "#partners", label: "共催・協力団体" },
+      { href: "#coc", label: "行動規範" },
+      { href: "#register", label: "参加登録" },
+    ],
     heroRegister: "無料で参加登録",
-    heroRegisterNote: "オンライン視聴も可",
+    heroRegisterNote: "現地参加は先着順。定員に達しだい締め切ります。",
     heroTimetable: "タイムテーブルを見る",
+    heroLede:
+      "AI、ロボティクス、ものづくり、ビジネス。異なる専門の第一線が、大阪に一日だけ集まります。",
+    heroDateLabel: "開催日",
+    statSessions: "セッション",
+    statTracks: "トラック",
+    statSpeakers: "登壇者",
+    statFee: "参加費",
+    speakersHeading: "登壇者",
+    speakersLede: (count: number) =>
+      `研究・AI・ものづくりの第一線から ${count} 名。分野を越えた登壇者が、同じ一日に集まります。`,
+    carouselPrev: "前の登壇者へ",
+    carouselNext: "次の登壇者へ",
+    accessEyebrow: "Access",
+    accessHeading: "会場・アクセス",
+    accessHosted: "主催",
+    accessCoHosted: "共催・協力",
+    whyEyebrow: "Why DevFest",
+    whyHeading: "この一日で、何が手に入るか。",
+    whyLede:
+      "DevFest は Google Developer Groups が世界中で開く、その年いちばん大きな技術カンファレンスです。関西では、こう組みました。",
+    why: [
+      {
+        no: "01",
+        tone: "blue",
+        h: "分野の外側にいる人の話が、聞ける。",
+        p: "「Attention Is All You Need」共著者の Llion Jones 氏、アンドロイド研究の第一人者・石黒浩氏、認知発達ロボティクスの浅田稔氏。自分では選ばなかったはずの話に、たまたま出会える設計にしています。",
+      },
+      {
+        no: "02",
+        tone: "green",
+        h: "一日で、必要なところだけ拾える。",
+        p: "4 トラックが並行して走ります。基調講演からハンズオンまで、興味のある回だけを選んでも一日ぶんの密度があります。タイムテーブルは公開済みです。",
+      },
+      {
+        no: "03",
+        tone: "yellow",
+        h: "無料で、来られなくても参加できる。",
+        p: "現地参加もオンライン視聴も参加費はかかりません。学生も、エンジニアでない方も歓迎です。18:30 からは登壇者と直接話せる懇親会もあります。",
+      },
+    ],
     newsHeading: "お知らせ",
     newsPast: "過去のお知らせ",
-    featuredHeading: "注目スピーカー",
-    featuredLede:
-      "研究・アート・AI の第一線から。分野を越えた登壇者が、同じ一日に集まります。",
     featuredCta: "全セッションを見る",
     featuredBadge: "注目",
     tabsAria: "トラックを選ぶ",
@@ -156,14 +233,71 @@ export const COPY = {
     stickyNote: (date: string) => `${date} 開催`,
   },
   en: {
+    nav: [
+      { href: "#news", label: "News" },
+      { href: "#featured", label: "Speakers" },
+      { href: "#timetable", label: "Timetable" },
+      { href: "#why", label: "Why DevFest" },
+      { href: "#access", label: "Access" },
+      { href: "#faq", label: "FAQ" },
+    ],
+    footerNav: [
+      { href: "#news", label: "News" },
+      { href: "#featured", label: "Speakers" },
+      { href: "#timetable", label: "Timetable" },
+      { href: "#about", label: "About" },
+      { href: "#why", label: "Why DevFest" },
+      { href: "#access", label: "Venue & access" },
+      { href: "#faq", label: "FAQ" },
+      { href: "#partners", label: "Partners" },
+      { href: "#coc", label: "Code of Conduct" },
+      { href: "#register", label: "Register" },
+    ],
     heroRegister: "Register for free",
-    heroRegisterNote: "Online viewing available",
+    heroRegisterNote: "On-site seats are first come, first served.",
     heroTimetable: "View timetable",
+    heroLede:
+      "AI, robotics, manufacturing, business — the front line of each, in Osaka for one day.",
+    heroDateLabel: "Date",
+    statSessions: "Sessions",
+    statTracks: "Tracks",
+    statSpeakers: "Speakers",
+    statFee: "Admission",
+    speakersHeading: "Speakers",
+    speakersLede: (count: number) =>
+      `${count} speakers from the front line of research, AI and making — different fields, one day.`,
+    carouselPrev: "Previous speakers",
+    carouselNext: "Next speakers",
+    accessEyebrow: "Access",
+    accessHeading: "Venue & access",
+    accessHosted: "Host",
+    accessCoHosted: "Co-hosts",
+    whyEyebrow: "Why DevFest",
+    whyHeading: "What one day here gets you.",
+    whyLede:
+      "DevFest is the biggest technology conference Google Developer Groups run each year, all over the world. Here is how Kansai put this one together.",
+    why: [
+      {
+        no: "01",
+        tone: "blue",
+        h: "Hear from people outside your field.",
+        p: "Llion Jones, co-author of “Attention Is All You Need”. Hiroshi Ishiguro, the leading figure in android research. Minoru Asada on cognitive developmental robotics. The day is built so you run into the talk you would never have picked.",
+      },
+      {
+        no: "02",
+        tone: "green",
+        h: "Take only what you need, in a day.",
+        p: "Four tracks run in parallel, from keynotes to hands-on. Pick only the sessions you care about and the day is still full. The timetable is already up.",
+      },
+      {
+        no: "03",
+        tone: "yellow",
+        h: "Free, and open to you even if you can't come.",
+        p: "Neither on-site nor online attendance costs anything. Students are welcome, and so is anyone who isn't an engineer. From 18:30 there's an after-party where you can talk to the speakers directly.",
+      },
+    ],
     newsHeading: "News",
     newsPast: "Past news",
-    featuredHeading: "Featured speakers",
-    featuredLede:
-      "From the front lines of research, art and AI — speakers from different fields, on the same day.",
     featuredCta: "View all sessions",
     featuredBadge: "Pick",
     tabsAria: "Choose a track",

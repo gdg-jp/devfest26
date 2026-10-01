@@ -118,6 +118,8 @@ export const ja = {
       }`,
     tbdHeading: "時間調整中",
     note: "※ タイムテーブルは変更となる場合があります。",
+    filterAria: "トラックで絞り込む",
+    filterAll: "すべて",
   },
 
   sessions: {

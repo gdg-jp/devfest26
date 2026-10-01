@@ -12,7 +12,7 @@ const lang = currentLanguage();
 const c = copy(lang);
 ---
 
-<section class="sec tint faq" id="faq">
+<section class="sec faq" id="faq">
   <div class="wrap">
     <p class="eyebrow" data-reveal="up">FAQ</p>
     <h2 class="sec-h" data-reveal="up">{c.faqHeading}</h2>
@@ -35,19 +35,29 @@ const c = copy(lang);
     border-top: var(--bw) solid var(--stroke);
   }
 
+  /* Two columns rather than one 820px-wide one: six questions in a single
+     narrow stack left half the section empty and read as unfinished. Each
+     item sizes to its own content, so opening one grows only its own row. */
   .list {
     display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
     gap: 10px;
-    max-width: 820px;
     transition:
       opacity 0.5s var(--ease-out),
       transform 0.5s var(--ease-out);
   }
 
+  @media (width <= 820px) {
+    .list {
+      grid-template-columns: 1fr;
+    }
+  }
+
   details {
     border: var(--bw) solid var(--stroke);
     border-radius: var(--r-md);
-    background: var(--ground);
+    background: var(--surface);
   }
 
   details[open] {

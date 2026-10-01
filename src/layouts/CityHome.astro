@@ -5,6 +5,7 @@ import Preloader from "../components/Preloader.astro";
 import TopBar from "../components/TopBar.astro";
 import Footer from "../components/Footer.astro";
 import type { ResolvedTenant } from "../tenants";
+import type { NavItem } from "../tenants/types";
 
 /**
  * The frame of a city's home page: the intro curtain, the top bar and the
@@ -18,18 +19,27 @@ import type { ResolvedTenant } from "../tenants";
  */
 interface Props {
   site: ResolvedTenant;
+  /**
+   * This page's first section is set on the dark stage and runs up behind the
+   * top bar, so the bar starts inverted. See `stageBar` in TopBar.astro.
+   */
+  stage?: boolean;
+  /** This page's own section links, when they are not the city's. */
+  nav?: readonly NavItem[];
+  /** The same for the footer's longer list. */
+  footerNav?: readonly NavItem[];
 }
 
-const { site } = Astro.props;
+const { site, stage = false, nav, footerNav } = Astro.props;
 ---
 
 <Base site={site}>
   <Sprite />
-  <Preloader />
+  <Preloader site={site} />
 
-  <TopBar site={site} />
+  <TopBar site={site} stageBar={stage} nav={nav} />
   <main>
     <slot />
   </main>
-  <Footer site={site} />
+  <Footer site={site} nav={footerNav} />
 </Base>

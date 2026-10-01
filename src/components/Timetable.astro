@@ -1,19 +1,30 @@
 ---
 /**
- * The timetable as a grid, built from the sessions rather than written out.
+ * The day as a list of time slots, built from the sessions rather than written
+ * out.
  *
- * Nothing here decides anything: `src/data/timetable.ts` has already resolved
- * the ends, sorted the boundaries and placed every block. This turns that into
- * columns and rows, and stops if there is not yet enough to draw.
+ * It used to be a proportional grid: four columns, row heights in minutes, the
+ * whole thing scrolled sideways on anything narrower than a laptop with the
+ * clock column pinned. That shape cost more than it bought. A row whose height
+ * is its duration spends a screenful of empty space on the lunch break; the
+ * sideways scroll put three of the four tracks off-screen on a phone, which is
+ * where most of the traffic is; and the pinned header had to live in a second
+ * scroller synchronised to the first in JavaScript, which meant the column
+ * labels visibly lagged behind their columns for the length of every swipe.
  *
- * Row heights are proportional but clamped. A row is the gap between two
- * boundaries, so a two-hour lunch really is twelve times a ten-minute break —
- * which, drawn honestly, is a screenful of empty beige. The clamp keeps the
- * shape of the day legible without letting one row own the page.
+ * So: one slot per start time, cards inside it. Nothing scrolls sideways, which
+ * is what removes that last bug rather than patching it. On a wide screen the
+ * cards still sit in their track's column, so the shape of the day is legible
+ * at a glance; below 900px they stack, which is the only honest answer to four
+ * parallel tracks on a phone.
+ *
+ * The track filter is what the grid's columns were really for — following one
+ * track down the day — offered directly instead of asked of the eye.
  */
 import SpeakerAvatar from "./SpeakerAvatar.astro";
-import { getTimetable } from "../data/timetable";
-import { getTracks } from "../data/tracks";
+import { getTimetable, type TimetableCell } from "../data/timetable";
+import { getTracks, type Track } from "../data/tracks";
+import { speakerHref } from "../data/program";
 import type { ResolvedTenant } from "../tenants";
 import { messages } from "../i18n";
 import { currentLanguage } from "../i18n/language";
@@ -21,8 +32,8 @@ import { currentLanguage } from "../i18n/language";
 interface Props {
   site: ResolvedTenant;
   /**
-   * Session slugs to badge as highlights on the grid. Optional, and a city
-   * that names none gets the grid exactly as before.
+   * Session slugs to badge as highlights. Optional, and a city that names none
+   * gets the list exactly as before.
    */
   featured?: readonly string[];
   /** The badge's text, in the city's own words. */
@@ -34,70 +45,49 @@ const t = messages(currentLanguage());
 const isFeatured = (key: string) =>
   featured.some((slug) => key === `session:${slug}`);
 
-/*
-  A city may hand over a layout of its own for phones in the `mobile` slot —
-  the day as one track at a time, say, instead of four columns scrolled
-  sideways. When it does, the grid gives way to it below the breakpoint; the
-  section, its heading and its anchor stay the same either way.
-*/
-const hasMobile = Astro.slots.has("mobile");
-
 // "3 トラック" is a fact about this city's configuration, not a constant.
 const trackCount = (await getTracks(site.tenant)).filter(
-  (t) => !t.data.pending,
+  (track) => !track.data.pending,
 ).length;
 
 const timetable = await getTimetable(site);
-
-const minutes = (time: string) =>
-  Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
-
-const rows =
-  timetable?.boundaries.slice(0, -1).map((time, index) => {
-    const next = timetable.boundaries[index + 1];
-    const span = next ? minutes(next) - minutes(time) : 0;
-    return Math.min(88, Math.max(34, span * 1.15));
-  }) ?? [];
-
-// Row 1 is the one the track headings used to occupy. They are their own
-// element now — sticky to the page rather than to the grid — but the blocks
-// are placed against boundary indices in `src/data/timetable.ts`, and counting
-// from 2 is that file's business. The row is kept, at no height.
-const template = `0 ${rows.map((h) => `minmax(${h}px, auto)`).join(" ")}`;
-const columns = timetable
-  ? `var(--tt-axis) repeat(${timetable.tracks.length}, minmax(0, 1fr))`
-  : "";
-// Wide enough that the pile is what a block costs. 208px is the floor the
-// clock alone asks for — 82px of tabular time, the 8px between, the 78px pile,
-// and the padding, border and margins a block is drawn with. The 8px on top of
-// that is for the names: 96px is where they stop wrapping into lines the pile
-// had not already paid for, and it is where the block heights on a phone stop
-// moving. 224px buys nothing further.
-const minWidth = timetable
-  ? `calc(var(--tt-axis) + ${timetable.tracks.length} * 216px)`
-  : "";
+const tracks = timetable?.tracks ?? [];
 
 /**
- * The portraits a block draws: how wide, how far they lap over one another,
- * and how many before the rest become a count.
- *
- * The names are written beside them already, so the faces say the same thing a
- * second way — worth the corner of a block rather than a line of it. They fill
- * that corner two abreast, which up to six of them keeps the pile as tall as
- * the names and the clock standing beside it, or taller: what a block costs is
- * the pile, and the names all but come free. Six is three rows of it.
- *
- * Lapping the circles over one another takes 10px off the pile in each
- * direction per row after the first — a little under a quarter of a circle,
- * enough to read as a group rather than a grid.
+ * The tracks a cell covers. Cells carry grid lines rather than track ids —
+ * column 1 was the clock — so this reads them back off the column list the
+ * lines were cut from.
  */
-const FACE = 44;
-const FACES = 6;
-const LAP = 10;
+const tracksOf = (cell: TimetableCell): Track[] =>
+  tracks.slice(cell.columnStart - 2, cell.columnEnd - 2);
 
-// The line the last track's column ends on. A block against it, or against the
-// clock column, has the frame on one side rather than a neighbour.
-const lastLine = (timetable?.tracks.length ?? 0) + 2;
+interface Slot {
+  start: string;
+  cells: TimetableCell[];
+}
+
+/*
+  One slot per distinct start time, in order, each holding whatever begins then
+  — left to right in track order, so a slot reads across the day the way the
+  columns used to read down it.
+*/
+const slots: Slot[] = [...(timetable?.cells ?? [])]
+  .sort((a, b) =>
+    a.start === b.start
+      ? a.columnStart - b.columnStart
+      : a.start < b.start
+        ? -1
+        : 1,
+  )
+  .reduce<Slot[]>((found, cell) => {
+    const last = found.at(-1);
+    if (last?.start === cell.start) last.cells.push(cell);
+    else found.push({ start: cell.start, cells: [cell] });
+    return found;
+  }, []);
+
+/** The portrait beside a speaker's name on a card. */
+const FACE = 26;
 ---
 
 <section class="sec" id="timetable">
@@ -110,123 +100,104 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
     {
       timetable && (
-        <div
-          class:list={["tt-frame", { "has-mobile": hasMobile }]}
-          data-reveal="up"
-        >
-          <div class="tt-scroll head" data-tt-head>
+        <div class="tt" data-tt data-reveal="up">
+          {tracks.length > 1 && (
             <div
-              class="tt-hd"
-              style={`grid-template-columns:${columns};min-width:${minWidth}`}
+              class="filter"
+              role="group"
+              aria-label={t.timetable.filterAria}
             >
-              <div class="tt-corner" aria-hidden="true" />
-
-              {timetable.tracks.map((track, index) => (
-                <div
-                  class:list={["tt-head", { ink: track.data.darkInk }]}
-                  style={`--trk:${track.data.color};grid-column:${index + 2}`}
+              <button type="button" data-tt-filter="" aria-pressed="true">
+                {t.timetable.filterAll}
+              </button>
+              {tracks.map((track) => (
+                <button
+                  type="button"
+                  class="trk-btn"
+                  data-tt-filter={track.id}
+                  aria-pressed="false"
+                  style={`--trk:${track.data.color}`}
                 >
-                  <b>{track.data.label}</b>
-                  <span>{track.data.sub}</span>
-                </div>
+                  {track.data.label}
+                </button>
               ))}
             </div>
-          </div>
+          )}
 
-          <div class="tt-scroll body" data-tt-body>
-            <div
-              class="tt"
-              style={`grid-template-columns:${columns};grid-template-rows:${template};min-width:${minWidth}`}
-            >
-              {rows.map((_, index) => (
-                <div class="tt-rule" style={`grid-row:${index + 2}`} />
-              ))}
-              <div class="tt-rule last" style={`grid-row:${rows.length + 1}`} />
-
-              {timetable.boundaries.slice(0, -1).map((time, index) => (
-                <div
-                  class:list={["tt-at", { first: index === 0 }]}
-                  style={`grid-row:${index + 2}`}
-                >
-                  <span>{time}</span>
+          <ol class="slots" style={`--tracks:${tracks.length}`}>
+            {slots.map((slot) => (
+              <li class="slot" data-tt-slot>
+                <div class="rail">
+                  <time class="at">{slot.start}</time>
                 </div>
-              ))}
-              <div class="tt-at last" style={`grid-row:${rows.length + 1}`}>
-                <span>{timetable.boundaries.at(-1)}</span>
-              </div>
 
-              {timetable.cells.map((cell) => {
-                const Tag = cell.href ? "a" : "div";
-                // A seventh speaker turns the sixth portrait into the number
-                // of everyone not drawn, rather than the pile going on past
-                // the corner there is for it.
-                const faces = cell.speakers.slice(
-                  0,
-                  cell.speakers.length > FACES ? FACES - 1 : FACES,
-                );
-                const rest = cell.speakers.length - faces.length;
-                // An odd pile stands its lone row on top, so that the row the
-                // clock ends up beside is a full one.
-                const odd = (faces.length + (rest > 0 ? 1 : 0)) % 2 === 1;
-                return (
-                  <Tag
-                    class:list={[
-                      "tt-cell",
-                      cell.kind,
-                      {
-                        "edge-start": cell.columnStart === 2,
-                        "edge-end": cell.columnEnd === lastLine,
-                      },
-                    ]}
-                    href={cell.href}
-                    style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
-                  >
-                    {isFeatured(cell.key) && (
-                      <span class="pick">{featuredLabel}</span>
-                    )}
-                    <b>{cell.label}</b>
-                    {cell.note && <span class="note">{cell.note}</span>}
-                    <div class="foot">
-                      {cell.speakers.length > 0 && (
-                        <span class="who">
-                          {cell.speakers.map((speaker) => (
-                            <span>{speaker.data.name}</span>
-                          ))}
-                        </span>
-                      )}
-                      <span class="span">
-                        {cell.start} – {cell.end}
-                      </span>
-                      {faces.length > 0 && (
-                        <span
-                          class:list={["faces", { odd }]}
-                          style={`--lap:${LAP}px`}
-                          aria-hidden="true"
-                        >
-                          {faces.map((speaker) => (
-                            <SpeakerAvatar speaker={speaker} size={FACE} />
-                          ))}
-                          {rest > 0 && (
-                            <span class="av more" style={`--av:${FACE}px`}>
-                              +{rest}
+                <ul class="cards">
+                  {slot.cells.map((cell) => {
+                    const on = tracksOf(cell);
+
+                    return (
+                      <li
+                        class:list={["card", cell.kind]}
+                        data-track={on.map((track) => track.id).join(" ")}
+                        style={`--cs:${cell.columnStart - 1};--ce:${cell.columnEnd - 1}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
+                      >
+                        <div class:list={["face", { linkbox: cell.href }]}>
+                          <p class="meta">
+                            {cell.kind === "session" &&
+                              on.map((track) => (
+                                <span
+                                  class:list={[
+                                    "trk",
+                                    { ink: track.data.darkInk },
+                                  ]}
+                                  style={`--trk:${track.data.color}`}
+                                >
+                                  {track.data.label}
+                                </span>
+                              ))}
+                            <span class="span">
+                              {cell.start} – {cell.end}
                             </span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </Tag>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )
-    }
+                            {isFeatured(cell.key) && (
+                              <span class="pick">{featuredLabel}</span>
+                            )}
+                          </p>
 
-    {
-      timetable && hasMobile && (
-        <div class="tt-mobile">
-          <slot name="mobile" />
+                          <b>
+                            {cell.href ? (
+                              <a class="stretch" href={cell.href}>
+                                {cell.label}
+                              </a>
+                            ) : (
+                              cell.label
+                            )}
+                          </b>
+
+                          {cell.note && <p class="note-in">{cell.note}</p>}
+
+                          {cell.speakers.length > 0 && (
+                            <ul class="who">
+                              {cell.speakers.map((speaker) => (
+                                <li>
+                                  <a href={speakerHref(speaker)}>
+                                    <SpeakerAvatar
+                                      speaker={speaker}
+                                      size={FACE}
+                                    />
+                                    <span>{speaker.data.name}</span>
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            ))}
+          </ol>
         </div>
       )
     }
@@ -256,337 +227,247 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 </section>
 
 <style>
-  /* Four tracks do not fit on a phone and nothing sensible happens if they are
-     made to, so the grid scrolls sideways, and the clock column is the one
-     thing that has to stay put while the tracks pass under the finger.
-
-     The frame is a third element around the two scrollers rather than one of
-     them, because it is what the head row is sticky *within*. A sticky box may
-     not leave its containing block — and it is its *margin* box that may not,
-     so the margin under the head is how far short of the frame's bottom it
-     lets go, and `--tt-release` is that distance written the way it is meant
-     rather than the way it is measured. Nothing observes the frame and nothing
-     decides when: the box already stops where it has been told to.
-
-     `clip`, not `hidden`: `hidden` would make the frame a scroll container,
-     and a sticky child is sticky to the nearest one of those. That is the trap
-     the head row was in when it lived inside the grid — writing `overflow-x`
-     alone resolves `overflow-y` to `auto` as well, so the grid was its own
-     scrollport, one that never scrolls, and `top` named nothing there. */
-  .tt-frame {
-    --tt-axis: 62px;
-    /* The blocks carry the black outline the rest of the site is drawn with,
-       so the row lines stop being a border and become a guide: what tells the
-       eye where 14:25 is in a column where nothing is on. Two line systems of
-       the same weight would only compete. */
-    --tt-rule: rgb(30 30 30 / 9%);
-    /* The day is held off the head row and off the frame, because the first
-       and last times are written across those edges rather than inside them:
-       with the grid flush to both, the digits are pressed against a black
-       line at the top and against the frame at the bottom. */
-    --tt-brow: 14px;
-    --tt-tail: 16px;
-
-    /* Where the head lets go, as a line across the window measured from its
-       top: the frame's bottom edge crossing this line is what unpins it.
-       `100dvh` is the foot of the window and lets the head go the moment the
-       end of the day comes into view, which is sooner than it reads: a screen
-       of the day is still up there, unlabelled. Seven tenths down keeps the
-       head for that screen and gives it up once the end is properly in hand.
-       `calc(var(--topbar-h) + var(--tt-headh))` would be the whole way, the
-       head let go of last. */
-    --tt-release: 70dvh;
-    /* The head row's own height plus the frame's border: the one term of that
-       line CSS has no way to read, since the sub-label takes a second row once
-       the columns are narrow. Over-estimated at the tallest the row gets, and
-       allowed to be approximate — the term is a distance along the scroll, so
-       a few pixels out moves the moment of release by a few pixels and touches
-       nothing else. */
-    --tt-headh: 72px;
-    /* Handed to the head as a bottom margin and taken straight back off the
-       body, which leaves nothing between them whether the two margins collapse
-       or merely add. Clamped at zero for the window taller than the day, where
-       the end is in view from the start and the head never pins at all. */
-    --tt-slack: max(
-      0px,
-      calc(var(--tt-release) - var(--topbar-h) - var(--tt-headh))
-    );
-
-    overflow: clip;
-    border: var(--bw) solid var(--stroke);
-    border-radius: var(--r-md);
-    background: var(--surface);
+  .tt {
     transition:
       opacity 0.5s var(--ease-out),
       transform 0.5s var(--ease-out);
   }
 
-  .tt-scroll {
-    overflow-x: auto;
-  }
+  /* ---- the track filter ------------------------------------------------- */
 
-  /* A city's own phone layout, from the `mobile` slot, takes the grid's place
-     below the width where four columns stop fitting side by side. */
-  .tt-mobile {
-    display: none;
-  }
-
-  @media (width <= 720px) {
-    .tt-frame.has-mobile {
-      display: none;
-    }
-
-    .tt-mobile {
-      display: block;
-    }
-  }
-
-  /* The head row is a scroller of its own rather than a copy laid over the
-     grid. Both are given `var(--tt-axis) repeat(n, minmax(0, 1fr))` across the
-     same width, and that is the same set of widths in both — a template that
-     never consults its content cannot drift from another of itself, so there
-     is nothing to measure and nothing to keep in step but the horizontal
-     offset, which is the whole of `src/scripts/timetable.ts`. It also means
-     the clock column's corner has a scrollport of its own to be `left: 0`
-     against, as it is in the body.
-
-     `--topbar-h` is published by the nav script, the only thing that knows how
-     tall the bar currently is: it condenses on scroll and its lockup narrows
-     on a phone. The token holds the condensed height, which is the state a bar
-     this far down the page is always in, so this lands on it either way. */
-  .tt-scroll.head {
-    position: sticky;
-    top: var(--topbar-h);
-    margin-bottom: var(--tt-slack);
-    z-index: 2;
-    /* A second scrollbar for an axis that already has one below. */
-    scrollbar-width: none;
-  }
-
-  .tt-scroll.head::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Left without a stacking context on purpose: the clock column's z-index is
-     meant to reach past this scroller and over the pinned head row, so that
-     the hour a block starts at is still written beside the head instead of
-     disappearing under it. The blocks stay below either way — nothing in the
-     grid but the clock column is positioned. */
-  .tt-scroll.body {
-    margin-top: calc(-1 * var(--tt-slack));
-  }
-
-  .tt-hd,
-  .tt {
-    display: grid;
-    gap: 0;
-  }
-
-  .tt {
-    padding: var(--tt-brow) 0 var(--tt-tail);
-  }
-
-  .tt-head {
-    grid-row: 1;
+  .filter {
     display: flex;
-    flex-direction: column;
-    gap: 1px;
-    padding: 10px 12px;
-    background: var(--trk);
-    color: #fff;
-    border-left: 2px solid var(--stroke);
-    border-bottom: var(--bw) solid var(--stroke);
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
   }
 
-  .tt-head.ink {
+  .filter button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: 999px;
+    padding: 7px 17px;
+    background: var(--surface);
     color: var(--ink);
-  }
-
-  /* The corner is the first div in the grid, so `.tt-head:first-of-type` names
-     nothing and the first head kept a left border of its own — set against the
-     clock column's right border, the two read as one 4px line. The sibling
-     selector says what was meant: the divider is the column's, once. */
-  .tt-corner + .tt-head {
-    border-left: 0;
-  }
-
-  .tt-head b {
     font-family: var(--f-display);
-    font-size: 14.5px;
-    line-height: 1.25;
+    font-weight: 700;
+    font-size: 13.5px;
+    line-height: 1.5;
+    cursor: pointer;
+    transition:
+      background-color 0.16s var(--ease-out),
+      box-shadow 0.14s var(--ease-out),
+      transform 0.14s var(--ease-out);
   }
 
-  .tt-head span {
-    font-size: 11px;
-    opacity: 0.85;
-    line-height: 1.3;
+  /* The dot is the track's colour, which is the only thing carrying the colour
+     now that the button itself has to stay readable in both states. */
+  .filter .trk-btn::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid var(--stroke);
+    background: var(--trk);
+    flex: none;
   }
 
-  /* A label names the boundary it is written against, so it sits on the line
-     rather than under it: the span is pulled up by half its own height, which
-     puts the middle of the digits on the rule the row starts at. The element
-     itself still fills the row, because its background is what keeps the rules
-     out of the clock column. */
-  .tt-at {
-    position: sticky;
-    left: 0;
-    z-index: 4;
-    grid-column: 1;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+  .filter button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 0 var(--stroke);
+  }
+
+  .filter button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  /* ---- the slots -------------------------------------------------------- */
+
+  .slots {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 4px;
+  }
+
+  .slot {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  /* A hairline down the left of the day, so the slots read as one column of
+     time rather than as a stack of unrelated blocks. It is drawn on the rail
+     rather than on the slot so it stops at the last time written, not at the
+     bottom of the last card. */
+  .rail {
+    position: relative;
+    padding: 10px 0 18px;
+    text-align: right;
+  }
+
+  .rail::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 0;
+    right: 4px;
+    width: 1.5px;
+    background: var(--rule);
+  }
+
+  .slot:last-child .rail::before {
+    display: none;
+  }
+
+  .at {
+    position: relative;
+    display: inline-block;
+    padding-right: 14px;
     font-family: var(--f-mono);
-    font-size: 11.5px;
-    line-height: 1;
+    font-weight: 700;
+    font-size: 14px;
     font-variant-numeric: tabular-nums;
-    color: var(--muted);
+    letter-spacing: -0.01em;
+  }
+
+  .at::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 9px;
+    height: 9px;
+    margin-top: -4.5px;
+    border-radius: 50%;
+    border: 2px solid var(--stroke);
     background: var(--surface);
-    border-right: 2px solid var(--stroke);
   }
 
-  .tt-at > span {
-    transform: translateY(-50%);
+  /* ---- the cards -------------------------------------------------------- */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(var(--tracks), minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
   }
 
-  /* The brow is the grid's padding, so the column started below it and the
-     rule down the side of the day broke for 14px right where the opening time
-     is written. Stretched up over it and padded back off, the same way the
-     closing time is stretched over the tail — the label stays on its boundary
-     and the column runs unbroken into the head row. */
-  .tt-at.first {
-    margin-top: calc(-1 * var(--tt-brow));
-    padding-top: var(--tt-brow);
+  .card {
+    grid-column: var(--cs) / var(--ce);
+    display: flex;
   }
 
-  /* The closing time is the bottom edge of the last row, not the top of one —
-     so it is a second label in a row that already has one, and it is drawn
-     after it. No background here, or it would be an opaque sheet over its own
-     neighbour: the row's own label supplies the one that hides the rules and
-     masks the cells sliding under the clock column. */
-  .tt-at.last {
-    align-items: flex-end;
-    background: none;
-    /* Stretched over the tail and padded back off it: the label still sits on
-       the last boundary, while the column's rule carries on to the frame
-       instead of stopping short of it. */
-    margin-bottom: calc(-1 * var(--tt-tail));
-    padding-bottom: var(--tt-tail);
+  /* Filtered to one track, the columns have nothing to hold: the cards that are
+     left would stand in a single narrow stripe with three empty ones beside
+     them. The list collapses to full width instead. */
+  .tt:global(.is-filtered) .cards {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .tt-at.last > span {
-    transform: translateY(50%);
+  .tt:global(.is-filtered) .card {
+    grid-column: auto;
   }
 
-  /* Nothing is written in the clock column beside the track headers, and
-     without something opaque there the first header slides into view under it.
-     `aria-hidden`, because it says nothing — which is why the line under the
-     head row stops short of this column rather than crossing it: there is no
-     heading here for it to underline, and the first time, sitting half above
-     its own row, would be struck through by it. */
-  .tt-corner {
-    position: sticky;
-    left: 0;
-    z-index: 3;
-    grid-row: 1;
-    grid-column: 1;
-    background: var(--surface);
-    border-right: 2px solid var(--stroke);
+  .card:global(.is-hidden),
+  .slot:global(.is-hidden) {
+    display: none;
   }
 
-  .tt-rule {
-    grid-column: 1 / -1;
-    border-top: 1.5px solid var(--tt-rule);
-    pointer-events: none;
-  }
-
-  /* A rule is the top of a row, so the day's closing time had none: there is
-     no row after it to draw one. The last is written the other way up. */
-  .tt-rule.last {
-    border-top: 0;
-    border-bottom: 1.5px solid var(--tt-rule);
-  }
-
-  /* A track is named once in strong colour at the top of its column, and the
-     pastel of that same colour carries it down the day — the pairing the
-     timetable image uses. It means a block is read along its own colour rather
-     than by counting columns back to a header a screen away.
-
-     Fixtures take no colour at all. They are the frame of the day rather than
-     the programme, and a break is usually a break on every track at once, so a
-     track colour would say something untrue about one. Grey is the whole
-     vocabulary they need, and it is the one thing on the grid that is neither
-     white nor a pastel.
-
-     The outline is the brand's, and the same 2px the tags and the avatars are
-     drawn with. It is what makes a block a block on this site rather than a
-     patch of colour, and it lands on the programme only: an outlined break
-     would claim to be one of the things the day is made of, and the figure and
-     the ground would read alike. */
-  .tt-cell {
+  .card .face {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    margin: 3px 4px;
-    padding: 7px 9px;
-    border-radius: var(--r-sm);
-    border: 2px solid var(--stroke);
+    gap: 7px;
+    flex: 1;
+    padding: 13px 15px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
     background: var(--pa, var(--surface));
     color: inherit;
     text-decoration: none;
-    overflow: hidden;
   }
 
-  /* Every session block is a link and nothing said so. The lift is the one the
-     buttons use, kept for the hover rather than worn all day: thirty of these
-     shadows standing at once is a busier grid than the day actually is. */
-  /* The gutter between two blocks is two margins wide. Against the frame and
-     against the clock column there is only ever one, so the outermost blocks
-     sat at half the distance of every other pair. They are given the half back
-     rather than the whole grid being inset, which would take the track colours
-     off the edges they are meant to fill. */
-  .tt-cell.edge-start {
-    margin-left: 8px;
-  }
-
-  .tt-cell.edge-end {
-    margin-right: 8px;
-  }
-
-  a.tt-cell {
+  /*
+    The card is a frame that follows the session, not a link that is one: the
+    people on it have pages of their own and an <a> cannot be nested inside
+    another. `.linkbox` in base.css is the answer the rest of the site already
+    uses — the title carries `.stretch`, which grows an invisible layer over
+    the whole card, and every other link in the box is positioned, which paints
+    it above that layer and leaves it clickable in its own right.
+  */
+  .face:global(.linkbox) {
     transition:
       transform 0.14s ease,
       box-shadow 0.14s ease;
   }
 
-  a.tt-cell:hover {
+  .face:global(.linkbox):hover {
     transform: translateY(-2px);
-    box-shadow: 0 3px 0 var(--stroke);
+    box-shadow: 0 4px 0 var(--stroke);
   }
 
-  a.tt-cell:hover b {
+  .face:global(.linkbox):hover b a {
     text-decoration: underline;
   }
 
-  .tt-cell.fixture {
+  .card b a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* A break is the frame of the day rather than the programme, so it takes no
+     track colour and no outline — the figure and the ground must not read
+     alike. */
+  .card.fixture .face {
     border: 0;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
     background: var(--ground);
+    color: var(--muted);
+    align-items: flex-start;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin: 0;
+  }
+
+  .trk {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1.5px solid var(--stroke);
+    padding: 1px 10px;
+    background: var(--trk);
+    color: #fff;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .trk.ink {
+    color: var(--ink);
+  }
+
+  .span {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
     color: var(--muted);
   }
 
-  .tt-cell b {
-    font-family: var(--f-display);
-    font-size: 13px;
-    line-height: 1.3;
-  }
-
   /* A highlight the city picked. The theme colour on its own, the one solid
-     fill on a grid of pastels, so it is found before it is read. */
-  .tt-cell .pick {
-    align-self: flex-start;
-    padding: 1px 8px;
+     fill on a list of pastels, so it is found before it is read. */
+  .pick {
+    padding: 1px 9px;
     border: 1.5px solid var(--stroke);
     border-radius: 999px;
     background: var(--t);
@@ -594,110 +475,100 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
     font-family: var(--f-display);
     font-size: 10.5px;
     font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .card b {
+    font-family: var(--f-display);
+    font-size: 14.5px;
+    line-height: 1.45;
+  }
+
+  .note-in {
+    margin: 0;
+    font-size: 12px;
     line-height: 1.5;
+    color: var(--muted);
   }
 
-  /* A fixture's aside, where a session has names. */
-  .tt-cell .note {
+  /* One chip per speaker rather than a pile of portraits beside a run of
+     names: the pile said who was on, but only the card as a whole was
+     clickable, so the one thing a reader wants from a face — that person's
+     page — was the one thing it would not do. */
+  .who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: auto 0 0;
+    padding: 4px 0 0;
+    list-style: none;
+  }
+
+  .who a {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .who span {
     font-size: 11.5px;
-    color: var(--muted);
-    line-height: 1.3;
+    line-height: 1.4;
   }
 
-  /* Everything under the title, laid out against the height the block already
-     has: the names at the top where they have always been, the clock on the
-     bottom line, and the portraits filling the corner between the two.
-
-     Names above, faces below would have been the obvious reading of "beside",
-     and it is the wrong one. Up to six speakers the pile is as tall as the
-     names and the clock stacked together, or taller, so giving the names
-     full-width lines of their own above it charges the block twice for one
-     height. Here they share it, and what they give up is width: 1fr, whatever
-     is left once the pile has its 78px. A name too long for that wraps into a
-     line the pile had already paid for. */
-  .tt-cell .foot {
-    flex: auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 1fr auto;
-    column-gap: 8px;
+  .who a:hover span {
+    color: var(--ink);
+    text-decoration: underline;
   }
 
-  .tt-cell .who {
-    grid-area: 1 / 1;
-    align-self: start;
-    font-size: 11.5px;
-    color: var(--muted);
-    line-height: 1.3;
+  .who :global(.av) {
+    transition: transform 0.16s var(--ease-spring);
   }
 
-  .tt-cell .who span {
-    display: block;
+  .who a:hover :global(.av) {
+    transform: scale(1.12);
   }
 
-  .tt-cell .span {
-    grid-area: 2 / 1;
-    font-family: var(--f-mono);
-    font-size: 10.5px;
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-    white-space: nowrap;
+  /* ---- phone ------------------------------------------------------------ */
+
+  /* Four parallel tracks have no honest side-by-side form on a phone, so the
+     slot's cards stack and the time moves above them. */
+  @media (width <= 900px) {
+    .slot {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 6px;
+    }
+
+    .rail {
+      padding: 14px 0 4px;
+      text-align: left;
+    }
+
+    .rail::before {
+      display: none;
+    }
+
+    .at {
+      padding: 0 0 0 16px;
+      font-size: 13px;
+    }
+
+    .at::after {
+      right: auto;
+      left: 0;
+    }
+
+    .cards {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .card {
+      grid-column: auto;
+    }
   }
 
-  .tt-cell.fixture .foot {
-    display: none;
-  }
-
-  /* Who is on, said again as faces: `aria-hidden`, because `.who` beside it
-     has already said it in the form that can be read out. It earns the space
-     by being the way somebody finds a person they already know in a grid of
-     thirty titles — a thing the names, at 11.5px, are slow at.
-
-     Two abreast in the bottom-right corner. `.av` is base.css's and belongs
-     to <SpeakerAvatar>, so a scoped rule cannot reach it and the lap is set
-     through `:global`; the ring and the initial it draws at 44px are the ones
-     base.css already wanted, which is a reason to prefer this diameter. Five
-     of the sixteen speakers announced so far have no photograph, so the
-     initial is not the rare case here. */
-  .faces {
-    grid-area: 1 / 2 / 3 / 3;
-    align-self: end;
-    display: grid;
-    grid-template-columns: auto auto;
-    justify-items: end;
-    padding: var(--lap) 0 0 var(--lap);
-  }
-
-  /* The lap is what makes the pile smaller than the circles in it. Every face
-     pulls itself up and left by `--lap`, the padding above gives back the row
-     and the column the first one is pulled out of, and the pile comes to
-     `2 × FACE - LAP` across by `rows × FACE - (rows - 1) × LAP` down. One
-     rule for every face, so the pile does not care where the odd one went.
-
-     The lap is also what a column measures, which leaves each column a lap
-     narrower than the circle standing in it. base.css keeps every image inside
-     its box with `max-width: 100%`, and that box is now the narrow one: a
-     portrait clamped to it comes out an oval, while an initial, not being an
-     image, stays round. The faces are drawn at `--av` in both directions by
-     construction, so the clamp has nothing to protect here. */
-  .faces :global(.av) {
-    margin: calc(-1 * var(--lap)) 0 0 calc(-1 * var(--lap));
-    max-width: none;
-  }
-
-  /* Five faces are a row of one above two rows of two, not the other way up:
-     the lone circle goes to the top, which leaves the bottom row full and the
-     clock a straight edge to sit against. */
-  .faces.odd :global(.av:first-child) {
-    grid-column: 2;
-  }
-
-  /* Everyone not drawn. The same circle, with a number where a face is. Drawn
-     last, so it is the one on top of the pile rather than under it. */
-  .faces .more {
-    font-size: 13px;
-    color: var(--muted);
-  }
+  /* ---- what is not placed yet ------------------------------------------- */
 
   .tbd {
     margin-top: 22px;

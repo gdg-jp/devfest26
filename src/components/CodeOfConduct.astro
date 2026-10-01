@@ -3,6 +3,19 @@ import type { ResolvedTenant } from "../tenants";
 import { messages } from "../i18n";
 import { currentLanguage } from "../i18n/language";
 
+/**
+ * The safety statement, as one band rather than two full panels.
+ *
+ * It used to run to the height of the whole "why come" section — two side-by-
+ * side panels, one of them carrying the anti-harassment policy in full. That
+ * gave reference text the same weight on the page as the argument for coming,
+ * which is the wrong trade on a page whose job is registrations.
+ *
+ * What a visitor needs here is the assurance that a policy exists and the way
+ * to read it. That is the band. The policy itself is folded away directly
+ * beneath it — still on the page, still in the markup for search, and open to
+ * anyone who wants it.
+ */
 interface Props {
   site: ResolvedTenant;
 }
@@ -11,99 +24,157 @@ const { site } = Astro.props;
 const t = messages(currentLanguage());
 ---
 
-<section class="sec" id="coc">
+<section class="sec coc" id="coc">
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Safety</p>
-    <h2 class="sec-h" data-reveal="up">{t.codeOfConduct.heading}</h2>
+    <div class="panel band" data-reveal="up">
+      <div class="say">
+        <p class="eyebrow">Safety</p>
+        <h2>{t.codeOfConduct.heading}</h2>
+        <p class="lede">{t.codeOfConduct.cocDesc}</p>
+      </div>
 
-    <div class="rules" data-stagger>
-      <div class="panel harassment" data-reveal="up">
-        <h3>{t.codeOfConduct.harassmentTitle}</h3>
-        <p>
-          {t.codeOfConduct.harassmentIntro}
-        </p>
+      <div class="acts">
+        <a
+          class="btn sm ghost"
+          href={site.links.cocJa}
+          target="_blank"
+          rel="noopener"
+        >
+          {t.codeOfConduct.cocJaLabel}
+        </a>
+        <a
+          class="btn sm ghost"
+          href={site.links.cocEn}
+          target="_blank"
+          rel="noopener"
+        >
+          {t.codeOfConduct.cocEnLabel}
+        </a>
+      </div>
+    </div>
+
+    <details class="policy" data-reveal="up">
+      <summary>{t.codeOfConduct.harassmentTitle}</summary>
+      <div class="body">
+        <p>{t.codeOfConduct.harassmentIntro}</p>
         <ul>
           {t.codeOfConduct.harassmentItems.map((item) => <li>{item}</li>)}
         </ul>
-        <p>
-          {t.codeOfConduct.harassmentFooter}
-        </p>
+        <p>{t.codeOfConduct.harassmentFooter}</p>
       </div>
-
-      <div class="panel" data-reveal="up">
-        <h3>{t.codeOfConduct.cocTitle}</h3>
-        <p>
-          {t.codeOfConduct.cocDesc}
-        </p>
-        <div class="cta-row">
-          <a
-            class="btn sm ghost"
-            href={site.links.cocJa}
-            target="_blank"
-            rel="noopener"
-          >
-            {t.codeOfConduct.cocJaLabel}
-          </a>
-          <a
-            class="btn sm ghost"
-            href={site.links.cocEn}
-            target="_blank"
-            rel="noopener"
-          >
-            {t.codeOfConduct.cocEnLabel}
-          </a>
-        </div>
-      </div>
-    </div>
+    </details>
   </div>
 </section>
 
 <style>
-  .rules {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    align-items: start;
-  }
-
-  @media (width <= 820px) {
-    .rules {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .panel {
+  .band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px 30px;
     transition:
       opacity 0.5s var(--ease-out),
       transform 0.5s var(--ease-out);
   }
 
-  .harassment {
-    border-color: var(--red);
+  .say {
+    min-width: 0;
   }
 
-  h3 {
+  /* Smaller than `.sec-h`: this is a reassurance, not one of the page's
+     arguments, and it should not announce itself like one. */
+  .band h2 {
+    font-size: clamp(20px, 2.4vw, 26px);
+    letter-spacing: -0.015em;
+  }
+
+  .lede {
+    margin: 8px 0 0;
+    max-width: 56ch;
+    font-size: 14.5px;
+    line-height: 1.85;
+    color: var(--muted);
+  }
+
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: none;
+  }
+
+  /* The policy in full, folded. Drawn as a quieter box than the band above so
+     that the band stays the thing that is read. */
+  .policy {
+    margin-top: 12px;
+    border: 1.5px solid var(--rule);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 20px;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 14.5px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    content: "+";
+    margin-left: auto;
     font-size: 19px;
+    line-height: 1;
+    color: var(--muted);
+    transition: transform 0.2s var(--ease-out);
   }
 
-  p {
-    font-size: 14.4px;
+  .policy[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  .body {
+    padding: 0 20px 18px;
+  }
+
+  .body p {
+    font-size: 14px;
     line-height: 1.9;
-    margin-top: 10px;
+    color: var(--muted);
+    margin: 0 0 10px;
   }
 
-  ul {
-    margin: 10px 0 0;
+  .body ul {
+    margin: 0 0 10px;
     padding-left: 1.15em;
-    font-size: 14.4px;
+    font-size: 14px;
     line-height: 1.9;
+    color: var(--muted);
   }
 
-  li::marker {
+  .body li::marker {
     color: var(--t);
   }
 
-  .cta-row {
-    margin-top: 16px;
+  @media (width <= 700px) {
+    .acts :global(.btn) {
+      width: 100%;
+    }
+
+    .acts {
+      width: 100%;
+    }
   }
 </style>

@@ -1,4 +1,5 @@
 import { initAnalytics } from "./analytics";
+import { initCarousels } from "./carousel";
 import { initCountdown } from "./countdown";
 import { initIntro } from "./intro";
 import { initMeetupAccordion } from "./meetup-accordion";
@@ -25,6 +26,7 @@ if (window.__dfMotionFallback) {
  * so this stays a plain list rather than a set of conditionals.
  */
 initAnalytics();
+initCarousels();
 initCountdown();
 initMeetupAccordion();
 initNav();
