@@ -1,0 +1,197 @@
+---
+import Eyebrow from "../../../components/Eyebrow.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { ACCESS, copy, localized } from "../_content";
+
+/**
+ * Where it is and how to get there.
+ *
+ * This replaces the old 開催概要 section, which was a five-row spec table of
+ * date, hours, format, fee and host beside four stat tiles. Every one of those
+ * facts is now on the first screen — in the hero's date card and the figure
+ * strip along the foot of it — so the section had become the same page said
+ * twice, a screen further down, where it read as filler rather than as detail.
+ *
+ * What was genuinely only here is the part that is left: the full address, how
+ * to reach it, the map, and who is running the day.
+ *
+ * It answers to `#overview` as well as `#access`, because the nav is edited in
+ * Sanity and still points at both.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event } = site;
+const { venue } = event;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const address = [
+  venue.postalCode && `〒${venue.postalCode}`,
+  [venue.addressRegion, venue.addressLocality, venue.streetAddress]
+    .filter(Boolean)
+    .join(""),
+]
+  .filter(Boolean)
+  .join(" ");
+
+const query = [venue.name, address].filter(Boolean).join(" ");
+const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+---
+
+<section class="sec tint access" id="access">
+  <span id="overview" class="anchor" aria-hidden="true"></span>
+
+  <div class="wrap">
+    <Eyebrow mark="dot">{c.accessEyebrow}</Eyebrow>
+    <h2 class="sec-h" data-reveal="up">{c.accessHeading}</h2>
+
+    <div class="split">
+      <div class="panel place" data-reveal="up">
+        <p class="venue">{venue.name}</p>
+        {address && <p class="addr">{address}</p>}
+
+        {
+          ACCESS.length > 0 && (
+            <ul class="ways">
+              {ACCESS.map((line) => (
+                <li>{localized(line, lang)}</li>
+              ))}
+            </ul>
+          )
+        }
+
+        <a class="btn sm ghost" href={map} target="_blank" rel="noopener">
+          {c.accessMap}
+        </a>
+      </div>
+
+      <dl class="who" data-reveal="up">
+        <div>
+          <dt>{c.accessHosted}</dt>
+          <dd>{event.host}</dd>
+        </div>
+        <div>
+          <dt>{c.accessCoHosted}</dt>
+          <dd>{event.coHosts}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Sized to nothing so it cannot disturb the layout — it is only somewhere
+     for the nav's `#overview` link to land. */
+  .anchor {
+    position: absolute;
+    width: 0;
+    height: 0;
+    scroll-margin-top: var(--topbar-h);
+  }
+
+  .access {
+    border-top: var(--bw) solid var(--stroke);
+  }
+
+  /* A card takes the ground its section does not: grey on white here, the way
+     the sections on the grey ground take white. It is what keeps a card
+     reading as a card wherever the alternation puts it. */
+  .place {
+    background: var(--ground);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(16px, 2.4vw, 26px);
+    align-items: start;
+  }
+
+  @media (width <= 820px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .venue {
+    margin: 0 0 4px;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(20px, 2.6vw, 27px);
+    letter-spacing: -0.015em;
+    line-height: 1.4;
+  }
+
+  .addr {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+
+  .ways {
+    margin: 16px 0 20px;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 7px;
+  }
+
+  .ways li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .ways li::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid var(--stroke);
+    background: var(--t);
+    transform: translateY(-1px);
+  }
+
+  .who {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-lg);
+    background: var(--ground);
+    overflow: hidden;
+  }
+
+  .who > div {
+    padding: 16px 20px;
+    border-top: 1.5px solid var(--rule);
+  }
+
+  .who > div:first-child {
+    border-top: 0;
+  }
+
+  .who dt {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .who dd {
+    margin: 5px 0 0;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+</style>

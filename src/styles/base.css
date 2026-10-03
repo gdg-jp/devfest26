@@ -59,6 +59,12 @@ h4 {
   font-family: var(--f-display);
   line-height: 1.28;
   text-wrap: balance;
+  /* Japanese has no spaces, so a heading left to itself breaks between any two
+     characters — mid-word, mid-particle. This asks the browser to break on
+     phrase boundaries instead, which is the difference between a headline that
+     reads and one that has to be re-parsed. Ignored where unsupported, which
+     lands back on the ordinary character break. */
+  word-break: auto-phrase;
   margin: 0;
   font-weight: 700;
 }
@@ -317,6 +323,12 @@ p:last-child {
   background: var(--t);
   border: 2px solid var(--stroke);
   flex: none;
+}
+
+/* A section that brings one of the brand's glyphs draws that instead — see
+   Eyebrow.astro. */
+.eyebrow.has-mark::before {
+  display: none;
 }
 
 .eyebrow::after {

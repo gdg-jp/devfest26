@@ -1,6 +1,7 @@
 ---
 import Logo from "./Logo.astro";
 import type { ResolvedTenant } from "../tenants";
+import type { NavItem } from "../tenants/types";
 import { photoCredits } from "../lib/photos";
 import { isHome, tenantHome } from "../lib/url";
 import { messages } from "../i18n";
@@ -13,9 +14,11 @@ import {
 
 interface Props {
   site: ResolvedTenant;
+  /** This page's own section links, when they are not the city's. */
+  nav?: readonly NavItem[];
 }
 
-const { site } = Astro.props;
+const { site, nav = site.footerNav } = Astro.props;
 const t = messages(currentLanguage());
 const { event } = site;
 const year = new Date().getFullYear();
@@ -45,16 +48,10 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       </div>
       <div>
         <nav class="foot-nav" aria-label={t.footer.navAria}>
-          {
-            site.footerNav.map((item) => (
-              <a href={prefix + item.href}>{item.label}</a>
-            ))
-          }
+          {nav.map((item) => <a href={prefix + item.href}>{item.label}</a>)}
         </nav>
         <div class="tags">
-          <span class="tag" style="background:var(--t-pa)"
-            >Hosted by {event.host}</span
-          >
+          <span class="tag host">Hosted by {event.host}</span>
           <a
             class="tag link"
             href={site.links.connpass}
@@ -117,6 +114,10 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     border-top: var(--bw) solid var(--stroke);
     background: var(--surface);
     padding: clamp(34px, 4.4vw, 52px) 0 28px;
+  }
+
+  .tag.host {
+    background: var(--t-pa);
   }
 
   .foot-top {

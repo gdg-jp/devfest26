@@ -17,19 +17,21 @@
  * publishes no `/talks/` at all. `ProgramTalk.href` hides which of the two a
  * link lands on.
  *
- * Every rule this file states is a rule a published build dies on: a reference
- * that crosses cities, a slot with nobody on it, two entries claiming one URL.
- * That is deliberate and unchanged. The draft preview is the one caller that
- * cannot afford it — half-written content is what it exists to show — so there
- * the same checks drop the entry and say so instead. See `reject` in
- * `src/preview/problems.ts`.
+ * The rules here that describe a page coming out *wrong* are rules a published
+ * build dies on: a reference that crosses cities, a slot with nobody on it, two
+ * entries claiming one URL. That is deliberate and unchanged. A rule whose only
+ * consequence is an unused document is warned about instead, because the site
+ * is no worse for it — see `warn` beside `reject` in
+ * `src/preview/problems.ts`. The draft preview cannot afford either kind to be
+ * fatal, since half-written content is what it exists to show, so there the
+ * same checks drop the entry and say so.
  */
 
 import type { CollectionEntry } from "astro:content";
 import { getTracks, type Track } from "./tracks";
 import { byTenant, partitionByTenant } from "./collections";
 import { previewMode } from "../preview/mode";
-import { reject, report } from "../preview/problems";
+import { reject, report, warn } from "../preview/problems";
 import { tenantPath } from "../lib/url";
 
 export type Session = CollectionEntry<"sessions">;
@@ -308,12 +310,22 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     (talk) => talk.data.session!.id,
   );
 
-  // 3. Ensure no orphaned talks exist (every talk must belong to exactly one session).
+  /*
+    3. A talk nothing claimed.
+
+    Warned about rather than thrown on, unlike every other rule here. The
+    others describe a page that would come out wrong; this one describes a
+    document that simply never appears — and making it fatal meant a single
+    "TBA" placeholder left in the Studio took down every session page, every
+    speaker page and the build with them. The talk is left off the programme,
+    which is what it already was.
+  */
   for (const talk of talkSplit.mine) {
     if (!claimedBy.has(talk.id)) {
-      reject(
+      warn(
         "programme",
-        `Talk "${talk.id}" belongs to no session. Add it to a session's "talks" list.`,
+        `Talk "${talk.id}" belongs to no session, so it is not on the page. ` +
+          `Add it to a session's "talks" list, or delete it.`,
       );
     }
   }

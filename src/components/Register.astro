@@ -8,9 +8,17 @@ import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
+  /**
+   * A city's own words for the closing ask, each optional. Left out, the
+   * section reads as it always has.
+   */
+  heading?: string;
+  lede?: string;
+  cta?: string;
+  note?: string;
 }
 
-const { site } = Astro.props;
+const { site, heading, lede, cta, note } = Astro.props;
 const { event, links } = site;
 const t = messages(currentLanguage());
 
@@ -45,12 +53,18 @@ const backdrop = await registerBackdrop(site.tenant);
   <div class="wrap">
     <p class="eyebrow mid" data-reveal="up">Join us</p>
     <h2 data-reveal="up">
-      {t.register.headingLine1}<br />{
-        t.register.headingLine2(event.monthDay, event.venue.city)
+      {
+        heading ?? (
+          <>
+            {t.register.headingLine1}
+            <br />
+            {t.register.headingLine2(event.monthDay, event.venue.city)}
+          </>
+        )
       }
     </h2>
     <p data-reveal="up">
-      {t.register.lede(site.title)}
+      {lede ?? t.register.lede(site.title)}
     </p>
     <div class="cta-row" data-reveal="up">
       <a
@@ -61,7 +75,7 @@ const backdrop = await registerBackdrop(site.tenant);
         data-analytics="register_click"
         data-placement="section"
       >
-        {t.register.ctaRegister}
+        {cta ?? t.register.ctaRegister}
       </a>
       <a
         class="btn ghost"
@@ -73,13 +87,20 @@ const backdrop = await registerBackdrop(site.tenant);
       </a>
     </div>
     <p class="reg-note" data-reveal="up">
-      {t.register.note(event.fee)}
+      {note ?? t.register.note(event.fee)}
     </p>
   </div>
 </section>
 
 <style>
-  /* The loudest surface on the page, and it belongs to the main event. */
+  /*
+    The loudest surface on the page, and it belongs to the main event.
+
+    On the stage rather than on a flat --t, so the page closes on the same dark
+    it opened on: the hero announces the day, the programme is read on paper,
+    and the lights go back down to ask. The hem at the top is the hero's, the
+    other way up.
+  */
   .register {
     position: relative;
     /* Makes this the blend boundary, so .bd multiplies with --t and not with
@@ -94,23 +115,13 @@ const backdrop = await registerBackdrop(site.tenant);
   }
 
   /*
-    `multiply` rather than a plain alpha wash, which is what lets this be a
-    photograph instead of a smudge.
+    A plain wash, not the `multiply` this used when the ground was a flat --t.
+    Multiply can only darken, which is exactly what made it work over a mid
+    blue and exactly what makes it useless over a near-black stage — there is
+    nothing left to darken and the photograph disappears.
 
-    Multiplying can only ever darken --t: white areas of the photo leave the
-    blue untouched, and everything else prints into it. So the copy's
-    background is never lighter than the flat colour, and white text can only
-    gain contrast as the photo gets stronger -- the opposite of an alpha
-    overlay, where every highlight eats into it. Measured over the text column,
-    blurred to text scale:
-
-      alpha 0.15 (what this was)  3.07 : 1
-      flat --t, no photo          3.56 : 1
-      multiply 0.62               4.11 : 1
-
-    That is also why there is no mask any more. The old ellipse existed to keep
-    the copy off the highlights; multiply removes the highlights, so the
-    picture can run edge to edge and read as one image.
+    At this strength the picture's brightest areas land around #4a4a4a, so the
+    white copy over it keeps better than 7:1 wherever the photo is strongest.
   */
   .bd {
     position: absolute;
@@ -145,16 +156,6 @@ const backdrop = await registerBackdrop(site.tenant);
     z-index: 1;
   }
 
-  .register::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 20px;
-    background: var(--scallop) repeat-x bottom;
-  }
-
   h2 {
     font-size: clamp(26px, 4.2vw, 42px);
     letter-spacing: -0.02em;
@@ -177,11 +178,6 @@ const backdrop = await registerBackdrop(site.tenant);
     border-color: var(--ink);
   }
 
-  .register :global(.cta-row) {
-    justify-content: center;
-    margin-top: 26px;
-  }
-
   /* On a solid tenant ground the primary action inverts to white. */
   .register :global(.btn) {
     background: var(--surface);
@@ -201,6 +197,11 @@ const backdrop = await registerBackdrop(site.tenant);
 
   .register :global(.btn.ghost:active) {
     box-shadow: 0 2px 0 currentcolor;
+  }
+
+  .register :global(.cta-row) {
+    justify-content: center;
+    margin-top: 26px;
   }
 
   .reg-note {

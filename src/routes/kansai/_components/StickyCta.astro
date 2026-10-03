@@ -1,0 +1,109 @@
+---
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * A register bar fixed to the bottom of a phone screen, under the thumb.
+ *
+ * It stays out of the way while a register button is already on screen — the
+ * hero's at the top, the closing section's and the footer at the bottom — and
+ * shows everywhere in between, which on a phone is most of the page: the
+ * timetable and the speakers, where the decision to come is actually made.
+ * Wider screens have the top bar's button in reach already and never see it.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const c = copy(currentLanguage());
+const { event } = site;
+---
+
+<div class="sticky-cta" data-sticky-cta aria-hidden="true" inert>
+  <p>
+    {
+      c.stickyNote(
+        `${event.dateShort} (${event.dayOfWeek}) ${event.venue.city}`,
+      )
+    }
+  </p>
+  <a
+    class="btn sm"
+    href={site.links.register}
+    target="_blank"
+    rel="noopener"
+    data-analytics="register_click"
+    data-placement="sticky">{c.heroRegister}</a
+  >
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>("[data-sticky-cta]");
+  // Anything that already offers the register button, or that the bar would
+  // sit on top of.
+  const covers = [
+    document.querySelector("#top"),
+    document.querySelector("#register"),
+    document.querySelector("footer"),
+  ].filter((el): el is Element => el !== null);
+
+  if (bar && covers.length > 0 && "IntersectionObserver" in window) {
+    const inView = new Set<Element>();
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) inView.add(entry.target);
+        else inView.delete(entry.target);
+      }
+      const show = inView.size === 0;
+      bar.classList.toggle("is-shown", show);
+      bar.toggleAttribute("inert", !show);
+      bar.setAttribute("aria-hidden", String(!show));
+    });
+    for (const el of covers) observer.observe(el);
+  }
+</script>
+
+<style>
+  .sticky-cta {
+    display: none;
+  }
+
+  @media (width <= 900px) {
+    .sticky-cta {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 35;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      border-top: var(--bw) solid var(--stroke);
+      background: color-mix(in srgb, var(--ground) 92%, transparent);
+      backdrop-filter: saturate(1.4) blur(10px);
+      transform: translateY(110%);
+      transition: transform 0.28s var(--ease-out);
+    }
+
+    .sticky-cta.is-shown {
+      transform: none;
+    }
+
+    p {
+      margin: 0;
+      font-family: var(--f-display);
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+  }
+
+  @media (width <= 900px) and (prefers-reduced-motion: reduce) {
+    .sticky-cta {
+      transition: none;
+    }
+  }
+</style>

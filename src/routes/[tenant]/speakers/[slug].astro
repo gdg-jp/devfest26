@@ -76,6 +76,8 @@ const jsonLd = {
     href: `${tenantHome(site.tenant)}#sessions`,
     label: t.detail.backToList,
   }}
+  register={t.detail.registerSpeaker}
+  placement="speaker"
 >
   <div class="head">
     <SpeakerAvatar speaker={speaker} size={112} />

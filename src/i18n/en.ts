@@ -107,6 +107,8 @@ export const en = {
       }`,
     tbdHeading: "Time TBD",
     note: "Note: the timetable is subject to change.",
+    filterAria: "Filter by track",
+    filterAll: "All tracks",
   },
 
   sessions: {
@@ -179,7 +181,7 @@ export const en = {
   },
 
   sessionCard: {
-    pendingAbstract: "The session abstract is still being finalized.",
+    pendingAbstract: "Session details coming soon.",
   },
 
   detail: {
@@ -192,6 +194,9 @@ export const en = {
       `${title} / Speakers: ${names}`,
     speakerMetaFallback: (name: string, role: string, siteTitle: string) =>
       `${name} (${role}) is speaking at ${siteTitle}.`,
+    registerSession: "Join this session (register)",
+    registerSpeaker: "Join this talk (register)",
+    registerNote: (fee: string) => `Admission: ${fee}`,
   },
 
   portal: {
