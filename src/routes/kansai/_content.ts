@@ -124,9 +124,18 @@ export const FAQ: readonly Faq[] = [
 
 /** How to get there, one line each. The address comes from the city config. */
 export const ACCESS: readonly Localized[] = [
+  /* The first line is the venue's strongest selling point and comes from the
+     event's own key visual on connpass. It used to sit under the venue in the
+     hero, where it was a third line of small print on the one screen that has
+     to stay down to three facts; here it is what somebody is actually reading
+     for. */
   {
-    ja: "JR「大阪」駅・各線「梅田」駅から徒歩圏内",
-    en: "Walking distance from JR Osaka Station and the Umeda stations",
+    ja: "JR「大阪」駅直結",
+    en: "Directly connected to JR Osaka Station",
+  },
+  {
+    ja: "各線「梅田」駅からも徒歩圏内",
+    en: "Also walking distance from the Umeda stations",
   },
 ];
 
@@ -174,15 +183,15 @@ export const COPY = {
       { href: "#register", label: "参加登録" },
     ],
     heroRegister: "無料で参加登録",
-    heroRegisterNote: "現地参加は先着順。定員に達しだい締め切ります。",
-    heroTimetable: "タイムテーブルを見る",
-    heroLede:
-      "AI、ロボティクス、ものづくり、ビジネス。異なる専門の第一線が、大阪に一日だけ集まります。",
-    heroDateLabel: "開催日",
-    statSessions: "セッション",
-    statTracks: "トラック",
-    statSpeakers: "登壇者",
-    statFee: "参加費",
+    heroRegisterNote: "現地参加は先着順です。定員に達しだい締め切ります。",
+    /* Tiny label chips in front of the two facts, the way xtalk sets them. */
+    heroDateLabel: "日時",
+    heroVenueLabel: "会場",
+    /* The four fields the day actually crosses, in the event's own words —
+       they are what the hero's diagram labels. */
+    heroFields: ["AI", "ロボティクス", "ものづくり", "ビジネス"],
+    heroArtAlt:
+      "AI・ロボティクス・ものづくり・ビジネスの四つの専門が一点で交わる図",
     speakersHeading: "登壇者",
     speakersLede: (count: number) =>
       `研究・AI・ものづくりの第一線から ${count} 名。分野を越えた登壇者が、同じ一日に集まります。`,
@@ -255,14 +264,11 @@ export const COPY = {
     ],
     heroRegister: "Register for free",
     heroRegisterNote: "On-site seats are first come, first served.",
-    heroTimetable: "View timetable",
-    heroLede:
-      "AI, robotics, manufacturing, business — the front line of each, in Osaka for one day.",
     heroDateLabel: "Date",
-    statSessions: "Sessions",
-    statTracks: "Tracks",
-    statSpeakers: "Speakers",
-    statFee: "Admission",
+    heroVenueLabel: "Venue",
+    heroFields: ["AI", "Robotics", "Making", "Business"],
+    heroArtAlt:
+      "A diagram of four fields — AI, robotics, making and business — meeting at a single point",
     speakersHeading: "Speakers",
     speakersLede: (count: number) =>
       `${count} speakers from the front line of research, AI and making — different fields, one day.`,

@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "../../../components/Eyebrow.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
 import { ACCESS, copy, localized } from "../_content";
@@ -45,7 +46,7 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
   <span id="overview" class="anchor" aria-hidden="true"></span>
 
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">{c.accessEyebrow}</p>
+    <Eyebrow mark="dot">{c.accessEyebrow}</Eyebrow>
     <h2 class="sec-h" data-reveal="up">{c.accessHeading}</h2>
 
     <div class="split">
@@ -164,7 +165,7 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     margin: 0;
     border: var(--bw) solid var(--stroke);
     border-radius: var(--r-lg);
-    background: var(--t-pa);
+    background: var(--ground);
     overflow: hidden;
   }
 

@@ -5,11 +5,11 @@ import type { ResolvedTenant } from "../tenants";
 /**
  * First-paint curtain — the title card the day opens on.
  *
- * Four coloured rules rise through a dark stage and cross the mark: the same
- * four the tracks, the timetable and the whole brand are drawn in. The mark
- * itself is a pair of braces, so it arrives as that gesture — the braces clamp
- * in from the edges and the wordmark opens out between them — and the curtain
- * then lifts on a scalloped hem onto a hero set on the same dark ground.
+ * Four coloured rules rise through the card and cross the mark: the same four
+ * the tracks, the timetable and the whole brand are drawn in. The mark itself
+ * is a pair of braces, so it arrives as that gesture — the braces clamp in from
+ * the edges and the wordmark opens out between them — and the curtain then
+ * lifts on a scalloped hem onto the page.
  *
  * Visible only when <html> carries `.is-loading`, which the inline script in
  * Base.astro sets — and only for a first visit, with motion allowed. That same
@@ -55,9 +55,7 @@ const stamp = `${event.isoDate.replaceAll("-", ".")} ${event.dayOfWeekEn.toUpper
     z-index: 100;
     display: grid;
     place-items: center;
-    background: var(--stage);
-    /* the wordmark inside the lockup paints itself with --brand-ink */
-    --brand-ink: var(--on-stage);
+    background: var(--surface);
     will-change: transform;
   }
 
@@ -71,14 +69,14 @@ const stamp = `${event.isoDate.replaceAll("-", ".")} ${event.dayOfWeekEn.toUpper
     height: 30px;
     background: radial-gradient(
         circle at 22px 0,
-        var(--stage) 21px,
+        var(--surface) 21px,
         transparent 22px
       )
       repeat-x;
     background-size: 44px 30px;
   }
 
-  /* The four core colours as four rules crossing the stage — the tracks of the
+  /* The four core colours as four rules crossing the card — the tracks of the
      day, before there is a timetable to put them in. Drawn behind the mark and
      scaled from the floor by the intro script. */
   .pl-rules {
@@ -106,8 +104,8 @@ const stamp = `${event.isoDate.replaceAll("-", ".")} ${event.dayOfWeekEn.toUpper
     inset: 0;
     background: radial-gradient(
       44% 26% at 50% 50%,
-      var(--stage) 42%,
-      color-mix(in srgb, var(--stage) 55%, transparent) 72%,
+      var(--surface) 42%,
+      color-mix(in srgb, var(--surface) 55%, transparent) 72%,
       transparent
     );
   }
@@ -156,14 +154,14 @@ const stamp = `${event.isoDate.replaceAll("-", ".")} ${event.dayOfWeekEn.toUpper
     font-size: clamp(11px, 1.5vw, 13px);
     font-weight: 700;
     letter-spacing: 0.22em;
-    color: var(--on-stage);
+    color: var(--ink);
     opacity: 0;
   }
 
   .pl-stamp span {
     padding-left: 14px;
-    border-left: 1.5px solid var(--stage-rule);
-    color: var(--on-stage-dim);
+    border-left: 1.5px solid var(--rule);
+    color: var(--muted);
     letter-spacing: 0.14em;
   }
 

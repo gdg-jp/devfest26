@@ -64,7 +64,7 @@ const featuredSessions = (await getProgramSessions(site.tenant))
   .map((session) => session.slug);
 ---
 
-<CityHome site={site} stage nav={c.nav} footerNav={c.footerNav}>
+<CityHome site={site} nav={c.nav} footerNav={c.footerNav}>
   <Hero site={site} />
   <News />
   <Speakers tenant={site.tenant} />

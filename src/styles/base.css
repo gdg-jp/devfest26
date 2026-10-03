@@ -293,70 +293,6 @@ p:last-child {
   background: var(--surface);
 }
 
-/*
-  A section set on the dark stage rather than on the page's paper.
-
-  It redefines the tokens the brand's shapes are drawn with rather than
-  restyling the shapes, which is the whole point: `.btn`, `.panel`, `.pill`,
-  `.tag` and `.av` above are all drawn in `--stroke` on `--surface`, so a
-  button dropped on the stage arrives already wearing the same 2.5px outline
-  and the same hard offset shadow — in light on dark instead of dark on light.
-  One vocabulary, two grounds, and nothing to keep in step by hand.
-
-  `--ground` is deliberately *not* among them. It is what the scalloped hems
-  are cut in, and those have to stay the colour of the paper the stage is
-  torn away from.
-*/
-.stage {
-  --brand-ink: var(--on-stage);
-  --ink: var(--on-stage);
-  --stroke: var(--on-stage);
-  --surface: var(--stage-2);
-  --muted: var(--on-stage-dim);
-  --rule: var(--stage-rule);
-
-  background: var(--stage);
-  color: var(--on-stage);
-}
-
-/*
-  Where the stage meets the paper: a row of half-circles in the page's own
-  ground, biting into the dark. The mark is a pair of braces and the brand's
-  edge is a scallop, so this is the shape the page already speaks — and having
-  both dark blocks leave on it is what makes the second one read as the same
-  device rather than as another idea.
-*/
-.stage-hem {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 22px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.stage-hem.bottom {
-  bottom: 0;
-  background: radial-gradient(
-      circle at 22px 22px,
-      var(--ground) 21px,
-      transparent 22px
-    )
-    repeat-x;
-  background-size: 44px 22px;
-}
-
-.stage-hem.top {
-  top: 0;
-  background: radial-gradient(
-      circle at 22px 0,
-      var(--ground) 21px,
-      transparent 22px
-    )
-    repeat-x;
-  background-size: 44px 22px;
-}
-
 .band {
   border-top: var(--bw) solid var(--stroke);
   border-bottom: var(--bw) solid var(--stroke);
@@ -387,6 +323,12 @@ p:last-child {
   background: var(--t);
   border: 2px solid var(--stroke);
   flex: none;
+}
+
+/* A section that brings one of the brand's glyphs draws that instead — see
+   Eyebrow.astro. */
+.eyebrow.has-mark::before {
+  display: none;
 }
 
 .eyebrow::after {

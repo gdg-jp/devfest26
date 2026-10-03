@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "./Eyebrow.astro";
 import { render } from "astro:content";
 import { inlineMarkdown } from "../lib/inlineMarkdown";
 import { byTenant } from "../data/collections";
@@ -22,9 +23,7 @@ const Content = entry ? (await render(entry)).Content : null;
   entry && Content && (
     <section class="sec tint bordered" id="about">
       <div class="wrap">
-        <p class="eyebrow" data-reveal="up">
-          About
-        </p>
+        <Eyebrow mark="braces">About</Eyebrow>
         <h2 class="sec-h" data-reveal="up">
           {t.about.heading}
         </h2>

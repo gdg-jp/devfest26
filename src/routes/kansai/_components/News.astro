@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "../../../components/Eyebrow.astro";
 import { currentLanguage } from "../../../i18n/language";
 import { NEWS, copy, localized } from "../_content";
 
@@ -28,9 +29,7 @@ const linkAttrs = (href: string) =>
   items.length > 0 && (
     <section class="sec news" id="news">
       <div class="wrap">
-        <p class="eyebrow" data-reveal="up">
-          News
-        </p>
+        <Eyebrow mark="slashes">News</Eyebrow>
         <h2 class="visually-hidden">{c.newsHeading}</h2>
 
         <ul class="list" data-reveal="up">

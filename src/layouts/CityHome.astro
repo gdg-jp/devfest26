@@ -19,25 +19,20 @@ import type { NavItem } from "../tenants/types";
  */
 interface Props {
   site: ResolvedTenant;
-  /**
-   * This page's first section is set on the dark stage and runs up behind the
-   * top bar, so the bar starts inverted. See `stageBar` in TopBar.astro.
-   */
-  stage?: boolean;
   /** This page's own section links, when they are not the city's. */
   nav?: readonly NavItem[];
   /** The same for the footer's longer list. */
   footerNav?: readonly NavItem[];
 }
 
-const { site, stage = false, nav, footerNav } = Astro.props;
+const { site, nav, footerNav } = Astro.props;
 ---
 
 <Base site={site}>
   <Sprite />
   <Preloader site={site} />
 
-  <TopBar site={site} stageBar={stage} nav={nav} />
+  <TopBar site={site} nav={nav} />
   <main>
     <slot />
   </main>

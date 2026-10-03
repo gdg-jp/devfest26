@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "./Eyebrow.astro";
 import type { ResolvedTenant } from "../tenants";
 import { messages } from "../i18n";
 import { currentLanguage } from "../i18n/language";
@@ -28,7 +29,7 @@ const t = messages(currentLanguage());
   <div class="wrap">
     <div class="panel band" data-reveal="up">
       <div class="say">
-        <p class="eyebrow">Safety</p>
+        <Eyebrow mark="slashes" reveal={false}>Safety</Eyebrow>
         <h2>{t.codeOfConduct.heading}</h2>
         <p class="lede">{t.codeOfConduct.cocDesc}</p>
       </div>

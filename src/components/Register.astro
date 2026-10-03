@@ -25,8 +25,7 @@ const t = messages(currentLanguage());
 const backdrop = await registerBackdrop(site.tenant);
 ---
 
-<section class="register stage" id="register">
-  <div class="stage-hem top" aria-hidden="true"></div>
+<section class="register" id="register">
   {
     backdrop && (
       <div class="bd" aria-hidden="true">
@@ -104,8 +103,13 @@ const backdrop = await registerBackdrop(site.tenant);
   */
   .register {
     position: relative;
+    /* Makes this the blend boundary, so .bd multiplies with --t and not with
+       whatever the page happens to be painting behind the section. */
     isolation: isolate;
-    padding: clamp(62px, 7.4vw, 94px) 0 clamp(62px, 7.6vw, 92px);
+    background: var(--t);
+    color: var(--t-on);
+    border-top: var(--bw) solid var(--stroke);
+    padding: clamp(52px, 6.6vw, 84px) 0 clamp(62px, 7.6vw, 92px);
     text-align: center;
     overflow: hidden;
   }
@@ -124,7 +128,8 @@ const backdrop = await registerBackdrop(site.tenant);
     inset: 0;
     z-index: 0;
     overflow: hidden;
-    opacity: 0.3;
+    opacity: 0.62;
+    mix-blend-mode: multiply;
   }
 
   /*
@@ -135,7 +140,7 @@ const backdrop = await registerBackdrop(site.tenant);
   */
   @media (width < 1100px) {
     .bd {
-      opacity: 0.22;
+      opacity: 0.45;
     }
   }
 
@@ -169,7 +174,29 @@ const backdrop = await registerBackdrop(site.tenant);
   }
 
   .register :global(.eyebrow::before) {
-    background: var(--t);
+    background: var(--surface);
+    border-color: var(--ink);
+  }
+
+  /* On a solid tenant ground the primary action inverts to white. */
+  .register :global(.btn) {
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .register :global(.btn.ghost) {
+    background: transparent;
+    color: inherit;
+    border-color: currentcolor;
+    box-shadow: 0 4px 0 currentcolor;
+  }
+
+  .register :global(.btn.ghost:hover) {
+    box-shadow: 0 6px 0 currentcolor;
+  }
+
+  .register :global(.btn.ghost:active) {
+    box-shadow: 0 2px 0 currentcolor;
   }
 
   .register :global(.cta-row) {

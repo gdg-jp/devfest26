@@ -34,18 +34,6 @@
   /* Off White */
   --surface: #ffffff;
 
-  /* The dark ground the first screen and the closing CTA are set on. The rest
-     of the site stays light: the stage is where the day is announced, and the
-     switch back to paper is what marks the programme as the part you read. */
-  --stage: #121317;
-  --stage-2: #1c1e25;
-  --on-stage: #f6f6f4;
-  --on-stage-dim: #a2a6b0;
-  --stage-rule: rgb(255 255 255 / 14%);
-  /* The stage's equivalent of a pastel fill: what a control takes on hover,
-     where a light wash is the only way to lift off a near-black ground. */
-  --stage-wash: rgb(255 255 255 / 9%);
-
   --ink: #1e1e1e;
   /* Black 02 */
   --brand-ink: #1e1e1e;

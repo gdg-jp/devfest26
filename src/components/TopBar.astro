@@ -15,13 +15,6 @@ import {
 interface Props {
   site: ResolvedTenant;
   /**
-   * This page opens on a hero set on the dark stage, which runs up behind the
-   * bar. The bar then starts inverted and the nav script returns it to paper
-   * once the stage is past — rather than starting light and flipping on the
-   * first frame of script, which is a flash on every repeat visit.
-   */
-  stageBar?: boolean;
-  /**
    * The section links to show, when this page's own are not the city's. A page
    * that has rearranged or renamed its sections knows its nav; the city config
    * is edited elsewhere and cannot.
@@ -29,7 +22,7 @@ interface Props {
   nav?: readonly NavItem[];
 }
 
-const { site, stageBar = false, nav = site.nav } = Astro.props;
+const { site, nav = site.nav } = Astro.props;
 const t = messages(currentLanguage());
 
 // The nav is a set of page anchors, which only resolve on the page that has
@@ -51,7 +44,7 @@ const switchHref = alternatePath(Astro.url.pathname);
 const switchLabel = LANGUAGE_NAMES[switchTo];
 ---
 
-<header class="topbar" data-topbar data-stage-bar={stageBar ? "" : undefined}>
+<header class="topbar" data-topbar>
   <div class="wrap">
     <a
       class="home"
@@ -86,31 +79,14 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 </header>
 
 <style>
-  /* These are the whole of the difference between the bar on paper and the bar
-     over the dark stage, so the two states below redefine only them and every
-     rule underneath is written once. */
   .topbar {
-    --bar-fg: var(--ink);
-    --bar-mark: var(--ink);
-    --bar-rule: var(--stroke);
-    --bar-accent: var(--t);
-    --bar-current: var(--t-deep);
-    --bar-hover: var(--t-pa);
-    --bar-cta-edge: var(--stroke);
-    --bar-cta-shadow: 0 3px 0 var(--stroke);
-
     position: sticky;
     top: 0;
     z-index: 40;
     background: color-mix(in srgb, var(--ground) 88%, transparent);
     backdrop-filter: saturate(1.4) blur(10px);
-    border-bottom: var(--bw) solid var(--bar-rule);
-    color: var(--bar-fg);
-    transition:
-      box-shadow 0.25s ease,
-      background-color 0.25s ease,
-      border-color 0.25s ease,
-      color 0.25s ease;
+    border-bottom: var(--bw) solid var(--stroke);
+    transition: box-shadow 0.25s ease;
   }
 
   .topbar :global(.wrap) {
@@ -126,65 +102,6 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     box-shadow: 0 6px 22px rgb(30 30 30 / 9%);
   }
 
-  /*
-    Over a hero set on the dark stage the bar is part of that stage rather than
-    a light strip laid across it, so it inverts and drops its rule and its
-    ground. Gated on `.js`, because it is the nav script that takes it off
-    again once the stage is past — without the script the bar has to stay on
-    paper, where it is readable over anything.
-  */
-  :global(html.js) .topbar[data-stage-bar] {
-    --bar-fg: var(--on-stage);
-    --bar-mark: var(--on-stage);
-    --bar-rule: var(--stage-rule);
-    --bar-accent: var(--t-ht);
-    --bar-current: var(--t-ht);
-    --bar-hover: var(--stage-wash);
-    --bar-cta-edge: transparent;
-    --bar-cta-shadow: none;
-
-    background: transparent;
-    backdrop-filter: none;
-    border-bottom-color: transparent;
-    box-shadow: none;
-  }
-
-  /* Transparent is right only while the bar is over the top of the stage,
-     where nothing has scrolled under it yet. Once the page is moving the
-     headline runs behind the nav, so the bar takes a ground of its own —
-     the stage's, so it still reads as part of the same dark screen. */
-  :global(html.js) .topbar[data-stage-bar]:global(.is-stuck) {
-    background: color-mix(in srgb, var(--stage) 84%, transparent);
-    backdrop-filter: saturate(1.2) blur(12px);
-  }
-
-  /* Past the stage the bar is back over paper and takes its ordinary form. It
-     restates the ground rather than unsetting it, because the inverted rule
-     above wins on specificity and has to be beaten rather than escaped. */
-  :global(html.js) .topbar[data-stage-bar]:global(.is-past-stage) {
-    --bar-fg: var(--ink);
-    --bar-mark: var(--ink);
-    --bar-rule: var(--stroke);
-    --bar-accent: var(--t);
-    --bar-current: var(--t-deep);
-    --bar-hover: var(--t-pa);
-    --bar-cta-edge: var(--stroke);
-    --bar-cta-shadow: 0 3px 0 var(--stroke);
-
-    background: color-mix(in srgb, var(--ground) 88%, transparent);
-    backdrop-filter: saturate(1.4) blur(10px);
-    border-bottom-color: var(--stroke);
-  }
-
-  .topbar :global(.mark) {
-    --brand-ink: var(--bar-mark);
-  }
-
-  .topbar :global(.btn.sm) {
-    border-color: var(--bar-cta-edge);
-    box-shadow: var(--bar-cta-shadow);
-  }
-
   .topbar:global(.is-stuck) :global(.wrap) {
     padding: 6px 0;
   }
@@ -198,7 +115,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     gap: 10px;
     min-width: 0;
     line-height: 0;
-    color: var(--bar-fg);
+    color: var(--ink);
     text-decoration: none;
   }
 
@@ -228,7 +145,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
      edition of DevFest rather than as part of the wordmark itself. */
   .edition {
     padding-left: 10px;
-    border-left: var(--bw) solid var(--bar-rule);
+    border-left: var(--bw) solid var(--stroke);
     font-family: var(--f-display);
     font-size: 16px;
     font-weight: 600;
@@ -254,7 +171,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 
   nav a {
     position: relative;
-    color: var(--bar-fg);
+    color: var(--ink);
     text-decoration: none;
     padding: 3px 0;
     /* A label that broke across two lines would make the whole bar taller, and
@@ -271,7 +188,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     right: 0;
     bottom: 0;
     height: 2.5px;
-    background: var(--bar-accent);
+    background: var(--t);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.24s var(--ease-out);
@@ -283,7 +200,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
   }
 
   nav a:global(.is-current) {
-    color: var(--bar-current);
+    color: var(--t-deep);
   }
 
   .lang-switch {
@@ -291,16 +208,16 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 0.04em;
-    color: var(--bar-fg);
+    color: var(--ink);
     text-decoration: none;
-    border: 1.5px solid var(--bar-rule);
+    border: 1.5px solid var(--stroke);
     border-radius: 999px;
     padding: 5px 13px;
     transition: background-color 0.16s var(--ease-out);
   }
 
   .lang-switch:hover {
-    background: var(--bar-hover);
+    background: var(--t-pa);
   }
 
   .progress {
@@ -315,7 +232,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     display: block;
     height: 100%;
     width: 100%;
-    background: var(--bar-accent);
+    background: var(--t);
     transform: scaleX(0);
     transform-origin: left;
   }

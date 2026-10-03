@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "./Eyebrow.astro";
 /**
  * The day as a list of time slots, built from the sessions rather than written
  * out.
@@ -86,13 +87,13 @@ const slots: Slot[] = [...(timetable?.cells ?? [])]
     return found;
   }, []);
 
-/** The portrait beside a speaker's name on a card. */
-const FACE = 26;
+/** The portrait beside a speaker's name on a card, as the session cards set it. */
+const FACE = 36;
 ---
 
 <section class="sec" id="timetable">
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Timetable</p>
+    <Eyebrow mark="semicolon">Timetable</Eyebrow>
     <h2 class="sec-h" data-reveal="up">{t.timetable.heading}</h2>
     <p class="sec-lede" data-reveal="up">
       {t.timetable.lede(trackCount, Boolean(timetable))}
@@ -123,6 +124,21 @@ const FACE = 26;
               ))}
             </div>
           )}
+
+          <div class="heads" style={`--tracks:${tracks.length}`}>
+            <div class="rail" aria-hidden="true" />
+            <div class="heads-in">
+              {tracks.map((track) => (
+                <p
+                  class:list={["head", { ink: track.data.darkInk }]}
+                  style={`--trk:${track.data.color}`}
+                >
+                  <b>{track.data.label}</b>
+                  <span>{track.data.sub}</span>
+                </p>
+              ))}
+            </div>
+          </div>
 
           <ol class="slots" style={`--tracks:${tracks.length}`}>
             {slots.map((slot) => (
@@ -184,7 +200,10 @@ const FACE = 26;
                                       speaker={speaker}
                                       size={FACE}
                                     />
-                                    <span>{speaker.data.name}</span>
+                                    <span class="who-text">
+                                      <b>{speaker.data.name}</b>
+                                      <small>{speaker.data.role}</small>
+                                    </span>
                                   </a>
                                 </li>
                               ))}
@@ -282,6 +301,71 @@ const FACE = 26;
   .filter button[aria-pressed="true"] {
     background: var(--ink);
     color: var(--surface);
+  }
+
+  /* ---- the track headers ------------------------------------------------ */
+
+  /*
+    The columns named once, at the top of the day. It can be sticky without any
+    of the trouble the old grid had with it: that one lived in a horizontal
+    scroller of its own and had to be kept in step with the body in JavaScript,
+    where this is a row in the same single column of page the slots are in.
+  */
+  .heads {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 10px;
+    background: var(--ground);
+    padding: 6px 0;
+  }
+
+  .heads-in {
+    display: grid;
+    grid-template-columns: repeat(var(--tracks), minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .head {
+    margin: 0;
+    padding: 7px 12px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-sm);
+    background: var(--trk);
+    color: #fff;
+    line-height: 1.25;
+  }
+
+  .head.ink {
+    color: var(--ink);
+  }
+
+  .head b {
+    display: block;
+    font-family: var(--f-display);
+    font-size: 13.5px;
+  }
+
+  .head span {
+    font-size: 10.5px;
+    opacity: 0.9;
+  }
+
+  /* Four names do not fit across a phone, and below that width the cards carry
+     their own badge instead. */
+  @media (width <= 900px) {
+    .heads {
+      display: none;
+    }
+  }
+
+  /* Filtered to one track, the row above says the same thing the one pressed
+     button already does. */
+  .tt:global(.is-filtered) .heads {
+    display: none;
   }
 
   /* ---- the slots -------------------------------------------------------- */
@@ -385,7 +469,7 @@ const FACE = 26;
     flex-direction: column;
     gap: 7px;
     flex: 1;
-    padding: 13px 15px;
+    padding: 14px 16px;
     border: var(--bw) solid var(--stroke);
     border-radius: var(--r-md);
     background: var(--pa, var(--surface));
@@ -439,6 +523,22 @@ const FACE = 26;
     margin: 0;
   }
 
+  /* The header row names the columns while it is on screen, so the badge is
+     what takes over below 900px where that row is gone. */
+  /* Two positive rules rather than `:not(:global(.is-filtered))`: Astro leaves
+     a `:global()` inside `:not()` in the output verbatim, which is not a valid
+     selector, and the whole rule is dropped. The second rule wins on
+     specificity. */
+  @media (width > 900px) {
+    .tt .trk {
+      display: none;
+    }
+
+    .tt:global(.is-filtered) .trk {
+      display: inline-flex;
+    }
+  }
+
   .trk {
     display: inline-flex;
     align-items: center;
@@ -480,7 +580,7 @@ const FACE = 26;
 
   .card b {
     font-family: var(--f-display);
-    font-size: 14.5px;
+    font-size: 15px;
     line-height: 1.45;
   }
 
@@ -491,34 +591,60 @@ const FACE = 26;
     color: var(--muted);
   }
 
-  /* One chip per speaker rather than a pile of portraits beside a run of
-     names: the pile said who was on, but only the card as a whole was
-     clickable, so the one thing a reader wants from a face — that person's
-     page — was the one thing it would not do. */
+  /*
+    One row per speaker — portrait, name, affiliation — which is how the
+    session cards on the deployed site introduce a person, and the form a
+    reader can actually pick a name out of. Each row is its own link: the pile
+    of faces this replaced said who was on but led nowhere.
+  */
   .who {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 10px;
+    display: grid;
+    gap: 0;
     margin: auto 0 0;
-    padding: 4px 0 0;
+    padding: 8px 0 0;
     list-style: none;
+  }
+
+  .who li + li {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1.5px solid var(--rule);
   }
 
   .who a {
     display: flex;
     align-items: center;
-    gap: 7px;
-    color: var(--muted);
+    gap: 9px;
+    color: inherit;
     text-decoration: none;
   }
 
-  .who span {
-    font-size: 11.5px;
-    line-height: 1.4;
+  .who-text {
+    min-width: 0;
   }
 
-  .who a:hover span {
-    color: var(--ink);
+  .who-text b {
+    display: block;
+    font-family: var(--f-display);
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .who-text small {
+    display: block;
+    /* An affiliation is a sentence and a card is a glance, so it is cut rather
+       than allowed to set the card's height. */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .who a:hover .who-text b {
     text-decoration: underline;
   }
 

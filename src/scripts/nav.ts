@@ -12,30 +12,9 @@ export function initNav() {
   }
 
   if (bar) {
-    // A hero set on the dark stage runs up behind the bar, so the bar has to
-    // invert for exactly as long as it is over one. Measured rather than
-    // assumed: the stage's height depends on the viewport, and on a page with
-    // no stage at all this simply never turns on.
-    const stage = document.querySelector<HTMLElement>("[data-stage]");
-    let stageEnd = 0;
-    const measure = () => {
-      stageEnd = stage
-        ? stage.offsetTop + stage.offsetHeight - bar.offsetHeight
-        : 0;
-    };
-
-    const sync = () => {
-      bar.classList.toggle("is-stuck", window.scrollY > 60);
-      bar.classList.toggle("is-past-stage", window.scrollY >= stageEnd);
-    };
-
-    measure();
+    const sync = () => bar.classList.toggle("is-stuck", window.scrollY > 60);
     sync();
     addEventListener("scroll", sync, { passive: true });
-    addEventListener("resize", () => {
-      measure();
-      sync();
-    });
 
     // The bar's height is not a constant — it condenses here and the lockup
     // narrows at two breakpoints — so anything pinned just below it wants the

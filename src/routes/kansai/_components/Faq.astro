@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "../../../components/Eyebrow.astro";
 import { currentLanguage } from "../../../i18n/language";
 import { FAQ, copy, localized } from "../_content";
 
@@ -14,7 +15,7 @@ const c = copy(lang);
 
 <section class="sec faq" id="faq">
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">FAQ</p>
+    <Eyebrow mark="ellipsis">FAQ</Eyebrow>
     <h2 class="sec-h" data-reveal="up">{c.faqHeading}</h2>
 
     <div class="list" data-reveal="up">

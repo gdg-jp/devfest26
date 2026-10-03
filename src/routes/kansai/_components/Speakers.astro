@@ -1,4 +1,5 @@
 ---
+import Eyebrow from "../../../components/Eyebrow.astro";
 import SpeakerAvatar from "../../../components/SpeakerAvatar.astro";
 import { getProgramSpeakers, speakerHref } from "../../../data/program";
 import { currentLanguage } from "../../../i18n/language";
@@ -34,8 +35,6 @@ const rank = (slug: string) => {
   return picked === -1 ? FEATURED_SPEAKERS.length : picked;
 };
 const speakers = [...programme].sort((a, b) => rank(a.slug) - rank(b.slug));
-
-const pastels = ["blue", "green", "yellow", "red"];
 ---
 
 {
@@ -43,9 +42,7 @@ const pastels = ["blue", "green", "yellow", "red"];
     <section class="sec tint speakers" id="featured">
       <div class="wrap head">
         <div class="head-text">
-          <p class="eyebrow" data-reveal="up">
-            Speakers
-          </p>
+          <Eyebrow mark="plus">Speakers</Eyebrow>
           <h2 class="sec-h" data-reveal="up">
             {c.speakersHeading}
           </h2>
@@ -70,11 +67,8 @@ const pastels = ["blue", "green", "yellow", "red"];
 
       <div class="rail-wrap" data-carousel data-reveal="up">
         <ul class="rail" data-carousel-rail>
-          {speakers.map(({ speaker, slug, appearances }, index) => (
-            <li
-              class="card linkbox"
-              style={`--pa:var(--pa-${pastels[index % pastels.length]})`}
-            >
+          {speakers.map(({ speaker, slug, appearances }) => (
+            <li class="card linkbox">
               <SpeakerAvatar speaker={speaker} size={116} />
               {FEATURED_SPEAKERS.includes(slug) && (
                 <span class="pick">{c.featuredBadge}</span>
@@ -216,7 +210,7 @@ const pastels = ["blue", "green", "yellow", "red"];
     padding: 26px 20px 22px;
     border: var(--bw) solid var(--stroke);
     border-radius: var(--r-lg);
-    background: var(--pa);
+    background: var(--ground);
     transition:
       transform 0.18s var(--ease-out),
       box-shadow 0.18s var(--ease-out);

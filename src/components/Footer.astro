@@ -35,7 +35,7 @@ const switchHref = alternatePath(Astro.url.pathname);
 const switchLabel = LANGUAGE_NAMES[switchTo];
 ---
 
-<footer class="stage">
+<footer>
   <div class="wrap">
     <div class="foot-top">
       <div>
@@ -110,17 +110,14 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 </footer>
 
 <style>
-  /* No rule along the top: the closing section above is on the same stage, and
-     the page is meant to read as one dark block from the ask to the colophon
-     rather than as two that happen to share a colour. */
   footer {
+    border-top: var(--bw) solid var(--stroke);
+    background: var(--surface);
     padding: clamp(34px, 4.4vw, 52px) 0 28px;
   }
 
-  /* A pastel needs the dark ink it was drawn for, whatever ground it is on. */
   .tag.host {
     background: var(--t-pa);
-    color: var(--stage);
   }
 
   .foot-top {
