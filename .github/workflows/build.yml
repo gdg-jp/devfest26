@@ -1,11 +1,10 @@
 name: Build
 
 on:
-  # A check, not a deploy. Merging to `main` proves the merge result still
-  # builds — two pull requests that were each green apart can break together —
-  # and stops there. What the site serves is decided in the Studio with
-  #「サイトに反映」, so code lands here and goes out with the next deploy. The
-  # `publish` job below is where that line is drawn.
+  # A push to `main` is the deploy. The site is the Markdown in `src/content/`,
+  # built and pushed to `gh-pages` by the `publish` job below. A pull request
+  # only proves that the merge result still builds — two pull requests that
+  # were each green apart can break together — and stops there.
   push:
     branches: [main]
   pull_request:
@@ -27,33 +26,23 @@ on:
         required: false
         type: boolean
         default: false
-  # Publishing in the Studio does not build anything. The Studio's「サイトに反映」
-  # tool touches a `deploy` document, a Sanity webhook turns that into a POST to
-  # /repos/gdg-jp/devfest26/dispatches with a token, and the cities that
-  # document names are the ones rebuilt. GitHub Actions cannot receive an
-  # arbitrary webhook directly, so this is the entry point for one.
-  #
-  # Nothing else in the CMS reaches here: the webhook's filter is
-  # `_type == "deploy"`. Publishing a session changes what the API answers and
-  # leaves the site alone until a person asks for it. What to configure on the
-  # Sanity side — filter, projection, headers — is in the README under 公開フロー.
+  # Left in place so an old Studio webhook still starts a build. It publishes
+  # the same checked-in Markdown as a push to `main`; nothing is read from Sanity.
   repository_dispatch:
     types: [deploy]
 
 # One production deploy at a time, and they queue rather than cancel each other.
-# Cancelling would be cheaper but wrong now that a run carries the set of cities
-# someone asked for: press 関西, then 東京 ten seconds later, and the newer run
-# would take 関西's build down with it and never put it back. Deploys only start
-# when a person asks for one, so the queue stays short.
+# A push to `main`, a manual run, and a leftover dispatch all write `gh-pages`,
+# so two of them at once would race. Cancelling would be cheaper but wrong when
+# a run carries a subset of cities: a newer run would take the older one's
+# build down with it and never put it back.
 #
-# The runs that only check — pull requests, and merges to `main` — are keyed by
-# their own ref instead, and do cancel: there the newest commit really does
-# subsume the ones before it. Keying them away from 'production' is also what
-# keeps a merge from delaying someone's「サイトに反映」, which it would if a
-# check and a deploy shared a queue.
+# Pull requests only check. They are keyed by their own ref and do cancel:
+# there the newest commit subsumes the ones before it, and keeping them out of
+# the production queue means a check does not delay a deploy.
 concurrency:
-  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.event_name == 'push') && github.ref || 'production' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -63,18 +52,20 @@ env:
   # under /kansai and /tokyo on the same host as the front page. Unset is not an
   # error — canonical/OG/JSON-LD absolute URLs are omitted rather than wrong.
   SITE_URL: ${{ vars.SITE_URL }}
-  # Also repository variables, not secrets: the project id and dataset name are
-  # public information, and `src/lib/sanity/env.ts` falls back to the Markdown
-  # in `src/content/` when the project id is absent. Deliberately no
-  # SANITY_READ_TOKEN — that one reads drafts, which must never reach a
-  # published build.
+  # Repository variables, not secrets: the project id and dataset name are
+  # public. Discovery and every city but Kansai still read Sanity, so a city
+  # that only exists in the Studio (Sapporo, Tokyo) stays on the site. Kansai
+  # does not: its job clears these two before it builds, and with them unset
+  # `src/lib/sanity/env.ts` reads `src/content/kansai` — the same files a local
+  # build with no `SANITY_PROJECT_ID` reads. Deliberately no SANITY_READ_TOKEN.
+  # That one reads drafts, which must never reach a published build.
   SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
   SANITY_DATASET: ${{ vars.SANITY_DATASET }}
   # Google Analytics — the site-wide property every page reports to. A city's
   # own property, if its chapter runs one, is a field on its `event` document
   # instead, so a chapter can set one up without repository access.
   #
-  # A repository variable for the same reason the two above are: a measurement
+  # A repository variable, same as SITE_URL: a measurement
   # id is printed into every page of the published HTML, so it is not a secret.
   # Unset is not an error — the tag is then absent entirely rather than
   # pointing at nothing, which is what keeps local builds and pull request
@@ -147,7 +138,7 @@ jobs:
       # "leave that city's published pages where they are".
       STRICT_TENANTS: "1"
       # Empty on every event but a manual run with the box ticked, which is
-      # what keeps pull requests, merges and「サイトに反映」strict.
+      # what keeps pull requests and pushes to `main` strict.
       IGNORE_CONTENT_WARNINGS: ${{ github.event_name == 'workflow_dispatch' && inputs.ignore_warnings && '1' || '' }}
 
     steps:
@@ -162,18 +153,35 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Kansai is not edited in the Studio. The workflow env above still
+      # names the project, because discovery and the other cities need it.
+      # Leaving it set on this job would publish the CMS copy of Kansai, which
+      # is how the live city drifted away from `src/content/kansai`. Clearing
+      # it is what `sanityEnabled()` reads as "build from the Markdown".
+      - name: Build Kansai from the repository
+        if: matrix.target == 'kansai'
+        run: |
+          echo "SANITY_PROJECT_ID=" >> "$GITHUB_ENV"
+          echo "SANITY_DATASET=" >> "$GITHUB_ENV"
+
       # `shell: bash` for its `pipefail`, which the default shell does not set:
       # without it `tee` would answer for the pipeline and a failed build would
       # look green.
       #
       # Types and content-collection schemas, scoped to this target.
+      # `unset` as well as the step above: a variable set on the workflow is
+      # re-applied to each step, and an empty `GITHUB_ENV` value is still set.
       - name: Check
         shell: bash
-        run: pnpm exec astro check 2>&1 | tee -a build.log
+        run: |
+          if [ "$TARGETS" = "kansai" ]; then unset SANITY_PROJECT_ID SANITY_DATASET; fi
+          pnpm exec astro check 2>&1 | tee -a build.log
 
       - name: Build
         shell: bash
-        run: pnpm exec astro build 2>&1 | tee -a build.log
+        run: |
+          if [ "$TARGETS" = "kansai" ]; then unset SANITY_PROJECT_ID SANITY_DATASET; fi
+          pnpm exec astro build 2>&1 | tee -a build.log
 
       # GitHub hands raw job logs to a token and to nothing else, and the Studio
       # has no token — it reads this repository unauthenticated, from a browser.
@@ -208,14 +216,12 @@ jobs:
   publish:
     name: publish
     needs: [discover, build]
-    # Not `always()` on its own, for two reasons. This job deletes the cities
-    # that discovery did not name, so it must not run on a discovery that never
-    # answered. And it runs only for the two events that mean a person asked
-    # for a deploy —「サイトに反映」 (`repository_dispatch`) and the Run workflow
-    # button (`workflow_dispatch`). A pull request and a merge to `main` build
-    # and stop: what the site serves is a decision someone takes in the Studio,
-    # not something a merge takes on the way past.
-    if: ${{ always() && needs.discover.result == 'success' && (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') }}
+    # Not `always()` on its own. This job deletes the cities that discovery did
+    # not name, so it must not run on a discovery that never answered. It runs
+    # for every event except a pull request: a push to `main` publishes the
+    # Markdown in the commit, and a manual run or a leftover dispatch does the
+    # same. A pull request builds and stops.
+    if: ${{ always() && needs.discover.result == 'success' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
 
     permissions:

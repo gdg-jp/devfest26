@@ -97,10 +97,9 @@ const nothing = optional({
 const city = (key: CollectionName): Loader => {
   const { name, query, toEntry } = sources[key];
 
-  // No language in the path: a Markdown build is a Japanese build. The
-  // tenant configs in `src/tenants/` that a Sanity-less build reads are
-  // Japanese-only, so `LOCAL_TENANT` in `src/tenants/selection.ts` refuses
-  // `SITE_LANG=en` before this loader is ever reached.
+  // No language in the path. Markdown is the Japanese source, and an
+  // English build reads the same files. Pages that carry both languages
+  // switch their own copy from `SITE_LANG`.
   return noCities || previewMode
     ? nothing
     : sanityEnabled()
