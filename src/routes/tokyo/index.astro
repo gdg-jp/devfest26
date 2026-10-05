@@ -22,7 +22,12 @@ import { missingCity, ownCity } from "../../lib/cityRoutes";
  * `src/routes/[tenant]/index.astro`.
  *
  * Until then this page does not follow the shared one: a section added there
- * does not appear here. Everything else is that file as it stood, in its order.
+ * does not appear here. Everything else is that file as it stood, but for one
+ * thing that is Tokyo's own choice and not part of the stopgap: the pre-events
+ * come after the overview rather than before it. Few readers are coming to a
+ * meetup, and the first thing the page says should be what the day itself is.
+ * Deleting this directory gives that up too, unless the shared page has taken
+ * the same order by then.
  */
 const site = await ownCity(Astro.url);
 if (!site) return missingCity(Astro.url);
@@ -31,8 +36,8 @@ if (!site) return missingCity(Astro.url);
 <CityHome site={site}>
   <Hero site={site} />
   <Countdown site={site} />
-  <PreEvents site={site} />
   <Overview site={site} />
+  <PreEvents site={site} />
   <About tenant={site.tenant} />
   <Sessions tenant={site.tenant} />
   <WhatIsDevFest tenant={site.tenant} />
