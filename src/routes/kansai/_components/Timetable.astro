@@ -1,7 +1,9 @@
 ---
 import Portrait from "./Portrait.astro";
+import Panel from "./Panel.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { getTimetable, type TimetableCell } from "../../../data/timetable";
+import { trackPastel } from "../../../data/tracks";
 import { currentLanguage } from "../../../i18n/language";
 import { copy } from "../_content";
 
@@ -10,8 +12,9 @@ import { copy } from "../_content";
  * timetable (`src/data/timetable.ts`) — only the drawing is Kansai's.
  *
  * Wide screens get the whole grid, one column per track, rows cut wherever
- * something starts or ends. A phone gets one track at a time behind tabs,
- * because four columns of 90px are four columns nobody can read.
+ * something starts or ends. A phone gets the same cells in one column,
+ * read across each row and then down: A1 B1 C1, then A2 B2 C2. A session
+ * that spans several rows is listed once, where it starts.
  */
 interface Props {
   site: ResolvedTenant;
@@ -37,10 +40,39 @@ const rows = table
     })
   : [];
 
-const cellsFor = (column: number) =>
-  (table?.cells ?? [])
-    .filter((cell) => cell.columnStart <= column && column < cell.columnEnd)
-    .sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+const phoneLabel = (label: string) => label.trim().toLowerCase();
+
+/** Dropped from the phone list. The grid still draws it. */
+const hiddenOnPhone = new Set(["懇親会会場へ移動"].map(phoneLabel));
+
+/** A break for the room, not a track. No track chip on the phone. */
+const noTrackOnPhone = new Set(
+  ["開場・受付", "昼休憩", "懇親会"].map(phoneLabel),
+);
+
+/**
+ * Fixtures that read as sessions: a filled card, not a dashed row.
+ * Matched loosely so "Fashion runway" and "fashion runway" agree.
+ */
+const cardOnPhone = new Set(
+  [
+    "調整中",
+    "LT大会",
+    "Findy スポンサーセッション",
+    "Fashion runway",
+    "写真撮影",
+  ].map(phoneLabel),
+);
+
+/** Phone order: each time-row left to right, then the next row. */
+const mobileCells = table
+  ? [...table.cells]
+      .filter((cell) => !hiddenOnPhone.has(phoneLabel(cell.label)))
+      .sort((a, b) => a.rowStart - b.rowStart || a.columnStart - b.columnStart)
+  : [];
+
+const tracksOf = (cell: TimetableCell) =>
+  (table?.tracks ?? []).slice(cell.columnStart - 2, cell.columnEnd - 2);
 
 const sessionSlug = (cell: TimetableCell) => cell.key.replace(/^session:/, "");
 const isFeatured = (cell: TimetableCell) =>
@@ -51,55 +83,48 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
 {
   table && (
     <section
-      class="k-sec k-tt"
+      class="k-sec k-sec--panel k-tt"
       id="timetable"
-      style="--k-accent:var(--blue)"
       aria-labelledby="k-tt-h"
     >
-      <div class="k-wrap k-wrap--wide">
-        <header class="k-head">
-          <h2 class="k-head__title" id="k-tt-h" data-k-split>
-            Timetable
-          </h2>
-        </header>
-
-        {/* ---- phone: one track at a time ------------------------------ */}
-        <div
-          class="k-tt__tabs"
-          role="tablist"
-          aria-label={c.tabsAria}
-          data-k-tabs
+      <div class="k-wrap k-wrap--panel">
+        <Panel
+          title="Timetable"
+          id="k-tt-h"
+          tone="var(--ht-green)"
+          stickers={["colon", "equals"]}
         >
-          {table.tracks.map((track, i) => (
-            <button
-              type="button"
-              role="tab"
-              id={`k-tt-tab-${track.id}`}
-              aria-controls={`k-tt-panel-${track.id}`}
-              aria-selected={i === 0 ? "true" : "false"}
-              tabindex={i === 0 ? 0 : -1}
-              style={`--trk:${track.data.color};--trk-ink:${track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
-              data-k-tab
-            >
-              <b>{track.data.label.replace(/^Track\s*/i, "")}</b>
-              <span>{track.data.sub}</span>
-            </button>
-          ))}
-          <span class="k-tt__tab-ind" aria-hidden="true" data-k-tab-ind />
-        </div>
-
-        <div class="k-tt__panels">
-          {table.tracks.map((track, i) => (
-            <ol
-              class="k-tt__list"
-              role="tabpanel"
-              id={`k-tt-panel-${track.id}`}
-              aria-labelledby={`k-tt-tab-${track.id}`}
-              data-k-panel
-              data-active={i === 0 ? "" : undefined}
-              style={`--trk:${track.data.color};--fill:${"var(--surface)"}`}
-            >
-              {cellsFor(i + 2).map((cell) => (
+          {/* ---- phone: one column, across each row then down ---------- */}
+          <ol class="k-tt__list">
+            {mobileCells.map((cell) => {
+              const covered = tracksOf(cell);
+              const key = phoneLabel(cell.label);
+              const venueWide = covered.length === table.tracks.length;
+              const showTracks = !noTrackOnPhone.has(key) && !venueWide;
+              const asCard =
+                (cell.kind === "session" && Boolean(cell.href)) ||
+                cardOnPhone.has(key);
+              const fill =
+                cell.fill ??
+                (covered[0] ? trackPastel(covered[0]) : "var(--surface)");
+              const tracks = showTracks && (
+                <span class="k-tt__tracks">
+                  {covered.map((track) => (
+                    <span
+                      class="k-tt__track"
+                      style={`--trk:${track.data.color}`}
+                    >
+                      <b>{track.data.label}</b>
+                    </span>
+                  ))}
+                </span>
+              );
+              const when = (
+                <time class="k-tt__slot">
+                  {cell.start} - {cell.end}
+                </time>
+              );
+              return (
                 <li
                   class:list={[
                     "k-tt__row",
@@ -107,10 +132,6 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
                     { "is-featured": isFeatured(cell) },
                   ]}
                 >
-                  <time class="k-tt__when">
-                    {cell.start}
-                    <span>{cell.end}</span>
-                  </time>
                   {cell.kind === "session" && cell.href ? (
                     <a
                       class="k-tt__card"
@@ -120,6 +141,10 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
                       {isFeatured(cell) && (
                         <span class="k-tt__badge">{c.featuredBadge}</span>
                       )}
+                      <span class="k-tt__chips">
+                        {tracks}
+                        {when}
+                      </span>
                       <span
                         class:list={[
                           "k-tt__title",
@@ -134,110 +159,126 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
                       <span class="k-tt__who">
                         {cell.speakers.map((s) => (
                           <span class="k-tt__person">
-                            <Portrait speaker={s} size={26} class="k-tt__av" />
-                            {bare(s.data.name)}
+                            <Portrait speaker={s} size={48} class="k-tt__av" />
+                            <span class="k-tt__id">
+                              <span class="k-tt__name">
+                                {bare(s.data.name)}
+                              </span>
+                              {s.data.role && (
+                                <span class="k-tt__role">{s.data.role}</span>
+                              )}
+                            </span>
                           </span>
                         ))}
                       </span>
                     </a>
+                  ) : asCard ? (
+                    <div class="k-tt__card" style={`--fill:${fill}`}>
+                      <span class="k-tt__chips">
+                        {tracks}
+                        {when}
+                      </span>
+                      <span class="k-tt__title">{cell.label}</span>
+                      {cell.note && <small>{cell.note}</small>}
+                    </div>
                   ) : (
                     <div class="k-tt__fixture">
-                      {cell.label}
-                      {cell.note && <small>{cell.note}</small>}
+                      <span class="k-tt__chips">
+                        {tracks}
+                        {when}
+                      </span>
+                      <span>
+                        {cell.label}
+                        {cell.note && <small>{cell.note}</small>}
+                      </span>
                     </div>
                   )}
                 </li>
-              ))}
-            </ol>
-          ))}
-        </div>
+              );
+            })}
+          </ol>
 
-        {/* ---- wide: the whole grid ------------------------------------ */}
-        <div
-          class="k-tt__grid"
-          style={`--tracks:${table.tracks.length};grid-template-rows:auto ${rows.join(" ")}`}
-          data-k-reveal="fade"
-        >
-          {table.tracks.map((track, i) => (
-            <div
-              class="k-tt__head"
-              style={`grid-column:${i + 2};--trk:${track.data.color};--trk-ink:${track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
-            >
-              <b>{track.data.label}</b>
-              <span>{track.data.sub}</span>
-            </div>
-          ))}
+          {/* ---- wide: the whole grid ------------------------------------ */}
+          <div
+            class="k-tt__grid"
+            style={`--tracks:${table.tracks.length};grid-template-rows:auto ${rows.join(" ")}`}
+            data-k-reveal="fade"
+          >
+            {table.tracks.map((track, i) => (
+              <div
+                class="k-tt__head"
+                style={`grid-column:${i + 2};--trk:${track.data.color};--trk-ink:${track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+              >
+                <b>{track.data.label}</b>
+              </div>
+            ))}
 
-          {table.boundaries.slice(0, -1).map((time, i) => (
-            <time class="k-tt__tick" style={`grid-row:${i + 2}`}>
-              {time}
-            </time>
-          ))}
+            {table.boundaries.slice(0, -1).map((time, i) => (
+              <time class="k-tt__tick" style={`grid-row:${i + 2}`}>
+                {time}
+              </time>
+            ))}
 
-          {table.cells.map((cell) => (
-            <div
-              class:list={[
-                "k-tt__cell",
-                `k-tt__cell--${cell.kind}`,
-                { "is-featured": isFeatured(cell) },
-              ]}
-              style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd};--fill:${cell.fill ?? "var(--surface)"}`}
-            >
-              {cell.kind === "session" && cell.href ? (
-                <a class="k-tt__card" href={cell.href}>
-                  <span class="k-tt__time">
-                    {cell.start} – {cell.end}
-                    {isFeatured(cell) && (
-                      <span class="k-tt__badge">{c.featuredBadge}</span>
-                    )}
-                  </span>
-                  <span class="k-tt__title">{cell.label || "TBA"}</span>
-                  <span class="k-tt__who">
-                    {cell.speakers.map((s) => (
-                      <span class="k-tt__person">
-                        <Portrait speaker={s} size={26} class="k-tt__av" />
-                        {bare(s.data.name)}
-                      </span>
-                    ))}
-                  </span>
-                </a>
-              ) : (
-                <div class="k-tt__fixture">
-                  <span>{cell.label}</span>
-                  {cell.note && <small>{cell.note}</small>}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {table.undated.length > 0 && (
-          <div class="k-tt__undated">
-            <h3>{c.undated}</h3>
-            <ul>
-              {table.undated.map((session) => (
-                <li>
-                  <a href={session.href}>
-                    {session.entry.data.title ?? session.label}
+            {table.cells.map((cell) => (
+              <div
+                class:list={[
+                  "k-tt__cell",
+                  `k-tt__cell--${cell.kind}`,
+                  { "is-featured": isFeatured(cell) },
+                ]}
+                style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd};--fill:${cell.fill ?? "var(--surface)"}`}
+              >
+                {cell.kind === "session" && cell.href ? (
+                  <a class="k-tt__card" href={cell.href}>
+                    <span class="k-tt__time">
+                      {cell.start} – {cell.end}
+                      {isFeatured(cell) && (
+                        <span class="k-tt__badge">{c.featuredBadge}</span>
+                      )}
+                    </span>
+                    <span class="k-tt__title">{cell.label || "TBA"}</span>
+                    <span class="k-tt__who">
+                      {cell.speakers.map((s) => (
+                        <span class="k-tt__person">
+                          <Portrait speaker={s} size={26} class="k-tt__av" />
+                          {bare(s.data.name)}
+                        </span>
+                      ))}
+                    </span>
                   </a>
-                </li>
-              ))}
-            </ul>
+                ) : (
+                  <div class="k-tt__fixture">
+                    <span>{cell.label}</span>
+                    {cell.note && <small>{cell.note}</small>}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        )}
 
-        <p class="k-tt__note">{c.timetableNote}</p>
+          {table.undated.length > 0 && (
+            <div class="k-tt__undated">
+              <h3>{c.undated}</h3>
+              <ul>
+                {table.undated.map((session) => (
+                  <li>
+                    <a href={session.href}>
+                      {session.entry.data.title ?? session.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p class="k-tt__note">{c.timetableNote}</p>
+        </Panel>
       </div>
     </section>
   )
 }
 
 <style>
-  .k-tt {
-    background: var(--ground);
-    border-top: var(--k-line) solid var(--ink);
-  }
-
   /* ---- grid (wide) -------------------------------------------------- */
 
   .k-tt__grid {
@@ -265,12 +306,6 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
   .k-tt__head b {
     font-family: var(--k-f-display);
     font-size: 17px;
-  }
-
-  .k-tt__head span {
-    font-size: 12px;
-    font-weight: 500;
-    opacity: 0.9;
   }
 
   .k-tt__tick {
@@ -403,10 +438,9 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
     font-size: 12px;
   }
 
-  /* ---- tabs (narrow) ------------------------------------------------ */
+  /* ---- list (narrow) ------------------------------------------------ */
 
-  .k-tt__tabs,
-  .k-tt__panels {
+  .k-tt__list {
     display: none;
   }
 
@@ -415,114 +449,108 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
       display: none;
     }
 
-    .k-tt__tabs {
-      position: sticky;
-      top: calc(var(--topbar-h, 64px) + 6px);
-      z-index: 3;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      padding: 5px;
-      margin-bottom: 18px;
-      border: var(--k-line) solid var(--ink);
-      border-radius: 999px;
-      background: var(--surface);
-      isolation: isolate;
-    }
-
-    .k-tt__tabs button {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      padding: 7px 4px;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
-      color: var(--ink);
-      font: inherit;
-      line-height: 1.2;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-
-    .k-tt__tabs button b {
-      font-family: var(--k-f-display);
-      font-size: 16px;
-    }
-
-    .k-tt__tabs button span {
-      font-size: 10px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .k-tt__tabs button[aria-selected="true"] {
-      color: var(--trk-ink);
-    }
-
-    .k-tt__tab-ind {
-      position: absolute;
-      z-index: 0;
-      left: 5px;
-      top: 5px;
-      bottom: 5px;
-      width: calc((100% - 10px) / 4);
-      border-radius: 999px;
-      background: var(--blue);
-      transform: translateX(calc(var(--k-tab, 0) * 100%));
-    }
-
-    .k-tt__panels {
-      display: block;
-    }
-
-    :global(html.js) .k-tt__list:not([data-active]) {
-      display: none;
-    }
-
     .k-tt__list {
       display: grid;
-      gap: 8px;
+      gap: 12px;
       margin: 0 0 24px;
       padding: 0;
       list-style: none;
     }
 
-    .k-tt__row {
-      display: grid;
-      grid-template-columns: 52px 1fr;
-      gap: 10px;
-      align-items: stretch;
+    .k-tt__chips {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
 
-    .k-tt__when {
-      display: grid;
-      align-content: start;
-      padding-top: 10px;
-      font-family: var(--f-mono);
+    .k-tt__tracks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .k-tt__track {
+      display: inline-flex;
+      padding: 4px 12px;
+      border: var(--k-line) solid var(--ink);
+      border-radius: 1000px;
+      background: var(--trk);
+      color: var(--ink);
+      font-family: var(--k-f-display);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .k-tt__slot {
+      display: inline-flex;
+      padding: 3px 12px;
+      border: 1.5px solid var(--ink);
+      border-radius: 1000px;
+      color: var(--ink);
+      font-family: var(--k-f-display);
       font-size: 13px;
       font-weight: 700;
-      line-height: 1.3;
-    }
-
-    .k-tt__when span {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .k-tt__row--fixture .k-tt__when {
-      padding-top: 6px;
-      color: var(--muted);
+      letter-spacing: 0.02em;
+      line-height: 1.5;
     }
 
     .k-tt__list .k-tt__card {
-      border-left: 8px solid var(--trk);
+      gap: 10px;
+      padding: 16px;
     }
 
-    .k-tt__fixture {
-      justify-content: flex-start;
+    .k-tt__list .k-tt__title {
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.45;
+    }
+
+    .k-tt__list .k-tt__who {
+      margin-top: 4px;
+    }
+
+    .k-tt__list .k-tt__person {
+      align-items: center;
+      gap: 10px;
+    }
+
+    .k-tt__list .k-tt__person :global(.k-tt__av) {
+      width: 48px;
+      height: 48px;
+      border-radius: 1000px;
+    }
+
+    .k-tt__id {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .k-tt__name {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .k-tt__role {
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .k-tt__list .k-tt__fixture {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 14px 16px;
       text-align: left;
+    }
+
+    .k-tt__list .k-tt__fixture small {
+      display: block;
     }
   }
 

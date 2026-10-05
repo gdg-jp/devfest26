@@ -2,7 +2,6 @@ import { animate, inView } from "motion";
 import {
   all,
   EASE_IN_OUT,
-  EASE_OUT,
   EASE_QUINT,
   finePointer,
   reduced,
@@ -109,99 +108,6 @@ export function initMarquee() {
       controls[i].play();
       return () => controls[i].pause();
     });
-  });
-}
-
-/**
- * Timetable tabs on a phone. Arrow keys move between them as the ARIA tabs
- * pattern expects; the coloured pill slides under the chosen one.
- */
-export function initTabs() {
-  all("[data-k-tabs]").forEach((list) => {
-    const tabs = all<HTMLButtonElement>("[data-k-tab]", list);
-    const indicator = list.querySelector<HTMLElement>("[data-k-tab-ind]");
-    const panels = tabs.map((tab) =>
-      document.getElementById(tab.getAttribute("aria-controls") ?? ""),
-    );
-
-    const select = (index: number, focus = false) => {
-      tabs.forEach((tab, i) => {
-        const on = i === index;
-        tab.setAttribute("aria-selected", String(on));
-        tab.tabIndex = on ? 0 : -1;
-        if (on) panels[i]?.setAttribute("data-active", "");
-        else panels[i]?.removeAttribute("data-active");
-      });
-      if (focus) tabs[index].focus();
-
-      if (indicator) {
-        const color = getComputedStyle(tabs[index]).getPropertyValue("--trk");
-        indicator.style.setProperty("--k-tab", String(index));
-        animate(
-          indicator,
-          { x: `${index * 100}%`, backgroundColor: color.trim() || undefined },
-          reduced
-            ? { duration: 0 }
-            : { type: "spring", stiffness: 380, damping: 32 },
-        );
-      }
-
-      const panel = panels[index];
-      if (panel && !reduced) {
-        animate(
-          [...panel.children],
-          { opacity: [0, 1], y: [14, 0] },
-          {
-            duration: 0.45,
-            delay: (i: number) => Math.min(i, 8) * 0.03,
-            ease: EASE_OUT,
-          },
-        );
-      }
-    };
-
-    // The pill is positioned by `x` from here on, not by the CSS variable.
-    if (indicator) indicator.style.transform = "none";
-
-    // Switching tracks from deep inside a long list starts the new one from
-    // its top, just under the pinned tabs, rather than somewhere mid-afternoon.
-    const toTop = (index: number) => {
-      const panel = panels[index];
-      if (!panel) return;
-      const pinned = list.getBoundingClientRect().bottom + 12;
-      const top = panel.getBoundingClientRect().top;
-      if (top < pinned) {
-        window.scrollTo({
-          top: window.scrollY + top - pinned,
-          behavior: reduced ? "auto" : "smooth",
-        });
-      }
-    };
-
-    tabs.forEach((tab, i) => {
-      tab.addEventListener("click", () => {
-        select(i);
-        toTop(i);
-      });
-      tab.addEventListener("keydown", (event) => {
-        const n = tabs.length;
-        const next =
-          event.key === "ArrowRight"
-            ? (i + 1) % n
-            : event.key === "ArrowLeft"
-              ? (i - 1 + n) % n
-              : event.key === "Home"
-                ? 0
-                : event.key === "End"
-                  ? n - 1
-                  : -1;
-        if (next < 0) return;
-        event.preventDefault();
-        select(next, true);
-      });
-    });
-
-    select(0);
   });
 }
 

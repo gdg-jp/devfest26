@@ -204,27 +204,6 @@ const [first] = c.kvTheme;
     flex-direction: column;
     min-height: 100svh;
     overflow: clip;
-    background: var(--ground);
-  }
-
-  /* Graph paper, fading out towards the edges. */
-  .k-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    --rule: color-mix(in srgb, var(--ink) 7%, transparent);
-    background-image:
-      linear-gradient(var(--rule) 1px, transparent 1px),
-      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
-    background-size: 32px 32px;
-    background-position: center top;
-    mask-image: radial-gradient(
-      ellipse 75% 70% at 50% 40%,
-      #000 40%,
-      transparent 100%
-    );
   }
 
   .k-hero__intro {

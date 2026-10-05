@@ -3,13 +3,13 @@ import { initHero } from "./hero";
 import { initKv } from "./kv";
 import { initReveal, initSplit } from "./reveal";
 import { initCarousels } from "./carousel";
+import { initPanels } from "./panel";
 import {
   initFaq,
   initMagnets,
   initMarquee,
   initMenu,
   initSticky,
-  initTabs,
   initTilt,
 } from "./interact";
 
@@ -29,13 +29,13 @@ window.__k26Ready = true;
 
 initHero();
 initKv();
+initPanels();
 initSplit();
 initReveal();
 initCarousels();
 initMarquee();
 initMagnets();
 initTilt();
-initTabs();
 initFaq();
 initMenu();
 initSticky();

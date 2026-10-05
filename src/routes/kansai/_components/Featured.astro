@@ -1,6 +1,7 @@
 ---
 import Portrait from "./Portrait.astro";
 import Arrow from "./Arrow.astro";
+import Panel from "./Panel.astro";
 import { currentLanguage } from "../../../i18n/language";
 import { copy, FEATURED_START, localized } from "../_content";
 import type { FeaturedSpeaker } from "../_data";
@@ -34,88 +35,88 @@ const TONES: Record<string, string> = {
 ---
 
 <section
-  class="k-sec k-dark on-dark k-featured"
+  class="k-sec k-sec--panel k-featured"
   id="featured"
-  style="--k-accent:var(--ht-yellow)"
   aria-labelledby="k-featured-h"
   data-k-car
 >
-  <div class="k-wrap">
-    <header class="k-head">
-      <h2
-        class="k-head__title k-head__title--ja"
-        id="k-featured-h"
-        data-k-split
-      >
-        {c.featuredHeading}
-      </h2>
-    </header>
-  </div>
-
-  <div class="k-wrap">
-    <ul
-      class="k-car"
-      data-k-car-track
-      data-k-car-start={start}
-      data-k-reveal="rise"
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title={c.featuredHeading}
+      id="k-featured-h"
+      tone="var(--ht-blue)"
+      stickers={["arrow", "ellipsis"]}
+      ja={lang === "ja"}
+      class="k-featured__panel"
     >
-      {
-        featured.map((f, i) => {
-          const { speaker } = f.program;
-          return (
-            <li class="k-car__item" style={`--tone:${TONES[f.tone]}`}>
-              <a class="k-card" href={f.talk.href} draggable="false">
-                <span class="k-card__frame">
-                  <span class="k-card__pan" data-k-car-pan>
-                    <Portrait
-                      speaker={speaker}
-                      size={320}
-                      class="k-card__img"
-                      tone={TONES[f.tone]}
-                      eager={Math.abs(i - start) < 2}
-                    />
+      <ul
+        class="k-car"
+        data-k-car-track
+        data-k-car-start={start}
+        data-k-reveal="rise"
+      >
+        {
+          featured.map((f, i) => {
+            const { speaker } = f.program;
+            return (
+              <li class="k-car__item">
+                <a class="k-card" href={f.talk.href} draggable="false">
+                  <span class="k-card__frame">
+                    <span class="k-card__pan" data-k-car-pan>
+                      <Portrait
+                        speaker={speaker}
+                        size={320}
+                        class="k-card__img"
+                        tone={TONES[f.tone]}
+                        eager={Math.abs(i - start) < 2}
+                      />
+                    </span>
+                    {f.talk.start && (
+                      <span class="k-card__time">{f.talk.start}</span>
+                    )}
                   </span>
-                  {f.talk.start && (
-                    <span class="k-card__time">{f.talk.start}</span>
-                  )}
-                </span>
-                <span class="k-card__name">{bare(speaker.data.name)}</span>
-                <span class="k-card__hook">{localized(f.hook, lang)}</span>
-              </a>
-            </li>
-          );
-        })
-      }
-    </ul>
+                  <span class="k-card__name">{bare(speaker.data.name)}</span>
+                  <span class="k-card__hook">{localized(f.hook, lang)}</span>
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
 
-    <div class="k-car__foot">
-      <div class="k-car__bar" aria-hidden="true">
-        <span data-k-car-progress></span>
+      <div class="k-car__foot">
+        <div class="k-car__bar" aria-hidden="true">
+          <span data-k-car-progress></span>
+        </div>
+        <div class="k-car__nav">
+          <button
+            type="button"
+            class="k-car__btn k-car__btn--prev"
+            aria-label={c.prev}
+            data-k-car-prev
+          >
+            <Arrow />
+          </button>
+          <button
+            type="button"
+            class="k-car__btn"
+            aria-label={c.next}
+            data-k-car-next
+          >
+            <Arrow />
+          </button>
+        </div>
       </div>
-      <div class="k-car__nav">
-        <button
-          type="button"
-          class="k-car__btn k-car__btn--prev"
-          aria-label={c.prev}
-          data-k-car-prev
-        >
-          <Arrow />
-        </button>
-        <button
-          type="button"
-          class="k-car__btn"
-          aria-label={c.next}
-          data-k-car-next
-        >
-          <Arrow />
-        </button>
-      </div>
-    </div>
+    </Panel>
   </div>
 </section>
 
 <style>
-  .k-featured {
+  /* Neighbours peek in up to the card's keyline, not its padding. */
+  .k-featured :global(.k-featured__panel .k-panel__body) {
+    margin: 0 var(--k-line) var(--k-line);
+    border-radius: 0 0 calc(var(--k-panel-r) - var(--k-line))
+      calc(var(--k-panel-r) - var(--k-line));
     overflow: clip;
   }
 
@@ -139,10 +140,10 @@ const TONES: Record<string, string> = {
     place-items: center;
     width: 52px;
     aspect-ratio: 1;
-    border: var(--k-line) solid var(--surface);
+    border: var(--k-line) solid var(--ink);
     border-radius: 50%;
     background: transparent;
-    color: var(--surface);
+    color: var(--ink);
     cursor: pointer;
     transition:
       background 0.3s var(--k-ease),
@@ -160,8 +161,7 @@ const TONES: Record<string, string> = {
   }
 
   .k-car__btn:hover:not(:disabled) {
-    background: var(--ht-yellow);
-    border-color: var(--ht-yellow);
+    background: var(--ht-blue);
     color: var(--ink);
     transform: scale(1.08);
   }
@@ -180,8 +180,8 @@ const TONES: Record<string, string> = {
     position: relative;
     display: flex;
     gap: clamp(12px, 2vw, 20px);
-    margin: 0;
-    padding: 4px calc(50% - var(--card) / 2) 8px;
+    margin: 0 calc(-1 * var(--k-panel-pad));
+    padding: 4px calc(50% + var(--k-panel-pad) - var(--card) / 2) 8px;
     list-style: none;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -215,7 +215,7 @@ const TONES: Record<string, string> = {
     display: grid;
     transform-origin: 50% 40%;
     gap: 6px;
-    color: var(--surface);
+    color: var(--ink);
     text-decoration: none;
     -webkit-user-drag: none;
     user-select: none;
@@ -226,20 +226,17 @@ const TONES: Record<string, string> = {
     display: block;
     aspect-ratio: 4 / 5;
     margin-bottom: 10px;
-    border: var(--k-line) solid var(--surface);
+    border: var(--k-line) solid var(--ink);
     border-radius: var(--k-r-lg);
-    background: var(--tone);
+    background: var(--surface);
     overflow: hidden;
     transition: border-radius 0.5s var(--k-ease);
   }
 
-  /* Its own background, because the transform that pans it also isolates it:
-     the photo multiplies onto this, not the frame behind. */
   .k-card__pan {
     position: absolute;
     inset: 0 -8%;
     display: block;
-    background: var(--tone);
   }
 
   .k-card__pan :global(.k-card__img) {
@@ -247,11 +244,7 @@ const TONES: Record<string, string> = {
     height: 100%;
     object-fit: cover;
     font-size: 72px;
-    filter: grayscale(1) contrast(1.05);
-    mix-blend-mode: multiply;
-    transition:
-      filter 0.6s var(--k-ease),
-      transform 0.8s var(--k-ease);
+    transition: transform 0.8s var(--k-ease);
   }
 
   .k-card:hover .k-card__frame,
@@ -261,8 +254,6 @@ const TONES: Record<string, string> = {
 
   .k-card:hover :global(.k-card__img),
   .k-card:focus-visible :global(.k-card__img) {
-    filter: grayscale(0);
-    mix-blend-mode: normal;
     transform: scale(1.05);
   }
 
@@ -293,7 +284,7 @@ const TONES: Record<string, string> = {
     font-size: 13px;
     font-weight: 700;
     line-height: 1.6;
-    color: var(--k-on-dark-muted);
+    color: var(--muted);
   }
 
   /* ---- progress ----------------------------------------------------- */
@@ -302,7 +293,7 @@ const TONES: Record<string, string> = {
     flex: 1;
     height: 3px;
     border-radius: 3px;
-    background: var(--k-on-dark-hair);
+    background: var(--k-hair);
     overflow: hidden;
   }
 
@@ -312,7 +303,7 @@ const TONES: Record<string, string> = {
     width: var(--seg, 30%);
     height: 100%;
     border-radius: 3px;
-    background: var(--ht-yellow);
+    background: var(--ink);
   }
 
   @media (width < 560px) {

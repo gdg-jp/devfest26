@@ -1,4 +1,5 @@
 ---
+import Panel from "./Panel.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
 import { copy, FAQ, localized } from "../_content";
@@ -18,64 +19,57 @@ const lang = currentLanguage();
 const c = copy(lang);
 ---
 
-<section
-  class="k-sec k-faq"
-  id="faq"
-  style="--k-accent:var(--blue)"
-  aria-labelledby="k-faq-h"
->
-  <div class="k-wrap">
-    <header class="k-head">
-      <h2 class="k-head__title" id="k-faq-h" data-k-split>{c.faqHeading}</h2>
-    </header>
-
-    <div class="k-faq__list" data-k-stagger>
-      {
-        FAQ.map((item) => (
-          <details class="k-faq__item" data-k-faq data-k-reveal="up">
-            <summary>
-              <span>{localized(item.q, lang)}</span>
-              <i aria-hidden="true" />
-            </summary>
-            <div class="k-faq__a" data-k-faq-body>
-              <p>{localized(item.a, lang)}</p>
-            </div>
-          </details>
-        ))
-      }
-    </div>
-
-    <aside class="k-coc" id="coc" data-k-reveal="up">
-      <h3>{c.cocHeading}</h3>
-      <p>{c.cocLede}</p>
-      <div class="k-coc__links">
-        <a
-          href={site.links.cocJa}
-          target="_blank"
-          rel="noopener"
-          class="k-link"
-        >
-          {c.cocJa} ↗
-        </a>
-        <a
-          href={site.links.cocEn}
-          target="_blank"
-          rel="noopener"
-          class="k-link"
-        >
-          {c.cocEn} ↗
-        </a>
+<section class="k-sec k-sec--panel k-faq" id="faq" aria-labelledby="k-faq-h">
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title={c.faqHeading}
+      id="k-faq-h"
+      tone="var(--red)"
+      stickers={["slash", "chevron"]}
+    >
+      <div class="k-faq__list" data-k-stagger>
+        {
+          FAQ.map((item) => (
+            <details class="k-faq__item" data-k-faq data-k-reveal="up">
+              <summary>
+                <span>{localized(item.q, lang)}</span>
+                <i aria-hidden="true" />
+              </summary>
+              <div class="k-faq__a" data-k-faq-body>
+                <p>{localized(item.a, lang)}</p>
+              </div>
+            </details>
+          ))
+        }
       </div>
-    </aside>
+
+      <aside class="k-coc" id="coc" data-k-reveal="up">
+        <h3>{c.cocHeading}</h3>
+        <p>{c.cocLede}</p>
+        <div class="k-coc__links">
+          <a
+            href={site.links.cocJa}
+            target="_blank"
+            rel="noopener"
+            class="k-link"
+          >
+            {c.cocJa} ↗
+          </a>
+          <a
+            href={site.links.cocEn}
+            target="_blank"
+            rel="noopener"
+            class="k-link"
+          >
+            {c.cocEn} ↗
+          </a>
+        </div>
+      </aside>
+    </Panel>
   </div>
 </section>
 
 <style>
-  .k-faq {
-    background: var(--ground);
-    border-top: var(--k-line) solid var(--ink);
-  }
-
   .k-faq__list {
     display: grid;
     gap: 10px;

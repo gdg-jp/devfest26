@@ -1,4 +1,5 @@
 ---
+import Panel from "./Panel.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { byTenant } from "../../../data/collections";
 import { currentLanguage } from "../../../i18n/language";
@@ -22,78 +23,75 @@ const partners = (await byTenant("partners", site.tenant)).sort(
 ---
 
 <section
-  class="k-sec k-sponsors"
+  class="k-sec k-sec--panel k-sponsors"
   id="sponsors"
-  style="--k-accent:var(--red)"
   aria-labelledby="k-sponsors-h"
 >
-  <div class="k-wrap">
-    <header class="k-head">
-      <h2 class="k-head__title" id="k-sponsors-h" data-k-split>Sponsors</h2>
-    </header>
-
-    {
-      SPONSORS.length > 0 && (
-        <ul class="k-spons" data-k-stagger>
-          {SPONSORS.map((s) => (
-            <li data-k-reveal="pop">
-              <a
-                class="k-spons__card"
-                href={s.url}
-                target="_blank"
-                rel="noopener"
-              >
-                {s.note && (
-                  <span class="k-spons__note">{localized(s.note, lang)}</span>
-                )}
-                <img
-                  src={s.logo}
-                  alt={s.name}
-                  width={s.width}
-                  height={s.height}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <span class="k-spons__name">{s.name}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )
-    }
-
-    {
-      partners.length > 0 && (
-        <>
-          <h3 class="k-partners__h" data-k-reveal="up">
-            {c.partnersHeading}
-          </h3>
-          <ul class="k-partners" data-k-stagger>
-            {partners.map(({ data }) => (
-              <li
-                class="k-partners__card"
-                style={`--rail:var(--${data.rail})`}
-                data-k-reveal="up"
-              >
-                <a href={data.url} target="_blank" rel="noopener">
-                  <span class="k-partners__name">{data.name}</span>
-                  <span class="k-partners__handle">{data.handle}</span>
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title="Sponsors"
+      id="k-sponsors-h"
+      tone="var(--ht-blue)"
+      stickers={["scallop", "multiply"]}
+    >
+      {
+        SPONSORS.length > 0 && (
+          <ul class="k-spons" data-k-stagger>
+            {SPONSORS.map((s) => (
+              <li data-k-reveal="pop">
+                <a
+                  class="k-spons__card"
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {s.note && (
+                    <span class="k-spons__note">{localized(s.note, lang)}</span>
+                  )}
+                  <img
+                    src={s.logo}
+                    alt={s.name}
+                    width={s.width}
+                    height={s.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span class="k-spons__name">{s.name}</span>
                 </a>
               </li>
             ))}
           </ul>
-        </>
-      )
-    }
+        )
+      }
+
+      {
+        partners.length > 0 && (
+          <>
+            <h3 class="k-partners__h" data-k-reveal="up">
+              {c.partnersHeading}
+            </h3>
+            <ul class="k-partners" data-k-stagger>
+              {partners.map(({ data }) => (
+                <li
+                  class="k-partners__card"
+                  style={`--rail:var(--${data.rail})`}
+                  data-k-reveal="up"
+                >
+                  <a href={data.url} target="_blank" rel="noopener">
+                    <span class="k-partners__name">{data.name}</span>
+                    <span class="k-partners__handle">{data.handle}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+    </Panel>
   </div>
 </section>
 
 <style>
-  .k-sponsors {
-    background: var(--surface);
-    border-top: var(--k-line) solid var(--ink);
-  }
-
   .k-spons {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

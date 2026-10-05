@@ -1,5 +1,6 @@
 ---
 import Portrait from "./Portrait.astro";
+import Panel from "./Panel.astro";
 import { speakerHref, type SpeakerProgram } from "../../../data/program";
 
 /** Everyone on the programme, each one tap from their page. */
@@ -14,39 +15,41 @@ const cycle = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
 ---
 
 <section
-  class="k-sec k-speakers"
+  class="k-sec k-sec--panel k-speakers"
   id="speakers"
-  style="--k-accent:var(--red)"
   aria-labelledby="k-speakers-h"
 >
-  <div class="k-wrap k-wrap--wide">
-    <header class="k-head">
-      <h2 class="k-head__title" id="k-speakers-h" data-k-split>Speakers</h2>
-    </header>
-
-    <ul class="k-grid" data-k-stagger>
-      {
-        speakers.map((s, i) => (
-          <li data-k-reveal="pop">
-            <a class="k-grid__item" href={speakerHref(s.speaker)}>
-              <span
-                class="k-grid__ring"
-                style={`--ring:${cycle[i % cycle.length]}`}
-              >
-                <Portrait
-                  speaker={s.speaker}
-                  size={96}
-                  class="k-grid__img"
-                  tone={cycle[i % cycle.length]}
-                />
-              </span>
-              <span class="k-grid__name">{bare(s.speaker.data.name)}</span>
-              <span class="k-grid__role">{s.speaker.data.role}</span>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title="Speakers"
+      id="k-speakers-h"
+      tone="var(--ht-yellow)"
+      stickers={["quoteOpen", "quoteClose"]}
+    >
+      <ul class="k-grid" data-k-stagger>
+        {
+          speakers.map((s, i) => (
+            <li data-k-reveal="pop">
+              <a class="k-grid__item" href={speakerHref(s.speaker)}>
+                <span
+                  class="k-grid__ring"
+                  style={`--ring:${cycle[i % cycle.length]}`}
+                >
+                  <Portrait
+                    speaker={s.speaker}
+                    size={96}
+                    class="k-grid__img"
+                    tone={cycle[i % cycle.length]}
+                  />
+                </span>
+                <span class="k-grid__name">{bare(s.speaker.data.name)}</span>
+                <span class="k-grid__role">{s.speaker.data.role}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </Panel>
   </div>
 </section>
 

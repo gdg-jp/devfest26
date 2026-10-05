@@ -67,14 +67,12 @@ export const kansai = {
   nav: [
     { href: "#timetable", label: "タイムテーブル" },
     { href: "#speakers", label: "スピーカー" },
-    { href: "#programs", label: "企画" },
     { href: "#faq", label: "FAQ" },
   ],
 
   footerNav: [
     { href: "#news", label: "お知らせ" },
     { href: "#featured", label: "注目スピーカー" },
-    { href: "#programs", label: "企画" },
     { href: "#timetable", label: "タイムテーブル" },
     { href: "#speakers", label: "スピーカー" },
     { href: "#sponsors", label: "スポンサー" },

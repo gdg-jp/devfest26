@@ -1,5 +1,6 @@
 ---
 import Arrow from "./Arrow.astro";
+import Panel from "./Panel.astro";
 import { currentLanguage } from "../../../i18n/language";
 import { copy, localized, NEWS } from "../_content";
 
@@ -17,71 +18,64 @@ const items = [...NEWS]
 
 {
   items.length > 0 && (
-    <section class="k-news k-wrap" id="news" aria-labelledby="k-news-h">
-      <h2 class="k-news__h" id="k-news-h">
-        <span>{c.newsHeading}</span>
-        <small>{c.newsSub}</small>
-      </h2>
-      <ul class="k-news__list" data-k-stagger>
-        {items.map((item) => {
-          const inner = (
-            <>
-              <time datetime={item.date}>{item.date.replaceAll("-", ".")}</time>
-              <span class="k-news__text">{localized(item.text, lang)}</span>
-              {item.href && (
-                <span class="k-news__go">
-                  <Arrow />
-                </span>
-              )}
-            </>
-          );
-          return (
-            <li data-k-reveal="up">
-              {item.href ? (
-                <a
-                  class="k-news__row"
-                  href={item.href}
-                  {...(item.href.startsWith("http")
-                    ? { target: "_blank", rel: "noopener" }
-                    : {})}
-                >
-                  {inner}
-                </a>
-              ) : (
-                <div class="k-news__row">{inner}</div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+    <section
+      class="k-news k-wrap k-wrap--panel"
+      id="news"
+      aria-labelledby="k-news-h"
+    >
+      <Panel
+        title={c.newsHeading}
+        id="k-news-h"
+        tone="var(--red)"
+        stickers={["plus", "period"]}
+      >
+        <p class="k-news__sub">{c.newsSub}</p>
+        <ul class="k-news__list" data-k-stagger>
+          {items.map((item) => {
+            const inner = (
+              <>
+                <time datetime={item.date}>
+                  {item.date.replaceAll("-", ".")}
+                </time>
+                <span class="k-news__text">{localized(item.text, lang)}</span>
+                {item.href && (
+                  <span class="k-news__go">
+                    <Arrow />
+                  </span>
+                )}
+              </>
+            );
+            return (
+              <li data-k-reveal="up">
+                {item.href ? (
+                  <a
+                    class="k-news__row"
+                    href={item.href}
+                    {...(item.href.startsWith("http")
+                      ? { target: "_blank", rel: "noopener" }
+                      : {})}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div class="k-news__row">{inner}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
     </section>
   )
 }
 
 <style>
   .k-news {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 24px;
-    align-items: start;
-    margin-top: clamp(40px, 6vw, 72px);
-    padding: clamp(20px, 2.4vw, 28px) clamp(20px, 2.6vw, 36px);
-    border: var(--k-line) solid var(--ink);
-    border-radius: var(--k-r-lg);
-    background: var(--surface);
+    margin-block: 24px;
   }
 
-  .k-news__h {
-    display: grid;
-    gap: 2px;
-    padding-top: 10px;
-    font-family: var(--k-f-display);
-    font-size: 30px;
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
-
-  .k-news__h small {
+  .k-news__sub {
+    margin: 0 0 4px;
     font-family: var(--f-mono);
     font-size: 12px;
     letter-spacing: 0.12em;
@@ -144,19 +138,6 @@ const items = [...NEWS]
   }
 
   @media (width < 760px) {
-    .k-news {
-      grid-template-columns: 1fr;
-      gap: 6px;
-    }
-
-    .k-news__h {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      padding-top: 0;
-      font-size: 24px;
-    }
-
     .k-news__row {
       grid-template-columns: 1fr 32px;
       gap: 2px 12px;

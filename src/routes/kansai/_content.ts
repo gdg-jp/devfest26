@@ -3,8 +3,7 @@ import type { Language } from "../../i18n";
 /**
  * Everything on the Kansai home page that is written by hand rather than read
  * from the programme: the news, the speakers picked out for the top of the
- * page, the programmes around the talks, sponsors, the FAQ and the page's
- * own wording.
+ * page, sponsors, the FAQ and the page's own wording.
  *
  * It is all in this one file so that whoever is updating the site in the weeks
  * before the event has one place to look. Most edits are a line in `NEWS`,
@@ -51,7 +50,7 @@ export const NEWS: readonly NewsItem[] = [
       ja: "学生展示ブースの出展者を募集しています。",
       en: "Student demo booths are open for applications.",
     },
-    href: "#programs",
+    href: "https://gdgs.jp/df26form-demo",
   },
   {
     date: "2026-09-28",
@@ -156,112 +155,12 @@ export const FEATURED: readonly Featured[] = [
 /** The featured speaker the carousel opens on, centred. */
 export const FEATURED_START = "hiroshi-ishiguro";
 
-/* -------------------------------------------------------------------------- */
-/* On-site gift                                                               */
-/* -------------------------------------------------------------------------- */
-
 /**
  * Seats per ticket type on connpass (現地参加 / オンライン参加), as of
  * 2026-09-30. Capacities, not counts — they only change if the organisers
  * change the event page.
  */
 export const CAPACITY = { onsite: 500, online: 200 } as const;
-
-/** Which gift the on-site ticket comes with — one of these, picked on the day. */
-export const SWAG: readonly Localized[] = [
-  { ja: "モニタークリーナー", en: "Screen cleaner" },
-  { ja: "キャンバスポーチ", en: "Canvas pouch" },
-  { ja: "キーキャップストラップ", en: "Keycap strap" },
-];
-
-/* -------------------------------------------------------------------------- */
-/* Programmes around the talks                                                */
-/* -------------------------------------------------------------------------- */
-
-export interface Program {
-  key: string;
-  tone: "blue" | "green" | "yellow" | "red" | "ink";
-  label: Localized;
-  title: Localized;
-  body: Localized;
-  when?: string;
-  cta?: { href: string; label: Localized; analytics?: string };
-}
-
-export const PROGRAMS: readonly Program[] = [
-  {
-    key: "handson",
-    tone: "red",
-    label: { ja: "Track D", en: "Track D" },
-    title: { ja: "手を動かすハンズオン", en: "Hands-on labs" },
-    body: {
-      ja: "Antigravity と Gemini で、AI アプリや AI エージェントをその場で構築。聞くだけでなく、手を動かして持ち帰れます。",
-      en: "Build AI apps and agents with Antigravity and Gemini on the spot — don't just listen, make something.",
-    },
-    when: "13:50 – 16:00",
-  },
-  {
-    key: "fashion",
-    tone: "yellow",
-    label: { ja: "Workshop", en: "Workshop" },
-    title: {
-      ja: "ファッション × AI ワークショップ",
-      en: "Fashion × AI workshop",
-    },
-    body: {
-      ja: "未来の社会を想定し、AI と共創して服をデザインする。朝には Fashion runway も。",
-      en: "Design clothes for a future society, together with AI. Plus a fashion runway in the morning.",
-    },
-    when: "16:20 – 17:40",
-  },
-  {
-    key: "panel",
-    tone: "green",
-    label: { ja: "Panel", en: "Panel" },
-    title: { ja: "元 Googler たちのパネル", en: "Panels with ex-Googlers" },
-    body: {
-      ja: "「面接で人は見抜けるのか？ Google 採用改革の舞台裏」と「ソフトウェアエンジニアリングについて」の 2 本。",
-      en: "Two panels: inside Google's hiring reform, and on software engineering itself.",
-    },
-    when: "12:25 / 16:20",
-  },
-  {
-    key: "booth",
-    tone: "blue",
-    label: { ja: "学生募集", en: "For students" },
-    title: { ja: "学生展示ブース", en: "Student demo booths" },
-    body: {
-      ja: "個人開発や研究のプロダクトを会場で展示。登壇者や参加者から、リアルな反応とフィードバックをもらえます。",
-      en: "Show your side project or research on the floor, and get real reactions from speakers and attendees.",
-    },
-    cta: {
-      href: "https://gdgs.jp/df26form-demo",
-      label: { ja: "出展を申し込む", en: "Apply for a booth" },
-      analytics: "booth_click",
-    },
-  },
-  {
-    key: "roundtable",
-    tone: "ink",
-    label: { ja: "学生向け", en: "For students" },
-    title: { ja: "学生エンジニア座談会", en: "Student roundtable" },
-    body: {
-      ja: "Google 認定技術者の登壇者と少人数で対話。開発の現場やキャリアを、第一線のプロに直接聞けます。詳細は近日公開。",
-      en: "A small-group conversation with Google-certified experts about real-world development and careers. Details soon.",
-    },
-  },
-  {
-    key: "party",
-    tone: "yellow",
-    label: { ja: "After party", en: "After party" },
-    title: { ja: "懇親会", en: "After party" },
-    body: {
-      ja: "登壇者・参加者と直接話せる時間。ビールスポンサーは転職ドラフトさん。",
-      en: "Talk with speakers and attendees. Beer courtesy of Tenshoku Draft.",
-    },
-    when: "18:25 – 20:25",
-  },
-];
 
 /* -------------------------------------------------------------------------- */
 /* Sponsors                                                                   */
@@ -425,8 +324,6 @@ export const COPY = {
     timetableNote:
       "※ タイムテーブル、セッション内容、登壇形式は変更となる場合があります。",
     undated: "時間調整中",
-    tabsAria: "トラックを選ぶ",
-    onsiteGift: "限定グッズを 1 点プレゼント",
     partnersHeading: "共催・協力団体",
     preEventHeading: "Pre-event",
     preEventCta: "詳細・申し込み",
@@ -497,8 +394,6 @@ export const COPY = {
     featuredBadge: "Pick",
     timetableNote: "The timetable, sessions and formats may change.",
     undated: "Time to be confirmed",
-    tabsAria: "Choose a track",
-    onsiteGift: "A gift of your choice",
     partnersHeading: "Co-hosts & partners",
     preEventHeading: "Pre-event",
     preEventCta: "Details & sign-up",

@@ -6,10 +6,8 @@ import KvLineup from "./kv/KvLineup.astro";
 import KvPoster from "./kv/KvPoster.astro";
 import KvTicket from "./kv/KvTicket.astro";
 import Featured from "./Featured.astro";
-import Marquee from "./Marquee.astro";
 import News from "./News.astro";
 import PreEvent from "./PreEvent.astro";
-import Programs from "./Programs.astro";
 import Timetable from "./Timetable.astro";
 import Speakers from "./Speakers.astro";
 import Sponsors from "./Sponsors.astro";
@@ -53,7 +51,6 @@ const { featured, featuredSessions, speakers, counts } = await homeData(
     )
   }
   <Featured featured={featured} />
-  <Marquee />
   <News />
   <PreEvent tenant={site.tenant} />
   {
@@ -65,7 +62,6 @@ const { featured, featuredSessions, speakers, counts } = await homeData(
   }
   <span id="sessions" class="k-anchor" aria-hidden="true"></span>
   <Timetable site={site} featured={featuredSessions} />
-  <Programs />
   <Speakers speakers={speakers} />
   <Sponsors site={site} />
   <Faq site={site} />
