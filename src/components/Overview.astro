@@ -3,6 +3,7 @@ import PhotoSticker from "./PhotoSticker.astro";
 import Gutter from "./Gutter.astro";
 import Sticker from "./Sticker.astro";
 import type { ResolvedTenant } from "../tenants";
+import { venueMaps } from "../data/venueMaps";
 import { messages } from "../i18n";
 import { currentLanguage } from "../i18n/language";
 
@@ -12,6 +13,7 @@ interface Props {
 
 const { site } = Astro.props;
 const { event, stats } = site;
+const mapEmbedUrl = venueMaps[site.tenant];
 const t = messages(currentLanguage());
 
 const rows = [
@@ -81,7 +83,7 @@ const rows = [
       {t.overview.lede(event.venue.region, event.isoDate.slice(0, 4))}
     </p>
 
-    <div class="split">
+    <div class:list={["split", { "with-map": mapEmbedUrl }]}>
       <div class="panel spec-panel" data-reveal="up">
         <dl class="spec">
           {
@@ -97,6 +99,27 @@ const rows = [
           }
         </dl>
       </div>
+
+      {
+        /*
+          Beside the spec, level with it: the venue row says where it is in
+          words, and the map is the same answer drawn. The stats give up their
+          column for it and run as one row underneath both — and in a single
+          column the map still comes before them, since where the day is
+          matters more to a reader than how many tracks it has.
+        */
+        mapEmbedUrl && (
+          <div class="panel map" id="access" data-reveal="up">
+            <iframe
+              src={mapEmbedUrl}
+              title={t.overview.mapTitle(event.venue.name)}
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            />
+          </div>
+        )
+      }
 
       <div class="stats" data-stagger>
         {
@@ -216,9 +239,35 @@ const rows = [
   }
 
   .disclaimer {
-    grid-column: span 2;
+    grid-column: 1 / -1;
     font-size: 13px;
     color: var(--muted);
     margin: 2px 0 0;
+  }
+
+  /* Level with the spec beside it, however tall the spec turns out to be. */
+  .map {
+    align-self: stretch;
+    display: flex;
+    min-height: 280px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .map iframe {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+  }
+
+  .with-map .stats {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (width <= 600px) {
+    .with-map .stats {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 </style>
