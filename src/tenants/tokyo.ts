@@ -71,17 +71,17 @@ export const tokyo = {
   },
 
   // No pre-events yet, so the nav does not offer a link to an empty section.
+  // Nor to the timetable, which src/routes/tokyo/index.astro leaves out until
+  // the day is settled: put it back in both lists when that file goes.
   nav: [
     { href: "#overview", label: "開催概要" },
     { href: "#about", label: "イベントについて" },
-    { href: "#timetable", label: "タイムテーブル" },
     { href: "#sessions", label: "セッション" },
   ],
 
   footerNav: [
     { href: "#overview", label: "開催概要" },
     { href: "#about", label: "イベントについて" },
-    { href: "#timetable", label: "タイムテーブル" },
     { href: "#sessions", label: "セッション" },
     { href: "#coc", label: "行動規範" },
     { href: "#register", label: "参加登録" },
