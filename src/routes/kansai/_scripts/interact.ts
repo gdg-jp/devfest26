@@ -1,11 +1,5 @@
 import { animate, inView } from "motion";
-import {
-  all,
-  EASE_IN_OUT,
-  EASE_QUINT,
-  finePointer,
-  reduced,
-} from "./env";
+import { all, EASE_IN_OUT, EASE_QUINT, finePointer, reduced } from "./env";
 
 /**
  * The register buttons lean towards the pointer when it comes near, then
