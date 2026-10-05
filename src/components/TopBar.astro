@@ -1,6 +1,7 @@
 ---
 import Logo from "./Logo.astro";
 import type { ResolvedTenant } from "../tenants";
+import type { NavItem } from "../tenants/types";
 import { isHome, tenantHome } from "../lib/url";
 import { clean } from "../preview/stega";
 import { messages } from "../i18n";
@@ -13,9 +14,15 @@ import {
 
 interface Props {
   site: ResolvedTenant;
+  /**
+   * The section links to show, when this page's own are not the city's. A page
+   * that has rearranged or renamed its sections knows its nav; the city config
+   * is edited elsewhere and cannot.
+   */
+  nav?: readonly NavItem[];
 }
 
-const { site } = Astro.props;
+const { site, nav = site.nav } = Astro.props;
 const t = messages(currentLanguage());
 
 // The nav is a set of page anchors, which only resolve on the page that has
@@ -49,7 +56,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     </a>
     <nav aria-label={t.topbar.sectionNavAria}>
       {
-        site.nav.map((item) => (
+        nav.map((item) => (
           <a href={prefix + item.href} data-spy={item.href.slice(1)}>
             {item.label}
           </a>
@@ -167,6 +174,9 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     color: var(--ink);
     text-decoration: none;
     padding: 3px 0;
+    /* A label that broke across two lines would make the whole bar taller, and
+       `--topbar-h` is what everything pinned below it is measured against. */
+    white-space: nowrap;
   }
 
   /* Underline grows from the left rather than switching on, so the active
@@ -227,7 +237,25 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     transform-origin: left;
   }
 
-  @media (width <= 900px) {
+  /* Six section links, the language toggle and the register button make a full
+     bar. Between a small laptop and the width where the nav gives up entirely,
+     the gaps close first — the alternative is labels wrapping, which costs more
+     than the space it saves. */
+  @media (width <= 1100px) {
+    .topbar :global(.wrap) {
+      gap: 14px;
+    }
+
+    nav {
+      gap: 13px;
+      font-size: 13.5px;
+    }
+  }
+
+  /* 940px rather than 900: with six links the bar needs 866px, and a 900px
+     window leaves it 860. It gives the nav up just before it would have to
+     wrap, not just after. */
+  @media (width <= 940px) {
     nav,
     .lang-switch {
       display: none;

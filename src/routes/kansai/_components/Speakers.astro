@@ -1,0 +1,305 @@
+---
+import Eyebrow from "../../../components/Eyebrow.astro";
+import SpeakerAvatar from "../../../components/SpeakerAvatar.astro";
+import { getProgramSpeakers, speakerHref } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import { FEATURED_SPEAKERS, copy } from "../_content";
+
+/**
+ * Everybody on the programme, as a carousel directly under the hero.
+ *
+ * This is the page's proof, and it wants to be *all* of it: three large cards
+ * said "we have three good speakers", where thirty-three said "this is a real
+ * conference". A carousel is how thirty-three fit above the fold — one row, as
+ * many as the screen holds, the rest a swipe away, and the row itself is the
+ * thing that says there are more.
+ *
+ * The ones `_content.ts` picks out lead, because the first two cards are the
+ * only ones a visitor is guaranteed to see and they should be the names that
+ * carry. After those, programme order.
+ *
+ * One scroller, scroll-snap, and buttons that page it. Nothing is synchronised
+ * to anything, so there is no state to get out of step.
+ */
+interface Props {
+  tenant: string;
+}
+
+const { tenant } = Astro.props;
+const c = copy(currentLanguage());
+
+const programme = await getProgramSpeakers(tenant);
+
+const rank = (slug: string) => {
+  const picked = FEATURED_SPEAKERS.indexOf(slug);
+  return picked === -1 ? FEATURED_SPEAKERS.length : picked;
+};
+const speakers = [...programme].sort((a, b) => rank(a.slug) - rank(b.slug));
+---
+
+{
+  speakers.length > 0 && (
+    <section class="sec tint speakers" id="featured">
+      <div class="wrap head">
+        <div class="head-text">
+          <Eyebrow mark="plus">Speakers</Eyebrow>
+          <h2 class="sec-h" data-reveal="up">
+            {c.speakersHeading}
+          </h2>
+          <p class="sec-lede" data-reveal="up">
+            {c.speakersLede(speakers.length)}
+          </p>
+        </div>
+
+        <div class="pager" data-carousel-pager hidden>
+          <button type="button" data-carousel-prev aria-label={c.carouselPrev}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 4 7 12l8 8" />
+            </svg>
+          </button>
+          <button type="button" data-carousel-next aria-label={c.carouselNext}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 4l8 8-8 8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="rail-wrap" data-carousel data-reveal="up">
+        <ul class="rail" data-carousel-rail>
+          {speakers.map(({ speaker, slug, appearances }) => (
+            <li class="card linkbox">
+              <SpeakerAvatar speaker={speaker} size={116} />
+              {FEATURED_SPEAKERS.includes(slug) && (
+                <span class="pick">{c.featuredBadge}</span>
+              )}
+              <h3>
+                <a class="stretch" href={speakerHref(speaker)}>
+                  {speaker.data.name}
+                </a>
+              </h3>
+              <p class="role">{speaker.data.role}</p>
+              {appearances[0]?.talk.title && (
+                <p class="talk">「{appearances[0].talk.title}」</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="wrap">
+        <div class="cta-row more" data-reveal="up">
+          <a class="btn ghost" href="#timetable">
+            {c.featuredCta}
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .speakers {
+    border-top: var(--bw) solid var(--stroke);
+    /* The rail runs to the edge of the window, so the section cannot hold it
+       inside `.wrap` padding. */
+    overflow: hidden;
+  }
+
+  .head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .head-text {
+    min-width: 0;
+  }
+
+  .head :global(.sec-lede) {
+    margin-bottom: 0;
+  }
+
+  /* ---- the pager -------------------------------------------------------- */
+
+  .pager {
+    display: flex;
+    gap: 9px;
+    flex: none;
+    padding-bottom: 4px;
+  }
+
+  .pager button {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: var(--bw) solid var(--stroke);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      transform 0.14s ease,
+      box-shadow 0.14s ease,
+      opacity 0.18s ease;
+  }
+
+  .pager button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 var(--stroke);
+  }
+
+  /* Kept in place rather than removed at the ends of the rail: a control that
+     disappears takes the other one's position with it. */
+  .pager button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .pager svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---- the rail --------------------------------------------------------- */
+
+  .rail-wrap {
+    margin-top: clamp(22px, 2.8vw, 30px);
+  }
+
+  /*
+    The rail is the full width of the window and pads itself in to where the
+    page's own gutter is, so the row starts in line with the heading above it
+    and runs off the right-hand edge — which is what says there is more of it
+    than fits. The padding repeats `.wrap`'s rule rather than sharing it,
+    because `.wrap` centres a box and this has to bleed.
+  */
+  .rail {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(228px, 25vw, 268px);
+    gap: 14px;
+    margin: 0;
+    padding: 6px max(20px, calc((100vw - var(--w)) / 2)) 10px;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: max(20px, calc((100vw - var(--w)) / 2));
+    scrollbar-width: none;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card {
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 26px 20px 22px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-lg);
+    background: var(--ground);
+    transition:
+      transform 0.18s var(--ease-out),
+      box-shadow 0.18s var(--ease-out);
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 0 var(--stroke);
+  }
+
+  .pick {
+    margin-top: 12px;
+    padding: 1px 11px;
+    border: 1.5px solid var(--stroke);
+    border-radius: 999px;
+    background: var(--t);
+    color: var(--t-on);
+    font-family: var(--f-display);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.7;
+  }
+
+  .card h3 {
+    margin: 13px 0 6px;
+    font-size: 19.5px;
+    letter-spacing: -0.01em;
+  }
+
+  /* The badge already pushed the name down; without this the unbadged cards
+     in the same row sit a line higher than the badged ones. */
+  .pick + h3 {
+    margin-top: 9px;
+  }
+
+  .card h3 a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .card:hover h3 a {
+    text-decoration: underline;
+  }
+
+  .role {
+    margin: 0;
+    /* Affiliations run to a full sentence and a card is read at a glance, so
+       the tail is cut rather than allowed to set the card's height. */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .talk {
+    margin: 12px 0 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  .more {
+    justify-content: center;
+    margin-top: clamp(20px, 2.6vw, 28px);
+  }
+
+  @media (width <= 700px) {
+    .head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .pager {
+      justify-content: flex-end;
+    }
+  }
+
+  @media (width <= 560px) {
+    .rail {
+      padding-inline: 14px;
+      scroll-padding-left: 14px;
+    }
+  }
+</style>

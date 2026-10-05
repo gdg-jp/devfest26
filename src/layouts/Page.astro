@@ -4,6 +4,8 @@ import Sprite from "../components/Sprite.astro";
 import TopBar from "../components/TopBar.astro";
 import Footer from "../components/Footer.astro";
 import type { ResolvedTenant } from "../tenants";
+import { messages } from "../i18n";
+import { currentLanguage } from "../i18n/language";
 
 /**
  * The shell for the pages behind the programme: one session, one talk, one
@@ -22,9 +24,19 @@ interface Props {
   description?: string;
   jsonLd?: Record<string, unknown>;
   back: { href: string; label: string };
+  /**
+   * The label of a register button closing the page. A visitor who has read
+   * this far into one session is as close to registering as anyone on the
+   * site, and without it the only way on is back up to the top bar.
+   */
+  register?: string;
+  /** Where the register click is reported as having come from. */
+  placement?: string;
 }
 
-const { site, title, description, jsonLd, back } = Astro.props;
+const { site, title, description, jsonLd, back, register, placement } =
+  Astro.props;
+const t = messages(currentLanguage());
 ---
 
 <Base
@@ -41,6 +53,23 @@ const { site, title, description, jsonLd, back } = Astro.props;
     <div class="wrap">
       <a class="back" href={back.href}>{back.label}</a>
       <slot />
+      {
+        register && (
+          <aside class="d-register">
+            <a
+              class="btn"
+              href={site.links.register}
+              target="_blank"
+              rel="noopener"
+              data-analytics="register_click"
+              data-placement={placement}
+            >
+              {register}
+            </a>
+            <p>{t.detail.registerNote(site.event.fee)}</p>
+          </aside>
+        )
+      }
     </div>
   </main>
   <Footer site={site} />
@@ -239,5 +268,25 @@ const { site, title, description, jsonLd, back } = Astro.props;
   .d-card.linkbox:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 0 -1px var(--stroke);
+  }
+
+  /* ---- closing register button -------------------------------------- */
+
+  .d-register {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-top: 40px;
+    padding: 22px 24px;
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-md);
+    background: var(--t-pa);
+  }
+
+  .d-register p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
   }
 </style>

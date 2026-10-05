@@ -1,0 +1,105 @@
+---
+import Eyebrow from "../../../components/Eyebrow.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * Three reasons, immediately after the speakers have scrolled past.
+ *
+ * The page used to go from the hero straight into what is on — news, faces,
+ * the timetable — which answers "what is this" and never answers "why would I
+ * give up a Sunday for it". That question is the one that decides whether
+ * anybody registers, so it is asked and answered here, once, in the visitor's
+ * terms rather than the organisers'.
+ *
+ * Deliberately concrete: a name, a number and a price, not three adjectives.
+ */
+const c = copy(currentLanguage());
+---
+
+<section class="sec why" id="why">
+  <div class="wrap">
+    <Eyebrow mark="cross">{c.whyEyebrow}</Eyebrow>
+    <h2 class="sec-h" data-reveal="up">{c.whyHeading}</h2>
+    <p class="sec-lede" data-reveal="up">{c.whyLede}</p>
+
+    <ol class="reasons">
+      {
+        c.why.map((reason) => (
+          <li
+            class="reason"
+            style={`--c:var(--${reason.tone}); --pa:var(--pa-${reason.tone})`}
+            data-reveal="up"
+          >
+            <p class="no">{reason.no}</p>
+            <h3>{reason.h}</h3>
+            <p class="body">{reason.p}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .why {
+    border-top: var(--bw) solid var(--stroke);
+  }
+
+  .reasons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(14px, 1.8vw, 22px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: none;
+  }
+
+  .reason {
+    position: relative;
+    padding: clamp(22px, 2.6vw, 30px);
+    border: var(--bw) solid var(--stroke);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    overflow: hidden;
+    transition:
+      opacity 0.5s var(--ease-out),
+      transform 0.5s var(--ease-out),
+      box-shadow 0.2s var(--ease-out);
+  }
+
+  .reason:hover {
+    box-shadow: 0 6px 0 var(--stroke);
+  }
+
+  .no {
+    margin: 4px 0 14px;
+    font-family: var(--f-mono);
+    font-size: clamp(30px, 3.6vw, 42px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--c);
+  }
+
+  .reason h3 {
+    margin: 0 0 12px;
+    font-size: clamp(18px, 2vw, 21.5px);
+    letter-spacing: -0.015em;
+    line-height: 1.5;
+  }
+
+  .body {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.95;
+    color: var(--muted);
+  }
+
+  @media (width <= 900px) {
+    .reasons {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

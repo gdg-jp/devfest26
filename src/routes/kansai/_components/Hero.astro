@@ -1,0 +1,648 @@
+---
+import Logo from "../../../components/Logo.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { copy } from "../_content";
+import { currentLanguage } from "../../../i18n/language";
+
+/**
+ * Kansai's first screen, built to the event's own key visual — the one on the
+ * connpass page, which is what the organisers already use everywhere else —
+ * with the date and venue given the weight xtalk gives them.
+ *
+ * Three rules decide everything here.
+ *
+ * One: exactly one thing on this screen can be clicked, and it is the only
+ * thing drawn as a control. The brand's button is a solid fill, a 2.5px
+ * outline and a hard offset shadow; nothing else on the screen is allowed any
+ * of those three. The 参加無料 / 入退場自由 pills that used to sit beside the
+ * button are gone rather than restyled: whatever they were filled with, two
+ * rounded chips next to a rounded button read as two more buttons, and both
+ * facts are already in the FAQ and in Why, which is where somebody looks for
+ * them. The same went for the station line under the venue — it has moved to
+ * the access section, where it is what the reader came for rather than a
+ * third line of small print on the screen that has to stay down to three
+ * facts.
+ *
+ * Two: the date and the venue are the same size as each other and bigger than
+ * anything except the claim. They sit on one line behind icons, out of the
+ * boxed panel they were in — a rounded, outlined box is itself a control
+ * shape, and the emphasis is meant to come from the type.
+ *
+ * Three: the right half carries a drawing. It began as five of the brand's
+ * punctuation glyphs scattered about, which is what the key visual does around
+ * the mark, and a scatter had nothing to say. What is there now is the year in
+ * the four brand colours, ringed by three orbits, with the four fields the day
+ * crosses riding on them: AI, robotics, making and business, each a disc in
+ * one of the four and each labelled, so the picture states the tagline —
+ * "専門を越えれば、アイデアは動き出す" — rather than decorating it. The same
+ * four colours badge the tracks in the timetable, so the code is taught here
+ * and paid off there.
+ *
+ * The discs are the one place on this screen with a filled shape that is not
+ * the button, so they are given none of the button's other two marks: no
+ * outline, no offset shadow, and they are a third of its size. The "26" sits
+ * at low opacity under everything and the orbits are hairlines — the white and
+ * the ink type stay the subject, which is the whole reason the drawing is
+ * allowed to be this busy.
+ *
+ * The mark is back but small — the top bar carries it at full size on every
+ * screen, so here it only has to say which event this is.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event, links, tagline } = site;
+const c = copy(currentLanguage());
+
+// `2026-10-18` → `10.18`. The year is in the top bar, the footer and the page
+// title; on the one line that has to be read at a glance it is noise.
+const dayMonth = event.isoDate.slice(5).replace("-", ".");
+
+/*
+  The four discs, in the brand's four colours and in the order the copy lists
+  the fields. Geometry lives in the component rather than in the copy file
+  because it is drawing, not wording: the labels come from `heroFields` and the
+  positions stay put whatever language is in them.
+
+  Each sits on one of the three orbit ellipses, and `icon` is drawn around the
+  disc's own centre, so every path below is relative to 0,0. `on` is what the
+  icon is drawn in: the palette's own rule, set out beside --t-on in
+  tokens.css, is that yellow is the one fill a white mark does not clear.
+*/
+const DISCS = [
+  {
+    tone: "blue",
+    on: "surface",
+    x: 126,
+    y: 136,
+    // `</>`
+    icon: "M-4.5-5.5-10 0l5.5 5.5M4.5-5.5 10 0 4.5 5.5M1.8-8-1.8 8",
+  },
+  {
+    tone: "red",
+    on: "surface",
+    x: 452,
+    y: 118,
+    // a robot's head — ears and an antenna, because a plain box beside a
+    // field called ビジネス was reading as a briefcase
+    icon: "M-7-3h14v10h-14zM0-3v-4.5M-7 1.5h-2.5M7 1.5h2.5M-3 1.2h.01M3 1.2h.01",
+  },
+  {
+    tone: "yellow",
+    on: "ink",
+    x: 92,
+    y: 318,
+    // an isometric cube
+    icon: "M0-9 8.4-4.3v9L0 9l-8.4-4.3v-9zM0-9V0m0 0 8.4-4.3M0 0l-8.4-4.3",
+  },
+  {
+    tone: "green",
+    on: "surface",
+    x: 436,
+    y: 344,
+    // three bars on a baseline
+    icon: "M-10 8h20M-6.5 5.5V-1M0 5.5V-6.5M6.5 5.5V2",
+  },
+] as const;
+
+/* Loose dots along the orbits, in the same four colours. */
+const MOTES = [
+  { tone: "red", x: 288, y: 54, r: 5 },
+  { tone: "blue", x: 196, y: 86, r: 4 },
+  { tone: "yellow", x: 46, y: 224, r: 4.5 },
+  { tone: "green", x: 520, y: 226, r: 4 },
+  { tone: "blue", x: 300, y: 418, r: 5 },
+  { tone: "yellow", x: 496, y: 392, r: 4 },
+] as const;
+
+const fields = c.heroFields;
+
+const venueName = event.venue.name;
+const venueCut = Math.max(
+  venueName.lastIndexOf(" "),
+  venueName.lastIndexOf("　"),
+);
+const venueMain = venueCut > 0 ? venueName.slice(0, venueCut) : venueName;
+const venueSub = venueCut > 0 ? venueName.slice(venueCut + 1) : "";
+---
+
+<section class="hero" id="top">
+  <div class="wrap lay">
+    <div class="col">
+      <p class="lockup" data-intro="1">
+        <Logo variant="brackets" class="mark" />
+        <span class="edition">{site.title}</span>
+      </p>
+
+      <h1 class="claim" data-intro="2">
+        <span class="claim-lead">{tagline.lead}</span><span class="claim-accent"
+          >{tagline.accent}</span
+        >
+      </h1>
+
+      {
+        /* The two facts, on one line and led by an icon rather than a worded
+           chip. They sit on the white with the rest of the column — the pale
+           band they were in was a heavier way of grouping them than the
+           grouping needed. */
+      }
+      <dl class="when" data-intro="3">
+        <div class="fact">
+          <dt>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="3"></rect>
+              <path d="M8 3v4M16 3v4M3 10h18"></path>
+            </svg>
+            <span class="visually-hidden">{c.heroDateLabel}</span>
+          </dt>
+          <dd>
+            <b>{dayMonth}</b><span class="dow"
+              >{event.dayOfWeekEn.toUpperCase()}</span
+            ><em>{event.hoursCompact}</em>
+          </dd>
+        </div>
+
+        <div class="fact">
+          <dt>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"
+              ></path>
+              <circle cx="12" cy="10" r="2.6"></circle>
+            </svg>
+            <span class="visually-hidden">{c.heroVenueLabel}</span>
+          </dt>
+          <dd>
+            <b class="venue"
+              >{venueMain}{
+                venueSub && <span class="campus">{venueSub}</span>
+              }</b
+            >
+          </dd>
+        </div>
+      </dl>
+
+      <a
+        class="btn"
+        href={links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="hero"
+        data-intro="4"
+        >{c.heroRegister}<span class="arr" aria-hidden="true">→</span></a
+      >
+
+      <p class="cta-note" data-intro="5">{c.heroRegisterNote}</p>
+    </div>
+
+    {
+      /* The four fields, meeting. Labelled, so it is read rather than merely
+         seen — which is why it is `role="img"` with the whole sentence on it
+         rather than hidden from assistive tech as decoration. */
+    }
+    <div class="art" data-intro="6">
+      <svg viewBox="0 22 560 396" role="img" aria-label={c.heroArtAlt}>
+        <defs>
+          <linearGradient id="yr" x1="0" y1="0" x2="1" y2="0.3">
+            <stop class="s1" offset="0"></stop>
+            <stop class="s2" offset="0.4"></stop>
+            <stop class="s3" offset="0.7"></stop>
+            <stop class="s4" offset="1"></stop>
+          </linearGradient>
+        </defs>
+
+        {
+          /* The year, under everything. The reference puts a pastel wash in
+             the corner behind it; here the artboard crops a circle that big
+             into a hard-edged blue rectangle, and with three orbits and four
+             discs over it there was nothing left for it to do. */
+        }
+        <text class="year" x="282" y="248">26</text>
+
+        <g class="orbits">
+          <ellipse
+            class="o-blue"
+            cx="282"
+            cy="236"
+            rx="218"
+            ry="124"
+            transform="rotate(-20 282 236)"></ellipse>
+          <ellipse
+            class="o-yellow"
+            cx="282"
+            cy="236"
+            rx="204"
+            ry="142"
+            transform="rotate(26 282 236)"></ellipse>
+          <ellipse
+            class="o-red"
+            cx="282"
+            cy="236"
+            rx="228"
+            ry="104"
+            transform="rotate(6 282 236)"></ellipse>
+        </g>
+
+        {
+          MOTES.map((m) => (
+            <circle
+              class="mote"
+              style={`--c: var(--${m.tone})`}
+              cx={m.x}
+              cy={m.y}
+              r={m.r}
+            />
+          ))
+        }
+
+        {
+          DISCS.map((disc, i) => (
+            <g
+              class="disc"
+              style={`--c: var(--${disc.tone}); --on: var(--${disc.on}); --i: ${i}`}
+            >
+              <circle class="pad" cx={disc.x} cy={disc.y} r="21" />
+              <path
+                class="sign"
+                d={disc.icon}
+                transform={`translate(${disc.x} ${disc.y})`}
+              />
+              <text
+                class="label"
+                x={disc.x}
+                y={disc.y + 42}
+                text-anchor="middle"
+              >
+                {fields[i]}
+              </text>
+            </g>
+          ))
+        }
+      </svg>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--surface);
+    border-bottom: var(--bw) solid var(--stroke);
+    padding: clamp(36px, 5vw, 70px) 0 clamp(36px, 5vw, 66px);
+  }
+
+  /* ---- the two columns ------------------------------------------------- */
+
+  /*
+    Text left, drawing right, and the drawing is the narrower of the two — it
+    is the second thing on the screen, never the first. `align-items: center`
+    rather than `start` because the drawing reads from its middle outwards and
+    wants the claim and the facts either side of that middle.
+  */
+  .lay {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr);
+    gap: clamp(20px, 3.4vw, 54px);
+    align-items: center;
+  }
+
+  /* One column, drawing beneath. It keeps its labels, so it is still worth
+     having, but it is capped well under the full width — at full width it
+     would push the button off a short screen, and the button is the point. */
+  @media (width <= 980px) {
+    .lay {
+      grid-template-columns: 1fr;
+    }
+
+    .art {
+      width: min(100%, 400px);
+      margin-top: clamp(8px, 3vw, 24px);
+    }
+  }
+
+  /* ---- the drawing ----------------------------------------------------- */
+
+  /* Capped rather than left to fill its column: the drawing is wider than it
+     is tall but not by much, so an uncapped width is what decides the height
+     of the screen, and the screen has to end with the register button still
+     on it. */
+  .art {
+    width: min(100%, 560px);
+    margin-inline: auto;
+  }
+
+  /*
+    Large, and quiet in proportion. Everything the visitor has to read is in
+    the left column, so the drawing is allowed to take the room it needs only
+    on the condition that it never competes for the eye: the whole thing is
+    held back a notch here, and the year, the orbits and the motes are each
+    held back again below.
+
+    On the <svg> rather than on `.art`, which is what the intro script
+    animates — an opacity there would be overwritten the moment it ran.
+  */
+  .art svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 0.82;
+  }
+
+  /*
+    The year, large and quiet. Four colours across one diagonal is the one
+    gradient on the site, and it earns the exception by being the thing that
+    makes the shape read as Google's rather than as a number — at 0.3 it is a
+    tint of the page, not a second headline.
+  */
+  .year {
+    font-family: var(--f-display);
+    font-size: 246px;
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    fill: url("#yr");
+    opacity: 0.2;
+  }
+
+  .s1 {
+    stop-color: var(--blue);
+  }
+
+  .s2 {
+    stop-color: var(--red);
+  }
+
+  .s3 {
+    stop-color: var(--yellow);
+  }
+
+  .s4 {
+    stop-color: var(--green);
+  }
+
+  /* Hairlines. Any heavier and three overlapping ellipses become a mesh. */
+  .orbits ellipse {
+    fill: none;
+    stroke-width: 1.4;
+    opacity: 0.4;
+  }
+
+  .o-blue {
+    stroke: var(--blue);
+  }
+
+  .o-yellow {
+    stroke: var(--yellow);
+  }
+
+  .o-red {
+    stroke: var(--red);
+  }
+
+  .mote {
+    fill: var(--c);
+    opacity: 0.62;
+  }
+
+  /*
+    The four fields. A filled disc is the button's first mark, so these are
+    denied its other two — no outline, no offset shadow — and drawn at a third
+    of its size, which is what keeps them reading as a diagram rather than as
+    four more things to press.
+  */
+  .pad {
+    fill: var(--c);
+  }
+
+  .sign {
+    fill: none;
+    stroke: var(--on);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Grey, not ink. In ink they were four more pieces of bold black type on a
+     screen whose black type is the thing that has to be read. */
+  .label {
+    fill: var(--muted);
+    font-family: var(--f-display);
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  /*
+    The discs arrive one after another, outward from the year. It is the one
+    piece of motion on the screen and it says the only thing worth saying
+    here, which is that these four turn up in the same place.
+  */
+  :global(html.js) .disc {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: arrive 0.5s var(--ease-out) forwards;
+    animation-delay: calc(0.8s + var(--i) * 0.11s);
+  }
+
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      transform: scale(0.84);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.js) .disc {
+      opacity: 1;
+      animation: none;
+    }
+  }
+
+  /* ---- the lockup and the claim ----------------------------------------- */
+
+  .lockup {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px clamp(12px, 1.6vw, 18px);
+    margin: 0 0 clamp(14px, 1.8vw, 20px);
+  }
+
+  /* Small: the top bar draws this at full size on every screen, so here it is
+     a signature rather than a headline. */
+  .lockup :global(.mark) {
+    width: clamp(136px, 15vw, 178px);
+    flex: none;
+  }
+
+  .edition {
+    font-family: var(--f-mono);
+    font-size: clamp(11.5px, 1.3vw, 13.5px);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /*
+    One phrase in colour and the rest in ink, which is how the key visual sets
+    it. The accent is the theme colour at text weight, so it stays readable on
+    paper rather than being the decorative halftone.
+  */
+  .claim {
+    margin: 0 0 clamp(26px, 3.4vw, 38px);
+    font-size: clamp(28px, 4.4vw, 54px);
+    line-height: 1.26;
+    letter-spacing: -0.03em;
+  }
+
+  .claim-lead,
+  .claim-accent {
+    display: inline;
+  }
+
+  .claim-accent {
+    color: var(--t-deep);
+  }
+
+  /* ---- when and where --------------------------------------------------- */
+
+  .when {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px clamp(20px, 3vw, 38px);
+    margin: 0 0 clamp(24px, 3vw, 32px);
+  }
+
+  .fact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  /* An icon rather than a worded label: a calendar and a pin say "when" and
+     "where" without spending a line on it, and they carry no fill or shadow,
+     so there is still nothing on this screen but the button that looks like a
+     control. The word is kept for anything that cannot see the drawing. */
+  .fact dt {
+    flex: none;
+    line-height: 0;
+  }
+
+  .ic {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: var(--t);
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .fact dd {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .fact b {
+    font-family: var(--f-display);
+    font-size: clamp(18px, 2.1vw, 25px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The venue runs to a sentence where the date is five characters, so it is
+     set a step down — the two still read as a pair, and the line does not
+     become the widest thing on the screen. */
+  .venue {
+    font-size: clamp(15px, 1.7vw, 19px);
+    letter-spacing: -0.02em;
+  }
+
+  /* The qualifier, not the name. */
+  .campus {
+    margin-left: 0.45em;
+    font-size: 0.84em;
+  }
+
+  .dow {
+    margin-left: 9px;
+    font-family: var(--f-mono);
+    font-size: clamp(13px, 1.5vw, 16px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--t-deep);
+  }
+
+  /* The hours matter as much as the day — somebody deciding whether they can
+     come is reading both — so they are set at the date's size and in ink
+     rather than as a grey aside. Mono keeps them a separate fact rather than
+     a continuation of the number before them. */
+  .fact em {
+    margin-left: 10px;
+    font-style: normal;
+    font-family: var(--f-mono);
+    font-size: clamp(16px, 1.9vw, 22px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  /* ---- the one control -------------------------------------------------- */
+
+  /* Deliberately not `.btn.big`. It is the third thing on the screen — after
+     the claim and the two facts — and at the larger size the fill and the
+     offset shadow made it the first. */
+  .hero :global(.btn) {
+    font-size: 16px;
+    padding: 13px 28px;
+  }
+
+  .arr {
+    transition: transform 0.18s var(--ease-out);
+  }
+
+  .hero :global(.btn:hover) .arr {
+    transform: translateX(4px);
+  }
+
+  .cta-note {
+    margin: 14px 0 0 2px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  @media (width <= 560px) {
+    .hero :global(.btn) {
+      width: 100%;
+    }
+  }
+
+  /* Entrance state. Cleared by the intro script; never applied without JS. */
+  :global(html.js) [data-intro] {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.js) [data-intro] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

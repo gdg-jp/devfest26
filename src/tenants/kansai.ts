@@ -40,11 +40,18 @@ export const kansai = {
     coHosts: "GDGoC IPUT / GDG Kobe / Alpha+Project",
   },
 
+  /*
+    Shown in the hero as well as the overview, so these are the four things a
+    visitor weighing it up in a few seconds wants: what it costs, how much is
+    on, whether others are coming, and whether they have to be there in person.
+    The registration count is kept by hand from connpass. With Sanity on,
+    these four live on the event document and are edited there instead.
+  */
   stats: [
-    { value: "3", label: "Tracks", tone: "blue" },
-    { value: "16+", label: "Sessions", tone: "green" },
-    { value: "7h", label: "Program", tone: "yellow" },
-    { value: "Free", label: "Admission", tone: "red" },
+    { value: "Free", label: "Admission", tone: "blue" },
+    { value: "28+", label: "Sessions", tone: "green" },
+    { value: "450+", label: "Registered", tone: "yellow" },
+    { value: "Hybrid", label: "On-site + Online", tone: "red" },
   ],
 
   links: {
@@ -58,19 +65,20 @@ export const kansai = {
   },
 
   nav: [
-    { href: "#preevent", label: "プレイベント" },
-    { href: "#overview", label: "開催概要" },
-    { href: "#about", label: "イベントについて" },
+    { href: "#news", label: "お知らせ" },
     { href: "#timetable", label: "タイムテーブル" },
-    { href: "#sessions", label: "セッション" },
+    { href: "#access", label: "アクセス" },
+    { href: "#faq", label: "FAQ" },
   ],
 
   footerNav: [
-    { href: "#preevent", label: "プレイベント" },
-    { href: "#overview", label: "開催概要" },
-    { href: "#about", label: "イベントについて" },
+    { href: "#news", label: "お知らせ" },
+    { href: "#featured", label: "注目スピーカー" },
     { href: "#timetable", label: "タイムテーブル" },
-    { href: "#sessions", label: "セッション" },
+    { href: "#about", label: "イベントについて" },
+    { href: "#overview", label: "開催概要" },
+    { href: "#access", label: "アクセス" },
+    { href: "#faq", label: "FAQ" },
     { href: "#coc", label: "行動規範" },
     { href: "#register", label: "参加登録" },
   ],

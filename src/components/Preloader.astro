@@ -1,30 +1,46 @@
 ---
 import Logo from "./Logo.astro";
+import type { ResolvedTenant } from "../tenants";
 
 /**
- * First-paint curtain. The DevFest mark is a pair of braces, so the intro is
- * that gesture: the braces clamp in from the edges, the wordmark opens out from
- * the centre, then the curtain lifts on a scalloped edge.
+ * First-paint curtain — the title card the day opens on.
+ *
+ * Four coloured rules rise through the card and cross the mark: the same four
+ * the tracks, the timetable and the whole brand are drawn in. The mark itself
+ * is a pair of braces, so it arrives as that gesture — the braces clamp in from
+ * the edges and the wordmark opens out between them — and the curtain then
+ * lifts on a scalloped hem onto the page.
  *
  * Visible only when <html> carries `.is-loading`, which the inline script in
  * Base.astro sets — and only for a first visit, with motion allowed. That same
  * script arms a timeout so a script that never loads cannot trap the page.
  */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event } = site;
+
+// `2026.10.18 SUN` — the one fact worth reading in the second the card is up.
+const stamp = `${event.isoDate.replaceAll("-", ".")} ${event.dayOfWeekEn.toUpperCase()}`;
 ---
 
 <div class="preloader" role="presentation" aria-hidden="true">
+  <div class="pl-rules">
+    <i style="--c:var(--blue); --i:0"></i>
+    <i style="--c:var(--green); --i:1"></i>
+    <i style="--c:var(--yellow); --i:2"></i>
+    <i style="--c:var(--red); --i:3"></i>
+  </div>
+
   <div class="pl-stack">
     <div class="pl-mark">
       <Logo variant="brackets" class="pl-brace pl-brace-l" label="" />
       <Logo variant="brackets" class="pl-word" label="" />
       <Logo variant="brackets" class="pl-brace pl-brace-r" label="" />
     </div>
-    <div class="pl-dots">
-      <i style="--c:var(--blue);--i:0"></i>
-      <i style="--c:var(--green);--i:1"></i>
-      <i style="--c:var(--yellow);--i:2"></i>
-      <i style="--c:var(--red);--i:3"></i>
-    </div>
+    <p class="pl-stamp">{stamp}<span>{event.venue.cityEn}</span></p>
   </div>
 </div>
 
@@ -39,9 +55,7 @@ import Logo from "./Logo.astro";
     z-index: 100;
     display: grid;
     place-items: center;
-    background: var(--t);
-    /* the wordmark inside the lockup paints itself with --brand-ink */
-    --brand-ink: var(--t-on);
+    background: var(--surface);
     will-change: transform;
   }
 
@@ -55,17 +69,52 @@ import Logo from "./Logo.astro";
     height: 30px;
     background: radial-gradient(
         circle at 22px 0,
-        var(--t) 21px,
+        var(--surface) 21px,
         transparent 22px
       )
       repeat-x;
     background-size: 44px 30px;
   }
 
+  /* The four core colours as four rules crossing the card — the tracks of the
+     day, before there is a timetable to put them in. Drawn behind the mark and
+     scaled from the floor by the intro script. */
+  .pl-rules {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    gap: clamp(46px, 11vw, 132px);
+    overflow: hidden;
+  }
+
+  .pl-rules i {
+    width: 2.5px;
+    background: var(--c);
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+
+  /* The rules run the full height of the card, so without this they cross the
+     wordmark and the mark reads as struck through. A pool of the ground itself
+     sits between the two and takes them out from under the type only. */
+  .pl-rules::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      44% 26% at 50% 50%,
+      var(--surface) 42%,
+      color-mix(in srgb, var(--surface) 55%, transparent) 72%,
+      transparent
+    );
+  }
+
   .pl-stack {
+    position: relative;
     display: grid;
     justify-items: center;
-    gap: clamp(26px, 4vw, 38px);
+    gap: clamp(20px, 3vw, 30px);
     padding: 24px;
   }
 
@@ -96,31 +145,24 @@ import Logo from "./Logo.astro";
     clip-path: inset(0 12% 0 12%);
   }
 
-  .pl-dots {
+  .pl-stamp {
     display: flex;
-    gap: 11px;
+    align-items: center;
+    gap: 14px;
+    margin: 0;
+    font-family: var(--f-mono);
+    font-size: clamp(11px, 1.5vw, 13px);
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--ink);
+    opacity: 0;
   }
 
-  .pl-dots i {
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    background: var(--c);
-    border: 2px solid var(--stroke);
-    animation: pl-bounce 1.05s var(--ease-out) infinite;
-    animation-delay: calc(var(--i) * 0.11s);
-  }
-
-  @keyframes pl-bounce {
-    0%,
-    62%,
-    100% {
-      transform: translateY(0);
-    }
-
-    28% {
-      transform: translateY(-11px);
-    }
+  .pl-stamp span {
+    padding-left: 14px;
+    border-left: 1.5px solid var(--rule);
+    color: var(--muted);
+    letter-spacing: 0.14em;
   }
 
   @media (prefers-reduced-motion: reduce) {

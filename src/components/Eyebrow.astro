@@ -1,0 +1,41 @@
+---
+import Sticker from "./Sticker.astro";
+import type { StickerName } from "../data/stickers";
+
+/**
+ * A section's kicker, marked with one of the brand's punctuation glyphs.
+ *
+ * Every section used to open with the same small theme-coloured dot, which
+ * made eleven sections read as eleven copies of one template. The glyphs are
+ * the vocabulary the event's own key visual uses to label a block — `//` over
+ * the sessions, `+` over the sponsors — and each carries its own colour in the
+ * artwork, so varying the mark varies the colour without any of it having to
+ * mean something it does not.
+ *
+ * The mark is decoration: it is `aria-hidden` inside `Sticker`, and the kicker
+ * still reads as its own words.
+ */
+interface Props {
+  mark: StickerName;
+  /** Centred, for the sections whose heading is. */
+  mid?: boolean;
+  reveal?: boolean;
+}
+
+const { mark, mid = false, reveal = true } = Astro.props;
+---
+
+<p
+  class:list={["eyebrow", "has-mark", { mid }]}
+  data-reveal={reveal ? "up" : undefined}
+>
+  <Sticker name={mark} width={22} />
+  <slot />
+</p>
+
+<style>
+  /* The glyph replaces the dot rather than joining it. */
+  .eyebrow :global(.glyph) {
+    flex: none;
+  }
+</style>

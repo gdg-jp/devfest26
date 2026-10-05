@@ -152,6 +152,10 @@ const ignoreWarnings = Boolean(process.env.IGNORE_CONTENT_WARNINGS?.trim());
  * otherwise be logged once per section that lists it — the same reason
  * `report()` collapses repeats. A module-level set is fine here and only here:
  * a static build is one walk, with no second request to interleave with.
+ *
+ * Shared by `warnOnce` and by `warn` below: both are "say this once per build",
+ * and keying on the place as well as the wording keeps the same sentence from
+ * two different checks from silencing one another.
  */
 const warned = new Set<string>();
 
@@ -173,4 +177,28 @@ function warnOnce(where: string, message: string): void {
   } else {
     console.warn(`[${where}] ignored: ${message}`);
   }
+}
+
+/**
+ * A rule the content has broken that nothing has to stop for.
+ *
+ * `reject` is for the mistakes that would put a wrong page on the internet — a
+ * reference across cities resolving to the wrong person, two entries fighting
+ * over one URL, a slot with nobody on it — and dying on those is the whole
+ * reason they are worth checking.
+ *
+ * This is for the ones whose only consequence is that something in the Studio
+ * goes unused. Nothing renders wrongly, so taking every page down over it is a
+ * worse outcome than the mistake: an event site is edited by volunteers in the
+ * week before the day, and a stray placeholder left in the Studio should cost
+ * that placeholder, not the site. It is still said out loud so it gets tidied.
+ */
+export function warn(where: string, message: string): void {
+  report(where, message);
+  if (previewMode) return;
+
+  const key = `${where} ${message}`;
+  if (warned.has(key)) return;
+  warned.add(key);
+  console.warn(`[${where}] ${message}`);
 }
