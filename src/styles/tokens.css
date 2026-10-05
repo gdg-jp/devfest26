@@ -119,3 +119,13 @@
   --t-deep: #a50e0e;
   --t-on: #ffffff;
 }
+
+/* ============================================================================
+   The lockups on a dark ground: the wordmark flips to Off White. A brand
+   rule, so it lives here rather than in any city's stylesheet — which may use
+   `--brand-ink` but not redefine it (see `src/lib/brandColors.ts`).
+   ========================================================================== */
+
+.on-dark {
+  --brand-ink: var(--ground);
+}

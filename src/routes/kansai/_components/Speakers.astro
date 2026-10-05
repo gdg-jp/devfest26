@@ -1,0 +1,137 @@
+---
+import Portrait from "./Portrait.astro";
+import Panel from "./Panel.astro";
+import { speakerHref, type SpeakerProgram } from "../../../data/program";
+
+/** Everyone on the programme, each one tap from their page. */
+interface Props {
+  speakers: SpeakerProgram[];
+}
+
+const { speakers } = Astro.props;
+
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+const cycle = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
+---
+
+<section
+  class="k-sec k-sec--panel k-speakers"
+  id="speakers"
+  aria-labelledby="k-speakers-h"
+>
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title="Speakers"
+      id="k-speakers-h"
+      tone="var(--ht-yellow)"
+      stickers={["quoteOpen", "quoteClose"]}
+    >
+      <ul class="k-grid" data-k-stagger>
+        {
+          speakers.map((s, i) => (
+            <li data-k-reveal="pop">
+              <a class="k-grid__item" href={speakerHref(s.speaker)}>
+                <span
+                  class="k-grid__ring"
+                  style={`--ring:${cycle[i % cycle.length]}`}
+                >
+                  <Portrait
+                    speaker={s.speaker}
+                    size={96}
+                    class="k-grid__img"
+                    tone={cycle[i % cycle.length]}
+                  />
+                </span>
+                <span class="k-grid__name">{bare(s.speaker.data.name)}</span>
+                <span class="k-grid__role">{s.speaker.data.role}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .k-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 32px 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-grid__item {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    gap: 4px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .k-grid__ring {
+    display: block;
+    width: 100px;
+    aspect-ratio: 1;
+    margin-bottom: 10px;
+    padding: 4px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ring);
+    transition: transform 0.5s var(--k-ease-back);
+  }
+
+  .k-grid__ring :global(.k-grid__img) {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: var(--k-line) solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 30px;
+  }
+
+  .k-grid__item:hover .k-grid__ring,
+  .k-grid__item:focus-visible .k-grid__ring {
+    transform: translateY(-6px) rotate(-6deg) scale(1.06);
+  }
+
+  .k-grid__name {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .k-grid__role {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (width < 520px) {
+    .k-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px 8px;
+    }
+
+    .k-grid__ring {
+      width: 80px;
+    }
+
+    .k-grid__name {
+      font-size: 13.5px;
+    }
+
+    .k-grid__role {
+      font-size: 11px;
+    }
+  }
+</style>

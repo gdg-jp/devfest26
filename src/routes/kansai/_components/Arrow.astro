@@ -1,0 +1,22 @@
+---
+/** The arrow inside every button's disc. Points right; CSS turns it. */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<svg
+  class={className}
+  viewBox="0 0 20 20"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    d="M3.5 10h12.5M11 4.5 16.5 10 11 15.5"
+    stroke="currentColor"
+    stroke-width="2.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"></path>
+</svg>

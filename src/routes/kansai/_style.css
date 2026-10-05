@@ -1,0 +1,438 @@
+/* ============================================================================
+   DevFest Kansai 2026 — the city's own design layer.
+
+   Loaded on every page of every city (see `astro.config.ts`), so every rule
+   hangs from `[data-city="kansai"]` and every class carries the `k-` prefix:
+   nothing here may reach Tokyo, and nothing here may collide with the shared
+   `.btn` / `.pill` / `.sec` that the session and speaker pages still use.
+
+   The palette is the brand's own four colours and two neutrals, from
+   `src/styles/tokens.css`. What changes is how they are used: a poster-scale
+   type ramp, a black keyline that does the work a shadow would, and motion
+   that is part of the layout rather than decoration on top of it.
+   ========================================================================== */
+
+[data-city="kansai"] {
+  --k-line: 2px;
+  --k-r-xl: 44px;
+  --k-r-lg: 30px;
+  --k-r-md: 20px;
+  --k-r-sm: 12px;
+  --k-gutter: clamp(16px, 4vw, 56px);
+  --k-max: 760px;
+  /* The programme itself — schedule, speakers, programmes — gets more room. */
+  --k-max-wide: 1000px;
+  --k-header-h: 76px;
+
+  --k-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --k-ease-io: cubic-bezier(0.76, 0, 0.24, 1);
+  --k-ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --k-f-display:
+    "Google Sans", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  --k-f-jp: "Noto Sans JP", "Google Sans", system-ui, sans-serif;
+
+  --k-hair: color-mix(in srgb, var(--ink) 14%, transparent);
+  --k-dots: color-mix(in srgb, var(--ink) 16%, transparent);
+  --k-on-dark-muted: color-mix(in srgb, var(--surface) 64%, transparent);
+  --k-on-dark-hair: color-mix(in srgb, var(--surface) 18%, transparent);
+
+  scroll-padding-top: calc(var(--k-header-h) + 16px);
+}
+
+/* The key visual's graph paper, continued across the whole page. Sections
+   that only repeat the ground colour stay transparent so the lines show
+   through; cards and the dark footer paint over it. */
+[data-city="kansai"] body {
+  --k-grid: color-mix(in srgb, var(--ink) 7%, transparent);
+  background-color: var(--ground);
+  background-image:
+    linear-gradient(var(--k-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--k-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center top;
+  font-feature-settings: "palt" 1;
+}
+
+html.k-menu-open[data-city="kansai"] body {
+  overflow: hidden;
+}
+
+/* Selection in the brand yellow reads on every ground this page has. */
+[data-city="kansai"] ::selection {
+  background: var(--ht-yellow);
+  color: var(--ink);
+}
+
+/* ---- layout -------------------------------------------------------------- */
+
+[data-city="kansai"] .k-wrap {
+  width: min(100% - 2 * var(--k-gutter), var(--k-max));
+  margin-inline: auto;
+}
+
+[data-city="kansai"] .k-wrap--wide {
+  width: min(100% - 2 * var(--k-gutter), var(--k-max-wide));
+}
+
+/* A panel stays 8px in from the viewport, and caps by section:
+   the timetable grid at 1270px, every other card at 800px. */
+[data-city="kansai"] .k-wrap--panel {
+  width: min(calc(100% - 16px), 800px);
+}
+
+[data-city="kansai"] .k-tt .k-wrap--panel {
+  width: min(calc(100% - 16px), 1270px);
+}
+
+[data-city="kansai"] .k-sec {
+  position: relative;
+  padding-block: clamp(80px, 11vw, 160px);
+}
+
+/* Sections that are a single panel sit 48px apart, card edge to card edge. */
+[data-city="kansai"] .k-sec--panel {
+  padding-block: 24px;
+}
+
+[data-city="kansai"] .k-sec--tight {
+  padding-block: clamp(56px, 7vw, 96px);
+}
+
+[data-city="kansai"] .k-dark {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+/* ---- section heading ------------------------------------------------------
+   The title itself, at half the old poster scale, with a coloured disc
+   sitting to its left. */
+
+[data-city="kansai"] .k-head {
+  margin-bottom: clamp(40px, 6vw, 80px);
+}
+
+[data-city="kansai"] .k-head__title {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  font-family: var(--k-f-display);
+  font-weight: 700;
+  font-size: clamp(31.2px, 7.2vw, 62.4px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  margin: 0;
+  text-wrap: nowrap;
+}
+
+[data-city="kansai"] .k-head__title::before {
+  content: "";
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  border: var(--k-line) solid currentcolor;
+  background: var(--k-accent, var(--blue));
+}
+
+/* A Japanese title: eight characters wide at most, so set smaller. */
+[data-city="kansai"] .k-head__title--ja {
+  font-family: var(--k-f-jp);
+  font-size: clamp(20.4px, 4.2vw, 38.4px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+[data-city="kansai"] .k-head__title .k-brace {
+  color: var(--k-accent, var(--blue));
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* ---- buttons --------------------------------------------------------------
+   One primary action on this site, and it looks the same everywhere: an ink
+   pill with a coloured disc carrying the arrow. On hover a colour floods in
+   from the disc. */
+
+[data-city="kansai"] .k-btn {
+  --k-btn-bg: var(--ink);
+  --k-btn-fg: var(--surface);
+  --k-btn-flood: var(--blue);
+  --k-btn-disc: var(--ht-yellow);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 26px;
+  min-height: 56px;
+  border: var(--k-line) solid var(--ink);
+  border-radius: 999px;
+  background: var(--k-btn-bg);
+  color: var(--k-btn-fg);
+  font-family: var(--k-f-display);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.3s var(--k-ease);
+  will-change: transform;
+}
+
+[data-city="kansai"] .k-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 8px;
+  top: 50%;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--k-btn-flood);
+  transform: translateY(-50%) scale(0);
+  transition: transform 0.55s var(--k-ease);
+}
+
+[data-city="kansai"] .k-btn:hover::before,
+[data-city="kansai"] .k-btn:focus-visible::before {
+  transform: translateY(-50%) scale(14);
+}
+
+[data-city="kansai"] .k-btn:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 4px;
+}
+
+[data-city="kansai"] .k-btn__disc {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: var(--k-line) solid var(--ink);
+  background: var(--k-btn-disc);
+  color: var(--ink);
+  transition: transform 0.45s var(--k-ease);
+}
+
+[data-city="kansai"] .k-btn__disc svg {
+  width: 18px;
+  height: 18px;
+}
+
+[data-city="kansai"] .k-btn:hover .k-btn__disc {
+  transform: rotate(-45deg);
+}
+
+[data-city="kansai"] .k-btn--lg {
+  font-size: clamp(17px, 1.6vw, 20px);
+  min-height: 68px;
+  padding-left: 32px;
+  gap: 20px;
+}
+
+[data-city="kansai"] .k-btn--lg .k-btn__disc,
+[data-city="kansai"] .k-btn--lg::before {
+  width: 50px;
+}
+
+[data-city="kansai"] .k-btn--light {
+  --k-btn-bg: var(--surface);
+  --k-btn-fg: var(--ink);
+  --k-btn-flood: var(--ht-yellow);
+  --k-btn-disc: var(--blue);
+}
+
+[data-city="kansai"] .k-btn--light .k-btn__disc {
+  color: var(--surface);
+}
+
+[data-city="kansai"] .k-btn--light:hover .k-btn__disc {
+  color: var(--surface);
+}
+
+[data-city="kansai"] .k-btn--ghost {
+  --k-btn-bg: transparent;
+  --k-btn-fg: var(--ink);
+  --k-btn-flood: var(--ink);
+  --k-btn-disc: var(--surface);
+}
+
+[data-city="kansai"] .k-btn--ghost:hover {
+  color: var(--surface);
+}
+
+[data-city="kansai"] .k-btn--sm {
+  min-height: 44px;
+  font-size: 14.5px;
+  padding: 4px 4px 4px 18px;
+  gap: 10px;
+}
+
+[data-city="kansai"] .k-btn--sm .k-btn__disc,
+[data-city="kansai"] .k-btn--sm::before {
+  width: 32px;
+  right: 4px;
+}
+
+[data-city="kansai"] .k-btn--sm .k-btn__disc svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* A quieter link, for "see all" and the like. The underline draws itself. */
+[data-city="kansai"] .k-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  font-family: var(--k-f-display);
+  font-weight: 700;
+  text-decoration: none;
+  background: linear-gradient(currentcolor, currentcolor) 0 100% / 0% 2px
+    no-repeat;
+  transition: background-size 0.4s var(--k-ease);
+}
+
+[data-city="kansai"] .k-link:hover {
+  background-size: 100% 2px;
+}
+
+/* ---- chips ---------------------------------------------------------------- */
+
+[data-city="kansai"] .k-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: var(--k-line) solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--k-f-display);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+[data-city="kansai"] .k-chip__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--k-dot, var(--blue));
+  flex: none;
+}
+
+/* ---- detail pages ---------------------------------------------------------
+   A panel's caption under its tab, the way News carries お知らせ: the tab
+   says it in the poster face, this says it plainly. */
+
+[data-city="kansai"] .k-sub {
+  margin: 0 0 clamp(16px, 2.4vw, 24px);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* An abstract or a bio, as written in Markdown or the Studio. */
+[data-city="kansai"] .k-prose {
+  font-size: 16px;
+  line-height: 1.95;
+  text-wrap: pretty;
+}
+
+[data-city="kansai"] .k-prose > :first-child {
+  margin-top: 0;
+}
+
+[data-city="kansai"] .k-prose > :last-child {
+  margin-bottom: 0;
+}
+
+[data-city="kansai"] .k-prose p {
+  margin: 0 0 1.1em;
+}
+
+[data-city="kansai"] .k-prose h2,
+[data-city="kansai"] .k-prose h3 {
+  font-family: var(--k-f-display);
+  font-size: 18px;
+  margin: 1.6em 0 0.5em;
+}
+
+[data-city="kansai"] .k-prose ul,
+[data-city="kansai"] .k-prose ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.4em;
+}
+
+[data-city="kansai"] .k-prose a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+[data-city="kansai"] .k-prose code {
+  font-family: var(--f-mono);
+  font-size: 0.9em;
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: var(--ground);
+}
+
+[data-city="kansai"] .k-prose blockquote {
+  margin: 0 0 1.1em;
+  padding-left: 16px;
+  border-left: 3px solid var(--ink);
+  color: var(--muted);
+}
+
+/* ---- motion states --------------------------------------------------------
+   Everything the scripts bring in starts hidden only once JavaScript has
+   announced itself (`html.js`), and is shown again if the bundle never lands
+   (`html.no-motion`, set by the fallback timer in Base.astro). With motion
+   unwelcome they never start hidden at all. */
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js:not(.no-motion)[data-city="kansai"] [data-k-reveal] {
+    opacity: 0;
+  }
+
+  html.js:not(.no-motion)[data-city="kansai"] .k-split__char,
+  html.js:not(.no-motion)[data-city="kansai"] .k-split__word {
+    transform: translateY(105%);
+  }
+}
+
+[data-city="kansai"] .k-split {
+  display: inline-block;
+}
+
+[data-city="kansai"] .k-split__mask {
+  display: inline-block;
+  overflow: clip;
+  overflow-clip-margin: 0.12em;
+  vertical-align: top;
+  padding-bottom: 0.06em;
+}
+
+[data-city="kansai"] .k-split__char,
+[data-city="kansai"] .k-split__word {
+  display: inline-block;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-city="kansai"] * {
+    scroll-behavior: auto;
+  }
+}

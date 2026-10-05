@@ -1,0 +1,699 @@
+---
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+import { BRACE, BRACE_STROKE, BRACE_TRANSFORM, BRACE_VIEWBOX } from "./brace";
+import { HERO_SHAPES } from "./heroShapes";
+import gdgLogo from "../../../assets/brand/gdg.svg?url";
+
+/**
+ * The key visual. The name falls into the DevFest braces letter by letter and
+ * is then retyped, field by field — AI × Robotics, AI × Fashion, AI × Game.
+ * The organiser and the globe hold the top corners; the two buttons sit at
+ * the foot of the screen, where a thumb reaches them.
+ *
+ * The header is not over this: it sits just below and pins to the top once it
+ * gets there (see `Shell.astro`).
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event, links } = site;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const [year, month, day] = event.isoDate.split("-");
+const [first] = c.kvTheme;
+---
+
+<section class="k-hero" aria-labelledby="k-hero-title" data-k-hero>
+  <p class="k-hero__org">
+    <img src={gdgLogo} alt="" width="100" height="100" />
+    <span><small>{c.organizedBy}</small>{c.organizer}</span>
+  </p>
+  <div class="k-hero__sym" aria-hidden="true">
+    <svg class="k-hero__point" viewBox="0 0 196.5 151.5">
+      <g
+        transform="translate(-2232.5 -197.5)"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="10"
+        stroke-linecap="round"
+      >
+        <line x1="2240.97" y1="273.19" x2="2420.74" y2="273.19"></line>
+        <path d="M2420.74,273.19c-37.42,0-88.8-30.13-89.49-67.45"></path>
+        <path d="M2420.74,273.19c-37.45,0-88.88,30.17-89.49,67.53"></path>
+      </g>
+    </svg>
+    <svg class="k-hero__globe" viewBox="0 0 242 224" data-k-globe>
+      <g
+        transform="translate(-2074.5 -600)"
+        fill="none"
+        stroke="var(--ink)"
+        stroke-width="5"
+        stroke-linejoin="round"
+      >
+        <ellipse cx="2195.67" cy="712.07" rx="110.25" ry="101.13"></ellipse>
+        <ellipse cx="2195.67" cy="712.07" rx="47.59" ry="101.13"></ellipse>
+        <ellipse cx="2195.67" cy="712.07" rx="0" ry="101.13" opacity="0"
+        ></ellipse>
+        <line x1="2093.16" y1="674.6" x2="2298.09" y2="674.6"></line>
+        <line x1="2093.16" y1="749.37" x2="2298.09" y2="749.37"></line>
+      </g>
+    </svg>
+  </div>
+
+  <div class="k-hero__shapes" aria-hidden="true" data-k-shapes>
+    {
+      HERO_SHAPES.map((shape, i) => (
+        <svg
+          class="k-hero__shape"
+          viewBox={shape.viewBox}
+          style={`--i:${i}`}
+          data-k-shape={shape.name}
+          set:html={shape.body}
+        />
+      ))
+    }
+  </div>
+
+  <div class="k-hero__intro">
+    <p class="k-hero__by">{c.kvBy}</p>
+
+    <h1 class="k-hero__title" id="k-hero-title">
+      <span class="visually-hidden">{site.title}</span>
+      <span class="k-hero__mark" aria-hidden="true" data-k-mark>
+        <svg
+          class="k-hero__brace k-hero__brace--l"
+          viewBox={BRACE_VIEWBOX.left}
+        >
+          <path
+            d={BRACE}
+            transform={BRACE_TRANSFORM.left}
+            stroke-width={BRACE_STROKE}></path>
+        </svg>
+        <span class="k-hero__type">
+          <span class="k-hero__word" data-k-word={JSON.stringify(c.kvTheme)}
+            >{first}</span
+          ><span class="k-hero__caret"></span>
+        </span>
+        <svg
+          class="k-hero__brace k-hero__brace--r"
+          viewBox={BRACE_VIEWBOX.right}
+        >
+          <path
+            d={BRACE}
+            transform={BRACE_TRANSFORM.right}
+            stroke-width={BRACE_STROKE}></path>
+        </svg>
+      </span>
+    </h1>
+
+    <p class="k-hero__catch">
+      {
+        c.kvCatch.map((line) => (
+          <span>
+            {line.split("*").map((part, i) => (i % 2 ? <em>{part}</em> : part))}
+          </span>
+        ))
+      }
+    </p>
+
+    <div class="k-hero__card">
+      <dl class="k-hero__facts">
+        <div>
+          <dt class="visually-hidden">{c.factDate}</dt>
+          <dd class="k-hero__when">
+            <span class="k-hero__year">{year}</span>
+            <time class="k-hero__date" datetime={event.startsAt}>
+              <span class="k-hero__md">{month}.{day}</span>
+              <span class="k-hero__dow">({event.dayOfWeek})</span>
+              <span class="k-hero__hours">
+                <small>{c.kvOnlineShort}</small>
+                <span>{event.startTime}</span>
+                <span>~{event.endTime}</span>
+              </span>
+            </time>
+          </dd>
+        </div>
+        <div>
+          <dt class="visually-hidden">{c.factVenue}</dt>
+          <dd class="k-hero__place">
+            <span class="k-hero__at">@</span><span class="k-hero__access"
+              >{c.venueAccess}</span
+            >
+            <span class="k-hero__venue" title={c.venueCampus}
+              >{c.venueShort}</span
+            >
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="k-hero__ctas">
+    <a
+      class="k-hero__cta"
+      href={links.register}
+      target="_blank"
+      rel="noopener"
+      data-analytics="register_click"
+      data-placement="hero"
+    >
+      {c.register}
+      <svg viewBox="0 0 196.5 151.5" aria-hidden="true">
+        <g
+          transform="translate(-2232.5 -197.5)"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="10"
+          stroke-linecap="round"
+        >
+          <line x1="2240.97" y1="273.19" x2="2420.74" y2="273.19"></line>
+          <path d="M2420.74,273.19c-37.42,0-88.8-30.13-89.49-67.45"></path>
+          <path d="M2420.74,273.19c-37.45,0-88.88,30.17-89.49,67.53"></path>
+        </g>
+      </svg>
+    </a>
+    <a class="k-hero__cta k-hero__cta--ink" href="#timetable">
+      {c.kvTimetableCta}
+      <svg viewBox="0 0 196.5 151.5" aria-hidden="true">
+        <g
+          transform="translate(-2232.5 -197.5)"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="10"
+          stroke-linecap="round"
+        >
+          <line x1="2240.97" y1="273.19" x2="2420.74" y2="273.19"></line>
+          <path d="M2420.74,273.19c-37.42,0-88.8-30.13-89.49-67.45"></path>
+          <path d="M2420.74,273.19c-37.45,0-88.88,30.17-89.49,67.53"></path>
+        </g>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<style>
+  .k-hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    overflow: clip;
+  }
+
+  .k-hero__intro {
+    /* Everything from the pre-title to the card is set at this share of its
+       full size. */
+    --s: 0.8;
+    --title-base: calc(clamp(48px, 8.6vw, 164px) * var(--s));
+    /* The name itself is set a fifth larger than the rest. */
+    --title: calc(var(--title-base) * 1.2);
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 2.4vh, 26px);
+    /* Clear of the corners above; centred in what the buttons leave. */
+    padding: clamp(72px, 10vh, 104px) var(--k-gutter) clamp(20px, 3vh, 36px);
+    text-align: center;
+  }
+
+  .k-hero__by {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin: 0 0 calc(clamp(14px, 2.4vh, 26px) * -0.6);
+    font-family: var(--k-f-display);
+    font-weight: 500;
+    font-size: calc(var(--title-base) * 0.26);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---- the mark ----------------------------------------------------- */
+
+  .k-hero__title {
+    margin: 0;
+    font-size: var(--title);
+  }
+
+  .k-hero__mark {
+    display: flex;
+    align-items: center;
+    gap: 0.08em;
+    line-height: 1;
+  }
+
+  .k-hero__brace {
+    flex: none;
+    width: auto;
+    height: 1.2em;
+    overflow: visible;
+  }
+
+  .k-hero__brace path {
+    stroke: var(--ink);
+    transition: fill 0.45s var(--k-ease);
+  }
+
+  .k-hero__brace--l path {
+    fill: var(--pa-blue);
+  }
+
+  .k-hero__brace--r path {
+    fill: var(--ht-blue);
+  }
+
+  .k-hero__mark:global(.is-flipped) .k-hero__brace--l path {
+    fill: var(--ht-blue);
+  }
+
+  .k-hero__mark:global(.is-flipped) .k-hero__brace--r path {
+    fill: var(--pa-blue);
+  }
+
+  .k-hero__type {
+    padding: 0 0.04em 0.06em;
+    white-space: nowrap;
+  }
+
+  .k-hero__word {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    white-space: pre;
+  }
+
+  /* The caret blinks while it waits and holds steady while it types. */
+  .k-hero__caret {
+    display: inline-block;
+    vertical-align: -0.1em;
+    width: 0.06em;
+    height: 0.86em;
+    margin-left: 0.04em;
+    border-radius: 0.03em;
+    background: var(--blue);
+    animation: k-hero-blink 1.05s steps(1) infinite;
+  }
+
+  .k-hero__mark:global(.is-typing) .k-hero__caret {
+    animation: none;
+  }
+
+  @keyframes k-hero-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* ---- catch -------------------------------------------------------- */
+
+  .k-hero__catch {
+    display: grid;
+    gap: 0.15em;
+    margin: 0;
+    font-family: var(--k-f-jp);
+    font-weight: 800;
+    font-size: calc(clamp(22px, 2.8vw, 46px) * var(--s) * 1.1);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  /* A marker stroke under each key word, as on key visual B. */
+  .k-hero__catch em {
+    font-style: normal;
+    background: linear-gradient(
+      transparent 62%,
+      var(--ht-blue) 62% 92%,
+      transparent 92%
+    );
+  }
+
+  /* ---- the card: when, where ---------------------------------- */
+
+  .k-hero__card {
+    display: grid;
+    gap: clamp(14px, 2vh, 22px);
+    width: fit-content;
+    max-width: 100%;
+    padding: clamp(16px, 2vw, 26px) clamp(22px, 2.6vw, 34px)
+      clamp(16px, 2vw, 24px);
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-xl);
+    background: var(--surface);
+    text-align: left;
+  }
+
+  @supports (corner-shape: squircle) {
+    .k-hero__card {
+      border-radius: 48px;
+      corner-shape: squircle;
+    }
+  }
+
+  /* The organiser and the globe hold the screen's two top corners. */
+  .k-hero__org,
+  .k-hero__sym {
+    position: absolute;
+    z-index: 2;
+    top: clamp(16px, 2.4vw, 28px);
+  }
+
+  .k-hero__org {
+    left: var(--k-gutter);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--k-f-display);
+    font-weight: 500;
+    font-size: clamp(16px, 1.5vw, 21px);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .k-hero__org span {
+    display: grid;
+  }
+
+  .k-hero__org small {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
+  /* As tall as the two lines beside it. */
+  .k-hero__org img {
+    width: auto;
+    height: calc(12px * 1.2 + 1.2em);
+  }
+
+  .k-hero__sym {
+    right: var(--k-gutter);
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .k-hero__globe {
+    width: clamp(44px, 4.2vw, 60px);
+    height: auto;
+  }
+
+  .k-hero__point {
+    width: clamp(38px, 3.6vw, 52px);
+    height: auto;
+    scale: -1 1;
+  }
+
+  /* The year tucked into the top-left, level with the top of the hours;
+     the date as big as the card allows, its foot shared with the day and
+     the closing time; the venue beneath.
+       2026          オンラインあり
+                     10:30
+       10.18 (日)    ~18:00
+       @JR大阪駅直結 IPUT Osaka */
+  .k-hero__facts {
+    --big: clamp(44px, 4.4vw, 64px);
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .k-hero__facts dd {
+    margin: 0;
+  }
+
+  .k-hero__when {
+    position: relative;
+  }
+
+  .k-hero__year {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: calc(var(--big) * 0.42);
+    letter-spacing: -0.01em;
+  }
+
+  /* Inline, so the stacked hours sit on the date's baseline: an inline
+     block's baseline is its last line's, so 10.18, (日) and ~18:00 share one. */
+  .k-hero__date {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .k-hero__md {
+    font-size: var(--big);
+    letter-spacing: -0.035em;
+  }
+
+  .k-hero__dow {
+    margin-left: 0.1em;
+    font-family: var(--k-f-jp);
+    font-size: calc(var(--big) * 0.34);
+  }
+
+  /* Stacked to the right of the day, as tall as the date beside it:
+       オンラインあり
+       10:30
+       ~18:00 */
+  .k-hero__hours {
+    display: inline-block;
+    margin-left: 0.5em;
+    /* Room above, so the year beside it clears the date. */
+    padding-top: 0.3em;
+    font-size: calc(var(--big) * 0.36);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .k-hero__hours > * {
+    display: block;
+  }
+
+  .k-hero__hours small {
+    font-family: var(--k-f-jp);
+    margin-bottom: 0.9em;
+    font-size: max(11px, 0.66em);
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  .k-hero__place {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0 0.5em;
+    margin-top: 16px;
+  }
+
+  .k-hero__at {
+    margin-right: -0.4em;
+    font-size: calc(var(--big) * 0.36);
+  }
+
+  .k-hero__access {
+    font-family: var(--k-f-jp);
+    font-weight: 800;
+    font-size: calc(var(--big) * 0.36);
+  }
+
+  .k-hero__venue {
+    font-size: max(12px, calc(var(--big) * 0.27));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .k-hero__point g {
+      animation: k-hero-nudge 1.8s ease-in-out infinite;
+    }
+  }
+
+  @keyframes k-hero-nudge {
+    50% {
+      translate: 14px 0;
+    }
+  }
+
+  /* ---- buttons: c.html's, register in blue, timetable in ink ------- */
+
+  .k-hero__ctas {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 var(--k-gutter)
+      calc(clamp(24px, 4vh, 44px) + env(safe-area-inset-bottom));
+  }
+
+  .k-hero__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 28px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--blue);
+    color: var(--surface);
+    font-family: var(--k-f-display);
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      transform 0.35s var(--k-ease-back),
+      background-color 0.2s;
+  }
+
+  .k-hero__cta--ink {
+    background: var(--ink);
+  }
+
+  .k-hero__cta svg {
+    width: 26px;
+    height: auto;
+    transition: transform 0.35s var(--k-ease-back);
+  }
+
+  .k-hero__cta:hover {
+    transform: translateY(-3px);
+  }
+
+  .k-hero__cta:hover svg {
+    transform: translateX(4px);
+  }
+
+  .k-hero__cta:active {
+    transform: scale(0.97);
+  }
+
+  .k-hero__cta:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 3px;
+  }
+
+  /* ---- the sprinkle: outline stickers in the open ground -------------
+     Placed by the script round the words and buttons, never on them or on
+     each other; until then (or without script) they are not shown. */
+
+  .k-hero__shapes {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .k-hero__shape {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: auto;
+    overflow: visible;
+    visibility: hidden;
+  }
+
+  .k-hero__shape:global(.is-placed) {
+    visibility: visible;
+  }
+
+  /* One keyline for every shape, the card's, whatever size it is drawn. */
+  .k-hero__shape :global(*) {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: var(--k-line);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* ---- entrance: only the shapes, popping in where they lie -------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) .k-hero__shape {
+      opacity: 0;
+      scale: 0.3;
+      transition:
+        scale 0.7s var(--k-ease-back),
+        opacity 0.25s;
+      transition-delay: calc(0.1s + var(--i) * 50ms);
+    }
+
+    :global(html.js:not(.no-motion)) .k-hero.is-in .k-hero__shape {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  /* ---- narrow ------------------------------------------------------- */
+
+  @media (width < 860px) {
+    .k-hero__intro {
+      --title-base: calc(clamp(48px, 15vw, 120px) * var(--s));
+    }
+
+    .k-hero__by {
+      height: auto;
+      font-size: calc(clamp(18px, 5vw, 28px) * var(--s));
+    }
+
+    /* The name on two lines between taller braces, with room for two
+       lines whatever is typed, so nothing below jumps. */
+    .k-hero__mark {
+      align-items: stretch;
+      min-height: 2.1em;
+    }
+
+    .k-hero__type {
+      align-self: center;
+      max-width: 4.6em;
+      white-space: normal;
+    }
+
+    .k-hero__word {
+      white-space: pre-wrap;
+      line-height: 1.02;
+    }
+
+    .k-hero__brace {
+      height: auto;
+      align-self: stretch;
+      width: 0.62em;
+    }
+
+    .k-hero__facts {
+      --big: clamp(40px, 11vw, 52px);
+    }
+
+    /* Full width and stacked, for a thumb. */
+    .k-hero__ctas {
+      flex-direction: column;
+      align-items: stretch;
+      box-sizing: border-box;
+      width: min(100%, 460px);
+      margin-inline: auto;
+      gap: 10px;
+    }
+
+    .k-hero__cta {
+      justify-content: space-between;
+      height: 58px;
+      padding: 0 24px;
+    }
+  }
+</style>

@@ -1,0 +1,9 @@
+---
+import Home from "./_components/Home.astro";
+import { missingCity, ownCity } from "../../lib/cityRoutes";
+
+const site = await ownCity(Astro.url);
+if (!site) return missingCity(Astro.url);
+---
+
+<Home site={site} />

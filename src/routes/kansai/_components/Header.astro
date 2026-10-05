@@ -1,0 +1,394 @@
+---
+import Wordmark from "./Wordmark.astro";
+import Arrow from "./Arrow.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { isHome, tenantHome } from "../../../lib/url";
+import { clean } from "../../../preview/stega";
+import {
+  alternatePath,
+  currentAlternateLanguage,
+  currentLanguage,
+  LANGUAGE_NAMES,
+} from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * A floating bar that is always one tap from registering.
+ *
+ * The anchors resolve on the home page only, so from anywhere else they go
+ * home first. `data-topbar` and `data-spy` are the hooks the shared nav script
+ * already reads — it publishes the bar's height and lights the section in
+ * view — so this bar needs no script of its own for either.
+ */
+interface Props {
+  site: ResolvedTenant;
+  /** Sits in the flow under the key visual and pins when it reaches the top. */
+  docked?: boolean;
+}
+
+const { site, docked = false } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const home = tenantHome(site.tenant);
+const prefix = isHome(Astro.url, site.tenant) ? "" : home;
+const siteName = clean(site.fullTitle ?? site.title);
+
+const switchTo = currentAlternateLanguage();
+const switchHref = alternatePath(Astro.url.pathname);
+const switchLabel = LANGUAGE_NAMES[switchTo];
+---
+
+<div class="k-progress" aria-hidden="true">
+  <span data-progress></span>
+</div>
+
+<header
+  class:list={["k-header", docked && "k-header--docked"]}
+  data-topbar
+  data-k-header
+>
+  <div class="k-header__bar">
+    <a class="k-header__brand" href={home} aria-label={siteName}>
+      <Wordmark class="k-header__logo" label="" />
+    </a>
+
+    <nav class="k-header__nav" aria-label="Main">
+      <ul>
+        {
+          site.nav.map((item) => (
+            <li>
+              <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="k-header__end">
+      <a
+        class="k-header__lang"
+        href={switchHref}
+        hreflang={switchTo}
+        aria-label={switchLabel}
+        title={switchLabel}
+      >
+        {switchTo.toUpperCase()}
+      </a>
+      <a
+        class="k-btn k-btn--sm k-header__cta"
+        href={site.links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="topbar"
+      >
+        {c.registerShort}
+        <span class="k-btn__disc"><Arrow /></span>
+      </a>
+      <button
+        type="button"
+        class="k-header__menu"
+        aria-expanded="false"
+        aria-controls="k-menu"
+        data-k-menu-toggle
+      >
+        <span class="visually-hidden" data-k-menu-label>{c.menu}</span>
+        <span class="k-header__burger" aria-hidden="true"><i></i><i></i></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="k-menu" id="k-menu" data-k-menu hidden>
+  <nav aria-label="Menu">
+    <ol>
+      {
+        site.footerNav.map((item, i) => (
+          <li data-k-menu-item>
+            <a href={`${prefix}${item.href}`} data-k-menu-link>
+              <span class="k-menu__no">{String(i + 1).padStart(2, "0")}</span>
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+  <div class="k-menu__foot" data-k-menu-item>
+    <a
+      class="k-btn k-btn--light"
+      href={site.links.register}
+      target="_blank"
+      rel="noopener"
+      data-analytics="register_click"
+      data-placement="menu"
+    >
+      {c.register}
+      <span class="k-btn__disc"><Arrow /></span>
+    </a>
+    <a class="k-menu__lang" href={switchHref} hreflang={switchTo}
+      >{switchLabel}</a
+    >
+  </div>
+</div>
+
+<style>
+  .k-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 3px;
+    z-index: 90;
+    pointer-events: none;
+  }
+
+  .k-progress span {
+    display: block;
+    height: 100%;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    background: linear-gradient(
+      90deg,
+      var(--blue) 0 25%,
+      var(--red) 25% 50%,
+      var(--yellow) 50% 75%,
+      var(--green) 75%
+    );
+  }
+
+  .k-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 80;
+    padding: 12px var(--k-gutter) 0;
+    pointer-events: none;
+    transition: transform 0.5s var(--k-ease);
+  }
+
+  .k-header--docked {
+    position: sticky;
+    top: 0;
+    padding-bottom: 12px;
+  }
+
+  .k-header.is-hidden {
+    transform: translateY(calc(-100% - 12px));
+  }
+
+  .k-header__bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(var(--k-max) + 48px);
+    margin-inline: auto;
+    height: 60px;
+    padding: 0 8px 0 18px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    pointer-events: auto;
+    transition: background 0.3s;
+  }
+
+  .k-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: none;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .k-header :global(.k-header__logo) {
+    width: 172px;
+  }
+
+  .k-header__nav {
+    margin-inline: auto;
+  }
+
+  .k-header__nav ul {
+    display: flex;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-header__nav a {
+    position: relative;
+    display: block;
+    padding: 8px 11px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.25s var(--k-ease);
+  }
+
+  .k-header__nav a:hover {
+    background: var(--ground);
+  }
+
+  .k-header__nav a:global(.is-current) {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .k-header__end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .k-header__lang,
+  .k-menu__lang {
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: inherit;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+
+  .k-header__lang:hover {
+    background: var(--ground);
+  }
+
+  .k-header__menu {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    cursor: pointer;
+    place-items: center;
+  }
+
+  .k-header__burger {
+    display: grid;
+    gap: 5px;
+    width: 18px;
+  }
+
+  .k-header__burger i {
+    display: block;
+    height: 2.4px;
+    border-radius: 2px;
+    background: var(--ink);
+    transition: transform 0.4s var(--k-ease);
+  }
+
+  .k-header__menu[aria-expanded="true"] .k-header__burger i:first-child {
+    transform: translateY(3.7px) rotate(45deg);
+  }
+
+  .k-header__menu[aria-expanded="true"] .k-header__burger i:last-child {
+    transform: translateY(-3.7px) rotate(-45deg);
+  }
+
+  @media (width < 860px) {
+    .k-header__nav {
+      display: none;
+    }
+
+    .k-header__end {
+      margin-left: auto;
+    }
+
+    .k-header__menu {
+      display: grid;
+    }
+  }
+
+  @media (width < 560px) {
+    .k-header {
+      padding-top: 8px;
+    }
+
+    .k-header__bar {
+      height: 56px;
+      padding-left: 14px;
+      gap: 8px;
+    }
+
+    .k-header :global(.k-header__logo) {
+      width: 148px;
+    }
+
+    .k-header__lang {
+      display: none;
+    }
+
+    .k-header__cta :global(.k-btn__disc) {
+      display: none;
+    }
+
+    .k-header__cta {
+      padding-right: 16px;
+    }
+  }
+
+  /* ---- full-screen menu ---------------------------------------------- */
+
+  .k-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    align-content: space-between;
+    gap: 32px;
+    padding: calc(var(--k-header-h) + 40px) var(--k-gutter) 40px;
+    background: var(--ink);
+    color: var(--surface);
+    overflow-y: auto;
+    clip-path: circle(0% at calc(100% - 48px) 44px);
+  }
+
+  .k-menu[hidden] {
+    display: none;
+  }
+
+  .k-menu ol {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-menu a[data-k-menu-link] {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 6px 0;
+    color: var(--surface);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(24px, 6.4vw, 40px);
+    line-height: 1.3;
+    text-decoration: none;
+  }
+
+  .k-menu__no {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--k-on-dark-muted);
+  }
+
+  .k-menu__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+</style>
