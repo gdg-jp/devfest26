@@ -2,7 +2,7 @@
 import "../styles/tokens.css";
 import "../styles/base.css";
 import { themeColor } from "../data/themes";
-import { hasOgCard } from "../lib/og";
+import { makesOgCards, OG_CARD_PENDING, ogCardFile } from "../lib/og";
 import { previewMode } from "../preview/mode";
 import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
@@ -62,13 +62,16 @@ const jaUrl = isDefault ? canonical : alternateUrl;
 const enUrl = isDefault ? alternateUrl : canonical;
 
 /*
-  `public/og/` is shared by every city and served from the site root, so the
-  path is the same in a one-city build as in a full one. Whether the file is
-  there at all is `hasOgCard`'s question — see `src/lib/og.ts`.
+  The card lives in this city's own directory, in this page's language, under
+  a name that is not known yet: the build makes the card after the pages and
+  writes its name in over the placeholder. See `src/lib/og.ts`.
 */
 const ogImage =
-  Astro.site && (await hasOgCard(site.tenant))
-    ? new URL(`/og/${site.tenant}.png`, Astro.site).href
+  Astro.site && makesOgCards
+    ? new URL(
+        tenantPath(site.tenant, `/${ogCardFile(OG_CARD_PENDING)}`),
+        Astro.site,
+      ).href
     : undefined;
 
 const eventSchema = clean({

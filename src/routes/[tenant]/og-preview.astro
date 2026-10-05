@@ -3,6 +3,7 @@ import Sprite from "../../components/Sprite.astro";
 import Logo from "../../components/Logo.astro";
 import { buildableCities } from "../../tenants";
 import { exceptOwned } from "../../lib/cityRoutes";
+import { makesOgCards } from "../../lib/og";
 import { stickers } from "../../data/stickers";
 import { messages } from "../../i18n";
 import { currentLanguage } from "../../i18n/language";
@@ -11,15 +12,17 @@ import "../../styles/tokens.css";
 import "../../styles/base.css";
 
 /**
- * The source artwork for `public/og/<tenant>.png`, rendered from the same
- * tenant config as the site so the card can never drift from the page.
+ * The source artwork for each city's OG card, rendered from the same tenant
+ * config as the site so the card can never drift from the page.
  *
- * Not part of a normal build: `getStaticPaths` returns nothing unless
- * OG_PREVIEW is set, so production output contains no such route. Screenshot it
- * with `pnpm og` — see scripts/make-og.mjs.
+ * Built only to be photographed: `src/lib/ogCards.ts` screenshots it once the
+ * build is written and deletes it, so production output contains no such page.
+ * A build that makes no cards does not build it either. In `astro dev` it is an
+ * ordinary page, `/<city>/og-preview`, for working on the design.
  */
 export async function getStaticPaths() {
-  const cities = process.env.OG_PREVIEW ? await buildableCities() : [];
+  const cities =
+    import.meta.env.DEV || makesOgCards ? await buildableCities() : [];
   return exceptOwned(
     "/[tenant]/og-preview",
     cities.map(({ slug, site }) => ({
@@ -97,9 +100,14 @@ const glyphs = [
 
         <div>
           <div class="meta">
+            {
+              /* One string: the line break between two expressions is
+              collapsed away rather than kept as a space. */
+            }
             <span class="pill hi">
-              {event.isoDate.replace(/-/g, ".")}
-              {event.dayOfWeekEn.toUpperCase()}
+              {
+                `${event.isoDate.replace(/-/g, ".")} ${event.dayOfWeekEn.toUpperCase()}`
+              }
             </span>
             <span class="pill">{event.venue.name}</span>
             <span class="pill">{t.og.fee(event.fee)}</span>

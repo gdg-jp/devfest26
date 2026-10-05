@@ -14,7 +14,7 @@ Sanity の **draft**（未公開の下書き）を含んだサイトを、GDG �
        ├─ 未サインイン → 302 /auth/login
        ├─ 非メンバー   → 403
        └─ 通過 → @astrojs/cloudflare
-                   ├─ /_astro/*, /og/* … → ASSETS（サイトのクライアントビルド）
+                   ├─ /_astro/*, /favicon/* … → ASSETS（サイトのクライアントビルド）
                    └─ ページ → SSR → Sanity（drafts）を今読む
                         ├─ /kansai      → 日本語
                         └─ /en/kansai   → 英語
