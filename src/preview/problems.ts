@@ -145,6 +145,19 @@ export function reject(where: string, message: string): void {
   warnOnce(where, message);
 }
 
+/**
+ * A finding that must be seen and must not fail the build.
+ *
+ * An orphan talk is the case this exists for. The document is simply absent
+ * from the programme, so the pages that do exist are still right. Throwing
+ * there took down every page of the city over one "TBA" left in the Studio.
+ */
+export function warn(where: string, message: string): void {
+  report(where, message);
+  if (previewMode) return;
+  warnOnce(where, message);
+}
+
 const ignoreWarnings = Boolean(process.env.IGNORE_CONTENT_WARNINGS?.trim());
 
 /**
