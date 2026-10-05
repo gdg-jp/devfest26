@@ -1,8 +1,6 @@
 ---
 import Portrait from "./Portrait.astro";
 import { speakerHref, type SpeakerProgram } from "../../../data/program";
-import { currentLanguage } from "../../../i18n/language";
-import { copy } from "../_content";
 
 /** Everyone on the programme, each one tap from their page. */
 interface Props {
@@ -10,7 +8,6 @@ interface Props {
 }
 
 const { speakers } = Astro.props;
-const c = copy(currentLanguage());
 
 const bare = (name: string) => name.replace(/\s*氏$/, "");
 const cycle = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
@@ -24,7 +21,6 @@ const cycle = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
 >
   <div class="k-wrap k-wrap--wide">
     <header class="k-head">
-      <p class="k-head__no">{c.speakersLabel}</p>
       <h2 class="k-head__title" id="k-speakers-h" data-k-split>Speakers</h2>
     </header>
 

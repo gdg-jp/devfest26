@@ -10,6 +10,9 @@ import type { ResolvedTenant } from "../../../tenants";
  * Kansai's frame: Base's head (meta, Open Graph, JSON-LD, analytics), the
  * city's own header and footer, and — on the home page only — the splash.
  *
+ * With `docked`, the `hero` slot goes above the header, which then sits in the
+ * flow just below it and pins to the top once scrolled there.
+ *
  * The motion for everything inside is one bundle, `_scripts/index.ts`. Each
  * module in it looks for its own `data-k-*` hooks and does nothing when the
  * page it is on has none, so detail pages can share the frame as they are
@@ -21,9 +24,17 @@ interface Props {
   description?: string;
   jsonLd?: Record<string, unknown>;
   splash?: boolean;
+  docked?: boolean;
 }
 
-const { site, title, description, jsonLd, splash = false } = Astro.props;
+const {
+  site,
+  title,
+  description,
+  jsonLd,
+  splash = false,
+  docked = false,
+} = Astro.props;
 ---
 
 <Base site={site} title={title} description={description} jsonLd={jsonLd}>
@@ -41,7 +52,8 @@ const { site, title, description, jsonLd, splash = false } = Astro.props;
   </script>
   <Sprite />
   {splash && <Splash site={site} />}
-  <Header site={site} />
+  <slot name="hero" />
+  <Header site={site} docked={docked} />
   <main id="top" class="k-main">
     <slot />
   </main>

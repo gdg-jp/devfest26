@@ -81,49 +81,40 @@ html.k-menu-open[data-city="kansai"] body {
 }
 
 /* ---- section heading ------------------------------------------------------
-   An English word set at poster scale, with a small Japanese label above
-   doing the actual naming. Nothing else — no strapline. */
+   The title itself, at half the old poster scale, with a coloured disc
+   sitting to its left. */
 
 [data-city="kansai"] .k-head {
-  display: grid;
-  gap: 14px;
   margin-bottom: clamp(40px, 6vw, 80px);
 }
 
-[data-city="kansai"] .k-head__no {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  font-family: var(--k-f-jp);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-[data-city="kansai"] .k-head__no::before {
-  content: "";
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: var(--k-line) solid currentcolor;
-  background: var(--k-accent, var(--blue));
-}
-
 [data-city="kansai"] .k-head__title {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
   font-family: var(--k-f-display);
   font-weight: 700;
-  font-size: clamp(52px, 12vw, 104px);
+  font-size: clamp(31.2px, 7.2vw, 62.4px);
   line-height: 0.9;
   letter-spacing: -0.05em;
   margin: 0;
   text-wrap: nowrap;
 }
 
+[data-city="kansai"] .k-head__title::before {
+  content: "";
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  border: var(--k-line) solid currentcolor;
+  background: var(--k-accent, var(--blue));
+}
+
 /* A Japanese title: eight characters wide at most, so set smaller. */
 [data-city="kansai"] .k-head__title--ja {
   font-family: var(--k-f-jp);
-  font-size: clamp(34px, 7vw, 64px);
+  font-size: clamp(20.4px, 4.2vw, 38.4px);
   line-height: 1.15;
   letter-spacing: -0.02em;
 }

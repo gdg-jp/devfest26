@@ -38,8 +38,8 @@ const { featured, featuredSessions, speakers, counts } = await homeData(
 );
 ---
 
-<Shell site={site} splash={kv === "current"}>
-  {kv === "current" && <Hero site={site} />}
+<Shell site={site} splash={kv === "current"} docked={kv === "current"}>
+  {kv === "current" && <Hero site={site} slot="hero" />}
   {kv === "a" && <KvBento site={site} />}
   {
     kv === "b" && (

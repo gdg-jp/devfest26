@@ -22,9 +22,11 @@ import { copy } from "../_content";
  */
 interface Props {
   site: ResolvedTenant;
+  /** Sits in the flow under the key visual and pins when it reaches the top. */
+  docked?: boolean;
 }
 
-const { site } = Astro.props;
+const { site, docked = false } = Astro.props;
 const lang = currentLanguage();
 const c = copy(lang);
 const home = tenantHome(site.tenant);
@@ -40,7 +42,11 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
   <span data-progress></span>
 </div>
 
-<header class="k-header" data-topbar data-k-header>
+<header
+  class:list={["k-header", docked && "k-header--docked"]}
+  data-topbar
+  data-k-header
+>
   <div class="k-header__bar">
     <a class="k-header__brand" href={home} aria-label={siteName}>
       <Wordmark class="k-header__logo" label="" />
@@ -158,6 +164,12 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     padding: 12px var(--k-gutter) 0;
     pointer-events: none;
     transition: transform 0.5s var(--k-ease);
+  }
+
+  .k-header--docked {
+    position: sticky;
+    top: 0;
+    padding-bottom: 12px;
   }
 
   .k-header.is-hidden {
