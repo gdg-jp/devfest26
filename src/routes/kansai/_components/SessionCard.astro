@@ -1,0 +1,211 @@
+---
+import Arrow from "./Arrow.astro";
+import Portrait from "./Portrait.astro";
+import type { ProgramSession } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+import { bare, trackTone } from "./track";
+
+/**
+ * One session as a card you can press: the timetable's card, given room to
+ * breathe. Used wherever a detail page points at another session — where a
+ * speaker appears, what runs alongside, what comes before and after.
+ */
+interface Props {
+  session: ProgramSession;
+  /** Worked out by the timetable when the session does not state it. */
+  end?: string;
+  /** A line above the chips, e.g. "Next". */
+  kicker?: string;
+  /** Points back rather than on: the arrow turns round. */
+  back?: boolean;
+}
+
+const { session, end, kicker, back = false } = Astro.props;
+const c = copy(currentLanguage());
+const { track, entry } = session;
+const tone = trackTone(track);
+const speakers = [
+  ...new Map(
+    session.talks
+      .flatMap((talk) => talk.speakers)
+      .map((speaker) => [speaker.id, speaker]),
+  ).values(),
+];
+const time = [session.start, session.start && end].filter(Boolean).join(" – ");
+---
+
+<a
+  class:list={["k-sc", { "k-sc--back": back }]}
+  href={session.href}
+  style={`--fill:${tone.pa};--trk:${tone.solid};--trk-ink:${tone.ink}`}
+>
+  {kicker && <span class="k-sc__kicker">{kicker}</span>}
+  <span class="k-sc__chips">
+    <span class="k-sc__track">{track.data.label}</span>
+    {time && <time class="k-sc__time">{time}</time>}
+  </span>
+  <span class:list={["k-sc__title", { "is-tba": !entry.data.title }]}>
+    {entry.data.title ?? c.titleTba}
+  </span>
+  <span class="k-sc__foot">
+    <span class="k-sc__who">
+      {
+        speakers.map((speaker) => (
+          <span class="k-sc__person">
+            <Portrait speaker={speaker} size={28} class="k-sc__av" />
+            {bare(speaker.data.name)}
+          </span>
+        ))
+      }
+    </span>
+    <span class="k-sc__go" aria-hidden="true"><Arrow /></span>
+  </span>
+</a>
+
+<style>
+  .k-sc {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    padding: 16px 16px 14px 18px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-md);
+    background: var(--fill);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      transform 0.35s var(--k-ease),
+      box-shadow 0.35s var(--k-ease);
+  }
+
+  .k-sc:hover,
+  .k-sc:focus-visible {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .k-sc:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 3px;
+  }
+
+  .k-sc__kicker {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .k-sc__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+  }
+
+  .k-sc__track {
+    padding: 2px 12px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--trk);
+    color: var(--trk-ink);
+    font-family: var(--k-f-display);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .k-sc__time {
+    padding: 2px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+  }
+
+  .k-sc__title {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .k-sc__title.is-tba {
+    color: var(--muted);
+  }
+
+  .k-sc__foot {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  .k-sc__who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .k-sc__person {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .k-sc__person :global(.k-sc__av) {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 12px;
+  }
+
+  .k-sc__go {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    transition:
+      background 0.3s var(--k-ease),
+      transform 0.4s var(--k-ease);
+  }
+
+  .k-sc__go :global(svg) {
+    width: 15px;
+  }
+
+  .k-sc--back .k-sc__go :global(svg) {
+    transform: scaleX(-1);
+  }
+
+  .k-sc:hover .k-sc__go {
+    background: var(--ht-yellow);
+    transform: translateX(3px);
+  }
+
+  .k-sc--back:hover .k-sc__go {
+    transform: translateX(-3px);
+  }
+</style>

@@ -18,10 +18,21 @@ interface Props {
   stickers: StickerName[];
   /** A Japanese title is set in the Japanese face. */
   ja?: boolean;
+  /** The tab's element. A page whose `h1` sits inside the panel makes it a `p`. */
+  tag?: "h2" | "p";
   class?: string;
 }
 
-const { title, id, tone, stickers, ja = false, class: className } = Astro.props;
+const {
+  title,
+  id,
+  tone,
+  stickers,
+  ja = false,
+  tag = "h2",
+  class: className,
+} = Astro.props;
+const Tab = tag;
 ---
 
 <div
@@ -33,14 +44,14 @@ const { title, id, tone, stickers, ja = false, class: className } = Astro.props;
     <path></path>
   </svg>
 
-  <h2
+  <Tab
     class:list={["k-panel__title", { "k-panel__title--ja": ja }]}
     id={id}
     data-k-folder-tab
     data-k-split
   >
     {title}
-  </h2>
+  </Tab>
 
   <div class="k-panel__shelf" aria-hidden="true">
     {

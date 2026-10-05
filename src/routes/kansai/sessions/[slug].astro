@@ -1,0 +1,722 @@
+---
+import { render } from "astro:content";
+import Detail from "../_layout/Detail.astro";
+import Panel from "../_components/Panel.astro";
+import Portrait from "../_components/Portrait.astro";
+import SessionCard from "../_components/SessionCard.astro";
+import Arrow from "../_components/Arrow.astro";
+import { bare, minutes, trackTone } from "../_components/track";
+import { buildableCities } from "../../../tenants";
+import {
+  missingCity,
+  notFound,
+  ownCity,
+  sessionProps,
+} from "../../../lib/cityRoutes";
+import { tenantHome } from "../../../lib/url";
+import {
+  getProgram,
+  getProgramSessions,
+  jstTimestamp,
+  slugOf,
+  speakerHref,
+  type ProgramSession,
+} from "../../../data/program";
+import { getTimetable } from "../../../data/timetable";
+import { messages } from "../../../i18n";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, FEATURED, localized } from "../_content";
+
+/**
+ * One session, in Kansai's own design: the slot and its title on the track's
+ * folder, the people on stage with their profiles, then where it sits in the
+ * day — what runs alongside it and what comes before and after on its track.
+ * Every session has a page, the same set the shared route would publish.
+ */
+export async function getStaticPaths() {
+  // Hoisted out of this file's scope by Astro, so the city is spelled here.
+  const city = (await buildableCities()).find((c) => c.slug === "kansai");
+  if (!city) return [];
+  return (await getProgramSessions(city.slug)).map((session) => ({
+    params: { slug: session.slug },
+    props: { site: city.site, session },
+  }));
+}
+
+const lang = currentLanguage();
+const t = messages(lang);
+const c = copy(lang);
+
+// The static build hands the session over from `getStaticPaths`; the draft
+// preview has only the URL. See `src/lib/cityRoutes.ts`.
+let props = Astro.props.site ? Astro.props : undefined;
+if (!props) {
+  const own = await ownCity(Astro.url);
+  if (!own) return missingCity(Astro.url);
+  props = await sessionProps({ tenant: own.tenant, slug: Astro.params.slug });
+}
+if (!props) return notFound(t.notFound.session(Astro.params.slug ?? ""));
+
+const { site, session } = props;
+const { entry, track, label, talks } = session;
+const { Content } = await render(entry);
+const tone = trackTone(track);
+const castTone =
+  tone.ht === "var(--ht-yellow)" ? "var(--ht-red)" : "var(--ht-yellow)";
+const home = tenantHome(site.tenant);
+
+const title = entry.data.title;
+const abstract = entry.body?.trim();
+
+const [program, timetable] = await Promise.all([
+  getProgram(site.tenant),
+  getTimetable(site),
+]);
+
+// A session that leaves out its end runs until the next thing on its track;
+// the timetable is what knows that, so this page and the grid agree.
+const endOf = (s: ProgramSession) => s.end ?? timetable?.ends.get(s.slug);
+const start = session.start;
+const end = endOf(session);
+const length = start && end ? minutes(end) - minutes(start) : undefined;
+
+const everyone = [
+  ...new Map(
+    talks
+      .flatMap((talk) => talk.speakers)
+      .map((speaker) => [speaker.id, speaker]),
+  ).values(),
+];
+const ring = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
+const cast = await Promise.all(
+  everyone.map(async (speaker, i) => ({
+    speaker,
+    href: speakerHref(speaker),
+    ring: ring[i % ring.length],
+    hook: FEATURED.find((f) => f.slug === slugOf(speaker)),
+    Bio: speaker.body?.trim() ? (await render(speaker)).Content : undefined,
+  })),
+);
+const featured = cast.some((person) => person.hook);
+
+// Talks of their own only exist where a city splits a slot; Kansai does not,
+// but the Studio could, and they would otherwise have no way in.
+const ownTalks = talks.filter((talk) => talk.standalone);
+
+const sessions = program.flatMap((group) => group.sessions);
+const alongside =
+  start && end
+    ? sessions.filter((other) => {
+        const otherEnd = endOf(other);
+        return (
+          other.track.id !== track.id &&
+          other.start !== undefined &&
+          otherEnd !== undefined &&
+          minutes(other.start) < minutes(end) &&
+          minutes(otherEnd) > minutes(start)
+        );
+      })
+    : [];
+
+const lane =
+  program.find((group) => group.track.id === track.id)?.sessions ?? [];
+const at = lane.findIndex((other) => other.slug === session.slug);
+const prev = at > 0 ? lane[at - 1] : undefined;
+const next = at >= 0 ? lane[at + 1] : undefined;
+
+const names = everyone
+  .map((speaker) => speaker.data.name)
+  .join(t.common.nameSeparator);
+const description = abstract
+  ? abstract.replace(/\s+/g, " ").slice(0, 110)
+  : t.detail.metaFallback(title ?? label, names);
+
+const url = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+
+// A slot with no announced title is not yet a thing search engines should be
+// told about.
+const jsonLd = title
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: title,
+      ...(url ? { url } : {}),
+      ...(start ? { startDate: jstTimestamp(site.event.isoDate, start) } : {}),
+      ...(end ? { endDate: jstTimestamp(site.event.isoDate, end) } : {}),
+      location: { "@type": "Place", name: site.event.venue.name },
+      performer: everyone.map((speaker) => ({
+        "@type": "Person",
+        name: speaker.data.name,
+        jobTitle: speaker.data.role,
+      })),
+      superEvent: {
+        "@type": "Event",
+        name: site.fullTitle ?? site.title,
+        startDate: site.event.startsAt,
+      },
+    }
+  : undefined;
+---
+
+<Detail
+  site={site}
+  title={title ?? label}
+  description={description}
+  jsonLd={jsonLd}
+  back={{ href: `${home}#timetable`, label: c.backToTimetable }}
+  placement="session"
+>
+  <section class="k-sec k-sec--panel" aria-labelledby="k-sh-title">
+    <div class="k-wrap k-wrap--panel">
+      <Panel
+        tag="p"
+        title={track.data.label}
+        id="k-sh-track"
+        tone={tone.ht}
+        stickers={tone.stickers}
+      >
+        <div class="k-sh">
+          <p class="k-sh__meta">
+            {
+              start && (
+                <span class="k-sh__time">
+                  <time>{start}</time>
+                  {end && (
+                    <>
+                      <span aria-hidden="true">–</span>
+                      <time>{end}</time>
+                    </>
+                  )}
+                </span>
+              )
+            }
+            {length && <span class="k-sh__len">{c.minutes(length)}</span>}
+            <span class="k-sh__no">{label}</span>
+            {featured && <span class="k-sh__badge">{c.featuredBadge}</span>}
+          </p>
+
+          <h1
+            class:list={["k-sh__title", { "is-tba": !title }]}
+            id="k-sh-title"
+          >
+            {title ?? c.titleTba}
+          </h1>
+
+          <p class="k-sh__room" style={`--trk:${tone.solid}`}>
+            {track.data.sub}
+          </p>
+
+          <ul class="k-sh__cast">
+            {
+              cast.map((person) => (
+                <li>
+                  <a class="k-sh__person" href={person.href}>
+                    <span class="k-sh__ring" style={`--ring:${person.ring}`}>
+                      <Portrait
+                        speaker={person.speaker}
+                        size={64}
+                        class="k-sh__av"
+                        tone={person.ring}
+                        eager
+                      />
+                    </span>
+                    <span class="k-sh__id">
+                      <b>{bare(person.speaker.data.name)}</b>
+                      <small>{person.speaker.data.role}</small>
+                    </span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </Panel>
+    </div>
+  </section>
+
+  {
+    (abstract || ownTalks.length > 0) && (
+      <section class="k-sec k-sec--panel" aria-labelledby="k-about-h">
+        <div class="k-wrap k-wrap--panel" data-k-reveal="up">
+          <Panel
+            title="About"
+            id="k-about-h"
+            tone={tone.pa}
+            stickers={["quoteOpen", "quoteClose"]}
+          >
+            <p class="k-sub">{c.aboutSub}</p>
+            {abstract && (
+              <div class="k-prose k-about">
+                <Content />
+              </div>
+            )}
+            {ownTalks.length > 0 && (
+              <ol class="k-talks">
+                {ownTalks.map((talk) => (
+                  <li>
+                    <a class="k-link" href={talk.href}>
+                      {talk.start && <time>{talk.start}</time>}
+                      {talk.title ?? c.titleTba}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Panel>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="k-sec k-sec--panel" aria-labelledby="k-cast-h">
+    <div class="k-wrap k-wrap--panel" data-k-reveal="up">
+      <Panel
+        title={everyone.length > 1 ? "Speakers" : "Speaker"}
+        id="k-cast-h"
+        tone={castTone}
+        stickers={["scallop", "multiply"]}
+      >
+        <p class="k-sub">{c.speakersSub}</p>
+        <div class="k-bios">
+          {
+            cast.map(({ speaker, href, ring, hook, Bio }) => (
+              <article class="k-bio">
+                <a
+                  class="k-bio__face"
+                  href={href}
+                  style={`--ring:${ring}`}
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <Portrait
+                    speaker={speaker}
+                    size={132}
+                    class="k-bio__img"
+                    tone={ring}
+                  />
+                </a>
+                <div class="k-bio__body">
+                  {hook && (
+                    <p class="k-bio__hook">{localized(hook.hook, lang)}</p>
+                  )}
+                  <h3 class="k-bio__name">
+                    <a href={href}>{bare(speaker.data.name)}</a>
+                  </h3>
+                  <p class="k-bio__role">{speaker.data.role}</p>
+                  {Bio && (
+                    <div class="k-prose k-bio__text">
+                      <Bio />
+                    </div>
+                  )}
+                  <a class="k-link k-bio__more" href={href}>
+                    {c.profile}
+                    <Arrow />
+                  </a>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+      </Panel>
+    </div>
+  </section>
+
+  <section class="k-sec k-sec--panel" aria-labelledby="k-day-h">
+    <div class="k-wrap k-wrap--panel" data-k-reveal="up">
+      <Panel
+        title="Timetable"
+        id="k-day-h"
+        tone="var(--ht-green)"
+        stickers={["colon", "equals"]}
+      >
+        {
+          alongside.length > 0 && (
+            <>
+              <h3 class="k-sub">{c.sameTimeSub}</h3>
+              <ul class="k-cards">
+                {alongside.map((other) => (
+                  <li>
+                    <SessionCard session={other} end={endOf(other)} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )
+        }
+
+        {
+          (prev || next) && (
+            <>
+              <h3 class="k-sub">{c.trackSub(track.data.label)}</h3>
+              <ul class="k-cards k-cards--lane">
+                {prev && (
+                  <li>
+                    <SessionCard
+                      session={prev}
+                      end={endOf(prev)}
+                      kicker={c.prevSession}
+                      back
+                    />
+                  </li>
+                )}
+                {next && (
+                  <li class="k-cards__next">
+                    <SessionCard
+                      session={next}
+                      end={endOf(next)}
+                      kicker={c.nextSession}
+                    />
+                  </li>
+                )}
+              </ul>
+            </>
+          )
+        }
+
+        <a class="k-link k-day__all" href={`${home}#timetable`}>
+          {c.fullTimetable}
+          <Arrow />
+        </a>
+      </Panel>
+    </div>
+  </section>
+</Detail>
+
+<style>
+  /* ---- head ---------------------------------------------------------- */
+
+  .k-sh {
+    display: grid;
+    gap: clamp(14px, 2vw, 20px);
+    padding-top: clamp(8px, 1.6vw, 16px);
+  }
+
+  .k-sh__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin: 0;
+  }
+
+  .k-sh__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--f-mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .k-sh__len,
+  .k-sh__no {
+    padding: 4px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .k-sh__no {
+    border-style: dashed;
+    color: var(--muted);
+    border-color: var(--dash);
+  }
+
+  .k-sh__badge {
+    padding: 3px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--ht-yellow);
+    font-family: var(--k-f-display);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .k-sh__title {
+    margin: 0;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(26px, 4.6vw, 42px);
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .k-sh__title.is-tba {
+    color: var(--muted);
+  }
+
+  .k-sh__room {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--k-f-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .k-sh__room::before {
+    content: "";
+    width: 12px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    background: var(--trk);
+  }
+
+  .k-sh__cast {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+    margin: clamp(4px, 1vw, 10px) 0 0;
+    padding: clamp(16px, 2.4vw, 22px) 0 0;
+    border-top: 1.5px dashed var(--k-hair);
+    list-style: none;
+  }
+
+  .k-sh__person {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 420px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .k-sh__ring {
+    flex: none;
+    width: 72px;
+    aspect-ratio: 1;
+    padding: 3px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ring);
+    transition: transform 0.5s var(--k-ease-back);
+  }
+
+  .k-sh__ring :global(.k-sh__av) {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: var(--k-line) solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 22px;
+  }
+
+  .k-sh__person:hover .k-sh__ring,
+  .k-sh__person:focus-visible .k-sh__ring {
+    transform: rotate(-8deg) scale(1.06);
+  }
+
+  .k-sh__id {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .k-sh__id b {
+    font-family: var(--k-f-display);
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .k-sh__id small {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ---- about --------------------------------------------------------- */
+
+  .k-about {
+    font-size: 16.5px;
+  }
+
+  .k-talks {
+    display: grid;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-talks time {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ---- speakers ------------------------------------------------------ */
+
+  .k-bios {
+    display: grid;
+  }
+
+  .k-bio {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: clamp(16px, 3vw, 32px);
+    align-items: start;
+    padding-block: clamp(20px, 3vw, 28px);
+  }
+
+  .k-bio:first-child {
+    padding-top: 0;
+  }
+
+  .k-bio:last-child {
+    padding-bottom: 0;
+  }
+
+  .k-bio + .k-bio {
+    border-top: 1.5px dashed var(--k-hair);
+  }
+
+  .k-bio__face {
+    display: block;
+    width: 140px;
+    aspect-ratio: 1;
+    padding: 5px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ring);
+    transition: transform 0.5s var(--k-ease-back);
+  }
+
+  .k-bio__face:hover {
+    transform: rotate(-6deg) scale(1.04);
+  }
+
+  .k-bio__face :global(.k-bio__img) {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: var(--k-line) solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 40px;
+  }
+
+  .k-bio__body {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .k-bio__hook {
+    margin: 0 0 4px;
+    padding: 2px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 13px;
+    background: var(--ink);
+    color: var(--ht-yellow);
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .k-bio__name {
+    margin: 0;
+    font-family: var(--k-f-display);
+    font-size: clamp(22px, 2.8vw, 28px);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .k-bio__name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .k-bio__name a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  .k-bio__role {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .k-bio__text {
+    margin-top: 10px;
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
+  .k-bio__more {
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  .k-bio__more :global(svg),
+  .k-day__all :global(svg) {
+    width: 16px;
+  }
+
+  /* ---- the day ------------------------------------------------------- */
+
+  .k-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 14px;
+    margin: 0 0 clamp(28px, 4vw, 40px);
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-cards--lane {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .k-cards__next {
+    grid-column: 2;
+  }
+
+  .k-day__all {
+    font-size: 15px;
+  }
+
+  @media (width < 640px) {
+    .k-bio {
+      grid-template-columns: 1fr;
+    }
+
+    .k-bio__face {
+      width: 104px;
+    }
+
+    .k-cards--lane {
+      grid-template-columns: 1fr;
+    }
+
+    .k-cards__next {
+      grid-column: auto;
+    }
+  }
+</style>

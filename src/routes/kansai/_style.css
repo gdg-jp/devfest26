@@ -330,6 +330,72 @@ html.k-menu-open[data-city="kansai"] body {
   flex: none;
 }
 
+/* ---- detail pages ---------------------------------------------------------
+   A panel's caption under its tab, the way News carries お知らせ: the tab
+   says it in the poster face, this says it plainly. */
+
+[data-city="kansai"] .k-sub {
+  margin: 0 0 clamp(16px, 2.4vw, 24px);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* An abstract or a bio, as written in Markdown or the Studio. */
+[data-city="kansai"] .k-prose {
+  font-size: 16px;
+  line-height: 1.95;
+  text-wrap: pretty;
+}
+
+[data-city="kansai"] .k-prose > :first-child {
+  margin-top: 0;
+}
+
+[data-city="kansai"] .k-prose > :last-child {
+  margin-bottom: 0;
+}
+
+[data-city="kansai"] .k-prose p {
+  margin: 0 0 1.1em;
+}
+
+[data-city="kansai"] .k-prose h2,
+[data-city="kansai"] .k-prose h3 {
+  font-family: var(--k-f-display);
+  font-size: 18px;
+  margin: 1.6em 0 0.5em;
+}
+
+[data-city="kansai"] .k-prose ul,
+[data-city="kansai"] .k-prose ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.4em;
+}
+
+[data-city="kansai"] .k-prose a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+[data-city="kansai"] .k-prose code {
+  font-family: var(--f-mono);
+  font-size: 0.9em;
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: var(--ground);
+}
+
+[data-city="kansai"] .k-prose blockquote {
+  margin: 0 0 1.1em;
+  padding-left: 16px;
+  border-left: 3px solid var(--ink);
+  color: var(--muted);
+}
+
 /* ---- motion states --------------------------------------------------------
    Everything the scripts bring in starts hidden only once JavaScript has
    announced itself (`html.js`), and is shown again if the bundle never lands
