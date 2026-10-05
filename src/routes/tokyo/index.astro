@@ -1,0 +1,42 @@
+---
+import CityHome from "../../layouts/CityHome.astro";
+import Hero from "../../components/Hero.astro";
+import Countdown from "../../components/Countdown.astro";
+import PreEvents from "../../components/PreEvents.astro";
+import Overview from "../../components/Overview.astro";
+import About from "../../components/About.astro";
+import Sessions from "../../components/Sessions.astro";
+import WhatIsDevFest from "../../components/WhatIsDevFest.astro";
+import Partners from "../../components/Partners.astro";
+import CodeOfConduct from "../../components/CodeOfConduct.astro";
+import Register from "../../components/Register.astro";
+import { missingCity, ownCity } from "../../lib/cityRoutes";
+
+/**
+ * Tokyo's home page: the shared one, less the timetable.
+ *
+ * A stopgap. Tokyo's sessions carry times already, but the day as a whole is
+ * not settled, and a grid drawn from the few that are placed reads as the
+ * programme when it is not. The section comes back when the timetable is
+ * final — by deleting this directory, which hands `/tokyo` back to
+ * `src/routes/[tenant]/index.astro`.
+ *
+ * Until then this page does not follow the shared one: a section added there
+ * does not appear here. Everything else is that file as it stood, in its order.
+ */
+const site = await ownCity(Astro.url);
+if (!site) return missingCity(Astro.url);
+---
+
+<CityHome site={site}>
+  <Hero site={site} />
+  <Countdown site={site} />
+  <PreEvents site={site} />
+  <Overview site={site} />
+  <About tenant={site.tenant} />
+  <Sessions tenant={site.tenant} />
+  <WhatIsDevFest tenant={site.tenant} />
+  <Partners site={site} />
+  <CodeOfConduct site={site} />
+  <Register site={site} />
+</CityHome>
