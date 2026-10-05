@@ -6,6 +6,7 @@ import { previewMode } from "./src/preview/mode";
 import { LANGUAGES, langPrefix, langPrefixOf } from "./src/i18n/language";
 import { routeTable, type RouteFile } from "./src/lib/routeTable";
 import { offBrandColors } from "./src/lib/brandColors";
+import { ogCards } from "./src/lib/ogCards";
 import {
   anyCity,
   mayBuildCity,
@@ -97,10 +98,11 @@ const routes: AstroIntegration = {
 
       if (anyCity) {
         for (const route of table.shared) {
-          // Only built with OG_PREVIEW set; see the route itself. The preview
-          // renders on demand, where `getStaticPaths` decides nothing and the
-          // route would answer for every city — so it is left out entirely,
-          // and with it any question of which language it would be in.
+          // The OG card, built to be screenshotted and then deleted; see
+          // `src/lib/ogCards.ts`. The preview renders on demand, where
+          // `getStaticPaths` decides nothing and the route would answer for
+          // every city — so it is left out entirely, and with it any question
+          // of which language it would be in.
           if (previewMode && route.pattern === "/[tenant]/og-preview") continue;
           inject(route);
         }
@@ -208,7 +210,7 @@ const routes: AstroIntegration = {
 // https://astro.build/config
 export default defineConfig({
   site,
-  integrations: [routes],
+  integrations: [routes, ogCards],
   trailingSlash: "never",
   /**
    * Two routes rendering the same path is always a mistake here, never a
@@ -281,10 +283,6 @@ export default defineConfig({
     assets: soleCity
       ? [langPrefix.slice(1), soleCity, "_astro"].filter(Boolean).join("/")
       : "_astro",
-    // The OG card is screenshotted straight off disk, where a `/_astro/...`
-    // stylesheet href resolves to nothing. Inlining makes that build
-    // self-contained; normal builds keep the default split.
-    inlineStylesheets: process.env.OG_PREVIEW ? "always" : "auto",
   },
   vite: {
     define: {

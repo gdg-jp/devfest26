@@ -138,7 +138,7 @@ gh-pages/.nojekyll   ← Astro は _astro/ に資産を出すので必須
 gh-pages/.cities     ← どのディレクトリが都市かの記録。publish が読み書きします
 ```
 
-**1 都市だけのビルド（`TARGETS=kansai SITE_LANG=en`）は、その都市の下で完結します。** バンドルの出力先も `en/kansai/_astro/` になるので（`astro.config.ts` の `build.assets`）、ディレクトリごと差し替えれば済みます。`public/` の共有ファイル（OG 画像・`.ico`）だけはルートにあり、`ja/portal` のジョブが公開します（`en/portal` の `_astro/` は内容が同じなら同じハッシュ名になるので、無ければ足すだけです）。
+**1 都市だけのビルド（`TARGETS=kansai SITE_LANG=en`）は、その都市の下で完結します。** バンドルの出力先も `en/kansai/_astro/` に、OG 画像も `en/kansai/og.<hash>.png` になるので（`astro.config.ts` の `build.assets` と [OG 画像](#og-画像)）、ディレクトリごと差し替えれば済みます。`public/` の共有ファイル（`.ico` など）だけはルートにあり、`ja/portal` のジョブが公開します（`en/portal` の `_astro/` は内容が同じなら同じハッシュ名になるので、無ければ足すだけです）。
 
 ローカルで同じ形を作るには `pnpm build` を実行してください。`dist/ja-all/` が公開されるサイトの日本語側そのものです（英語側は `SITE_LANG=en pnpm build` で `dist/en-all/`）。
 
@@ -300,7 +300,7 @@ audience:
 
 **Studio で `event` ドキュメントを 1 件作って publish するだけです。** slug が URL（`/<slug>`）になり、次のビルドから CI の matrix にも自動で入ります。この repo を触る必要はありません。
 
-任意で、公開後に `pnpm og <slug>` で OG 画像を作ってください。無い間は `og:image` を出さないだけで、ページ自体は普通に公開されます。
+OG 画像もその都市のビルドが作るので、別の作業はありません。
 
 Sanity を使わない場合だけ、以下の手作業が残ります。
 
@@ -328,7 +328,7 @@ src/routes/
     speakers/[slug].astro     → /<slug>/speakers/…
     talks/[slug].astro        → /<slug>/talks/…
     favicon.svg.ts            → /<slug>/favicon.svg
-    og-preview.astro          → OG 画像の元（pnpm og のときだけ）
+    og-preview.astro          → OG 画像の元（ビルドが撮影して消す）
   kansai/                     → 関西だけ（任意）
     index.astro               → /kansai を差し替える
     access.astro              → /kansai/access を足す
@@ -428,7 +428,7 @@ Sanity を使っている場合は、Studio の **External Events**（`externalE
 
 **「開催予定」と「終了」の境目はビルド時刻です。** 静的サイトなので、当日を過ぎたイベントが下段に移るのは次のビルドのときです。
 
-トップページには OG 画像がありません。`public/og/` にあるのは都市ごとのカードで、そのどれも全体を代表しないためです。
+トップページには OG 画像がありません。カードは都市ごとのもので、そのどれも全体を代表しないためです。
 
 ## コンテンツを Sanity で管理する（任意）
 
@@ -553,20 +553,20 @@ Secret（署名）は設定しても意味がありません。GitHub の `dispa
 
 ## OG 画像
 
-`public/og/<tenant>.png`（1200×630）を都市ごとに持ちます。
+**ビルドが都市ごと・言語ごとに作ります。手作業はありません。** 「サイトに反映」で都市を作り直せば、カードもその時点の Sanity の内容で作り直されます。
 
-```bash
-pnpm og            # 全都市
-pnpm og kansai     # 1 都市だけ
+```text
+/kansai/og.<hash>.png       ← 日本語ページの og:image
+/en/kansai/og.<hash>.png    ← 英語ページの og:image
 ```
 
-カード自体は `src/routes/[tenant]/og-preview.astro` で、サイト本体と同じテナント設定を読みます。**画像とページの内容がずれません。** このルートは `OG_PREVIEW` が立っているときだけ生成されるので、通常のビルド成果物には含まれません。
+カード自体は `src/routes/[tenant]/og-preview.astro` で、サイト本体と同じテナント設定を読みます。**画像とページの内容がずれません。** ビルドがこのページを書き出したあと、`src/lib/ogCards.ts` がローカルで配信して Chrome でスクリーンショットを撮り、PNG を都市のディレクトリに置いて、ページ自体は成果物から消します。デザインを触るときは `pnpm dev` で `/<city>/og-preview` を開いてください。
 
-Chrome が必要です（`CHROME_PATH` で上書き可）。Google Fonts を読むのでネットワークも必要です。ビルドには組み込んでいません — タイトル・日付・会場・テーマが変わったときだけ実行してください。
+**ファイル名のハッシュはカードの内容から作ります。** 文言・日付・会場・デザインのどれかが変われば URL が変わるので、X・Facebook・Slack などが古い画像をキャッシュしていても新しいカードが取りに行かれます。何も変わっていなければ同じ名前のままです。ただしページ自体のプレビューのキャッシュは別で、すでにシェアされたリンクのカードが切り替わるのは各サービスがページを読み直したときです（Facebook は[シェアデバッガー](https://developers.facebook.com/tools/debug/)で即時に読み直させられます）。
 
-トップページには OG 画像がありません（`pnpm og portal` もありません）。ここにあるのは都市ごとのカードで、そのどれも一覧ページを代表しないためです。
+Chrome が必要です（`CHROME_PATH` で上書き可）。GitHub Actions の Ubuntu ランナーには最初から入っています。Google Fonts を読むのでネットワークも必要です。**CI で Chrome が見つからなければビルドを落とします。** ローカルで見つからない場合は警告を出し、そのビルドのページは `og:image` を出しません（壊れた URL を出すよりは何も出さない方を選んでいます）。`astro dev` と下書きプレビューも `og:image` を出しません。
 
-**OG 画像が無い都市は `og:image` を出しません。** `event` を publish した直後の都市にはまだカードが無いので、壊れた URL を出すよりは何も出さない方を選んでいます（`src/layouts/Base.astro` がビルド時にファイルの有無を見ます）。
+トップページには OG 画像がありません。カードは都市ごとのもので、そのどれも一覧ページを代表しないためです。
 
 ファビコンは都市ごとに `/<slug>/favicon.svg` のエンドポイント（`src/routes/[tenant]/favicon.svg.ts`）で、テーマ色で生成されます。`public/` は全都市で共有されていて `/favicon.svg` は 1 つしか置けないため、静的ファイルではなくエンドポイントにしています。ルートの `/favicon.svg` はトップページのもので、都市ではないので DevFest のプライマリ（blue）です。
 

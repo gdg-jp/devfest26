@@ -1,42 +1,44 @@
-import { previewMode } from "../preview/mode";
+/**
+ * The Open Graph card, as the pages see it.
+ *
+ * Each city's card is made by the build that makes the city's pages — see
+ * `src/lib/ogCards.ts` — and saved inside that city's own directory under a
+ * name taken from what the card says: `/kansai/og.3f9c1e0a2b.png`, and
+ * `/en/kansai/og.….png` beside the English pages. Two things follow from that,
+ * and they are why it works this way rather than the way it used to, a PNG per
+ * city committed to `public/og/` by hand:
+ *
+ * - The card is drawn from what the build read from Sanity, at the same moment
+ *   as the page around it. A committed image was drawn from whatever was there
+ *   the last time somebody remembered to run a script — and for Tokyo that was
+ *   the placeholder config the city started from, months before the CMS had
+ *   its real date and venue.
+ * - A card whose content changes gets a new URL. Link previews are cached by
+ *   image URL — by X, Facebook, Slack — so a card that changed under a fixed
+ *   name would go on showing the old one for as long as each of them pleased.
+ *
+ * The name cannot be known while a page is being rendered: the card is a
+ * screenshot of another page in the same build. So pages write a placeholder,
+ * and the build swaps in the real name once the card exists.
+ *
+ * Dependency-free, because `astro.config.ts` reads it too.
+ */
 
 /**
- * Whether this city has an Open Graph card in `public/og/`.
+ * Whether this build makes cards, substituted in by `src/lib/ogCards.ts`.
  *
- * A city gets its card the moment its `event` document is published, which is
- * before anyone has run `pnpm og` for it. Checking rather than assuming means a
- * new city ships without an `og:image` instead of with a URL that 404s in every
- * preview that follows the link.
- *
- * `public/og/` is shared by every city and served from the site root, so the
- * URL is the same in a one-city build as in a full one; only the answer to
- * "is it there" differs.
- *
- * The path is resolved from the working directory rather than from
- * `import.meta.url`, and that is the whole reason this is a module of its own.
- * A build bundles this code into a chunk under `dist/<targetKey>/.prerender/`,
- * so a URL relative to the module resolves to `dist/<targetKey>/public/og/…`
- * — which never exists, and so quietly suppressed the tag in every build
- * while working perfectly in `astro dev`. `astro build` runs from the
- * project root.
- *
- * Asynchronous because of where the check has to happen. In a build there is a
- * filesystem and the file either exists or does not. In the draft preview the
- * page is rendered inside a Cloudflare Worker, where `public/` is an asset
- * store rather than a directory — so there is nothing to stat, and the answer
- * is yes: the preview is `noindex` and private, nothing will ever unfurl one of
- * its links, and a tag pointing at an asset that may or may not be there costs
- * nothing. The dynamic import is what keeps `node:fs` out of the Worker bundle,
- * since `previewMode` is substituted at build time and takes the rest of this
- * function with it.
+ * False in `astro dev`, in the draft preview, and in a local build with no
+ * Chrome to take the screenshot with — a page there carries no `og:image`
+ * rather than one that points at nothing. A CI build without Chrome fails
+ * instead of quietly publishing pages with no card.
  */
-export async function hasOgCard(tenant: string): Promise<boolean> {
-  if (previewMode) return true;
+declare const __OG_CARDS__: boolean | undefined;
 
-  const [{ existsSync }, { join }] = await Promise.all([
-    import("node:fs"),
-    import("node:path"),
-  ]);
+export const makesOgCards: boolean =
+  typeof __OG_CARDS__ === "boolean" ? __OG_CARDS__ : false;
 
-  return existsSync(join(process.cwd(), "public", "og", `${tenant}.png`));
-}
+/** Written where the card's hash will go, and replaced after the build. */
+export const OG_CARD_PENDING = "__OG_CARD__";
+
+/** The card's file name inside its city's directory. */
+export const ogCardFile = (hash: string) => `og.${hash}.png`;

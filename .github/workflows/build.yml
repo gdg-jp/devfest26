@@ -171,6 +171,9 @@ jobs:
         shell: bash
         run: pnpm exec astro check 2>&1 | tee -a build.log
 
+      # Also makes the city's OG card, with the Chrome the Ubuntu runner comes
+      # with — see `src/lib/ogCards.ts`. Without one the build fails here
+      # rather than publishing pages whose link previews have no image.
       - name: Build
         shell: bash
         run: pnpm exec astro build 2>&1 | tee -a build.log
@@ -309,8 +312,9 @@ jobs:
           # Each city, in each language, if its job produced anything. A
           # `TARGETS=<slug> SITE_LANG=<lang>` build writes that city under
           # `<slug>/` (or `en/<slug>/`) with its own assets inside it — see
-          # `soleCity` in `src/tenants/selection.ts` — so the directory is
-          # self-contained and swaps in whole.
+          # `soleCity` in `src/tenants/selection.ts` — and its own OG card,
+          # so the directory is self-contained and swaps in whole. The card
+          # the old pages pointed at goes with them.
           for slug in "${cities[@]}"; do
             if [ -d "artifacts/site-ja-$slug/$slug" ]; then
               echo "replacing /$slug"
@@ -335,7 +339,7 @@ jobs:
           done
 
           # The front page owns the root, which is also where the files every
-          # city shares live (public/og, public/favicon). It is replaced
+          # city shares live (public/favicon). It is replaced
           # wholesale so a deleted file actually disappears; the city
           # directories, `en/`, the git metadata and the two markers are what
           # survive the prune.
@@ -354,7 +358,7 @@ jobs:
           # loop above, and a plain `rm -rf site/en` here would take it
           # straight back out.
           #
-          # Its own `_astro/` (and `og/`, `favicon/`, …) are the same public
+          # Its own `_astro/` (and `favicon/`, …) are the same public
           # assets the Japanese build just published, content-hashed the same
           # way if their content matches — `cp -n` only adds what is not
           # already there rather than risking two different files landing on
