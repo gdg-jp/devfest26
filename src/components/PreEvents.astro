@@ -62,10 +62,28 @@ const meetups = (await byTenant("meetups", site.tenant)).sort(
 }
 
 <style>
+  /*
+    A rule against whatever plain section it meets, on either side — a city
+    may put it after the overview rather than before. A band or a bordered
+    section draws that line itself, and two of them would stack into one
+    twice as thick.
+  */
   .sec {
     padding-top: clamp(46px, 5.8vw, 74px);
     padding-bottom: clamp(46px, 5.8vw, 74px);
+    border-top: var(--bw) solid var(--stroke);
     border-bottom: var(--bw) solid var(--stroke);
+  }
+
+  :global(.band) + .sec,
+  :global(.bordered) + .sec {
+    border-top: 0;
+  }
+
+  /* Whole-selector `:global`, because Astro leaves one inside `:has()` as is. */
+  :global(#preevent:has(+ .band)),
+  :global(#preevent:has(+ .bordered)) {
+    border-bottom: 0;
   }
 
   .meets {
