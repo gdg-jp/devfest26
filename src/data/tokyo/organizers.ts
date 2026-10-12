@@ -1,6 +1,5 @@
 import type { ImageMetadata } from "astro";
 import googleLogo from "../../assets/tokyo/googlelogo.png";
-import connpassIcon from "../../assets/tokyo/connpass-icon.png";
 
 export interface SocialLink {
   type: "x" | "instagram" | "linkedin" | "connpass";
@@ -115,5 +114,3 @@ export const TOKYO_ORGANIZERS: OrganizerSection[] = [
     ],
   },
 ];
-
-export { connpassIcon };
