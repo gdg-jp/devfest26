@@ -7,7 +7,7 @@ import Overview from "../../components/Overview.astro";
 import About from "../../components/About.astro";
 import Sessions from "../../components/Sessions.astro";
 import WhatIsDevFest from "../../components/WhatIsDevFest.astro";
-import Partners from "../../components/Partners.astro";
+import Organizers from "../../components/Organizers.astro";
 import CodeOfConduct from "../../components/CodeOfConduct.astro";
 import Register from "../../components/Register.astro";
 import { missingCity, ownCity } from "../../lib/cityRoutes";
@@ -36,7 +36,7 @@ if (!site) return missingCity(Astro.url);
   <About tenant={site.tenant} />
   <Sessions tenant={site.tenant} />
   <WhatIsDevFest tenant={site.tenant} />
-  <Partners site={site} />
+  <Organizers />
   <CodeOfConduct site={site} />
   <Register site={site} />
 </CityHome>

@@ -1,0 +1,316 @@
+---
+import { Image } from "astro:assets";
+import {
+  TOKYO_ORGANIZERS,
+  type OrganizerSection,
+} from "../data/tokyo/organizers";
+
+interface Props {
+  sections?: OrganizerSection[];
+  title?: string;
+  eyebrow?: string;
+}
+
+const {
+  sections = TOKYO_ORGANIZERS,
+  title = "運営",
+  eyebrow = "Organizers",
+} = Astro.props;
+---
+
+<section class="sec tint bordered" id="organizers">
+  <div id="partners" class="anchor-alias" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">
+      {eyebrow}
+    </p>
+    <h2 class="sec-h" data-reveal="up">
+      {title}
+    </h2>
+
+    <div class="groups">
+      {
+        sections.map((section) => (
+          <div class="group" data-reveal="up">
+            <h3 class="group-title">{section.title}</h3>
+            <div class="orgs-list" data-stagger>
+              {section.items.map((item) => (
+                <div
+                  class="org-card"
+                  style={item.rail ? `--rail:var(--${item.rail})` : undefined}
+                  data-reveal="up"
+                >
+                  <div class="org-head">
+                    <h4 class="org-name">
+                      <span>{item.name}</span>
+                      {item.xUrl && (
+                        <span class="x-badge">
+                          (
+                          <a
+                            href={item.xUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="x-link"
+                          >
+                            {item.xHandle || "X"}
+                          </a>
+                          )
+                        </span>
+                      )}
+                    </h4>
+                  </div>
+
+                  {item.description && (
+                    <div class="org-body">
+                      {item.description.split("\n\n").map((block) => (
+                        <p>{block}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.links && item.links.length > 0 && (
+                    <div class="org-links">
+                      {item.links.map((link) => (
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="link-pill"
+                        >
+                          <svg
+                            class="link-icon"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                          </svg>
+                          <span>{link.label}</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.logo && (
+                    <div class="org-logo">
+                      {item.logo.url ? (
+                        <a
+                          href={item.logo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="logo-link"
+                          aria-label={item.logo.alt}
+                        >
+                          {typeof item.logo.image === "string" ? (
+                            <img
+                              src={item.logo.image}
+                              alt={item.logo.alt}
+                              width={item.logo.width || 220}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <Image
+                              src={item.logo.image}
+                              alt={item.logo.alt}
+                              width={item.logo.width || 220}
+                              loading="lazy"
+                            />
+                          )}
+                        </a>
+                      ) : typeof item.logo.image === "string" ? (
+                        <img
+                          src={item.logo.image}
+                          alt={item.logo.alt}
+                          width={item.logo.width || 220}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Image
+                          src={item.logo.image}
+                          alt={item.logo.alt}
+                          width={item.logo.width || 220}
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .bordered {
+    border-top: var(--bw) solid var(--stroke);
+    border-bottom: var(--bw) solid var(--stroke);
+  }
+
+  .anchor-alias {
+    position: relative;
+    top: -84px;
+    height: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    margin-top: 28px;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .group-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--rule);
+    color: var(--ink);
+  }
+
+  .orgs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .org-card {
+    border: var(--bw) solid var(--stroke);
+    border-left: 7px solid var(--rail, var(--t));
+    border-radius: var(--r-md);
+    padding: 22px 24px;
+    background: var(--surface);
+    box-shadow: 0 3px 0 var(--stroke);
+    transition:
+      transform 0.18s var(--ease-out),
+      box-shadow 0.18s var(--ease-out);
+  }
+
+  .org-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--stroke);
+  }
+
+  .org-head {
+    margin-bottom: 12px;
+  }
+
+  .org-name {
+    font-size: 19px;
+    font-weight: 700;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--ink);
+  }
+
+  .x-badge {
+    font-family: var(--f-mono);
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .x-link {
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 600;
+    transition: color 0.15s ease;
+  }
+
+  .x-link:hover {
+    color: var(--t-deep);
+  }
+
+  .org-body {
+    font-size: 14.5px;
+    line-height: 1.85;
+    color: var(--ink);
+    white-space: pre-line;
+  }
+
+  .org-body p {
+    margin: 0 0 12px;
+  }
+
+  .org-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .org-links {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1.8px solid var(--stroke);
+    border-radius: 999px;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    text-decoration: none;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background 0.15s ease;
+    box-shadow: 0 2px 0 var(--stroke);
+  }
+
+  .link-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 0 var(--stroke);
+    background: var(--surface);
+  }
+
+  .link-icon {
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  .org-logo {
+    margin-top: 14px;
+    padding-top: 8px;
+  }
+
+  .logo-link {
+    display: inline-block;
+    transition: opacity 0.15s ease;
+  }
+
+  .logo-link:hover {
+    opacity: 0.85;
+  }
+
+  .org-logo img {
+    height: auto;
+    object-fit: contain;
+  }
+</style>

@@ -77,12 +77,14 @@ export const tokyo = {
     { href: "#overview", label: "開催概要" },
     { href: "#about", label: "イベントについて" },
     { href: "#sessions", label: "セッション" },
+    { href: "#organizers", label: "運営" },
   ],
 
   footerNav: [
     { href: "#overview", label: "開催概要" },
     { href: "#about", label: "イベントについて" },
     { href: "#sessions", label: "セッション" },
+    { href: "#organizers", label: "運営" },
     { href: "#coc", label: "行動規範" },
     { href: "#register", label: "参加登録" },
   ],
