@@ -56,16 +56,18 @@ export const TOKYO_ORGANIZERS: OrganizerSection[] = [
             url: "https://www.linkedin.com/company/gdg-tokyo/?viewAsMember=true",
             label: "LinkedIn (gdg-tokyo)",
           },
-          {
-            type: "connpass",
-            url: "https://gdg-tokyo.connpass.com/",
-            label: "connpass (GDG Tokyo)",
-          },
         ],
         description: `Google Developer Group (GDG) Tokyo は、主に Google のテクノロジーに興味のある人たちで情報を共有し合うコミュニティです。平日夜や週末に東京で勉強会などを行っています。ご興味のある方は気軽にご参加ください。\nGoogle Developer Group (GDG) Tokyo is a group of people who are interested in Google technology and share information. #GDGTokyo #GDG #DevFest`,
       },
       {
         name: "GDG Shibuya",
+        socials: [
+          {
+            type: "x",
+            url: "https://x.com/GDGShibuya",
+            label: "X (@GDGShibuya)",
+          },
+        ],
         description: `Google Developer Group (GDG) Shibuya は、渋谷を拠点に国内外のエンジニアやクリエイターが集う国際色豊かなテックコミュニティです。日本に滞在・勤務するエキスパートや海外エキスパットはもちろん、グローバルな開発環境や英語での技術交流に関心のある日本人エンジニアも大歓迎です。Google の最新テクノロジーに関する勉強会やネットワーキングを通じて、多様なバックグラウンドを持つ仲間とつながりましょう！\n\nGoogle Developer Group (GDG) Shibuya is an internationally minded tech community based in Shibuya, welcoming expats, international engineers, and local Japanese developers alike. We host meetups, workshops, and networking events centered around Google technologies and modern software development. Whether you are living in Tokyo or looking to connect globally, everyone passionate about building with tech is welcome to join! #GDGShibuya #GDG #DevFest`,
       },
     ],

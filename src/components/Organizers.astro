@@ -281,12 +281,17 @@ const {
     justify-content: center;
     color: var(--muted);
     text-decoration: none;
-    transition: color 0.15s ease;
+    transition:
+      transform 0.18s var(--ease-out),
+      color 0.18s var(--ease-out),
+      filter 0.18s var(--ease-out);
     line-height: 1;
   }
 
   .social-icon-link:hover {
     color: var(--ink);
+    transform: translateY(-2px);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 12%));
   }
 
   .social-icon-link svg {
