@@ -181,7 +181,7 @@ export function stickerSvg(
   const [w, h] = [vw * scale, vh * scale];
   const style =
     weight === "thin"
-      ? ` fill="none" stroke="${ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"`
+      ? ` fill="none" stroke="${ink}" color="${ink}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"`
       : "";
   return svg(
     box.w,
