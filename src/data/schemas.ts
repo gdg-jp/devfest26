@@ -29,12 +29,39 @@ import { LOCAL_TENANT } from "../tenants/selection";
  */
 export type Images = SchemaContext;
 
+/**
+ * The image field as Sanity stores it: the asset, and the crop and hotspot an
+ * organiser set on it. Enough to ask the CDN for a different crop than `src`
+ * — the session cards want a portrait at several times the avatar's size.
+ */
+const sanityImage = z.object({
+  asset: z.object({ _ref: z.string() }),
+  crop: z
+    .object({
+      top: z.number(),
+      bottom: z.number(),
+      left: z.number(),
+      right: z.number(),
+    })
+    .optional(),
+  hotspot: z
+    .object({
+      x: z.number(),
+      y: z.number(),
+      height: z.number(),
+      width: z.number(),
+    })
+    .optional(),
+});
+
 /** A Sanity asset, already cropped and sized by its CDN. See src/lib/photo.ts. */
 const remotePhoto = z.object({
   src: z.url(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   remote: z.literal(true),
+  /** Where `src` was cut from, for anything that needs another shape. */
+  source: sanityImage.optional(),
 });
 
 /**

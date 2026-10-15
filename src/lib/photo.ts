@@ -7,11 +7,23 @@
  * Both shapes carry `src` / `width` / `height`; `remote` is the discriminant.
  */
 
+/**
+ * A Sanity image field — the asset and the crop and hotspot set on it — as
+ * `remotePhoto` in `src/data/schemas.ts` keeps it.
+ */
+export interface SanityImage {
+  asset: { _ref: string };
+  crop?: { top: number; bottom: number; left: number; right: number };
+  hotspot?: { x: number; y: number; height: number; width: number };
+}
+
 export interface RemotePhoto {
   src: string;
   width: number;
   height: number;
   remote: true;
+  /** The Sanity image `src` was cut from. See `remotePhoto` in schemas.ts. */
+  source?: SanityImage;
 }
 
 export type Photo = ImageMetadata | RemotePhoto;
