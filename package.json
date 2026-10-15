@@ -26,6 +26,7 @@
     "og:session": "dotenv -- tsx scripts/og.ts session",
     "og:sessions": "dotenv -- tsx scripts/og.ts sessions",
     "og:card": "tsx scripts/og.ts card",
+    "og:stickers": "tsx scripts/og-stickers.ts && prettier --write src/lib/og/stickerShapes.ts",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --check .",
