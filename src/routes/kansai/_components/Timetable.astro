@@ -52,17 +52,22 @@ const noTrackOnPhone = new Set(
 
 /**
  * Fixtures that read as sessions: a filled card, not a dashed row.
- * Matched loosely so "Fashion runway" and "fashion runway" agree.
+ * Matched loosely so "Fashion show" and "fashion show" agree.
  */
 const cardOnPhone = new Set(
   [
     "調整中",
     "LT大会",
     "Findy スポンサーセッション",
-    "Fashion runway",
+    "シナジーマーケティング スポンサーセッション",
+    "Fashion show",
     "写真撮影",
+    "転職ドラフト－フルスポンサードLT",
   ].map(phoneLabel),
 );
+
+/** Fixtures drawn as a plain white card, on the grid and on the phone. */
+const whiteCard = new Set(["Closing"].map(phoneLabel));
 
 /** Phone order: each time-row left to right, then the next row. */
 const mobileCells = table
@@ -103,10 +108,12 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
               const showTracks = !noTrackOnPhone.has(key) && !venueWide;
               const asCard =
                 (cell.kind === "session" && Boolean(cell.href)) ||
-                cardOnPhone.has(key);
-              const fill =
-                cell.fill ??
-                (covered[0] ? trackPastel(covered[0]) : "var(--surface)");
+                cardOnPhone.has(key) ||
+                whiteCard.has(key);
+              const fill = whiteCard.has(key)
+                ? "var(--surface)"
+                : (cell.fill ??
+                  (covered[0] ? trackPastel(covered[0]) : "var(--surface)"));
               const tracks = showTracks && (
                 <span class="k-tt__tracks">
                   {covered.map((track) => (
@@ -173,7 +180,10 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
                       </span>
                     </a>
                   ) : asCard ? (
-                    <div class="k-tt__card" style={`--fill:${fill}`}>
+                    <div
+                      class="k-tt__card k-tt__card--static"
+                      style={`--fill:${fill}`}
+                    >
                       <span class="k-tt__chips">
                         {tracks}
                         {when}
@@ -246,6 +256,14 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
                       ))}
                     </span>
                   </a>
+                ) : whiteCard.has(phoneLabel(cell.label)) ? (
+                  <div
+                    class="k-tt__card k-tt__card--static"
+                    style="--fill:var(--surface)"
+                  >
+                    <span class="k-tt__title">{cell.label}</span>
+                    {cell.note && <small>{cell.note}</small>}
+                  </div>
                 ) : (
                   <div class="k-tt__fixture">
                     <span>{cell.label}</span>
@@ -344,6 +362,12 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
   .k-tt__card:focus-visible {
     transform: translate(-3px, -3px);
     box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  /* Not a link, so it does not lift. */
+  .k-tt__card--static:hover {
+    transform: none;
+    box-shadow: none;
   }
 
   .is-featured .k-tt__card {
