@@ -96,6 +96,7 @@ export const ja = {
     dtHost: "主催",
     coHostsNote: (coHosts: string) => `共催・協力：${coHosts}`,
     disclaimer: "※イベント内容や開催時間は、今後変更となる場合があります。",
+    mapTitle: (venue: string) => `${venue}の地図`,
   },
 
   preEvents: {

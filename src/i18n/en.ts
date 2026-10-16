@@ -83,6 +83,7 @@ export const en = {
     dtHost: "Host",
     coHostsNote: (coHosts: string) => `Co-hosted with: ${coHosts}`,
     disclaimer: "Note: event details and times are subject to change.",
+    mapTitle: (venue: string) => `Map of ${venue}`,
   },
 
   preEvents: {
