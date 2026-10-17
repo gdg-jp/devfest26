@@ -157,10 +157,10 @@ export const FEATURED_START = "hiroshi-ishiguro";
 
 /**
  * Seats per ticket type on connpass (現地参加 / オンライン参加), as of
- * 2026-09-30. Capacities, not counts — they only change if the organisers
+ * 2026-10-16. Capacities, not counts — they only change if the organisers
  * change the event page.
  */
-export const CAPACITY = { onsite: 500, online: 200 } as const;
+export const CAPACITY = { onsite: 800, online: 500 } as const;
 
 /* -------------------------------------------------------------------------- */
 /* Sponsors                                                                   */
@@ -183,6 +183,13 @@ export const SPONSORS: readonly Sponsor[] = [
     logo: "https://img.gdgs.jp/ueP38FwZ?w=320&f=webp",
     width: 320,
     height: 373,
+  },
+  {
+    name: "シナジーマーケティング株式会社",
+    url: "https://www.synergy-marketing.co.jp/",
+    logo: "https://img.gdgs.jp/4jEV2uQC?w=320&f=webp",
+    width: 320,
+    height: 320,
   },
   {
     name: "転職ドラフト株式会社",
@@ -251,8 +258,8 @@ export const FAQ: readonly Faq[] = [
   {
     q: { ja: "懇親会はありますか？", en: "Is there an after-party?" },
     a: {
-      ja: "18:25 から懇親会を予定しています。登壇者や参加者と直接話せる時間です。",
-      en: "Yes, from 18:25 — a chance to talk with the speakers and other attendees.",
+      ja: "18:30 から懇親会を予定しています。登壇者や参加者と直接話せる時間です。",
+      en: "Yes, from 18:30 — a chance to talk with the speakers and other attendees.",
     },
   },
 ];
