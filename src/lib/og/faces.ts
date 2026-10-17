@@ -261,51 +261,60 @@ export interface Framing {
 export const PORTRAIT: Framing = { faceHeight: 0.34, eyeLine: 0.42 };
 
 /**
+ * With no face to place, how much of what the cut leaves over goes above it:
+ * a quarter, so the cut sits high. See `cropToFace`.
+ */
+const UNFOUND_TOP = 0.25;
+
+/**
  * An image cut to `width` × `height` around its most confident face: the face
  * made `framing.faceHeight` of the frame and centred across it at
  * `framing.eyeLine` down. The cut is kept inside the image, so a face near an
  * edge sits nearer that edge rather than the picture gaining a border, and a
  * face too large for its framing is shown as large as the image allows.
  *
- * Without a face it falls back to sharp's attention crop, which looks for the
- * busiest, most skin-toned region — usually still the person.
+ * Without a face — an illustration, an avatar, a laughing face tilted past
+ * what the cascade knows — it cuts as much of the image as the frame's shape
+ * allows, centred across it and nearer the top than the bottom
+ * (`UNFOUND_TOP`). Avatars are drawn centred and people stand with their head
+ * high, so that keeps the subject. (sharp's attention crop, used before, went for
+ * the busiest region and pushed illustrated faces against the frame edge.)
+ *
+ * `face` says which happened, so that a caller can name the photos to give a
+ * hotspot.
  */
 export async function cropToFace(
   image: Buffer,
   width: number,
   height: number,
   framing: Framing = PORTRAIT,
-): Promise<Buffer> {
+): Promise<{ jpeg: Buffer; face?: Face }> {
   // Upright first, so that the face is found where it will be cut from.
   const upright = await sharp(image).rotate().toBuffer();
   const [face] = await findFaces(upright);
-  const oriented = sharp(upright);
-
-  if (!face) {
-    return oriented
-      .resize(width, height, {
-        fit: "cover",
-        position: sharp.strategy.attention,
-      })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-  }
 
   const { width: iw = width, height: ih = height } =
     await sharp(upright).metadata();
   const aspect = width / height;
 
-  // The cut the framing asks for, shrunk to fit the image if it has to be.
-  let ch = face.size / framing.faceHeight;
-  let cw = ch * aspect;
-  const fit = Math.min(1, iw / cw, ih / ch);
-  ch *= fit;
-  cw *= fit;
+  let left: number, top: number, cw: number, ch: number;
+  if (face) {
+    // The cut the framing asks for, shrunk to fit the image if it has to be.
+    ch = face.size / framing.faceHeight;
+    cw = ch * aspect;
+    const fit = Math.min(1, iw / cw, ih / ch);
+    ch *= fit;
+    cw *= fit;
+    left = Math.min(Math.max(face.x - cw / 2, 0), iw - cw);
+    top = Math.min(Math.max(face.y - ch * framing.eyeLine, 0), ih - ch);
+  } else {
+    cw = Math.min(iw, ih * aspect);
+    ch = cw / aspect;
+    left = (iw - cw) / 2;
+    top = (ih - ch) * UNFOUND_TOP;
+  }
 
-  const left = Math.min(Math.max(face.x - cw / 2, 0), iw - cw);
-  const top = Math.min(Math.max(face.y - ch * framing.eyeLine, 0), ih - ch);
-
-  return oriented
+  const jpeg = await sharp(upright)
     .extract({
       left: Math.round(left),
       top: Math.round(top),
@@ -315,4 +324,5 @@ export async function cropToFace(
     .resize(width, height, { fit: "cover" })
     .jpeg({ quality: 85 })
     .toBuffer();
+  return { jpeg, face };
 }

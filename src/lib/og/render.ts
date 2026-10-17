@@ -191,6 +191,9 @@ const TRIO: Frame[] = (() => {
   ];
 })();
 
+/** Every frame a photo is cut into, by layout. `scripts/og-faces.ts` shows them. */
+export const SPEAKER_FRAMES = { single: SINGLE, pair: PAIR, trio: TRIO };
+
 /**
  * A frame's outline with its bottom-right corner stepped in, inset by half
  * the stroke so that all of it is drawn inside the frame's box. Clockwise from
@@ -228,7 +231,7 @@ const TURN: Record<Corner, (w: number, h: number) => string> = {
  * into the next one's box, and whichever was painted last covered the other's
  * photo. A clip touches nothing outside its own frame.
  */
-function frameSvg(frame: Frame, fill: string): string {
+export function frameSvg(frame: Frame, fill: string): string {
   const { w, h } = frame;
   const outline = `<path d="${framePath(frame)}" transform="${TURN[frame.notch.corner](w, h)}"/>`;
   const content = fill.startsWith("data:")
@@ -651,7 +654,8 @@ async function framed(
   pastel: string,
 ): Promise<Node[]> {
   const { w, h, notch } = frame;
-  const src = speaker.photo && (await framedPhoto(speaker.photo, w, h));
+  const src =
+    speaker.photo && (await framedPhoto(speaker.photo, w, h, speaker.name));
   const whole = h - notch.h;
   const notchOnTop = notch.corner.startsWith("top");
 
