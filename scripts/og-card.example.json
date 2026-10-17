@@ -1,0 +1,14 @@
+{
+  "id": "example-session",
+  "edition": "Tokyo 2026",
+  "title": "[ライブデモ] サンプルセッション：JSON から OGP 画像を作る",
+  "lang": "ja",
+  "theme": "red",
+  "speakers": [
+    {
+      "name": "サンプル 太郎",
+      "role": "Example Inc. / Developer Advocate"
+    },
+    { "name": "サンプル 花子", "role": "Example Inc. / Engineer" }
+  ]
+}

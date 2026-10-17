@@ -4,6 +4,7 @@ import Sprite from "../components/Sprite.astro";
 import TopBar from "../components/TopBar.astro";
 import Footer from "../components/Footer.astro";
 import type { ResolvedTenant } from "../tenants";
+import type { CardImage } from "../lib/sessionCard";
 import { messages } from "../i18n";
 import { currentLanguage } from "../i18n/language";
 
@@ -23,6 +24,8 @@ interface Props {
   title: string;
   description?: string;
   jsonLd?: Record<string, unknown>;
+  /** This page's own Open Graph card, when it has one. See Base.astro. */
+  ogImage?: CardImage;
   back: { href: string; label: string };
   /**
    * The label of a register button closing the page. A visitor who has read
@@ -34,7 +37,7 @@ interface Props {
   placement?: string;
 }
 
-const { site, title, description, jsonLd, back, register, placement } =
+const { site, title, description, jsonLd, ogImage, back, register, placement } =
   Astro.props;
 const t = messages(currentLanguage());
 ---
@@ -44,6 +47,7 @@ const t = messages(currentLanguage());
   title={`${title}｜${site.fullTitle ?? site.title}`}
   description={description}
   jsonLd={jsonLd}
+  ogImage={ogImage}
 >
   {/* The lockup in the top bar and the footer is drawn from here. */}
   <Sprite stickers={false} />

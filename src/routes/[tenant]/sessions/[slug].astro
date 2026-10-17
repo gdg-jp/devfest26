@@ -13,6 +13,7 @@ import {
 } from "../../../data/program";
 import { getTimetable } from "../../../data/timetable";
 import { messages } from "../../../i18n";
+import { sessionCardImage, sessionSpeakers } from "../../../lib/sessionCard";
 import { currentLanguage } from "../../../i18n/language";
 
 /**
@@ -67,13 +68,8 @@ const time = [entry.data.start, entry.data.start && end]
 
 // Everyone on this slot, in running order and without repeating anyone who
 // appears on more than one of its talks.
-const everyone = [
-  ...new Map(
-    talks
-      .flatMap((talk) => talk.speakers)
-      .map((speaker) => [speaker.id, speaker]),
-  ).values(),
-];
+const everyone = sessionSpeakers(session);
+const ogImage = await sessionCardImage(site, session);
 const names = everyone
   .map((speaker) => speaker.data.name)
   .join(t.common.nameSeparator);
@@ -118,6 +114,7 @@ const jsonLd = title
   title={title ?? label}
   description={description}
   jsonLd={jsonLd}
+  ogImage={ogImage}
   back={{
     href: `${tenantHome(site.tenant)}#sessions`,
     label: t.detail.backToList,

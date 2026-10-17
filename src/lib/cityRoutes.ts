@@ -24,9 +24,17 @@ import { previewMode } from "../preview/mode";
  */
 declare const __CITY_ROUTES__: readonly string[] | undefined;
 
-const owned = (
-  typeof __CITY_ROUTES__ === "undefined" ? [] : __CITY_ROUTES__
-).map(
+const cityRoutes =
+  typeof __CITY_ROUTES__ === "undefined" ? [] : __CITY_ROUTES__;
+
+/**
+ * Whether some city answers `pattern` from its own directory — how a shared
+ * page learns that its city has opted into something, such as the session
+ * cards in `src/routes/tokyo/og/`.
+ */
+export const hasCityRoute = (pattern: string) => cityRoutes.includes(pattern);
+
+const owned = cityRoutes.map(
   (pattern) =>
     new RegExp(
       `^${pattern
