@@ -42,6 +42,7 @@ export function speakerEntry(doc: Doc): SanityEntry {
             width: size,
             height: size,
             remote: true,
+            source: doc.photo,
           }
         : undefined,
     },
