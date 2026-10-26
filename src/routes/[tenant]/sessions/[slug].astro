@@ -128,8 +128,10 @@ const jsonLd = title
         "d-trk",
         { ink: track.data.darkInk, plain: track.data.pending },
       ]}
-      style={`--trk:${track.data.color}`}>{track.data.label}</span
+      style={`--trk:${track.data.color}`}
     >
+      {track.data.label}
+    </span>
     <span class="d-no">{label}</span>
     {time && <span class="d-time">{time}</span>}
   </p>
@@ -137,53 +139,49 @@ const jsonLd = title
   <h1 class:list={["d-title", { tbd: !title }]}>{title ?? "TBD"}</h1>
   <p class="d-sub">{track.data.sub}</p>
 
-  {
-    abstract && (
-      <div class="prose">
-        <Content />
-      </div>
-    )
-  }
+  {abstract && (
+    <div class="prose">
+      <Content />
+    </div>
+  )}
 
-  {
-    listsTalks ? (
-      <>
-        <h2 class="d-h">{t.detail.talksHeading(talks.length)}</h2>
-        <ol class="d-list">
-          {talks.map((talk, i) => (
-            <li
-              class="d-card pa linkbox"
-              style={`--pa:var(--pa-${pastelCycle[i % pastelCycle.length]})`}
-            >
-              <p class="t-meta">
-                <span class="d-no">Talk {String(i + 1).padStart(2, "0")}</span>
-                {talk.start && <span class="d-time">{talk.start}</span>}
-              </p>
-              <h3 class="t-title">
-                <a class="stretch" href={talk.href}>
-                  {talk.title ?? "TBD"}
-                </a>
-              </h3>
-              {talk.speakers.map((speaker) => (
-                <SpeakerRow speaker={speaker} size={44} />
-              ))}
-            </li>
-          ))}
-        </ol>
-      </>
-    ) : (
-      <>
-        <h2 class="d-h">{t.detail.speakersHeading}</h2>
-        <ul class="d-list">
-          {everyone.map((speaker) => (
-            <li class="d-card linkbox">
-              <SpeakerRow speaker={speaker} bio stretch size={64} />
-            </li>
-          ))}
-        </ul>
-      </>
-    )
-  }
+  {listsTalks ? (
+    <>
+      <h2 class="d-h">{t.detail.talksHeading(talks.length)}</h2>
+      <ol class="d-list">
+        {talks.map((talk, i) => (
+          <li
+            class="d-card pa linkbox"
+            style={`--pa:var(--pa-${pastelCycle[i % pastelCycle.length]})`}
+          >
+            <p class="t-meta">
+              <span class="d-no">Talk {String(i + 1).padStart(2, "0")}</span>
+              {talk.start && <span class="d-time">{talk.start}</span>}
+            </p>
+            <h3 class="t-title">
+              <a class="stretch" href={talk.href}>
+                {talk.title ?? "TBD"}
+              </a>
+            </h3>
+            {talk.speakers.map((speaker) => (
+              <SpeakerRow speaker={speaker} size={44} />
+            ))}
+          </li>
+        ))}
+      </ol>
+    </>
+  ) : (
+    <>
+      <h2 class="d-h">{t.detail.speakersHeading}</h2>
+      <ul class="d-list">
+        {everyone.map((speaker) => (
+          <li class="d-card linkbox">
+            <SpeakerRow speaker={speaker} bio stretch size={64} />
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
 </Page>
 
 <style>

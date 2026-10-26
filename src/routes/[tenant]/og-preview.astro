@@ -70,44 +70,42 @@ const glyphs = [
     <Sprite />
 
     <div class="card">
-      {
-        glyphs.map((g) => (
-          <svg
-            class="glyph"
-            viewBox={stickers[g.name]}
-            style={g.style}
-            aria-hidden="true"
-          >
-            <use href="#stickersheet" />
-          </svg>
-        ))
-      }
+      {glyphs.map((g) => (
+        <svg
+          class="glyph"
+          viewBox={stickers[g.name]}
+          style={g.style}
+          aria-hidden="true"
+        >
+          <use href="#stickersheet" />
+        </svg>
+      ))}
 
       <div class="inner">
         <Logo variant="brackets" class="mark" />
 
         <div>
           <h1>
-            <span class="og-title">{site.titleEn}{site.subtitleEn && ":"}</span>
-            {
-              site.subtitleEn && (
-                <span class="og-subtitle">{site.subtitleEn}</span>
-              )
-            }
+            <span class="og-title">
+              {site.titleEn}
+              {site.subtitleEn && ":"}
+            </span>
+            {site.subtitleEn && (
+              <span class="og-subtitle">{site.subtitleEn}</span>
+            )}
           </h1>
-          <p class="pitch">{tagline.lead}{tagline.accent}</p>
+          <p class="pitch">
+            {tagline.lead}
+            {tagline.accent}
+          </p>
         </div>
 
         <div>
           <div class="meta">
-            {
-              /* One string: the line break between two expressions is
-              collapsed away rather than kept as a space. */
-            }
+            {/* One string: the line break between two expressions is
+              collapsed away rather than kept as a space. */}
             <span class="pill hi">
-              {
-                `${event.isoDate.replace(/-/g, ".")} ${event.dayOfWeekEn.toUpperCase()}`
-              }
+              {`${event.isoDate.replace(/-/g, ".")} ${event.dayOfWeekEn.toUpperCase()}`}
             </span>
             <span class="pill">{event.venue.name}</span>
             <span class="pill">{t.og.fee(event.fee)}</span>

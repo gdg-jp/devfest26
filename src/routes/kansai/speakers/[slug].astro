@@ -160,42 +160,40 @@ const jsonLd = {
 
           <div class="k-sp__id">
             {pick && <p class="k-sp__hook">{localized(pick.hook, lang)}</p>}
-            <h1 class="k-sp__name" id="k-sp-name">{bare(name)}</h1>
+            <h1 class="k-sp__name" id="k-sp-name">
+              {bare(name)}
+            </h1>
             <ul class="k-sp__role">
-              {
-                role
-                  .split(/\s*／\s*/)
-                  .filter(Boolean)
-                  .map((line) => <li>{line}</li>)
-              }
+              {role
+                .split(/\s*／\s*/)
+                .filter(Boolean)
+                .map((line) => (
+                  <li>{line}</li>
+                ))}
             </ul>
             <ul class="k-sp__slots">
-              {
-                appearances.map(({ session }) => (
-                  <li>
-                    <a
-                      class="k-sp__slot"
-                      href={session.href}
-                      style={`--trk:${session.track.data.color};--trk-ink:${session.track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
-                    >
-                      <b>{session.track.data.label}</b>
-                      {session.start && <time>{session.start}</time>}
-                      <Arrow />
-                    </a>
-                  </li>
-                ))
-              }
+              {appearances.map(({ session }) => (
+                <li>
+                  <a
+                    class="k-sp__slot"
+                    href={session.href}
+                    style={`--trk:${session.track.data.color};--trk-ink:${session.track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+                  >
+                    <b>{session.track.data.label}</b>
+                    {session.start && <time>{session.start}</time>}
+                    <Arrow />
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {
-          profile && (
-            <div class="k-prose k-sp__bio">
-              <Content />
-            </div>
-          )
-        }
+        {profile && (
+          <div class="k-prose k-sp__bio">
+            <Content />
+          </div>
+        )}
       </Panel>
     </div>
   </section>
@@ -210,61 +208,57 @@ const jsonLd = {
       >
         <p class="k-sub">{c.appearancesSub}</p>
         <ul class="k-sp__cards">
-          {
-            appearances.map(({ session }) => (
-              <li>
-                <SessionCard session={session} end={endOf(session)} />
-              </li>
-            ))
-          }
+          {appearances.map(({ session }) => (
+            <li>
+              <SessionCard session={session} end={endOf(session)} />
+            </li>
+          ))}
         </ul>
       </Panel>
     </div>
   </section>
 
-  {
-    others.length > 0 && (
-      <section class="k-sec k-sec--panel" aria-labelledby="k-sp-more">
-        <div class="k-wrap k-wrap--panel">
-          <Panel
-            title="More"
-            id="k-sp-more"
-            tone={moreTone}
-            stickers={["scallop", "multiply"]}
-          >
-            <p class="k-sub">{c.moreSpeakersSub}</p>
-            <ul class="k-more" data-k-stagger>
-              {others.map((entry, i) => (
-                <li data-k-reveal="pop">
-                  <a class="k-more__item" href={speakerHref(entry.speaker)}>
-                    <span
-                      class="k-more__ring"
-                      style={`--ring:${ring[i % ring.length]}`}
-                    >
-                      <Portrait
-                        speaker={entry.speaker}
-                        size={88}
-                        class="k-more__img"
-                        tone={ring[i % ring.length]}
-                      />
-                    </span>
-                    <span class="k-more__name">
-                      {bare(entry.speaker.data.name)}
-                    </span>
-                    <span class="k-more__role">{entry.speaker.data.role}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <a class="k-link k-more__all" href={`${home}#speakers`}>
-              {c.allSpeakers}
-              <Arrow />
-            </a>
-          </Panel>
-        </div>
-      </section>
-    )
-  }
+  {others.length > 0 && (
+    <section class="k-sec k-sec--panel" aria-labelledby="k-sp-more">
+      <div class="k-wrap k-wrap--panel">
+        <Panel
+          title="More"
+          id="k-sp-more"
+          tone={moreTone}
+          stickers={["scallop", "multiply"]}
+        >
+          <p class="k-sub">{c.moreSpeakersSub}</p>
+          <ul class="k-more" data-k-stagger>
+            {others.map((entry, i) => (
+              <li data-k-reveal="pop">
+                <a class="k-more__item" href={speakerHref(entry.speaker)}>
+                  <span
+                    class="k-more__ring"
+                    style={`--ring:${ring[i % ring.length]}`}
+                  >
+                    <Portrait
+                      speaker={entry.speaker}
+                      size={88}
+                      class="k-more__img"
+                      tone={ring[i % ring.length]}
+                    />
+                  </span>
+                  <span class="k-more__name">
+                    {bare(entry.speaker.data.name)}
+                  </span>
+                  <span class="k-more__role">{entry.speaker.data.role}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a class="k-link k-more__all" href={`${home}#speakers`}>
+            {c.allSpeakers}
+            <Arrow />
+          </a>
+        </Panel>
+      </div>
+    </section>
+  )}
 </Detail>
 
 <style>

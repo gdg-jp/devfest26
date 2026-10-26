@@ -97,19 +97,19 @@ const theme = "blue";
     {/* No `tenant`: the front page belongs to no city. */}
     <Analytics />
 
-    {
-      jsonLd && (
-        <script
-          type="application/ld+json"
-          is:inline
-          set:html={JSON.stringify(clean(jsonLd))}
-        />
-      )
-    }
+    {jsonLd && (
+      <script
+        type="application/ld+json"
+        is:inline
+        set:html={JSON.stringify(clean(jsonLd))}
+      />
+    )}
   </head>
 
   <body>
-    <a class="skip" href="#top">{t.meta.skipToContent}</a>
+    <a class="skip" href="#top">
+      {t.meta.skipToContent}
+    </a>
     <slot />
     {previewMode && <PreviewBar />}
     <style is:global>

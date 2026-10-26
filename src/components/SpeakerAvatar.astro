@@ -21,34 +21,32 @@ const { photo, initial, name } = speaker.data;
 const style = `--av:${size}px`;
 ---
 
-{
-  photo ? (
-    isRemotePhoto(photo) ? (
-      /* Sanity's CDN already cropped this to the hotspot at 2x. */
-      <img
-        class="av"
-        style={style}
-        src={photo.src}
-        alt=""
-        width={AVATAR_SIZE}
-        height={AVATAR_SIZE}
-        loading="lazy"
-      />
-    ) : (
-      <Image
-        class="av"
-        style={style}
-        src={photo}
-        alt=""
-        width={AVATAR_SIZE}
-        height={AVATAR_SIZE}
-        densities={[1, 2]}
-        loading="lazy"
-      />
-    )
+{photo ? (
+  isRemotePhoto(photo) ? (
+    /* Sanity's CDN already cropped this to the hotspot at 2x. */
+    <img
+      class="av"
+      style={style}
+      src={photo.src}
+      alt=""
+      width={AVATAR_SIZE}
+      height={AVATAR_SIZE}
+      loading="lazy"
+    />
   ) : (
-    <span class="av" style={style} aria-hidden="true">
-      {initial ?? name.slice(0, 1)}
-    </span>
+    <Image
+      class="av"
+      style={style}
+      src={photo}
+      alt=""
+      width={AVATAR_SIZE}
+      height={AVATAR_SIZE}
+      densities={[1, 2]}
+      loading="lazy"
+    />
   )
-}
+) : (
+  <span class="av" style={style} aria-hidden="true">
+    {initial ?? name.slice(0, 1)}
+  </span>
+)}

@@ -109,33 +109,32 @@ const jsonLd = talk.title
         "d-trk",
         { ink: track.data.darkInk, plain: track.data.pending },
       ]}
-      style={`--trk:${track.data.color}`}>{track.data.label}</span
+      style={`--trk:${track.data.color}`}
     >
+      {track.data.label}
+    </span>
     <span class="d-no">{label}</span>
     {talk.start && <span class="d-time">{talk.start}</span>}
   </p>
 
   <h1 class:list={["d-title", { tbd: !talk.title }]}>{talk.title ?? "TBD"}</h1>
   <p class="d-sub">
-    {t.detail.sessionPrefix}<a href={session.href}>{sessionTitle}</a>
+    {t.detail.sessionPrefix}
+    <a href={session.href}>{sessionTitle}</a>
   </p>
 
-  {
-    abstract && (
-      <div class="prose">
-        <Content />
-      </div>
-    )
-  }
+  {abstract && (
+    <div class="prose">
+      <Content />
+    </div>
+  )}
 
   <h2 class="d-h">{t.detail.speakersHeading}</h2>
   <ul class="d-list">
-    {
-      talk.speakers.map((speaker) => (
-        <li class="d-card linkbox">
-          <SpeakerRow speaker={speaker} bio stretch size={64} />
-        </li>
-      ))
-    }
+    {talk.speakers.map((speaker) => (
+      <li class="d-card linkbox">
+        <SpeakerRow speaker={speaker} bio stretch size={64} />
+      </li>
+    ))}
   </ul>
 </Page>

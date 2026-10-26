@@ -28,19 +28,17 @@ const c = copy(lang);
       stickers={["slash", "chevron"]}
     >
       <div class="k-faq__list" data-k-stagger>
-        {
-          FAQ.map((item) => (
-            <details class="k-faq__item" data-k-faq data-k-reveal="up">
-              <summary>
-                <span>{localized(item.q, lang)}</span>
-                <i aria-hidden="true" />
-              </summary>
-              <div class="k-faq__a" data-k-faq-body>
-                <p>{localized(item.a, lang)}</p>
-              </div>
-            </details>
-          ))
-        }
+        {FAQ.map((item) => (
+          <details class="k-faq__item" data-k-faq data-k-reveal="up">
+            <summary>
+              <span>{localized(item.q, lang)}</span>
+              <i aria-hidden="true" />
+            </summary>
+            <div class="k-faq__a" data-k-faq-body>
+              <p>{localized(item.a, lang)}</p>
+            </div>
+          </details>
+        ))}
       </div>
 
       <aside class="k-coc" id="coc" data-k-reveal="up">

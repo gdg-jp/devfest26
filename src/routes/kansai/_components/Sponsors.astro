@@ -34,59 +34,55 @@ const partners = (await byTenant("partners", site.tenant)).sort(
       tone="var(--ht-blue)"
       stickers={["scallop", "multiply"]}
     >
-      {
-        SPONSORS.length > 0 && (
-          <ul class="k-spons" data-k-stagger>
-            {SPONSORS.map((s) => (
-              <li data-k-reveal="pop">
-                <a
-                  class="k-spons__card"
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener"
-                >
-                  {s.note && (
-                    <span class="k-spons__note">{localized(s.note, lang)}</span>
-                  )}
-                  <img
-                    src={s.logo}
-                    alt={s.name}
-                    width={s.width}
-                    height={s.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <span class="k-spons__name">{s.name}</span>
+      {SPONSORS.length > 0 && (
+        <ul class="k-spons" data-k-stagger>
+          {SPONSORS.map((s) => (
+            <li data-k-reveal="pop">
+              <a
+                class="k-spons__card"
+                href={s.url}
+                target="_blank"
+                rel="noopener"
+              >
+                {s.note && (
+                  <span class="k-spons__note">{localized(s.note, lang)}</span>
+                )}
+                <img
+                  src={s.logo}
+                  alt={s.name}
+                  width={s.width}
+                  height={s.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="k-spons__name">{s.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {partners.length > 0 && (
+        <>
+          <h3 class="k-partners__h" data-k-reveal="up">
+            {c.partnersHeading}
+          </h3>
+          <ul class="k-partners" data-k-stagger>
+            {partners.map(({ data }) => (
+              <li
+                class="k-partners__card"
+                style={`--rail:var(--${data.rail})`}
+                data-k-reveal="up"
+              >
+                <a href={data.url} target="_blank" rel="noopener">
+                  <span class="k-partners__name">{data.name}</span>
+                  <span class="k-partners__handle">{data.handle}</span>
                 </a>
               </li>
             ))}
           </ul>
-        )
-      }
-
-      {
-        partners.length > 0 && (
-          <>
-            <h3 class="k-partners__h" data-k-reveal="up">
-              {c.partnersHeading}
-            </h3>
-            <ul class="k-partners" data-k-stagger>
-              {partners.map(({ data }) => (
-                <li
-                  class="k-partners__card"
-                  style={`--rail:var(--${data.rail})`}
-                  data-k-reveal="up"
-                >
-                  <a href={data.url} target="_blank" rel="noopener">
-                    <span class="k-partners__name">{data.name}</span>
-                    <span class="k-partners__handle">{data.handle}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </>
-        )
-      }
+        </>
+      )}
     </Panel>
   </div>
 </section>

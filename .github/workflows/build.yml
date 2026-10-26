@@ -144,14 +144,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
+      - uses: pnpm/setup@v3
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+          cache: true
+          require-lockfile: true
 
       # Kansai is not edited in the Studio. The workflow env above still
       # names the project, because discovery and the other cities need it.

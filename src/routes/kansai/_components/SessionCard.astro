@@ -50,16 +50,16 @@ const time = [session.start, session.start && end].filter(Boolean).join(" – ")
   </span>
   <span class="k-sc__foot">
     <span class="k-sc__who">
-      {
-        speakers.map((speaker) => (
-          <span class="k-sc__person">
-            <Portrait speaker={speaker} size={28} class="k-sc__av" />
-            {bare(speaker.data.name)}
-          </span>
-        ))
-      }
+      {speakers.map((speaker) => (
+        <span class="k-sc__person">
+          <Portrait speaker={speaker} size={28} class="k-sc__av" />
+          {bare(speaker.data.name)}
+        </span>
+      ))}
     </span>
-    <span class="k-sc__go" aria-hidden="true"><Arrow /></span>
+    <span class="k-sc__go" aria-hidden="true">
+      <Arrow />
+    </span>
   </span>
 </a>
 

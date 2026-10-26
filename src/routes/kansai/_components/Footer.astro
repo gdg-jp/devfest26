@@ -47,36 +47,36 @@ const follow = [
 
       <nav aria-label="Footer">
         <ul class="k-footer__nav">
-          {
-            site.footerNav.map((item) => (
-              <li>
-                <a href={`${prefix}${item.href}`}>{item.label}</a>
-              </li>
-            ))
-          }
+          {site.footerNav.map((item) => (
+            <li>
+              <a href={`${prefix}${item.href}`}>{item.label}</a>
+            </li>
+          ))}
         </ul>
       </nav>
 
       <div>
         <p class="k-footer__label">{c.footerFollow}</p>
         <ul class="k-footer__nav">
-          {
-            follow.map((item) => (
-              <li>
-                <a href={item.href} target="_blank" rel="noopener">
-                  {item.label} ↗
-                </a>
-              </li>
-            ))
-          }
+          {follow.map((item) => (
+            <li>
+              <a href={item.href} target="_blank" rel="noopener">
+                {item.label} ↗
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
     </div>
 
     <div class="k-footer__base">
-      <p>© {year} {site.event.host}</p>
+      <p>
+        © {year} {site.event.host}
+      </p>
       {credits.length > 0 && <p>Photo: {credits.join(", ")}</p>}
-      <a href={switchHref} hreflang={switchTo}>{LANGUAGE_NAMES[switchTo]}</a>
+      <a href={switchHref} hreflang={switchTo}>
+        {LANGUAGE_NAMES[switchTo]}
+      </a>
     </div>
   </div>
 </footer>

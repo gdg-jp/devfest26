@@ -62,122 +62,41 @@ const doneFacts = [
 const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
 ---
 
-{
-  isCompleted ? (
-    <details class="meet meet-done" data-meetup-details data-reveal="up">
-      <summary class="meet-done-summary">
-        <div class="meet-done-left">
-          <span class="meet-no">Meetup #{d.no}</span>
-          {dated && (
-            <time class="meet-done-date" datetime={dated.iso}>
-              {dated.md}
-              {d.date && (
-                <span class="meet-done-dow">({DOW[d.date.getDay()]})</span>
-              )}
-            </time>
-          )}
-        </div>
-        <h3 class="meet-done-title">{d.title}</h3>
-        <div class="meet-done-right">
-          {status && (
-            <span class:list={["meet-status", { done: isCompleted }]}>
-              {status}
-            </span>
-          )}
-          <span class="meet-done-toggle" aria-hidden="true" />
-        </div>
-      </summary>
-
-      <div class="meet-done-content" data-meetup-content>
-        <div class="meet-done-body">
-          {d.subtitle && <p class="meet-done-subtitle">{d.subtitle}</p>}
-          <div class="meet-lede">
-            <Content />
-          </div>
-
-          {doneFacts.length > 0 && (
-            <ul class="meet-facts">
-              {doneFacts.map((f) => (
-                <li>
-                  <span>{f.k}</span>
-                  {f.v}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {d.program && d.program.length > 0 && (
-            <details class="lt-wrap">
-              <summary>
-                {t.meetupCard.programHeading}
-                {t.meetupCard.programCount(talkCount)}
-              </summary>
-              <ol class="lt">
-                {d.program.map((p) => (
-                  <li class:list={{ brk: p.break }}>
-                    <span class="t">{p.at}</span>
-                    <div>
-                      <b>{p.what}</b>
-                      {p.who && <i>{p.who}</i>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </details>
-          )}
-
-          {d.url && (
-            <div class="cta-row">
-              <a
-                class:list={["btn", { ghost: isGhostCta }]}
-                href={d.url}
-                target="_blank"
-                rel="noopener"
-              >
-                {ctaLabel}
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
-    </details>
-  ) : (
-    <article class:list={["meet", { next: isPlanned }]} data-reveal="up">
-      <div class="meet-when">
-        <span class="meet-no">
-          Meetup #{d.no}
-          {isPlanned ? " →" : ""}
-        </span>
-        {dated ? (
-          <>
-            <time class="meet-date" datetime={dated.iso}>
-              {dated.md.split("/")[0]}
-              <span class="sl">/</span>
-              {dated.md.split("/")[1]}
-            </time>
-            <span class="meet-dow">{dated.dow}</span>
-            {span && <span class="meet-time">{span}</span>}
-          </>
-        ) : (
-          <span class="meet-date">TBD</span>
+{isCompleted ? (
+  <details class="meet meet-done" data-meetup-details data-reveal="up">
+    <summary class="meet-done-summary">
+      <div class="meet-done-left">
+        <span class="meet-no">Meetup #{d.no}</span>
+        {dated && (
+          <time class="meet-done-date" datetime={dated.iso}>
+            {dated.md}
+            {d.date && (
+              <span class="meet-done-dow">({DOW[d.date.getDay()]})</span>
+            )}
+          </time>
         )}
       </div>
+      <h3 class="meet-done-title">{d.title}</h3>
+      <div class="meet-done-right">
+        {status && (
+          <span class:list={["meet-status", { done: isCompleted }]}>
+            {status}
+          </span>
+        )}
+        <span class="meet-done-toggle" aria-hidden="true" />
+      </div>
+    </summary>
 
-      <div class="meet-body">
-        {status && <span class="meet-status">{status}</span>}
-
-        <h3>
-          {d.title}
-          {d.subtitle && <small>{d.subtitle}</small>}
-        </h3>
-
+    <div class="meet-done-content" data-meetup-content>
+      <div class="meet-done-body">
+        {d.subtitle && <p class="meet-done-subtitle">{d.subtitle}</p>}
         <div class="meet-lede">
           <Content />
         </div>
 
-        {facts.length > 0 && (
+        {doneFacts.length > 0 && (
           <ul class="meet-facts">
-            {facts.map((f) => (
+            {doneFacts.map((f) => (
               <li>
                 <span>{f.k}</span>
                 {f.v}
@@ -209,19 +128,98 @@ const talkCount = d.program?.filter((p) => p.talk).length ?? 0;
         {d.url && (
           <div class="cta-row">
             <a
-              class:list={["btn", { ghost: isPlanned }]}
+              class:list={["btn", { ghost: isGhostCta }]}
               href={d.url}
               target="_blank"
               rel="noopener"
             >
-              {d.cta ?? t.meetupCard.ctaDefault}
+              {ctaLabel}
             </a>
           </div>
         )}
       </div>
-    </article>
-  )
-}
+    </div>
+  </details>
+) : (
+  <article class:list={["meet", { next: isPlanned }]} data-reveal="up">
+    <div class="meet-when">
+      <span class="meet-no">
+        Meetup #{d.no}
+        {isPlanned ? " →" : ""}
+      </span>
+      {dated ? (
+        <>
+          <time class="meet-date" datetime={dated.iso}>
+            {dated.md.split("/")[0]}
+            <span class="sl">/</span>
+            {dated.md.split("/")[1]}
+          </time>
+          <span class="meet-dow">{dated.dow}</span>
+          {span && <span class="meet-time">{span}</span>}
+        </>
+      ) : (
+        <span class="meet-date">TBD</span>
+      )}
+    </div>
+
+    <div class="meet-body">
+      {status && <span class="meet-status">{status}</span>}
+
+      <h3>
+        {d.title}
+        {d.subtitle && <small>{d.subtitle}</small>}
+      </h3>
+
+      <div class="meet-lede">
+        <Content />
+      </div>
+
+      {facts.length > 0 && (
+        <ul class="meet-facts">
+          {facts.map((f) => (
+            <li>
+              <span>{f.k}</span>
+              {f.v}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {d.program && d.program.length > 0 && (
+        <details class="lt-wrap">
+          <summary>
+            {t.meetupCard.programHeading}
+            {t.meetupCard.programCount(talkCount)}
+          </summary>
+          <ol class="lt">
+            {d.program.map((p) => (
+              <li class:list={{ brk: p.break }}>
+                <span class="t">{p.at}</span>
+                <div>
+                  <b>{p.what}</b>
+                  {p.who && <i>{p.who}</i>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      {d.url && (
+        <div class="cta-row">
+          <a
+            class:list={["btn", { ghost: isPlanned }]}
+            href={d.url}
+            target="_blank"
+            rel="noopener"
+          >
+            {d.cta ?? t.meetupCard.ctaDefault}
+          </a>
+        </div>
+      )}
+    </div>
+  </article>
+)}
 
 <style>
   .meet {

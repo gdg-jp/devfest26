@@ -129,12 +129,10 @@ const eventSchema = clean({
 ---
 
 <!doctype html>
-{
-  /* `data-city` is what a city's own stylesheet hangs from —
+{/* `data-city` is what a city's own stylesheet hangs from —
     `src/routes/<slug>/_style.css`. In a build or a preview with more than one
     city, every city's stylesheet is on every page, so each has to say which
-    city it is for. */
-}
+    city it is for. */}
 <html lang={t.meta.htmlLang} data-theme={site.theme} data-city={site.tenant}>
   <head>
     <meta charset="utf-8" />
@@ -146,12 +144,10 @@ const eventSchema = clean({
     {enUrl && <link rel="alternate" hreflang="en" href={enUrl} />}
     {jaUrl && <link rel="alternate" hreflang="x-default" href={jaUrl} />}
 
-    {
-      /* /kansai/favicon.svg is an endpoint, generated in this city's theme
+    {/* /kansai/favicon.svg is an endpoint, generated in this city's theme
         colour — one per city, because `public/` is shared by all of them. The
         .ico is a static file and only there for browsers that ignore SVG
-        icons, so it is picked by theme rather than by city. */
-    }
+        icons, so it is picked by theme rather than by city. */}
     <link
       rel="icon"
       href={tenantPath(site.tenant, "/favicon.svg")}
@@ -191,25 +187,21 @@ const eventSchema = clean({
       is:inline
       set:html={JSON.stringify(eventSchema)}
     />
-    {
-      jsonLd && (
-        <script
-          type="application/ld+json"
-          is:inline
-          set:html={JSON.stringify(clean(jsonLd))}
-        />
-      )
-    }
+    {jsonLd && (
+      <script
+        type="application/ld+json"
+        is:inline
+        set:html={JSON.stringify(clean(jsonLd))}
+      />
+    )}
 
-    {
-      /* Runs before first paint: marks that JS is live, and decides whether the
+    {/* Runs before first paint: marks that JS is live, and decides whether the
         intro curtain plays at all.
 
         Both timeouts are safety nets. Marking `.js` is what hides the hero and
         every scroll-reveal, so a bundle that never arrives would otherwise
         leave the page blank behind a curtain that never lifts. main.ts clears
-        the fallback as soon as it has actually taken over. */
-    }
+        the fallback as soon as it has actually taken over. */}
     <script is:inline>
       (function () {
         const d = document.documentElement;
@@ -245,7 +237,9 @@ const eventSchema = clean({
   </head>
 
   <body>
-    <a class="skip" href="#top">{t.meta.skipToContent}</a>
+    <a class="skip" href="#top">
+      {t.meta.skipToContent}
+    </a>
     <slot />
     {previewMode && <PreviewBar />}
     <script>

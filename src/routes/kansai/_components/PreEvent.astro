@@ -34,33 +34,31 @@ const upcoming = (await byTenant("meetups", tenant))
   });
 ---
 
-{
-  upcoming.length > 0 && (
-    <aside class="k-pre k-wrap" aria-label={c.preEventHeading}>
-      {upcoming.map(({ m, when }) => (
-        <a
-          class="k-pre__row"
-          href={m.data.url}
-          target="_blank"
-          rel="noopener"
-          data-k-reveal="up"
-        >
-          <span class="k-pre__tag">
-            {c.preEventHeading} #{m.data.no}
-          </span>
-          <span class="k-pre__when">
-            {when} {m.data.startsAt}
-          </span>
-          <span class="k-pre__title">{m.data.title}</span>
-          <span class="k-pre__cta">
-            {c.preEventCta}
-            <Arrow />
-          </span>
-        </a>
-      ))}
-    </aside>
-  )
-}
+{upcoming.length > 0 && (
+  <aside class="k-pre k-wrap" aria-label={c.preEventHeading}>
+    {upcoming.map(({ m, when }) => (
+      <a
+        class="k-pre__row"
+        href={m.data.url}
+        target="_blank"
+        rel="noopener"
+        data-k-reveal="up"
+      >
+        <span class="k-pre__tag">
+          {c.preEventHeading} #{m.data.no}
+        </span>
+        <span class="k-pre__when">
+          {when} {m.data.startsAt}
+        </span>
+        <span class="k-pre__title">{m.data.title}</span>
+        <span class="k-pre__cta">
+          {c.preEventCta}
+          <Arrow />
+        </span>
+      </a>
+    ))}
+  </aside>
+)}
 
 <style>
   .k-pre {

@@ -179,19 +179,17 @@ const jsonLd = title
       >
         <div class="k-sh">
           <p class="k-sh__meta">
-            {
-              start && (
-                <span class="k-sh__time">
-                  <time>{start}</time>
-                  {end && (
-                    <>
-                      <span aria-hidden="true">–</span>
-                      <time>{end}</time>
-                    </>
-                  )}
-                </span>
-              )
-            }
+            {start && (
+              <span class="k-sh__time">
+                <time>{start}</time>
+                {end && (
+                  <>
+                    <span aria-hidden="true">–</span>
+                    <time>{end}</time>
+                  </>
+                )}
+              </span>
+            )}
             {length && <span class="k-sh__len">{c.minutes(length)}</span>}
             <span class="k-sh__no">{label}</span>
             {featured && <span class="k-sh__badge">{c.featuredBadge}</span>}
@@ -209,66 +207,62 @@ const jsonLd = title
           </p>
 
           <ul class="k-sh__cast">
-            {
-              cast.map((person) => (
-                <li>
-                  <a class="k-sh__person" href={person.href}>
-                    <span class="k-sh__ring" style={`--ring:${person.ring}`}>
-                      <Portrait
-                        speaker={person.speaker}
-                        size={64}
-                        class="k-sh__av"
-                        tone={person.ring}
-                        eager
-                      />
-                    </span>
-                    <span class="k-sh__id">
-                      <b>{bare(person.speaker.data.name)}</b>
-                      <small>{person.speaker.data.role}</small>
-                    </span>
-                  </a>
-                </li>
-              ))
-            }
+            {cast.map((person) => (
+              <li>
+                <a class="k-sh__person" href={person.href}>
+                  <span class="k-sh__ring" style={`--ring:${person.ring}`}>
+                    <Portrait
+                      speaker={person.speaker}
+                      size={64}
+                      class="k-sh__av"
+                      tone={person.ring}
+                      eager
+                    />
+                  </span>
+                  <span class="k-sh__id">
+                    <b>{bare(person.speaker.data.name)}</b>
+                    <small>{person.speaker.data.role}</small>
+                  </span>
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       </Panel>
     </div>
   </section>
 
-  {
-    (abstract || ownTalks.length > 0) && (
-      <section class="k-sec k-sec--panel" aria-labelledby="k-about-h">
-        <div class="k-wrap k-wrap--panel" data-k-reveal="up">
-          <Panel
-            title="About"
-            id="k-about-h"
-            tone={tone.pa}
-            stickers={["quoteOpen", "quoteClose"]}
-          >
-            <p class="k-sub">{c.aboutSub}</p>
-            {abstract && (
-              <div class="k-prose k-about">
-                <Content />
-              </div>
-            )}
-            {ownTalks.length > 0 && (
-              <ol class="k-talks">
-                {ownTalks.map((talk) => (
-                  <li>
-                    <a class="k-link" href={talk.href}>
-                      {talk.start && <time>{talk.start}</time>}
-                      {talk.title ?? c.titleTba}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
-        </div>
-      </section>
-    )
-  }
+  {(abstract || ownTalks.length > 0) && (
+    <section class="k-sec k-sec--panel" aria-labelledby="k-about-h">
+      <div class="k-wrap k-wrap--panel" data-k-reveal="up">
+        <Panel
+          title="About"
+          id="k-about-h"
+          tone={tone.pa}
+          stickers={["quoteOpen", "quoteClose"]}
+        >
+          <p class="k-sub">{c.aboutSub}</p>
+          {abstract && (
+            <div class="k-prose k-about">
+              <Content />
+            </div>
+          )}
+          {ownTalks.length > 0 && (
+            <ol class="k-talks">
+              {ownTalks.map((talk) => (
+                <li>
+                  <a class="k-link" href={talk.href}>
+                    {talk.start && <time>{talk.start}</time>}
+                    {talk.title ?? c.titleTba}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+      </div>
+    </section>
+  )}
 
   <section class="k-sec k-sec--panel" aria-labelledby="k-cast-h">
     <div class="k-wrap k-wrap--panel" data-k-reveal="up">
@@ -280,44 +274,42 @@ const jsonLd = title
       >
         <p class="k-sub">{c.speakersSub}</p>
         <div class="k-bios">
-          {
-            cast.map(({ speaker, href, ring, hook, Bio }) => (
-              <article class="k-bio">
-                <a
-                  class="k-bio__face"
-                  href={href}
-                  style={`--ring:${ring}`}
-                  tabindex="-1"
-                  aria-hidden="true"
-                >
-                  <Portrait
-                    speaker={speaker}
-                    size={132}
-                    class="k-bio__img"
-                    tone={ring}
-                  />
+          {cast.map(({ speaker, href, ring, hook, Bio }) => (
+            <article class="k-bio">
+              <a
+                class="k-bio__face"
+                href={href}
+                style={`--ring:${ring}`}
+                tabindex="-1"
+                aria-hidden="true"
+              >
+                <Portrait
+                  speaker={speaker}
+                  size={132}
+                  class="k-bio__img"
+                  tone={ring}
+                />
+              </a>
+              <div class="k-bio__body">
+                {hook && (
+                  <p class="k-bio__hook">{localized(hook.hook, lang)}</p>
+                )}
+                <h3 class="k-bio__name">
+                  <a href={href}>{bare(speaker.data.name)}</a>
+                </h3>
+                <p class="k-bio__role">{speaker.data.role}</p>
+                {Bio && (
+                  <div class="k-prose k-bio__text">
+                    <Bio />
+                  </div>
+                )}
+                <a class="k-link k-bio__more" href={href}>
+                  {c.profile}
+                  <Arrow />
                 </a>
-                <div class="k-bio__body">
-                  {hook && (
-                    <p class="k-bio__hook">{localized(hook.hook, lang)}</p>
-                  )}
-                  <h3 class="k-bio__name">
-                    <a href={href}>{bare(speaker.data.name)}</a>
-                  </h3>
-                  <p class="k-bio__role">{speaker.data.role}</p>
-                  {Bio && (
-                    <div class="k-prose k-bio__text">
-                      <Bio />
-                    </div>
-                  )}
-                  <a class="k-link k-bio__more" href={href}>
-                    {c.profile}
-                    <Arrow />
-                  </a>
-                </div>
-              </article>
-            ))
-          }
+              </div>
+            </article>
+          ))}
         </div>
       </Panel>
     </div>
@@ -331,49 +323,45 @@ const jsonLd = title
         tone="var(--ht-green)"
         stickers={["colon", "equals"]}
       >
-        {
-          alongside.length > 0 && (
-            <>
-              <h3 class="k-sub">{c.sameTimeSub}</h3>
-              <ul class="k-cards">
-                {alongside.map((other) => (
-                  <li>
-                    <SessionCard session={other} end={endOf(other)} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )
-        }
+        {alongside.length > 0 && (
+          <>
+            <h3 class="k-sub">{c.sameTimeSub}</h3>
+            <ul class="k-cards">
+              {alongside.map((other) => (
+                <li>
+                  <SessionCard session={other} end={endOf(other)} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
-        {
-          (prev || next) && (
-            <>
-              <h3 class="k-sub">{c.trackSub(track.data.label)}</h3>
-              <ul class="k-cards k-cards--lane">
-                {prev && (
-                  <li>
-                    <SessionCard
-                      session={prev}
-                      end={endOf(prev)}
-                      kicker={c.prevSession}
-                      back
-                    />
-                  </li>
-                )}
-                {next && (
-                  <li class="k-cards__next">
-                    <SessionCard
-                      session={next}
-                      end={endOf(next)}
-                      kicker={c.nextSession}
-                    />
-                  </li>
-                )}
-              </ul>
-            </>
-          )
-        }
+        {(prev || next) && (
+          <>
+            <h3 class="k-sub">{c.trackSub(track.data.label)}</h3>
+            <ul class="k-cards k-cards--lane">
+              {prev && (
+                <li>
+                  <SessionCard
+                    session={prev}
+                    end={endOf(prev)}
+                    kicker={c.prevSession}
+                    back
+                  />
+                </li>
+              )}
+              {next && (
+                <li class="k-cards__next">
+                  <SessionCard
+                    session={next}
+                    end={endOf(next)}
+                    kicker={c.nextSession}
+                  />
+                </li>
+              )}
+            </ul>
+          </>
+        )}
 
         <a class="k-link k-day__all" href={`${home}#timetable`}>
           {c.fullTimetable}

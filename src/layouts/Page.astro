@@ -55,25 +55,25 @@ const t = messages(currentLanguage());
   <TopBar site={site} />
   <main id="top" class="detail">
     <div class="wrap">
-      <a class="back" href={back.href}>{back.label}</a>
+      <a class="back" href={back.href}>
+        {back.label}
+      </a>
       <slot />
-      {
-        register && (
-          <aside class="d-register">
-            <a
-              class="btn"
-              href={site.links.register}
-              target="_blank"
-              rel="noopener"
-              data-analytics="register_click"
-              data-placement={placement}
-            >
-              {register}
-            </a>
-            <p>{t.detail.registerNote(site.event.fee)}</p>
-          </aside>
-        )
-      }
+      {register && (
+        <aside class="d-register">
+          <a
+            class="btn"
+            href={site.links.register}
+            target="_blank"
+            rel="noopener"
+            data-analytics="register_click"
+            data-placement={placement}
+          >
+            {register}
+          </a>
+          <p>{t.detail.registerNote(site.event.fee)}</p>
+        </aside>
+      )}
     </div>
   </main>
   <Footer site={site} />
