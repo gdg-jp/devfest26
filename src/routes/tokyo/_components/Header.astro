@@ -1,0 +1,394 @@
+---
+import Wordmark from "./Wordmark.astro";
+import Arrow from "./Arrow.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { isHome, tenantHome } from "../../../lib/url";
+import { clean } from "../../../preview/stega";
+import {
+  alternatePath,
+  currentAlternateLanguage,
+  currentLanguage,
+  LANGUAGE_NAMES,
+} from "../../../i18n/language";
+import { copy, navigation } from "../_content";
+
+/**
+ * A floating bar that is always one tap from registering.
+ *
+ * The anchors resolve on the home page only, so from anywhere else they go
+ * home first. `data-topbar` and `data-spy` are the hooks the shared nav script
+ * already reads — it publishes the bar's height and lights the section in
+ * view — so this bar needs no script of its own for either.
+ */
+interface Props {
+  site: ResolvedTenant;
+  /** Sits in the flow under the key visual and pins when it reaches the top. */
+  docked?: boolean;
+}
+
+const { site, docked = false } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const nav = navigation(lang);
+const home = tenantHome(site.tenant);
+const prefix = isHome(Astro.url, site.tenant) ? "" : home;
+const siteName = clean(site.fullTitle ?? site.title);
+
+const switchTo = currentAlternateLanguage();
+const switchHref = alternatePath(Astro.url.pathname);
+const switchLabel = LANGUAGE_NAMES[switchTo];
+---
+
+<div class="tk-progress" aria-hidden="true">
+  <span data-progress></span>
+</div>
+
+<header
+  class:list={["tk-header", docked && "tk-header--docked"]}
+  data-topbar
+  data-tk-header
+>
+  <div class="tk-header__bar">
+    <a class="tk-header__brand" href={home} aria-label={siteName}>
+      <Wordmark class="tk-header__logo" label="" />
+    </a>
+
+    <nav class="tk-header__nav" aria-label="Main">
+      <ul>
+        {
+          nav.bar.map((item) => (
+            <li>
+              <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="tk-header__end">
+      <a
+        class="tk-header__lang"
+        href={switchHref}
+        hreflang={switchTo}
+        aria-label={switchLabel}
+        title={switchLabel}
+      >
+        {switchTo.toUpperCase()}
+      </a>
+      <a
+        class="tk-btn tk-btn--sm tk-header__cta"
+        href={site.links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="topbar"
+      >
+        {c.registerShort}
+        <span class="tk-btn__disc"><Arrow /></span>
+      </a>
+      <button
+        type="button"
+        class="tk-header__menu"
+        aria-expanded="false"
+        aria-controls="tk-menu"
+        data-tk-menu-toggle
+      >
+        <span class="visually-hidden" data-tk-menu-label>{c.menu}</span>
+        <span class="tk-header__burger" aria-hidden="true"><i></i><i></i></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="tk-menu" id="tk-menu" data-tk-menu hidden>
+  <nav aria-label="Menu">
+    <ol>
+      {
+        nav.menu.map((item, i) => (
+          <li data-tk-menu-item>
+            <a href={`${prefix}${item.href}`} data-tk-menu-link>
+              <span class="tk-menu__no">{String(i + 1).padStart(2, "0")}</span>
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+  <div class="tk-menu__foot" data-tk-menu-item>
+    <a
+      class="tk-btn tk-btn--light"
+      href={site.links.register}
+      target="_blank"
+      rel="noopener"
+      data-analytics="register_click"
+      data-placement="menu"
+    >
+      {c.register}
+      <span class="tk-btn__disc"><Arrow /></span>
+    </a>
+    <a class="tk-menu__lang" href={switchHref} hreflang={switchTo}
+      >{switchLabel}</a
+    >
+  </div>
+</div>
+
+<style>
+  .tk-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 3px;
+    z-index: 90;
+    pointer-events: none;
+  }
+
+  .tk-progress span {
+    display: block;
+    height: 100%;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    background: linear-gradient(
+      90deg,
+      var(--tk-accent) 0 33.4%,
+      var(--yellow) 33.4% 66.7%,
+      var(--green) 66.7%
+    );
+  }
+
+  .tk-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 80;
+    padding: 12px var(--tk-gutter) 0;
+    pointer-events: none;
+    transition: transform 0.5s var(--tk-ease);
+  }
+
+  .tk-header--docked {
+    position: sticky;
+    top: 0;
+    padding-bottom: 12px;
+  }
+
+  .tk-header.is-hidden {
+    transform: translateY(calc(-100% - 12px));
+  }
+
+  .tk-header__bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(var(--tk-max) + 48px);
+    margin-inline: auto;
+    height: 60px;
+    padding: 0 8px 0 18px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    pointer-events: auto;
+    transition: background 0.3s;
+  }
+
+  .tk-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: none;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .tk-header :global(.tk-header__logo) {
+    width: 172px;
+  }
+
+  .tk-header__nav {
+    margin-inline: auto;
+  }
+
+  .tk-header__nav ul {
+    display: flex;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-header__nav a {
+    position: relative;
+    display: block;
+    padding: 8px 11px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.25s var(--tk-ease);
+  }
+
+  .tk-header__nav a:hover {
+    background: var(--ground);
+  }
+
+  .tk-header__nav a:global(.is-current) {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .tk-header__end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tk-header__lang,
+  .tk-menu__lang {
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: inherit;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+
+  .tk-header__lang:hover {
+    background: var(--ground);
+  }
+
+  .tk-header__menu {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    cursor: pointer;
+    place-items: center;
+  }
+
+  .tk-header__burger {
+    display: grid;
+    gap: 5px;
+    width: 18px;
+  }
+
+  .tk-header__burger i {
+    display: block;
+    height: 2.4px;
+    border-radius: 2px;
+    background: var(--ink);
+    transition: transform 0.4s var(--tk-ease);
+  }
+
+  .tk-header__menu[aria-expanded="true"] .tk-header__burger i:first-child {
+    transform: translateY(3.7px) rotate(45deg);
+  }
+
+  .tk-header__menu[aria-expanded="true"] .tk-header__burger i:last-child {
+    transform: translateY(-3.7px) rotate(-45deg);
+  }
+
+  @media (width < 860px) {
+    .tk-header__nav {
+      display: none;
+    }
+
+    .tk-header__end {
+      margin-left: auto;
+    }
+
+    .tk-header__menu {
+      display: grid;
+    }
+  }
+
+  @media (width < 560px) {
+    .tk-header {
+      padding-top: 8px;
+    }
+
+    .tk-header__bar {
+      height: 56px;
+      padding-left: 14px;
+      gap: 8px;
+    }
+
+    .tk-header :global(.tk-header__logo) {
+      width: 148px;
+    }
+
+    .tk-header__lang {
+      display: none;
+    }
+
+    .tk-header__cta :global(.tk-btn__disc) {
+      display: none;
+    }
+
+    .tk-header__cta {
+      padding-right: 16px;
+    }
+  }
+
+  /* ---- full-screen menu ---------------------------------------------- */
+
+  .tk-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    align-content: space-between;
+    gap: 32px;
+    padding: calc(var(--tk-header-h) + 40px) var(--tk-gutter) 40px;
+    background: var(--ink);
+    color: var(--surface);
+    overflow-y: auto;
+    clip-path: circle(0% at calc(100% - 48px) 44px);
+  }
+
+  .tk-menu[hidden] {
+    display: none;
+  }
+
+  .tk-menu ol {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-menu a[data-tk-menu-link] {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 6px 0;
+    color: var(--surface);
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(24px, 6.4vw, 40px);
+    line-height: 1.3;
+    text-decoration: none;
+  }
+
+  .tk-menu__no {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--tk-on-dark-muted);
+  }
+
+  .tk-menu__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+</style>

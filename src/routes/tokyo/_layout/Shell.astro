@@ -1,0 +1,73 @@
+---
+import Base from "../../../layouts/Base.astro";
+import Sprite from "../../../components/Sprite.astro";
+import Header from "../_components/Header.astro";
+import Footer from "../_components/Footer.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import type { CardImage } from "../../../lib/sessionCard";
+
+/**
+ * Tokyo's frame, the same as Kansai's: Base's head (meta, Open Graph,
+ * JSON-LD, analytics) and the city's own header and footer. Kansai's splash is
+ * left out — Tokyo opens on the shared hero and its own entrance.
+ *
+ * With `docked`, the `hero` slot goes above the header, which then sits in the
+ * flow just below it and pins to the top once scrolled there.
+ *
+ * The motion for everything inside is one bundle, `_scripts/index.ts`. Each
+ * module in it looks for its own `data-tk-*` hooks and does nothing when the
+ * page it is on has none, so detail pages can share the frame as they are
+ * redesigned without a second entry point.
+ */
+interface Props {
+  site: ResolvedTenant;
+  title?: string;
+  description?: string;
+  jsonLd?: Record<string, unknown>;
+  /** A session's own Open Graph card, where it has one. */
+  ogImage?: CardImage;
+  docked?: boolean;
+}
+
+const {
+  site,
+  title,
+  description,
+  jsonLd,
+  ogImage,
+  docked = false,
+} = Astro.props;
+---
+
+<Base
+  site={site}
+  title={title}
+  description={description}
+  jsonLd={jsonLd}
+  ogImage={ogImage}
+>
+  {
+    /* Base's own fallback only knows about the shared bundle. This one covers
+       Tokyo's: if it has not run within three seconds, nothing waits on it. */
+  }
+  <script is:inline>
+    setTimeout(function () {
+      if (!window.__tk26Ready) {
+        document.documentElement.classList.add("no-motion");
+        document.documentElement.classList.remove("is-loading");
+      }
+    }, 3000);
+  </script>
+  <Sprite />
+  <slot name="hero" />
+  <Header site={site} docked={docked} />
+  <main id="tk-main" class="tk-main">
+    <slot />
+  </main>
+  <Footer site={site} />
+  <slot name="after" />
+</Base>
+
+<script>
+  import "../_scripts/index";
+</script>

@@ -1,0 +1,187 @@
+---
+import Panel from "./Panel.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, FAQ, localized } from "../_content";
+
+/**
+ * The doubts that stop someone registering, answered before they have to ask.
+ * `<details>` so it works with no script at all; `_scripts/faq.ts` only adds
+ * the height animation. The safety policy sits beside it — it is the answer to
+ * the one question people do not ask out loud.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+---
+
+<section
+  class="tk-sec tk-sec--panel tk-faq"
+  id="faq"
+  aria-labelledby="tk-faq-h"
+>
+  <div class="tk-wrap tk-wrap--panel">
+    <Panel
+      title={FAQ.length > 0 ? c.faqHeading : c.safetyHeading}
+      id="tk-faq-h"
+      tone="var(--red)"
+      stickers={["slash", "chevron"]}
+    >
+      {
+        FAQ.length > 0 && (
+          <div class="tk-faq__list" data-tk-stagger>
+            {FAQ.map((item) => (
+              <details class="tk-faq__item" data-tk-faq data-tk-reveal="up">
+                <summary>
+                  <span>{localized(item.q, lang)}</span>
+                  <i aria-hidden="true" />
+                </summary>
+                <div class="tk-faq__a" data-tk-faq-body>
+                  <p>{localized(item.a, lang)}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        )
+      }
+
+      <aside class="tk-coc" id="coc" data-tk-reveal="up">
+        <h3>{c.cocHeading}</h3>
+        <p>{c.cocLede}</p>
+        <div class="tk-coc__links">
+          <a
+            href={site.links.cocJa}
+            target="_blank"
+            rel="noopener"
+            class="tk-link"
+          >
+            {c.cocJa} ↗
+          </a>
+          <a
+            href={site.links.cocEn}
+            target="_blank"
+            rel="noopener"
+            class="tk-link"
+          >
+            {c.cocEn} ↗
+          </a>
+        </div>
+      </aside>
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .tk-faq__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tk-faq__item {
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .tk-faq__item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 18px 24px;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(16px, 1.4vw, 18px);
+    line-height: 1.5;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .tk-faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tk-faq__item summary i {
+    position: relative;
+    display: block;
+    flex: none;
+    width: 32px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ground);
+    transition:
+      transform 0.45s var(--tk-ease),
+      background 0.3s;
+  }
+
+  .tk-faq__item summary i::before,
+  .tk-faq__item summary i::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 2.4px;
+    border-radius: 2px;
+    background: var(--ink);
+    translate: -50% -50%;
+  }
+
+  .tk-faq__item summary i::after {
+    rotate: 90deg;
+  }
+
+  .tk-faq__item[open] summary i {
+    transform: rotate(135deg);
+    background: var(--ht-yellow);
+  }
+
+  .tk-faq__a {
+    padding: 0 24px 22px;
+    color: var(--ink);
+    line-height: 1.9;
+  }
+
+  .tk-faq__a p {
+    margin: 0;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  /* Framed in the theme's pastel, as Kansai frames it in its blue. */
+  .tk-coc {
+    margin-top: 28px;
+    padding: 24px 26px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--tk-accent-pa);
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  .tk-coc:first-child {
+    margin-top: 0;
+  }
+
+  .tk-coc h3 {
+    font-size: 19px;
+    margin-bottom: 8px;
+  }
+
+  .tk-coc p {
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  .tk-coc__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-size: 14px;
+  }
+</style>

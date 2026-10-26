@@ -1,0 +1,319 @@
+---
+import Portrait from "./Portrait.astro";
+import Arrow from "./Arrow.astro";
+import Panel from "./Panel.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, FEATURED_START, localized } from "../_content";
+import type { FeaturedSpeaker } from "../_data";
+
+/**
+ * The headliners, straight after the key visual, as an endless carousel that
+ * snaps each card to the middle of the column — neighbours peek in at either
+ * side, cut off at the column's edge, and the last runs round to the first.
+ * It opens on `FEATURED_START`. Swipe, drag or use the arrows;
+ * `_scripts/carousel.ts`. Left off the page until `FEATURED` names someone.
+ */
+interface Props {
+  featured: FeaturedSpeaker[];
+}
+
+const { featured } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const start = Math.max(
+  0,
+  featured.findIndex((f) => f.slug === FEATURED_START),
+);
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+const TONES: Record<string, string> = {
+  green: "var(--green)",
+  yellow: "var(--yellow)",
+  red: "var(--red)",
+};
+---
+
+{
+  featured.length > 0 && (
+    <section
+      class="tk-sec tk-sec--panel tk-featured"
+      id="featured"
+      aria-labelledby="tk-featured-h"
+      data-tk-car
+    >
+      <div class="tk-wrap tk-wrap--panel">
+        <Panel
+          title={c.featuredHeading}
+          id="tk-featured-h"
+          tone="var(--tk-accent-ht)"
+          stickers={["arrow", "ellipsis"]}
+          ja={lang === "ja"}
+          class="tk-featured__panel"
+        >
+          <ul
+            class="tk-car"
+            data-tk-car-track
+            data-tk-car-start={start}
+            data-tk-reveal="rise"
+          >
+            {featured.map((f, i) => {
+              const { speaker } = f.program;
+              return (
+                <li class="tk-car__item">
+                  <a class="tk-card" href={f.talk.href} draggable="false">
+                    <span class="tk-card__frame">
+                      <span class="tk-card__pan" data-tk-car-pan>
+                        <Portrait
+                          speaker={speaker}
+                          size={320}
+                          class="tk-card__img"
+                          tone={TONES[f.tone]}
+                          eager={Math.abs(i - start) < 2}
+                        />
+                      </span>
+                      {f.talk.start && (
+                        <span class="tk-card__time">{f.talk.start}</span>
+                      )}
+                    </span>
+                    <span class="tk-card__name">{bare(speaker.data.name)}</span>
+                    <span class="tk-card__hook">{localized(f.hook, lang)}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div class="tk-car__foot">
+            <div class="tk-car__bar" aria-hidden="true">
+              <span data-tk-car-progress />
+            </div>
+            <div class="tk-car__nav">
+              <button
+                type="button"
+                class="tk-car__btn tk-car__btn--prev"
+                aria-label={c.prev}
+                data-tk-car-prev
+              >
+                <Arrow />
+              </button>
+              <button
+                type="button"
+                class="tk-car__btn"
+                aria-label={c.next}
+                data-tk-car-next
+              >
+                <Arrow />
+              </button>
+            </div>
+          </div>
+        </Panel>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* Neighbours peek in up to the card's keyline, not its padding. */
+  .tk-featured :global(.tk-featured__panel .tk-panel__body) {
+    margin: 0 var(--tk-line) var(--tk-line);
+    border-radius: 0 0 calc(var(--tk-panel-r) - var(--tk-line))
+      calc(var(--tk-panel-r) - var(--tk-line));
+    overflow: clip;
+  }
+
+  /* ---- arrows ------------------------------------------------------- */
+
+  .tk-car__foot {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: clamp(24px, 3.4vw, 36px);
+  }
+
+  .tk-car__nav {
+    display: flex;
+    gap: 10px;
+    flex: none;
+  }
+
+  .tk-car__btn {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      background 0.3s var(--tk-ease),
+      color 0.3s var(--tk-ease),
+      opacity 0.3s,
+      transform 0.4s var(--tk-ease-back);
+  }
+
+  .tk-car__btn :global(svg) {
+    width: 20px;
+  }
+
+  .tk-car__btn--prev :global(svg) {
+    transform: scaleX(-1);
+  }
+
+  .tk-car__btn:hover:not(:disabled) {
+    background: var(--tk-accent-ht);
+    color: var(--ink);
+    transform: scale(1.08);
+  }
+
+  .tk-car__btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* ---- track -------------------------------------------------------- */
+
+  /* Clipped to the column. The padding lets the first and last cards reach
+     the middle, where every card snaps. */
+  .tk-car {
+    --card: clamp(220px, 34vw, 270px);
+    position: relative;
+    display: flex;
+    gap: clamp(12px, 2vw, 20px);
+    margin: 0 calc(-1 * var(--tk-panel-pad));
+    padding: 4px calc(50% + var(--tk-panel-pad) - var(--card) / 2) 8px;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    cursor: grab;
+  }
+
+  .tk-car::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tk-car:global(.is-dragging) {
+    cursor: grabbing;
+    scroll-snap-type: none;
+  }
+
+  .tk-car:global(.is-dragging) .tk-card {
+    pointer-events: none;
+  }
+
+  .tk-car__item {
+    flex: none;
+    width: var(--card);
+    scroll-snap-align: center;
+  }
+
+  /* ---- card --------------------------------------------------------- */
+
+  .tk-card {
+    display: grid;
+    transform-origin: 50% 40%;
+    gap: 6px;
+    color: var(--ink);
+    text-decoration: none;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+
+  .tk-card__frame {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 5;
+    margin-bottom: 10px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    background: var(--surface);
+    overflow: hidden;
+    transition: border-radius 0.5s var(--tk-ease);
+  }
+
+  .tk-card__pan {
+    position: absolute;
+    inset: 0 -8%;
+    display: block;
+  }
+
+  .tk-card__pan :global(.tk-card__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-size: 72px;
+    transition: transform 0.8s var(--tk-ease);
+  }
+
+  .tk-card:hover .tk-card__frame,
+  .tk-card:focus-visible .tk-card__frame {
+    border-radius: var(--tk-r-md);
+  }
+
+  .tk-card:hover :global(.tk-card__img),
+  .tk-card:focus-visible :global(.tk-card__img) {
+    transform: scale(1.05);
+  }
+
+  .tk-card__time {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    padding: 2px 12px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--f-mono);
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+  }
+
+  .tk-card__name {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(22px, 2.4vw, 28px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .tk-card__hook {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* ---- progress ----------------------------------------------------- */
+
+  .tk-car__bar {
+    flex: 1;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--tk-hair);
+    overflow: hidden;
+  }
+
+  /* One segment per speaker, sliding to whichever is in the middle. */
+  .tk-car__bar span {
+    display: block;
+    width: var(--seg, 30%);
+    height: 100%;
+    border-radius: 3px;
+    background: var(--ink);
+  }
+
+  @media (width < 560px) {
+    .tk-car__btn {
+      width: 44px;
+    }
+
+    .tk-car {
+      --card: 68vw;
+    }
+  }
+</style>
