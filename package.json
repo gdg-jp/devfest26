@@ -22,7 +22,6 @@
     "type-check": "dotenv -- astro check && tsc --noEmit",
     "check:portal": "cross-env TARGETS=portal dotenv -- astro check",
     "targets": "dotenv -- node --experimental-strip-types scripts/discover-targets.mjs",
-    "og": "dotenv -- node --experimental-strip-types scripts/make-og.mjs",
     "og:session": "dotenv -- tsx scripts/og.ts session",
     "og:sessions": "dotenv -- tsx scripts/og.ts sessions",
     "og:card": "tsx scripts/og.ts card",
