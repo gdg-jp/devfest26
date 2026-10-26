@@ -1,0 +1,654 @@
+---
+import Panel from "./Panel.astro";
+import Arrow from "./Arrow.astro";
+import Icon from "./Icon.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { getProgram } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import {
+  CATEGORIES,
+  copy,
+  LANES,
+  localized,
+  OVERVIEW,
+  QUIZ,
+  type Lane,
+  type QuizStep,
+} from "../_content";
+import { trackTone } from "./track";
+
+/**
+ * When, where, how much, and the four categories. The facts are marked by
+ * icons rather than labels, and the venue's name opens it in Google Maps;
+ * the categories sit underneath in the theme's two halves, each a card that
+ * drops down to its own folder in `Sessions` further down the page.
+ *
+ * Beside the facts, two questions that light up the category that suits the
+ * reader (`_scripts/overview.ts`). The quiz is `hidden` until the script shows
+ * it, and the facts take the whole width until then: without the script the
+ * categories are all there, just not picked out.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const { event } = site;
+const { venue } = event;
+
+const program = await getProgram(site.tenant);
+const categories = CATEGORIES.flatMap((category) => {
+  const group = program.find(({ track }) => track.id === category.track);
+  if (!group) return [];
+  return [
+    {
+      ...category,
+      track: group.track,
+      tone: trackTone(group.track),
+      // A category with no sessions yet has no folder below to go to.
+      Card: group.sessions.length > 0 ? ("a" as const) : ("div" as const),
+    },
+  ];
+});
+const lanes = (Object.keys(LANES) as Lane[])
+  .map((lane) => ({
+    lane,
+    ...LANES[lane],
+    categories: categories.filter((category) => category.lane === lane),
+  }))
+  .filter(({ categories }) => categories.length > 0);
+
+// Flattened so every question is in the page and the script only swaps them.
+const steps: { id: string; depth: number; step: QuizStep }[] = [];
+const flatten = (step: QuizStep, id: string, depth: number) => {
+  steps.push({ id, depth, step });
+  step.answers.forEach((answer, i) => {
+    if (answer.next) flatten(answer.next, `${id}-${i}`, depth + 1);
+  });
+};
+flatten(QUIZ, "q", 1);
+const depth = Math.max(...steps.map((s) => s.depth));
+
+const date =
+  lang === "ja"
+    ? `${event.dateLabel}（${event.dayOfWeek}）`
+    : `${event.dayOfWeek}, ${event.dateLabel}`;
+// The Studio's locality and street can share a district ("千代田区丸の内" +
+// "丸の内２丁目…"); each part joins on where the last one left off.
+const address = [venue.addressLocality, venue.streetAddress].reduce<string>(
+  (joined, part) => {
+    if (!part) return joined;
+    const overlap = [...Array(Math.min(joined.length, part.length)).keys()]
+      .map((i) => i + 1)
+      .filter((n) => joined.endsWith(part.slice(0, n)))
+      .pop();
+    return joined + part.slice(overlap ?? 0);
+  },
+  venue.addressRegion ?? "",
+);
+const place = venue.name.replace(/\s*[(（].*[)）]\s*$/, "");
+const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  address ? `${place} ${address}` : place,
+)}`;
+---
+
+<section
+  class="tk-sec tk-sec--panel tk-overview"
+  id="overview"
+  aria-labelledby="tk-overview-h"
+>
+  <div class="tk-wrap tk-wrap--panel">
+    <Panel
+      title={c.overviewHeading}
+      id="tk-overview-h"
+      tone="var(--ht-yellow)"
+      stickers={["slash", "period"]}
+      ja={lang === "ja"}
+    >
+      <div class="tk-overview__head">
+        <dl class="tk-overview__facts">
+          <div class="tk-overview__fact" data-tk-reveal="up">
+            <dt>
+              <Icon name="calendar" />
+              <span class="visually-hidden">{c.overviewDate}</span>
+            </dt>
+            <dd>
+              <time class="tk-overview__big" datetime={event.isoDate}>
+                {date}
+              </time>
+              <span>{event.hours}</span>
+            </dd>
+          </div>
+          <div class="tk-overview__fact" data-tk-reveal="up">
+            <dt>
+              <Icon name="pin" />
+              <span class="visually-hidden">{c.overviewVenue}</span>
+            </dt>
+            <dd>
+              <a
+                class="tk-overview__venue"
+                href={map}
+                target="_blank"
+                rel="noopener"
+                title={c.overviewMap}
+              >
+                {venue.name}
+                <Icon name="external" />
+              </a>
+              <span class="tk-overview__note">
+                {localized(OVERVIEW.exit, lang)}
+                {address && ` ・ ${address}`}
+              </span>
+              <span class="tk-overview__walk">
+                <Icon name="train" />
+                <span>{localized(OVERVIEW.station, lang)}</span>
+                <b>{localized(OVERVIEW.walk, lang)}</b>
+              </span>
+            </dd>
+          </div>
+          <div class="tk-overview__fact" data-tk-reveal="up">
+            <dt>
+              <Icon name="ticket" />
+              <span class="visually-hidden">{c.overviewFee}</span>
+            </dt>
+            <dd>
+              <span class="tk-overview__big">{event.fee}</span>
+              <span>{localized(OVERVIEW.seats, lang)}</span>
+              <span class="tk-overview__note">
+                ※ {localized(OVERVIEW.feeNote, lang)}
+              </span>
+            </dd>
+          </div>
+        </dl>
+
+        <div
+          class="tk-quiz"
+          data-tk-quiz
+          data-tk-quiz-template={c.quizResult("{name}")}
+          hidden
+        >
+          <p class="tk-quiz__lead">{c.quizLead}</p>
+          {
+            steps.map(({ id, depth: n, step }) => (
+              <div
+                class="tk-quiz__step"
+                data-tk-quiz-step={id}
+                hidden={id !== "q"}
+              >
+                <p class="tk-quiz__q">
+                  <span>{c.quizStep(n, depth)}</span>
+                  {localized(step.q, lang)}
+                </p>
+                <div class="tk-quiz__answers">
+                  {step.answers.map((answer, i) => (
+                    <button
+                      type="button"
+                      class="tk-quiz__answer"
+                      data-tk-quiz-next={answer.next ? `${id}-${i}` : undefined}
+                      data-tk-quiz-pick={answer.pick}
+                    >
+                      {localized(answer.label, lang)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+          }
+          <div class="tk-quiz__step" data-tk-quiz-done hidden>
+            <p class="tk-quiz__q" aria-live="polite" data-tk-quiz-result></p>
+            <div class="tk-quiz__answers">
+              <a
+                class="tk-btn tk-btn--sm tk-btn--light"
+                href={site.links.register}
+                target="_blank"
+                rel="noopener"
+                data-analytics="register_click"
+                data-placement="overview_quiz"
+              >
+                {c.register}
+                <span class="tk-btn__disc"><Arrow /></span>
+              </a>
+              <button type="button" class="tk-quiz__again" data-tk-quiz-again>
+                {c.quizAgain}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tk-overview__lanes" data-tk-quiz-board>
+        {
+          lanes.map(({ lane, title, sub, categories }) => (
+            <div
+              class:list={["tk-lane", `tk-lane--${lane}`]}
+              style={`--tk-lane:${categories[0].tone.pa}`}
+            >
+              <div class="tk-lane__head">
+                <h3>{title}</h3>
+                <span>{localized(sub, lang)}</span>
+              </div>
+              {categories.map(({ track, tone, icon, Card }) => (
+                <Card
+                  class="tk-cat"
+                  href={Card === "a" ? `#tk-sessions-${track.id}` : undefined}
+                  style={`--tk-cat:${tone.ht}`}
+                  data-tk-quiz-card={track.id}
+                  data-tk-quiz-name={track.data.label.trim()}
+                  data-tk-reveal="up"
+                >
+                  <span class="tk-cat__badge" aria-hidden="true">
+                    {c.quizPicked}
+                  </span>
+                  <span class="tk-cat__icon">
+                    <Icon name={icon} />
+                  </span>
+                  <div class="tk-cat__text">
+                    <h4 class="tk-cat__name">{track.data.label}</h4>
+                    {track.data.sub && (
+                      <span class="tk-cat__sub">{track.data.sub}</span>
+                    )}
+                  </div>
+                  {Card === "a" && (
+                    <span class="tk-cat__disc" aria-hidden="true">
+                      <Arrow />
+                    </span>
+                  )}
+                </Card>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .tk-overview {
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  /* ---- the facts and the quiz ---- */
+
+  .tk-overview__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(16px, 2.4vw, 28px);
+  }
+
+  /* Until the script shows the quiz, the facts have the row to themselves. */
+  .tk-overview__head:has(> .tk-quiz[hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tk-overview__facts {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+  }
+
+  .tk-overview__fact {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+  }
+
+  .tk-overview__fact + .tk-overview__fact {
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  .tk-overview__fact dt {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 12px;
+    background: var(--pa-yellow);
+  }
+
+  .tk-overview__fact dt :global(svg) {
+    width: 20px;
+  }
+
+  .tk-overview__fact dd {
+    display: grid;
+    justify-items: start;
+    gap: 4px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .tk-overview__big {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(20px, 2.4vw, 26px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .tk-overview__venue {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(16px, 1.8vw, 19px);
+    line-height: 1.4;
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--tk-hair);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .tk-overview__venue:hover {
+    text-decoration-color: var(--ink);
+  }
+
+  .tk-overview__venue :global(svg) {
+    width: 15px;
+    margin-left: 6px;
+    vertical-align: -1px;
+  }
+
+  /* A minute from Tokyo Station is the venue's best feature: said loudest,
+     but as text under a highlighter stroke — no border, nothing to press. */
+  .tk-overview__walk {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .tk-overview__walk :global(svg) {
+    width: 22px;
+  }
+
+  .tk-overview__walk b {
+    padding-inline: 2px;
+    font-family: var(--tk-f-display);
+    font-size: clamp(22px, 2.6vw, 26px);
+    line-height: 1.1;
+    background: linear-gradient(
+      transparent 58%,
+      var(--ht-yellow) 58%,
+      var(--ht-yellow) 92%,
+      transparent 92%
+    );
+  }
+
+  .tk-overview__note {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---- the quiz ---- */
+
+  .tk-quiz {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+    border-radius: var(--tk-r-md);
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .tk-quiz[hidden],
+  .tk-quiz__step[hidden] {
+    display: none;
+  }
+
+  .tk-quiz__lead {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ht-yellow);
+  }
+
+  .tk-quiz__step {
+    display: grid;
+    gap: 14px;
+  }
+
+  .tk-quiz__q {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1.4;
+  }
+
+  .tk-quiz__q span {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--tk-on-dark-muted);
+  }
+
+  .tk-quiz__answers {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tk-quiz__answer,
+  .tk-quiz__again {
+    padding: 11px 18px;
+    border: var(--tk-line) solid var(--surface);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      translate 0.3s var(--tk-ease-back);
+  }
+
+  .tk-quiz__answer:hover,
+  .tk-quiz__answer:focus-visible {
+    background: var(--ht-yellow);
+    translate: 4px 0;
+  }
+
+  .tk-quiz__answers .tk-btn {
+    justify-content: space-between;
+  }
+
+  .tk-quiz__again {
+    background: transparent;
+    color: var(--surface);
+    border-color: var(--tk-on-dark-hair);
+    text-align: center;
+  }
+
+  .tk-quiz__again:hover {
+    border-color: var(--surface);
+  }
+
+  /* ---- the two lanes and their categories ---- */
+
+  .tk-overview__lanes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 16px;
+    margin-top: clamp(16px, 2.4vw, 24px);
+  }
+
+  .tk-lane {
+    display: grid;
+    align-content: start;
+    /* Room above each card for the quiz's badge. */
+    gap: 20px;
+    padding: 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--tk-lane);
+  }
+
+  .tk-lane__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 10px;
+    padding-inline: 4px;
+  }
+
+  .tk-lane__head h3 {
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .tk-lane__head span {
+    padding: 2px 12px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .tk-cat {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      filter 0.4s var(--tk-ease),
+      box-shadow 0.4s var(--tk-ease),
+      translate 0.4s var(--tk-ease);
+  }
+
+  .tk-cat__icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 14px;
+    background: var(--tk-cat);
+    transition: rotate 0.4s var(--tk-ease-back);
+  }
+
+  .tk-cat__icon :global(svg) {
+    width: 24px;
+  }
+
+  a.tk-cat:hover .tk-cat__icon,
+  .tk-cat.is-picked .tk-cat__icon {
+    rotate: -8deg;
+  }
+
+  .tk-cat__text {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tk-cat__name {
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-size: clamp(20px, 2.2vw, 24px);
+    line-height: 1.2;
+  }
+
+  .tk-cat__sub {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* The sessions are further down this page, so the arrow points down. */
+  .tk-cat__disc {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    rotate: 90deg;
+    transition:
+      translate 0.3s var(--tk-ease-back),
+      background 0.2s;
+  }
+
+  .tk-cat__disc :global(svg) {
+    width: 14px;
+  }
+
+  a.tk-cat:hover .tk-cat__disc {
+    translate: 0 3px;
+    background: var(--tk-cat);
+  }
+
+  /* The quiz's answer: the pick lifts onto a hard shadow, the rest fade. */
+  .tk-cat__badge {
+    position: absolute;
+    top: -13px;
+    right: 14px;
+    padding: 3px 12px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ht-yellow);
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    scale: 0.4;
+    rotate: -8deg;
+    transition:
+      opacity 0.3s,
+      scale 0.5s var(--tk-ease-back),
+      rotate 0.5s var(--tk-ease-back);
+  }
+
+  /* A filter rather than `opacity`, which the reveal leaves inline. */
+  .tk-overview__lanes.is-picking .tk-cat:not(.is-picked) {
+    filter: opacity(0.38) grayscale(0.6);
+  }
+
+  .tk-cat.is-picked {
+    translate: -4px -4px;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+
+  .tk-cat.is-picked .tk-cat__badge {
+    opacity: 1;
+    scale: 1;
+    rotate: 4deg;
+  }
+
+  @media (width < 720px) {
+    .tk-overview__head {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tk-cat,
+    .tk-cat__badge,
+    .tk-cat__icon,
+    .tk-cat__disc {
+      transition: none;
+    }
+  }
+</style>

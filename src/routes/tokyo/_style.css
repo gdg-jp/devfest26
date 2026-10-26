@@ -1,0 +1,452 @@
+/* ============================================================================
+   DevFest Tokyo 2026 — the city's own design layer.
+
+   Kansai's design layer (`src/routes/kansai/_style.css`), carried over with
+   the `tk-` prefix and Tokyo's colour. Kansai leaned on the brand blue for
+   its accent; here every one of those is one of the `--tk-accent*` tokens
+   below, which read the red theme (`data-theme="red"`, `tokens.css`). Change
+   the theme and the whole page follows — no colour is spelled out twice.
+
+
+   Loaded on every page of every city (see `astro.config.ts`), so every rule
+   hangs from `[data-city="tokyo"]` and every class carries the `tk-` prefix:
+   nothing here may reach Tokyo, and nothing here may collide with the shared
+   `.btn` / `.pill` / `.sec` that the session and speaker pages still use.
+
+   The palette is the brand's own four colours and two neutrals, from
+   `src/styles/tokens.css`. What changes is how they are used: a poster-scale
+   type ramp, a black keyline that does the work a shadow would, and motion
+   that is part of the layout rather than decoration on top of it.
+   ========================================================================== */
+
+[data-city="tokyo"] {
+  /* The accent, in the four strengths the theme defines. */
+  --tk-accent: var(--t);
+  --tk-accent-ht: var(--t-ht);
+  --tk-accent-pa: var(--t-pa);
+  --tk-accent-deep: var(--t-deep);
+  --tk-accent-on: var(--t-on);
+
+  --tk-line: 2px;
+  --tk-r-xl: 44px;
+  --tk-r-lg: 30px;
+  --tk-r-md: 20px;
+  --tk-r-sm: 12px;
+  --tk-gutter: clamp(16px, 4vw, 56px);
+  --tk-max: 760px;
+  /* The programme itself — schedule, speakers, programmes — gets more room. */
+  --tk-max-wide: 1000px;
+  --tk-header-h: 76px;
+
+  --tk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tk-ease-io: cubic-bezier(0.76, 0, 0.24, 1);
+  --tk-ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --tk-f-display:
+    "Google Sans", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  --tk-f-jp: "Noto Sans JP", "Google Sans", system-ui, sans-serif;
+
+  --tk-hair: color-mix(in srgb, var(--ink) 14%, transparent);
+  --tk-dots: color-mix(in srgb, var(--ink) 16%, transparent);
+  --tk-on-dark-muted: color-mix(in srgb, var(--surface) 64%, transparent);
+  --tk-on-dark-hair: color-mix(in srgb, var(--surface) 18%, transparent);
+
+  scroll-padding-top: calc(var(--tk-header-h) + 16px);
+}
+
+/* The key visual's graph paper, continued across the whole page. Sections
+   that only repeat the ground colour stay transparent so the lines show
+   through; cards and the dark footer paint over it. */
+[data-city="tokyo"] body {
+  --tk-grid: color-mix(in srgb, var(--ink) 7%, transparent);
+  background-color: var(--ground);
+  background-image:
+    linear-gradient(var(--tk-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tk-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center top;
+  font-feature-settings: "palt" 1;
+}
+
+html.tk-menu-open[data-city="tokyo"] body {
+  overflow: hidden;
+}
+
+/* Selection in the brand yellow reads on every ground this page has. */
+[data-city="tokyo"] ::selection {
+  background: var(--ht-yellow);
+  color: var(--ink);
+}
+
+/* ---- layout -------------------------------------------------------------- */
+
+[data-city="tokyo"] .tk-wrap {
+  width: min(100% - 2 * var(--tk-gutter), var(--tk-max));
+  margin-inline: auto;
+}
+
+[data-city="tokyo"] .tk-wrap--wide {
+  width: min(100% - 2 * var(--tk-gutter), var(--tk-max-wide));
+}
+
+/* A panel stays 8px in from the viewport, and caps by section:
+   the timetable grid at 1270px, every other card at 800px. */
+[data-city="tokyo"] .tk-wrap--panel {
+  width: min(calc(100% - 16px), 800px);
+}
+
+[data-city="tokyo"] .tk-tt .tk-wrap--panel {
+  width: min(calc(100% - 16px), 1270px);
+}
+
+[data-city="tokyo"] .tk-sec {
+  position: relative;
+  padding-block: clamp(80px, 11vw, 160px);
+}
+
+/* Sections that are a single panel sit 48px apart, card edge to card edge. */
+[data-city="tokyo"] .tk-sec--panel {
+  padding-block: 24px;
+}
+
+[data-city="tokyo"] .tk-sec--tight {
+  padding-block: clamp(56px, 7vw, 96px);
+}
+
+[data-city="tokyo"] .tk-dark {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+/* ---- section heading ------------------------------------------------------
+   The title itself, at half the old poster scale, with a coloured disc
+   sitting to its left. */
+
+[data-city="tokyo"] .tk-head {
+  margin-bottom: clamp(40px, 6vw, 80px);
+}
+
+[data-city="tokyo"] .tk-head__title {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  font-family: var(--tk-f-display);
+  font-weight: 700;
+  font-size: clamp(31.2px, 7.2vw, 62.4px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  margin: 0;
+  text-wrap: nowrap;
+}
+
+[data-city="tokyo"] .tk-head__title::before {
+  content: "";
+  flex: none;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  border: var(--tk-line) solid currentcolor;
+  background: var(--tk-accent);
+}
+
+/* A Japanese title: eight characters wide at most, so set smaller. */
+[data-city="tokyo"] .tk-head__title--ja {
+  font-family: var(--tk-f-jp);
+  font-size: clamp(20.4px, 4.2vw, 38.4px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+[data-city="tokyo"] .tk-head__title .tk-brace {
+  color: var(--tk-accent);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* ---- buttons --------------------------------------------------------------
+   One primary action on this site, and it looks the same everywhere: an ink
+   pill with a coloured disc carrying the arrow. On hover a colour floods in
+   from the disc. */
+
+[data-city="tokyo"] .tk-btn {
+  --tk-btn-bg: var(--ink);
+  --tk-btn-fg: var(--surface);
+  --tk-btn-flood: var(--tk-accent);
+  --tk-btn-disc: var(--ht-yellow);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 26px;
+  min-height: 56px;
+  border: var(--tk-line) solid var(--ink);
+  border-radius: 999px;
+  background: var(--tk-btn-bg);
+  color: var(--tk-btn-fg);
+  font-family: var(--tk-f-display);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.3s var(--tk-ease);
+  will-change: transform;
+}
+
+[data-city="tokyo"] .tk-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 8px;
+  top: 50%;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--tk-btn-flood);
+  transform: translateY(-50%) scale(0);
+  transition: transform 0.55s var(--tk-ease);
+}
+
+[data-city="tokyo"] .tk-btn:hover::before,
+[data-city="tokyo"] .tk-btn:focus-visible::before {
+  transform: translateY(-50%) scale(14);
+}
+
+[data-city="tokyo"] .tk-btn:focus-visible {
+  outline: 3px solid var(--tk-accent-deep);
+  outline-offset: 4px;
+}
+
+[data-city="tokyo"] .tk-btn__disc {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: var(--tk-line) solid var(--ink);
+  background: var(--tk-btn-disc);
+  color: var(--ink);
+  transition: transform 0.45s var(--tk-ease);
+}
+
+[data-city="tokyo"] .tk-btn__disc svg {
+  width: 18px;
+  height: 18px;
+}
+
+[data-city="tokyo"] .tk-btn:hover .tk-btn__disc {
+  transform: rotate(-45deg);
+}
+
+[data-city="tokyo"] .tk-btn--lg {
+  font-size: clamp(17px, 1.6vw, 20px);
+  min-height: 68px;
+  padding-left: 32px;
+  gap: 20px;
+}
+
+[data-city="tokyo"] .tk-btn--lg .tk-btn__disc,
+[data-city="tokyo"] .tk-btn--lg::before {
+  width: 50px;
+}
+
+[data-city="tokyo"] .tk-btn--light {
+  --tk-btn-bg: var(--surface);
+  --tk-btn-fg: var(--ink);
+  --tk-btn-flood: var(--ht-yellow);
+  --tk-btn-disc: var(--tk-accent);
+}
+
+[data-city="tokyo"] .tk-btn--light .tk-btn__disc {
+  color: var(--surface);
+}
+
+[data-city="tokyo"] .tk-btn--light:hover .tk-btn__disc {
+  color: var(--surface);
+}
+
+[data-city="tokyo"] .tk-btn--ghost {
+  --tk-btn-bg: transparent;
+  --tk-btn-fg: var(--ink);
+  --tk-btn-flood: var(--ink);
+  --tk-btn-disc: var(--surface);
+}
+
+[data-city="tokyo"] .tk-btn--ghost:hover {
+  color: var(--surface);
+}
+
+[data-city="tokyo"] .tk-btn--sm {
+  min-height: 44px;
+  font-size: 14.5px;
+  padding: 4px 4px 4px 18px;
+  gap: 10px;
+}
+
+[data-city="tokyo"] .tk-btn--sm .tk-btn__disc,
+[data-city="tokyo"] .tk-btn--sm::before {
+  width: 32px;
+  right: 4px;
+}
+
+[data-city="tokyo"] .tk-btn--sm .tk-btn__disc svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* A quieter link, for "see all" and the like. The underline draws itself. */
+[data-city="tokyo"] .tk-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  font-family: var(--tk-f-display);
+  font-weight: 700;
+  text-decoration: none;
+  background: linear-gradient(currentcolor, currentcolor) 0 100% / 0% 2px
+    no-repeat;
+  transition: background-size 0.4s var(--tk-ease);
+}
+
+[data-city="tokyo"] .tk-link:hover {
+  background-size: 100% 2px;
+}
+
+/* ---- chips ---------------------------------------------------------------- */
+
+[data-city="tokyo"] .tk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: var(--tk-line) solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--tk-f-display);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+[data-city="tokyo"] .tk-chip__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--tk-dot, var(--tk-accent));
+  flex: none;
+}
+
+/* ---- detail pages ---------------------------------------------------------
+   A panel's caption under its tab, the way News carries お知らせ: the tab
+   says it in the poster face, this says it plainly. */
+
+[data-city="tokyo"] .tk-sub {
+  margin: 0 0 clamp(16px, 2.4vw, 24px);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* An abstract or a bio, as written in Markdown or the Studio. */
+[data-city="tokyo"] .tk-prose {
+  font-size: 16px;
+  line-height: 1.95;
+  text-wrap: pretty;
+}
+
+[data-city="tokyo"] .tk-prose > :first-child {
+  margin-top: 0;
+}
+
+[data-city="tokyo"] .tk-prose > :last-child {
+  margin-bottom: 0;
+}
+
+[data-city="tokyo"] .tk-prose p {
+  margin: 0 0 1.1em;
+}
+
+[data-city="tokyo"] .tk-prose h2,
+[data-city="tokyo"] .tk-prose h3 {
+  font-family: var(--tk-f-display);
+  font-size: 18px;
+  margin: 1.6em 0 0.5em;
+}
+
+[data-city="tokyo"] .tk-prose ul,
+[data-city="tokyo"] .tk-prose ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.4em;
+}
+
+[data-city="tokyo"] .tk-prose a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+[data-city="tokyo"] .tk-prose code {
+  font-family: var(--f-mono);
+  font-size: 0.9em;
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: var(--ground);
+}
+
+[data-city="tokyo"] .tk-prose blockquote {
+  margin: 0 0 1.1em;
+  padding-left: 16px;
+  border-left: 3px solid var(--ink);
+  color: var(--muted);
+}
+
+/* ---- motion states --------------------------------------------------------
+   Everything the scripts bring in starts hidden only once JavaScript has
+   announced itself (`html.js`), and is shown again if the bundle never lands
+   (`html.no-motion`, set by the fallback timer in Base.astro). With motion
+   unwelcome they never start hidden at all. */
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js:not(.no-motion)[data-city="tokyo"] [data-tk-reveal] {
+    opacity: 0;
+  }
+
+  html.js:not(.no-motion)[data-city="tokyo"] .tk-split__char,
+  html.js:not(.no-motion)[data-city="tokyo"] .tk-split__word {
+    transform: translateY(105%);
+  }
+}
+
+[data-city="tokyo"] .tk-split {
+  display: inline-block;
+}
+
+[data-city="tokyo"] .tk-split__mask {
+  display: inline-block;
+  overflow: clip;
+  overflow-clip-margin: 0.12em;
+  vertical-align: top;
+  padding-bottom: 0.06em;
+}
+
+[data-city="tokyo"] .tk-split__char,
+[data-city="tokyo"] .tk-split__word {
+  display: inline-block;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-city="tokyo"] * {
+    scroll-behavior: auto;
+  }
+}

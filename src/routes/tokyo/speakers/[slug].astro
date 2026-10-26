@@ -1,0 +1,492 @@
+---
+import { render } from "astro:content";
+import Detail from "../_layout/Detail.astro";
+import Panel from "../_components/Panel.astro";
+import Portrait from "../_components/Portrait.astro";
+import SessionCard from "../_components/SessionCard.astro";
+import Arrow from "../_components/Arrow.astro";
+import { bare, minutes, onTheme, trackTone } from "../_components/track";
+import { buildableCities } from "../../../tenants";
+import {
+  missingCity,
+  notFound,
+  ownCity,
+  speakerProps,
+} from "../../../lib/cityRoutes";
+import { tenantHome } from "../../../lib/url";
+import {
+  getProgramSpeakers,
+  speakerHref,
+  type SpeakerProgram,
+} from "../../../data/program";
+import { getTimetable } from "../../../data/timetable";
+import { messages } from "../../../i18n";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, FEATURED, localized, SHOW_TIMES } from "../_content";
+
+/**
+ * One speaker, in the design Tokyo shares with Kansai: a portrait the size of the home page's
+ * headliner cards, who they are, their profile, the sessions they are on, and
+ * a handful of others to go on to.
+ *
+ * Only speakers on the programme get a page — the same set the shared route
+ * would publish.
+ */
+export async function getStaticPaths() {
+  // Hoisted out of this file's scope by Astro, so the city is spelled here.
+  const city = (await buildableCities()).find((c) => c.slug === "tokyo");
+  if (!city) return [];
+  return (await getProgramSpeakers(city.slug)).map((entry) => ({
+    params: { slug: entry.slug },
+    props: { site: city.site, ...entry },
+  }));
+}
+
+const lang = currentLanguage();
+const t = messages(lang);
+const c = copy(lang);
+
+// The static build hands the speaker over from `getStaticPaths`; the draft
+// preview has only the URL. See `src/lib/cityRoutes.ts`.
+let props = Astro.props.site ? Astro.props : undefined;
+if (!props) {
+  const own = await ownCity(Astro.url);
+  if (!own) return missingCity(Astro.url);
+  props = await speakerProps({ tenant: own.tenant, slug: Astro.params.slug });
+}
+if (!props) return notFound(t.notFound.speaker(Astro.params.slug ?? ""));
+
+const { site, speaker, slug, appearances } = props;
+const { Content } = await render(speaker);
+const home = tenantHome(site.tenant);
+
+const { name, role } = speaker.data;
+const profile = speaker.body?.trim();
+const pick = FEATURED.find((f) => f.slug === slug);
+
+const TONES = {
+  green: { solid: "var(--green)", ht: "var(--ht-green)" },
+  yellow: { solid: "var(--yellow)", ht: "var(--ht-yellow)" },
+  red: { solid: "var(--red)", ht: "var(--ht-red)" },
+};
+const tone = TONES[pick?.tone ?? "yellow"];
+
+// Three folders one under the other, never two of a colour in a row: the
+// sessions take their track's, the last whichever is left.
+const lane = trackTone(appearances[0].session.track);
+const moreTone =
+  ["var(--ht-red)", "var(--ht-green)", "var(--ht-yellow)"].find(
+    (ht) => ht !== tone.ht && ht !== lane.ht,
+  ) ?? "var(--ht-green)";
+
+const timetable = await getTimetable(site);
+const endOf = (session: SpeakerProgram["appearances"][number]["session"]) =>
+  session.end ?? timetable?.ends.get(session.slug);
+
+/*
+  Who to go on to: the people on the same tracks first, nearest in the day
+  first, then everyone else the same way — so a keynote's page offers the
+  other keynotes and a hands-on page the other hands-ons.
+*/
+const firstStart = (entry: SpeakerProgram) =>
+  entry.appearances.find((a) => a.session.start)?.session.start;
+const mine = new Set(appearances.map((a) => a.session.track.id));
+const myStart = firstStart(props);
+const distance = (entry: SpeakerProgram) => {
+  const theirs = firstStart(entry);
+  return myStart && theirs
+    ? Math.abs(minutes(theirs) - minutes(myStart))
+    : 24 * 60;
+};
+const sharesTrack = (entry: SpeakerProgram) =>
+  entry.appearances.some((a) => mine.has(a.session.track.id)) ? 0 : 1;
+const others = (await getProgramSpeakers(site.tenant))
+  .filter((entry) => entry.slug !== slug)
+  .sort((a, b) => sharesTrack(a) - sharesTrack(b) || distance(a) - distance(b))
+  .slice(0, 6);
+const ring = ["var(--red)", "var(--yellow)", "var(--green)"];
+
+const description = profile
+  ? profile.replace(/\s+/g, " ").slice(0, 110)
+  : t.detail.speakerMetaFallback(name, role, site.title);
+
+const url = Astro.site
+  ? new URL(Astro.url.pathname, Astro.site).href
+  : undefined;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name,
+  jobTitle: role,
+  ...(url ? { url } : {}),
+  performerIn: appearances
+    .filter(({ talk }) => talk.title)
+    .map(({ talk }) => ({ "@type": "Event", name: talk.title })),
+};
+---
+
+<Detail
+  site={site}
+  title={name}
+  description={description}
+  jsonLd={jsonLd}
+  back={{ href: `${home}#speakers`, label: c.backToSpeakers }}
+  placement="speaker"
+>
+  <section class="tk-sec tk-sec--panel" aria-labelledby="tk-sp-name">
+    <div class="tk-wrap tk-wrap--panel">
+      <Panel
+        tag="p"
+        title="Speaker"
+        id="tk-sp-tab"
+        tone={tone.ht}
+        stickers={["quoteOpen", "quoteClose"]}
+      >
+        <div class="tk-sp">
+          <div class="tk-sp__frame">
+            <Portrait
+              speaker={speaker}
+              size={300}
+              class="tk-sp__img"
+              tone={tone.ht}
+              eager
+            />
+          </div>
+
+          <div class="tk-sp__id">
+            {pick && <p class="tk-sp__hook">{localized(pick.hook, lang)}</p>}
+            <h1 class="tk-sp__name" id="tk-sp-name">{bare(name)}</h1>
+            <ul class="tk-sp__role">
+              {
+                role
+                  .split(/\s*／\s*/)
+                  .filter(Boolean)
+                  .map((line) => <li>{line}</li>)
+              }
+            </ul>
+            <ul class="tk-sp__slots">
+              {
+                appearances.map(({ session }) => (
+                  <li>
+                    <a
+                      class="tk-sp__slot"
+                      href={session.href}
+                      style={`--trk:${onTheme(session.track.data.color)};--trk-ink:${session.track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+                    >
+                      <b>{session.track.data.label}</b>
+                      {SHOW_TIMES && session.start && (
+                        <time>{session.start}</time>
+                      )}
+                      <Arrow />
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </div>
+
+        {
+          profile && (
+            <div class="tk-prose tk-sp__bio">
+              <Content />
+            </div>
+          )
+        }
+      </Panel>
+    </div>
+  </section>
+
+  <section class="tk-sec tk-sec--panel" aria-labelledby="tk-sp-sessions">
+    <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
+      <Panel
+        title={appearances.length > 1 ? "Sessions" : "Session"}
+        id="tk-sp-sessions"
+        tone={lane.ht}
+        stickers={lane.stickers}
+      >
+        <p class="tk-sub">{c.appearancesSub}</p>
+        <ul class="tk-sp__cards">
+          {
+            appearances.map(({ session }) => (
+              <li>
+                <SessionCard session={session} end={endOf(session)} />
+              </li>
+            ))
+          }
+        </ul>
+      </Panel>
+    </div>
+  </section>
+
+  {
+    others.length > 0 && (
+      <section class="tk-sec tk-sec--panel" aria-labelledby="tk-sp-more">
+        <div class="tk-wrap tk-wrap--panel">
+          <Panel
+            title="More"
+            id="tk-sp-more"
+            tone={moreTone}
+            stickers={["scallop", "multiply"]}
+          >
+            <p class="tk-sub">{c.moreSpeakersSub}</p>
+            <ul class="tk-more" data-tk-stagger>
+              {others.map((entry, i) => (
+                <li data-tk-reveal="pop">
+                  <a class="tk-more__item" href={speakerHref(entry.speaker)}>
+                    <span
+                      class="tk-more__ring"
+                      style={`--ring:${ring[i % ring.length]}`}
+                    >
+                      <Portrait
+                        speaker={entry.speaker}
+                        size={88}
+                        class="tk-more__img"
+                        tone={ring[i % ring.length]}
+                      />
+                    </span>
+                    <span class="tk-more__name">
+                      {bare(entry.speaker.data.name)}
+                    </span>
+                    <span class="tk-more__role">{entry.speaker.data.role}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a class="tk-link tk-more__all" href={`${home}#speakers`}>
+              {c.allSpeakers}
+              <Arrow />
+            </a>
+          </Panel>
+        </div>
+      </section>
+    )
+  }
+</Detail>
+
+<style>
+  /* ---- head ---------------------------------------------------------- */
+
+  .tk-sp {
+    display: grid;
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+    gap: clamp(20px, 4vw, 44px);
+    align-items: end;
+    padding-top: clamp(8px, 1.6vw, 16px);
+  }
+
+  .tk-sp__frame {
+    aspect-ratio: 4 / 5;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .tk-sp__frame :global(.tk-sp__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-size: 88px;
+  }
+
+  .tk-sp__id {
+    display: grid;
+    justify-items: start;
+    gap: 12px;
+    min-width: 0;
+    padding-bottom: 4px;
+  }
+
+  .tk-sp__hook {
+    margin: 0;
+    padding: 3px 14px;
+    border: 1.5px solid var(--ink);
+    border-radius: 14px;
+    background: var(--ink);
+    color: var(--ht-yellow);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tk-sp__name {
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(34px, 6.4vw, 60px);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+  }
+
+  .tk-sp__role {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .tk-sp__slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-sp__slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px 4px 4px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      transform 0.35s var(--tk-ease),
+      box-shadow 0.35s var(--tk-ease);
+  }
+
+  .tk-sp__slot b {
+    padding: 2px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--trk);
+    color: var(--trk-ink);
+    font-family: var(--tk-f-display);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .tk-sp__slot time {
+    font-family: var(--f-mono);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .tk-sp__slot :global(svg) {
+    width: 15px;
+    margin-right: 4px;
+  }
+
+  .tk-sp__slot:hover,
+  .tk-sp__slot:focus-visible {
+    transform: translate(-2px, -2px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .tk-sp__bio {
+    margin-top: clamp(24px, 3.6vw, 36px);
+    padding-top: clamp(20px, 3vw, 28px);
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  /* ---- sessions ------------------------------------------------------ */
+
+  .tk-sp__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* ---- more speakers ------------------------------------------------- */
+
+  .tk-more {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 24px 12px;
+    margin: 0 0 clamp(24px, 3.6vw, 32px);
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-more__item {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    text-align: center;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .tk-more__ring {
+    display: block;
+    width: min(100%, 92px);
+    aspect-ratio: 1;
+    margin-bottom: 8px;
+    padding: 4px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ring);
+    transition: transform 0.5s var(--tk-ease-back);
+  }
+
+  .tk-more__ring :global(.tk-more__img) {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: var(--tk-line) solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 26px;
+  }
+
+  .tk-more__item:hover .tk-more__ring,
+  .tk-more__item:focus-visible .tk-more__ring {
+    transform: translateY(-6px) rotate(-6deg) scale(1.06);
+  }
+
+  .tk-more__name {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .tk-more__role {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tk-more__all {
+    font-size: 15px;
+  }
+
+  .tk-more__all :global(svg) {
+    width: 16px;
+  }
+
+  @media (width < 760px) {
+    .tk-more {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (width < 600px) {
+    .tk-sp {
+      grid-template-columns: 1fr;
+    }
+
+    .tk-sp__frame {
+      width: min(100%, 240px);
+    }
+  }
+</style>

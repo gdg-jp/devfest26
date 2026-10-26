@@ -1,0 +1,290 @@
+---
+import { Image } from "astro:assets";
+import Panel from "./Panel.astro";
+import {
+  TOKYO_ORGANIZERS,
+  type OrganizerItem,
+} from "../../../data/tokyo/organizers";
+
+/**
+ * Who makes the day possible, in Kansai's Sponsors panel: sponsors in
+ * neutral, labelled frames — their marks are theirs and are not recoloured —
+ * then the communities running and co-hosting it.
+ *
+ * Everything comes from `src/data/tokyo/organizers.ts`, as the old Organizers
+ * section did; only the drawing is new. The section answers to `#organizers`
+ * and `#partners` as well, which other pages may still link to.
+ */
+const sponsors = TOKYO_ORGANIZERS.filter((s) => s.category === "sponsor");
+const groups = TOKYO_ORGANIZERS.filter((s) => s.category !== "sponsor");
+
+const rails = ["var(--tk-accent)", "var(--yellow)", "var(--green)"];
+let railAt = 0;
+const nextRail = () => rails[railAt++ % rails.length];
+
+const SOCIAL_LABEL: Record<string, string> = {
+  x: "X",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  connpass: "connpass",
+};
+
+const logoWidth = (item: OrganizerItem) => item.logo?.width ?? 220;
+---
+
+<section
+  class="tk-sec tk-sec--panel tk-sponsors"
+  id="sponsors"
+  aria-labelledby="tk-sponsors-h"
+>
+  <span id="organizers" class="tk-sponsors__alias" aria-hidden="true"></span>
+  <span id="partners" class="tk-sponsors__alias" aria-hidden="true"></span>
+  <div class="tk-wrap tk-wrap--panel">
+    <Panel
+      title="Sponsors"
+      id="tk-sponsors-h"
+      tone="var(--tk-accent-ht)"
+      stickers={["scallop", "multiply"]}
+    >
+      {
+        sponsors.map((section) => (
+          <>
+            <h3
+              class="tk-partners__h tk-partners__h--first"
+              data-tk-reveal="up"
+            >
+              {section.title}
+            </h3>
+            <ul class="tk-spons" data-tk-stagger>
+              {section.items.map((item) => {
+                const href = item.logo?.url ?? item.xUrl;
+                const mark = item.logo ? (
+                  typeof item.logo.image === "string" ? (
+                    <img
+                      src={item.logo.image}
+                      alt={item.logo.alt}
+                      width={logoWidth(item)}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <Image
+                      src={item.logo.image}
+                      alt={item.logo.alt}
+                      width={logoWidth(item)}
+                      loading="lazy"
+                    />
+                  )
+                ) : null;
+                const inner = (
+                  <>
+                    {mark}
+                    <span class="tk-spons__name">{item.name}</span>
+                  </>
+                );
+                return (
+                  <li data-tk-reveal="pop">
+                    {href ? (
+                      <a
+                        class="tk-spons__card"
+                        href={href}
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        {inner}
+                      </a>
+                    ) : (
+                      <div class="tk-spons__card">{inner}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        ))
+      }
+
+      {
+        groups.map((section) => (
+          <>
+            <h3 class="tk-partners__h" data-tk-reveal="up">
+              {section.title}
+            </h3>
+            <ul class="tk-partners" data-tk-stagger>
+              {section.items.map((item) => (
+                <li
+                  class="tk-partners__card"
+                  style={`--rail:${nextRail()}`}
+                  data-tk-reveal="up"
+                >
+                  <div class="tk-partners__head">
+                    <span class="tk-partners__name">{item.name}</span>
+                    {item.socials && item.socials.length > 0 && (
+                      <span class="tk-partners__socials">
+                        {item.socials.map((social) => (
+                          <a
+                            href={social.url}
+                            target="_blank"
+                            rel="noopener"
+                            aria-label={social.label}
+                            title={social.label}
+                          >
+                            {SOCIAL_LABEL[social.type] ?? social.type} ↗
+                          </a>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <div class="tk-partners__body">
+                      {item.description.split("\n\n").map((block) => (
+                        <p>{block}</p>
+                      ))}
+                    </div>
+                  )}
+                  {item.links && item.links.length > 0 && (
+                    <span class="tk-partners__socials">
+                      {item.links.map((link) => (
+                        <a href={link.url} target="_blank" rel="noopener">
+                          {link.label} ↗
+                        </a>
+                      ))}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
+        ))
+      }
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .tk-sponsors__alias {
+    display: block;
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  .tk-spons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-spons__card {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: 14px;
+    min-height: 200px;
+    padding: 36px 28px 20px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      transform 0.4s var(--tk-ease),
+      box-shadow 0.4s var(--tk-ease);
+  }
+
+  a.tk-spons__card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+
+  .tk-spons__card :global(img) {
+    max-width: 78%;
+    max-height: 110px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .tk-spons__name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .tk-partners__h {
+    margin: clamp(40px, 5vw, 64px) 0 20px;
+    font-size: clamp(20px, 2.2vw, 26px);
+  }
+
+  .tk-partners__h--first {
+    margin-top: 8px;
+  }
+
+  .tk-partners {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-partners__card {
+    display: grid;
+    gap: 10px;
+    padding: 18px 22px;
+    border: var(--tk-line) solid var(--ink);
+    border-left-width: 10px;
+    border-left-color: var(--rail);
+    border-radius: var(--tk-r-md);
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .tk-partners__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 16px;
+  }
+
+  .tk-partners__name {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .tk-partners__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+
+  .tk-partners__socials a {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: none;
+    background: linear-gradient(currentcolor, currentcolor) 0 100% / 0% 2px
+      no-repeat;
+    transition: background-size 0.4s var(--tk-ease);
+  }
+
+  .tk-partners__socials a:hover {
+    background-size: 100% 2px;
+  }
+
+  .tk-partners__body p {
+    margin: 0 0 0.8em;
+    font-size: 14px;
+    line-height: 1.85;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  .tk-partners__body p:last-child {
+    margin-bottom: 0;
+  }
+</style>

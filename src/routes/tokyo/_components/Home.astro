@@ -1,0 +1,52 @@
+---
+import Shell from "../_layout/Shell.astro";
+import Hero from "../../../components/Hero.astro";
+import Featured from "./Featured.astro";
+import Overview from "./Overview.astro";
+import News from "./News.astro";
+import PreEvent from "./PreEvent.astro";
+import Sessions from "./Sessions.astro";
+import Speakers from "./Speakers.astro";
+import Sponsors from "./Sponsors.astro";
+import Faq from "./Faq.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { homeData } from "../_data";
+
+/**
+ * Tokyo's home page, laid out as Kansai's: the key visual, the headliners,
+ * then the programme from the top down — by theme rather than by time, since
+ * Tokyo's day is not settled yet (`Sessions`, where Kansai has its timetable). The register button stays in the header,
+ * which pins to the top of the screen, all the way down.
+ *
+ * The key visual is the shared hero, untouched — Tokyo's theme, date and
+ * venue are still to be settled. It sits on the plain ground rather than the
+ * graph paper the rest of the page is drawn on, so it looks as it always has.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { featured, speakers } = await homeData(site.tenant);
+---
+
+<Shell site={site} docked>
+  <div class="tk-hero" slot="hero" data-tk-hero>
+    <Hero site={site} />
+  </div>
+  <Overview site={site} />
+  <Featured featured={featured} />
+  <News />
+  <PreEvent tenant={site.tenant} />
+  <Sessions site={site} />
+  <Speakers speakers={speakers} />
+  <Sponsors />
+  <Faq site={site} />
+</Shell>
+
+<style>
+  .tk-hero {
+    position: relative;
+    background: var(--ground);
+  }
+</style>

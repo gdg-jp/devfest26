@@ -1,0 +1,147 @@
+---
+import Panel from "./Panel.astro";
+import SessionCard from "./SessionCard.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { getProgram } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+import { trackTone } from "./track";
+
+/**
+ * Tokyo's programme, theme by theme, in place of Kansai's timetable: the day
+ * is not settled yet, so the sessions are grouped by what they are about
+ * rather than placed on a grid of times. One folder for the section, as the
+ * overview and the speakers have, and inside it a heading per theme (track)
+ * in the track's colour, with its sessions as cards. No times are shown here —
+ * they would read as a schedule.
+ *
+ * When the timetable is final, Kansai's `Timetable` can take this place again.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const groups = (await getProgram(site.tenant)).filter(
+  (group) => group.sessions.length > 0,
+);
+---
+
+{
+  groups.length > 0 && (
+    <section
+      class="tk-sec tk-sec--panel tk-sessions"
+      id="sessions"
+      aria-labelledby="tk-sessions-h"
+    >
+      <div class="tk-wrap tk-wrap--panel tk-sessions__stack">
+        <Panel
+          title={c.sessionsHeading}
+          id="tk-sessions-h"
+          tone="var(--ht-yellow)"
+          stickers={["colon", "equals"]}
+          ja={lang === "ja"}
+        >
+          <div class="tk-sessions__groups">
+            {groups.map(({ track, sessions }) => {
+              const tone = trackTone(track);
+              return (
+                <div class="tk-sessions__group" style={`--tk-group:${tone.ht}`}>
+                  <div class="tk-sessions__head">
+                    <h3
+                      class="tk-sessions__track"
+                      id={`tk-sessions-${track.id}`}
+                    >
+                      {track.data.label}
+                    </h3>
+                    {track.data.sub && (
+                      <p class="tk-sessions__sub">{track.data.sub}</p>
+                    )}
+                  </div>
+                  <ul class="tk-sessions__list" data-tk-stagger>
+                    {sessions.map((session) => (
+                      <li data-tk-reveal="up">
+                        <SessionCard session={session} timeless trackless />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+        <p class="tk-sessions__note">{c.sessionsNote}</p>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .tk-sessions {
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  .tk-sessions__stack {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tk-sessions__groups {
+    display: grid;
+    gap: 28px;
+  }
+
+  .tk-sessions__group + .tk-sessions__group {
+    padding-top: 28px;
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  /* A category is a heading inside the section, not a folder of its own:
+     a pill in the track's colour, the way the overview's cards are tinted. */
+  .tk-sessions__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    margin-bottom: 14px;
+  }
+
+  .tk-sessions__track {
+    margin: 0;
+    padding: 6px 18px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--tk-group);
+    font-family: var(--tk-f-display);
+    font-size: clamp(17px, 1.8vw, 20px);
+    line-height: 1.3;
+  }
+
+  .tk-sessions__sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .tk-sessions__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-sessions__list > li {
+    display: grid;
+  }
+
+  .tk-sessions__note {
+    margin: 0 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+</style>

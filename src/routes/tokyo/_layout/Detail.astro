@@ -1,0 +1,104 @@
+---
+import Shell from "./Shell.astro";
+import Arrow from "../_components/Arrow.astro";
+import Closing from "../_components/Closing.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import type { CardImage } from "../../../lib/sessionCard";
+
+/**
+ * The pages behind the programme — one session, one speaker — in the home
+ * page's frame: the same header and footer, the same folder panels on the
+ * graph paper, and the register button to close.
+ *
+ * The header floats here rather than docking under a key visual, so the page
+ * starts below it.
+ */
+interface Props {
+  site: ResolvedTenant;
+  /** The page's own name. The event's is appended here. */
+  title: string;
+  description?: string;
+  jsonLd?: Record<string, unknown>;
+  ogImage?: CardImage;
+  back: { href: string; label: string };
+  placement: string;
+}
+
+const { site, title, description, jsonLd, ogImage, back, placement } =
+  Astro.props;
+---
+
+<Shell
+  site={site}
+  title={`${title}｜${site.fullTitle ?? site.title}`}
+  description={description}
+  jsonLd={jsonLd}
+  ogImage={ogImage}
+>
+  <div class="tk-detail">
+    <nav class="tk-wrap tk-wrap--panel tk-detail__crumb">
+      <a class="tk-back" href={back.href}>
+        <span class="tk-back__disc"><Arrow /></span>
+        {back.label}
+      </a>
+    </nav>
+    <slot />
+    <Closing site={site} placement={placement} />
+  </div>
+</Shell>
+
+<style>
+  .tk-detail {
+    padding: calc(var(--tk-header-h) + clamp(12px, 2.4vw, 28px)) 0
+      clamp(48px, 7vw, 96px);
+  }
+
+  .tk-detail__crumb {
+    padding-bottom: 4px;
+  }
+
+  .tk-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 18px 4px 4px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.3s var(--tk-ease);
+  }
+
+  .tk-back__disc {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ht-yellow);
+    transition: transform 0.4s var(--tk-ease);
+  }
+
+  .tk-back__disc :global(svg) {
+    width: 15px;
+    transform: scaleX(-1);
+  }
+
+  .tk-back:hover {
+    background: var(--ground);
+  }
+
+  .tk-back:hover .tk-back__disc {
+    transform: translateX(-3px);
+  }
+
+  .tk-back:focus-visible {
+    outline: 3px solid var(--tk-accent-deep);
+    outline-offset: 3px;
+  }
+</style>
