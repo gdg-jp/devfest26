@@ -34,7 +34,9 @@ const { site, title, description, jsonLd, back, placement } = Astro.props;
   <div class="k-detail">
     <nav class="k-wrap k-wrap--panel k-detail__crumb">
       <a class="k-back" href={back.href}>
-        <span class="k-back__disc"><Arrow /></span>
+        <span class="k-back__disc">
+          <Arrow />
+        </span>
         {back.label}
       </a>
     </nav>

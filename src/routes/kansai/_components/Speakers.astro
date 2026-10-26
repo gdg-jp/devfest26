@@ -27,27 +27,25 @@ const cycle = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
       stickers={["quoteOpen", "quoteClose"]}
     >
       <ul class="k-grid" data-k-stagger>
-        {
-          speakers.map((s, i) => (
-            <li data-k-reveal="pop">
-              <a class="k-grid__item" href={speakerHref(s.speaker)}>
-                <span
-                  class="k-grid__ring"
-                  style={`--ring:${cycle[i % cycle.length]}`}
-                >
-                  <Portrait
-                    speaker={s.speaker}
-                    size={96}
-                    class="k-grid__img"
-                    tone={cycle[i % cycle.length]}
-                  />
-                </span>
-                <span class="k-grid__name">{bare(s.speaker.data.name)}</span>
-                <span class="k-grid__role">{s.speaker.data.role}</span>
-              </a>
-            </li>
-          ))
-        }
+        {speakers.map((s, i) => (
+          <li data-k-reveal="pop">
+            <a class="k-grid__item" href={speakerHref(s.speaker)}>
+              <span
+                class="k-grid__ring"
+                style={`--ring:${cycle[i % cycle.length]}`}
+              >
+                <Portrait
+                  speaker={s.speaker}
+                  size={96}
+                  class="k-grid__img"
+                  tone={cycle[i % cycle.length]}
+                />
+              </span>
+              <span class="k-grid__name">{bare(s.speaker.data.name)}</span>
+              <span class="k-grid__role">{s.speaker.data.role}</span>
+            </a>
+          </li>
+        ))}
       </ul>
     </Panel>
   </div>

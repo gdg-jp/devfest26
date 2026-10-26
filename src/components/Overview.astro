@@ -75,8 +75,12 @@ const rows = [
   </Gutter>
 
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Overview</p>
-    <h2 class="sec-h" data-reveal="up">{t.overview.heading}</h2>
+    <p class="eyebrow" data-reveal="up">
+      Overview
+    </p>
+    <h2 class="sec-h" data-reveal="up">
+      {t.overview.heading}
+    </h2>
     <p class="sec-lede" data-reveal="up">
       {t.overview.lede(event.venue.region, event.isoDate.slice(0, 4))}
     </p>
@@ -84,36 +88,30 @@ const rows = [
     <div class="split">
       <div class="panel spec-panel" data-reveal="up">
         <dl class="spec">
-          {
-            rows.map((r) => (
-              <div class="spec-row" style={`--rail:var(--${r.rail})`}>
-                <dt>{r.dt}</dt>
-                <dd>
-                  {r.dd}
-                  {r.note && <small>{r.note}</small>}
-                </dd>
-              </div>
-            ))
-          }
+          {rows.map((r) => (
+            <div class="spec-row" style={`--rail:var(--${r.rail})`}>
+              <dt>{r.dt}</dt>
+              <dd>
+                {r.dd}
+                {r.note && <small>{r.note}</small>}
+              </dd>
+            </div>
+          ))}
         </dl>
       </div>
 
       <div class="stats" data-stagger>
-        {
-          stats.map((s) => (
-            <div
-              class="stat"
-              style={`background:var(--pa-${s.tone})`}
-              data-reveal="scale"
-            >
-              <b>{s.value}</b>
-              <span>{s.label}</span>
-            </div>
-          ))
-        }
-        <p class="disclaimer">
-          {t.overview.disclaimer}
-        </p>
+        {stats.map((s) => (
+          <div
+            class="stat"
+            style={`background:var(--pa-${s.tone})`}
+            data-reveal="scale"
+          >
+            <b>{s.value}</b>
+            <span>{s.label}</span>
+          </div>
+        ))}
+        <p class="disclaimer">{t.overview.disclaimer}</p>
       </div>
     </div>
   </div>

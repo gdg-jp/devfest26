@@ -50,18 +50,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
+      # `studio/` sits outside the pnpm workspace with a lockfile of its
+      # own: React and Sanity belong to the Studio, not to the site.
+      - uses: pnpm/setup@v3
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-          # `studio/` sits outside the pnpm workspace with a lockfile of its
-          # own: React and Sanity belong to the Studio, not to the site.
-          cache-dependency-path: studio/pnpm-lock.yaml
-
-      - run: pnpm install --frozen-lockfile
-        working-directory: studio
+          working-directory: studio
+          node-version-file: ../.nvmrc
+          cache: true
+          require-lockfile: true
 
       # Build and upload in one command. `--yes` is the unattended flag; the
       # `studioHost` in sanity.cli.ts is what leaves it with nothing to ask.

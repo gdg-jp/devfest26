@@ -78,55 +78,47 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       <div class="wrap">
         <p class="eyebrow">Google Developer Groups</p>
         <h1 class="sec-h">DevFest</h1>
-        <p class="sec-lede">
-          {t.portal.introLede}
-        </p>
+        <p class="sec-lede">{t.portal.introLede}</p>
       </div>
     </section>
 
-    {
-      upcoming.length > 0 && (
-        <section class="sec tint band" aria-labelledby="upcoming">
-          <div class="wrap">
-            <h2 class="sec-h sub" id="upcoming">
-              {t.portal.upcomingHeading}
-            </h2>
-            <ul class="list">
-              {upcoming.map((event) => (
-                <EventCard event={event} />
-              ))}
-            </ul>
-          </div>
-        </section>
-      )
-    }
+    {upcoming.length > 0 && (
+      <section class="sec tint band" aria-labelledby="upcoming">
+        <div class="wrap">
+          <h2 class="sec-h sub" id="upcoming">
+            {t.portal.upcomingHeading}
+          </h2>
+          <ul class="list">
+            {upcoming.map((event) => (
+              <EventCard event={event} />
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
 
-    {
-      past.length > 0 && (
-        <section class="sec" aria-labelledby="past">
-          <div class="wrap">
-            <h2 class="sec-h sub" id="past">
-              {t.portal.pastHeading}
-            </h2>
-            <ul class="list">
-              {past.map((event) => (
-                <EventCard event={event} past />
-              ))}
-            </ul>
-          </div>
-        </section>
-      )
-    }
+    {past.length > 0 && (
+      <section class="sec" aria-labelledby="past">
+        <div class="wrap">
+          <h2 class="sec-h sub" id="past">
+            {t.portal.pastHeading}
+          </h2>
+          <ul class="list">
+            {past.map((event) => (
+              <EventCard event={event} past />
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
 
-    {
-      upcoming.length === 0 && past.length === 0 && (
-        <section class="sec">
-          <div class="wrap">
-            <p class="empty">{t.portal.emptyMessage}</p>
-          </div>
-        </section>
-      )
-    }
+    {upcoming.length === 0 && past.length === 0 && (
+      <section class="sec">
+        <div class="wrap">
+          <p class="empty">{t.portal.emptyMessage}</p>
+        </div>
+      </section>
+    )}
   </main>
 
   <footer>
@@ -136,8 +128,11 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
         <a
           href="https://developers.google.com/community/devfest"
           target="_blank"
-          rel="noopener">developers.google.com</a
-        >{t.portal.footerAfter}
+          rel="noopener"
+        >
+          developers.google.com
+        </a>
+        {t.portal.footerAfter}
       </p>
     </div>
   </footer>

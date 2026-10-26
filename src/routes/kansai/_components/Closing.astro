@@ -27,14 +27,21 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
   <div class="k-wrap k-wrap--panel">
     <div class="k-closing__card k-dark" data-k-reveal="rise">
       <p class="k-closing__when">
-        <span class="k-closing__dots" aria-hidden="true"
-          ><i></i><i></i><i></i><i></i></span
-        >
-        <time datetime={event.isoDate}>{date} {day}</time>
+        <span class="k-closing__dots" aria-hidden="true">
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+        </span>
+        <time datetime={event.isoDate}>
+          {date} {day}
+        </time>
         <span>{c.venueShort}</span>
       </p>
       <h2 class="k-closing__title" id="k-closing-h">
-        {c.closingTitle.map((line) => <span>{line}</span>)}
+        {c.closingTitle.map((line) => (
+          <span>{line}</span>
+        ))}
       </h2>
       <div class="k-closing__end">
         <a
@@ -47,7 +54,9 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
           data-k-magnet
         >
           {c.register}
-          <span class="k-btn__disc"><Arrow /></span>
+          <span class="k-btn__disc">
+            <Arrow />
+          </span>
         </a>
         <p class="k-closing__note">{c.closingNote}</p>
       </div>

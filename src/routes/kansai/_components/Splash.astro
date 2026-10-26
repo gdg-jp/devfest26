@@ -38,14 +38,16 @@ const date = event.isoDate.replaceAll("-", ".");
   <div class="k-splash__type">
     <Wordmark class="k-splash__logo" label="" />
     <p class="k-splash__line" data-k-splash-line>
-      <span class="k-splash__date"
-        >{date} {event.dayOfWeekEn.toUpperCase()}</span
-      >
+      <span class="k-splash__date">
+        {date} {event.dayOfWeekEn.toUpperCase()}
+      </span>
     </p>
   </div>
 
   <div class="k-splash__foot">
-    <span class="k-splash__count" data-k-splash-count>000</span>
+    <span class="k-splash__count" data-k-splash-count>
+      000
+    </span>
     <button type="button" class="k-splash__skip" data-k-splash-skip>
       {c.skipSplash}
     </button>

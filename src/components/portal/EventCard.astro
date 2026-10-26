@@ -29,37 +29,32 @@ const t = messages(currentLanguage());
   <p class="when">
     <time datetime={event.isoDate}>{event.dateLabel}</time>
     <span class="region">{event.region}</span>
-    {
-      previewMode && event.isPublic === false && (
-        <span class="badge-private">{t.eventCard.privateBadge}</span>
-      )
-    }
+    {previewMode && event.isPublic === false && (
+      <span class="badge-private">{t.eventCard.privateBadge}</span>
+    )}
   </p>
 
   <h3 class="title">
     <a
       class="stretch"
       href={event.href}
-      {...event.external ? { target: "_blank", rel: "noopener" } : {}}
+      {...(event.external ? { target: "_blank", rel: "noopener" } : {})}
     >
-      {event.title}{
-        event.external && (
-          <>
-            <span aria-hidden="true"> ↗</span>
-            <span class="visually-hidden">{t.eventCard.externalSiteLabel}</span>
-          </>
-        )
-      }
+      {event.title}
+      {event.external && (
+        <>
+          <span aria-hidden="true"> ↗</span>
+          <span class="visually-hidden">{t.eventCard.externalSiteLabel}</span>
+        </>
+      )}
     </a>
   </h3>
 
-  {
-    (event.venue || event.city) && (
-      <p class="where">
-        {[event.city, event.venue].filter(Boolean).join(" ／ ")}
-      </p>
-    )
-  }
+  {(event.venue || event.city) && (
+    <p class="where">
+      {[event.city, event.venue].filter(Boolean).join(" ／ ")}
+    </p>
+  )}
 
   {event.note && <p class="note">{event.note}</p>}
 </li>

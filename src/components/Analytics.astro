@@ -93,23 +93,17 @@ const snippet =
   ].join("\n");
 ---
 
-{
-  /* `is:inline` on both, so Astro leaves the third-party URL alone instead of
+{/* `is:inline` on both, so Astro leaves the third-party URL alone instead of
     trying to resolve it as a local module, and leaves the snippet where it is
-    instead of bundling it behind the rest of the page's JavaScript. */
-}
-{
-  ids.length > 0 && (
-    <link rel="preconnect" href="https://www.googletagmanager.com" />
-  )
-}
-{
-  ids.length > 0 && (
-    <script
-      is:inline
-      async
-      src={`https://www.googletagmanager.com/gtag/js?id=${ids[0]}`}
-    />
-  )
-}
+    instead of bundling it behind the rest of the page's JavaScript. */}
+{ids.length > 0 && (
+  <link rel="preconnect" href="https://www.googletagmanager.com" />
+)}
+{ids.length > 0 && (
+  <script
+    is:inline
+    async
+    src={`https://www.googletagmanager.com/gtag/js?id=${ids[0]}`}
+  />
+)}
 {snippet && <script is:inline set:html={snippet} />}

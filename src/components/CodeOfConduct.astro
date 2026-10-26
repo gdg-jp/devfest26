@@ -13,28 +13,28 @@ const t = messages(currentLanguage());
 
 <section class="sec" id="coc">
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Safety</p>
-    <h2 class="sec-h" data-reveal="up">{t.codeOfConduct.heading}</h2>
+    <p class="eyebrow" data-reveal="up">
+      Safety
+    </p>
+    <h2 class="sec-h" data-reveal="up">
+      {t.codeOfConduct.heading}
+    </h2>
 
     <div class="rules" data-stagger>
       <div class="panel harassment" data-reveal="up">
         <h3>{t.codeOfConduct.harassmentTitle}</h3>
-        <p>
-          {t.codeOfConduct.harassmentIntro}
-        </p>
+        <p>{t.codeOfConduct.harassmentIntro}</p>
         <ul>
-          {t.codeOfConduct.harassmentItems.map((item) => <li>{item}</li>)}
+          {t.codeOfConduct.harassmentItems.map((item) => (
+            <li>{item}</li>
+          ))}
         </ul>
-        <p>
-          {t.codeOfConduct.harassmentFooter}
-        </p>
+        <p>{t.codeOfConduct.harassmentFooter}</p>
       </div>
 
       <div class="panel" data-reveal="up">
         <h3>{t.codeOfConduct.cocTitle}</h3>
-        <p>
-          {t.codeOfConduct.cocDesc}
-        </p>
+        <p>{t.codeOfConduct.cocDesc}</p>
         <div class="cta-row">
           <a
             class="btn sm ghost"

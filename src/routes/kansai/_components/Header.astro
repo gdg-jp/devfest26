@@ -54,15 +54,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 
     <nav class="k-header__nav" aria-label="Main">
       <ul>
-        {
-          site.nav.map((item) => (
-            <li>
-              <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
+        {site.nav.map((item) => (
+          <li>
+            <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
+              {item.label}
+            </a>
+          </li>
+        ))}
       </ul>
     </nav>
 
@@ -85,7 +83,9 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
         data-placement="topbar"
       >
         {c.registerShort}
-        <span class="k-btn__disc"><Arrow /></span>
+        <span class="k-btn__disc">
+          <Arrow />
+        </span>
       </a>
       <button
         type="button"
@@ -94,8 +94,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
         aria-controls="k-menu"
         data-k-menu-toggle
       >
-        <span class="visually-hidden" data-k-menu-label>{c.menu}</span>
-        <span class="k-header__burger" aria-hidden="true"><i></i><i></i></span>
+        <span class="visually-hidden" data-k-menu-label>
+          {c.menu}
+        </span>
+        <span class="k-header__burger" aria-hidden="true">
+          <i></i>
+          <i></i>
+        </span>
       </button>
     </div>
   </div>
@@ -104,16 +109,14 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 <div class="k-menu" id="k-menu" data-k-menu hidden>
   <nav aria-label="Menu">
     <ol>
-      {
-        site.footerNav.map((item, i) => (
-          <li data-k-menu-item>
-            <a href={`${prefix}${item.href}`} data-k-menu-link>
-              <span class="k-menu__no">{String(i + 1).padStart(2, "0")}</span>
-              {item.label}
-            </a>
-          </li>
-        ))
-      }
+      {site.footerNav.map((item, i) => (
+        <li data-k-menu-item>
+          <a href={`${prefix}${item.href}`} data-k-menu-link>
+            <span class="k-menu__no">{String(i + 1).padStart(2, "0")}</span>
+            {item.label}
+          </a>
+        </li>
+      ))}
     </ol>
   </nav>
   <div class="k-menu__foot" data-k-menu-item>
@@ -126,11 +129,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       data-placement="menu"
     >
       {c.register}
-      <span class="k-btn__disc"><Arrow /></span>
+      <span class="k-btn__disc">
+        <Arrow />
+      </span>
     </a>
-    <a class="k-menu__lang" href={switchHref} hreflang={switchTo}
-      >{switchLabel}</a
-    >
+    <a class="k-menu__lang" href={switchHref} hreflang={switchTo}>
+      {switchLabel}
+    </a>
   </div>
 </div>
 

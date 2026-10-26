@@ -28,11 +28,9 @@ const profile = speaker.body?.trim();
 ---
 
 <div class="one">
-  {
-    /* The portrait goes where the name goes. Hidden from assistive tech and
+  {/* The portrait goes where the name goes. Hidden from assistive tech and
       from the tab order, because it is the same destination said twice — a
-      screen reader gets the name, which is the version that says who. */
-  }
+      screen reader gets the name, which is the version that says who. */}
   <a class="pic" href={speakerHref(speaker)} tabindex="-1" aria-hidden="true">
     <SpeakerAvatar speaker={speaker} size={size} />
   </a>
