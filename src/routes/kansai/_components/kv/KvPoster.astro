@@ -1,0 +1,426 @@
+---
+import Arrow from "../Arrow.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { CAPACITY, copy } from "../../_content";
+import { BRACE, BRACE_STROKE, BRACE_TRANSFORM, BRACE_VIEWBOX } from "../brace";
+
+/**
+ * Key visual C — the poster. One mark, as big as the screen allows: the
+ * DevFest braces, with the name typed between them as if into a template
+ * string. Every few seconds it is backspaced out and the theme typed in —
+ * AI × Robotics, AI × Fashion, AI × Game — and the braces take that field's
+ * colour. What and when and where sit in the four corners; the button takes
+ * the last one. The next section slides up over it as the page scrolls.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event, links } = site;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const date = event.isoDate.replaceAll("-", ".");
+const [first] = c.kvTheme;
+---
+
+<section class="kv-c" data-k-hero data-kv="c" aria-labelledby="kv-c-title">
+  <div class="kv-c__stage" data-kv-stage>
+    <h1 class="kv-c__title" id="kv-c-title">
+      <span class="visually-hidden">{site.title}</span>
+      <span class="kv-c__mark" aria-hidden="true" data-kv-mark data-kv-tone="0">
+        <svg
+          class="kv-c__brace"
+          viewBox={BRACE_VIEWBOX.left}
+          data-kv-in="from-l"
+          data-kv-at="0.1"
+        >
+          <path
+            d={BRACE}
+            transform={BRACE_TRANSFORM.left}
+            stroke-width={BRACE_STROKE}></path>
+        </svg>
+        <span class="kv-c__type">
+          <span class="kv-c__word" data-kv-word={JSON.stringify(c.kvTheme)}
+            >{first}</span
+          ><span class="kv-c__caret"></span>
+        </span>
+        <svg
+          class="kv-c__brace kv-c__brace--r"
+          viewBox={BRACE_VIEWBOX.right}
+          data-kv-in="from-r"
+          data-kv-at="0.1"
+        >
+          <path
+            d={BRACE}
+            transform={BRACE_TRANSFORM.right}
+            stroke-width={BRACE_STROKE}></path>
+        </svg>
+        <span class="kv-c__year" data-kv-in="pop" data-kv-at="0.7">2026</span>
+      </span>
+    </h1>
+
+    <p class="kv-c__corner kv-c__corner--tl" data-kv-in="up" data-kv-at="0.5">
+      <time datetime={event.startsAt}>
+        <b>{date}</b>
+        <span>{event.dayOfWeekEn.toUpperCase()}</span>
+      </time>
+      <span class="kv-c__sub">{event.hours.replace(" – ", "–")}</span>
+    </p>
+
+    <p class="kv-c__corner kv-c__corner--tr" data-kv-in="up" data-kv-at="0.58">
+      <b>{event.venue.name}</b>
+      <span class="kv-c__sub">{c.venueArea}</span>
+    </p>
+
+    <p class="kv-c__corner kv-c__corner--bl" data-kv-in="up" data-kv-at="0.66">
+      <b>{c.catchLead}{c.catchMark}{c.catchTail}</b>
+      <span class="kv-c__sub">{c.kicker}</span>
+    </p>
+
+    <div
+      class="kv-c__corner kv-c__corner--br"
+      data-kv-in="up"
+      data-kv-at="0.74"
+    >
+      <p class="kv-c__terms">
+        <span class="kv-c__free">{c.kvFree}</span>
+        <span>{c.kvOnsite(CAPACITY.onsite)}</span>
+        <span>{c.kvOnline}</span>
+      </p>
+      <a
+        class="k-btn k-btn--lg kv-c__cta"
+        href={links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="hero"
+        data-k-magnet
+      >
+        {c.register}
+        <span class="k-btn__disc"><Arrow /></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .kv-c {
+    position: relative;
+    height: min(100svh, 1100px);
+    min-height: 560px;
+    background: var(--ground);
+    overflow: clip;
+  }
+
+  .kv-c__stage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: calc(var(--k-header-h) + 24px) var(--k-gutter)
+      calc(var(--k-r-xl) + 28px);
+    transform-origin: 50% 0;
+  }
+
+  /* ---- the mark ----------------------------------------------------- */
+
+  .kv-c__title {
+    margin: 0;
+    font-size: clamp(56px, 9.6vw, 176px);
+  }
+
+  .kv-c__mark {
+    --brace: var(--ht-blue);
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 0.14em;
+    line-height: 1;
+  }
+
+  .kv-c__mark[data-kv-tone="1"] {
+    --brace: var(--ht-green);
+  }
+
+  .kv-c__mark[data-kv-tone="2"] {
+    --brace: var(--ht-red);
+  }
+
+  .kv-c__mark[data-kv-tone="3"] {
+    --brace: var(--ht-yellow);
+  }
+
+  .kv-c__brace {
+    flex: none;
+    width: auto;
+    height: 1.3em;
+    align-self: center;
+    overflow: visible;
+  }
+
+  .kv-c__brace path {
+    fill: var(--brace);
+    stroke: var(--ink);
+    transition: fill 0.35s var(--k-ease);
+  }
+
+  .kv-c__type {
+    align-self: center;
+    padding-bottom: 0.05em;
+  }
+
+  .kv-c__word {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    white-space: pre;
+  }
+
+  /* The caret blinks while it waits and holds steady while it types, as an
+     editor's does. */
+  .kv-c__caret {
+    display: inline-block;
+    vertical-align: -0.1em;
+    width: 0.06em;
+    height: 0.86em;
+    margin-left: 0.04em;
+    border-radius: 0.03em;
+    background: var(--blue);
+    animation: kv-c-blink 1.05s steps(1) infinite;
+  }
+
+  .kv-c__mark:global(.is-typing) .kv-c__caret {
+    animation: none;
+  }
+
+  @keyframes kv-c-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .kv-c__year {
+    position: absolute;
+    right: -0.1em;
+    top: -0.42em;
+    padding: 0.28em 0.8em;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--pa-green);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(15px, 0.14em, 26px);
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  /* ---- corners ------------------------------------------------------ */
+
+  .kv-c__corner {
+    position: absolute;
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    max-width: min(40%, 440px);
+  }
+
+  .kv-c__corner--tl {
+    left: var(--k-gutter);
+    top: calc(var(--k-header-h) + 28px);
+  }
+
+  .kv-c__corner--tr {
+    right: var(--k-gutter);
+    top: calc(var(--k-header-h) + 28px);
+    text-align: right;
+  }
+
+  .kv-c__corner--bl {
+    left: var(--k-gutter);
+    bottom: calc(var(--k-r-xl) + 32px);
+  }
+
+  .kv-c__corner--br {
+    right: var(--k-gutter);
+    bottom: calc(var(--k-r-xl) + 32px);
+    justify-items: end;
+    gap: 14px;
+  }
+
+  .kv-c__corner time {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .kv-c__corner--tl b {
+    font-family: var(--k-f-display);
+    font-size: clamp(26px, 2.6vw, 38px);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .kv-c__corner--tl time span {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(16px, 1.4vw, 20px);
+  }
+
+  .kv-c__corner--tr b,
+  .kv-c__corner--bl b {
+    font-family: var(--k-f-jp);
+    font-size: clamp(17px, 1.6vw, 22px);
+    line-height: 1.35;
+  }
+
+  .kv-c__sub {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .kv-c__corner--tl .kv-c__sub {
+    font-size: clamp(17px, 1.5vw, 21px);
+    color: var(--ink);
+  }
+
+  .kv-c__corner--bl .kv-c__sub {
+    font-family: var(--k-f-jp);
+    color: var(--blue);
+  }
+
+  .kv-c__terms {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: end;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .kv-c__terms span {
+    padding: 5px 12px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .kv-c__terms .kv-c__free {
+    background: var(--ht-yellow);
+  }
+
+  /* ---- the page rides up over it ------------------------------------ */
+
+  .kv-c + :global(*) {
+    position: relative;
+    z-index: 1;
+    margin-top: calc(-1 * var(--k-r-xl));
+    border-radius: var(--k-r-xl) var(--k-r-xl) 0 0;
+  }
+
+  /* ---- entrance ----------------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) .kv-c [data-kv-in] {
+      opacity: 0;
+    }
+  }
+
+  /* ---- narrow ------------------------------------------------------- */
+
+  @media (width < 820px) {
+    .kv-c {
+      height: auto;
+      min-height: min(100svh, 860px);
+    }
+
+    .kv-c__stage {
+      position: relative;
+      min-height: inherit;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr auto auto;
+      grid-template-areas:
+        "tl tr"
+        "mark mark"
+        "bl bl"
+        "br br";
+      gap: 20px 16px;
+      place-items: stretch;
+    }
+
+    .kv-c__corner {
+      position: static;
+      max-width: none;
+    }
+
+    .kv-c__corner--tl {
+      grid-area: tl;
+    }
+
+    .kv-c__corner--tr {
+      grid-area: tr;
+      align-self: end;
+    }
+
+    .kv-c__corner--tr b {
+      font-size: 14px;
+    }
+
+    .kv-c__corner--tl b {
+      font-size: 22px;
+    }
+
+    .kv-c__corner--tl time span,
+    .kv-c__corner--tl .kv-c__sub {
+      font-size: 14px;
+    }
+
+    .kv-c__corner--bl {
+      grid-area: bl;
+    }
+
+    .kv-c__corner--br {
+      grid-area: br;
+      justify-items: stretch;
+    }
+
+    .kv-c__terms {
+      justify-content: start;
+    }
+
+    .kv-c__title {
+      grid-area: mark;
+      align-self: center;
+      justify-self: center;
+      font-size: clamp(48px, 15vw, 96px);
+    }
+
+    /* Two lines between taller braces: "DevFest / Kansai". */
+    .kv-c__type {
+      max-width: 4.6em;
+    }
+
+    .kv-c__word {
+      white-space: pre-wrap;
+      line-height: 1.02;
+    }
+
+    .kv-c__brace {
+      height: auto;
+      align-self: stretch;
+      width: 0.62em;
+    }
+
+    .kv-c__cta {
+      justify-content: space-between;
+    }
+  }
+</style>

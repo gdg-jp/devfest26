@@ -119,7 +119,11 @@ const routes: AstroIntegration = {
         for (const [slug, city] of table.cities) {
           if (!previewMode && !mayBuildCity(slug)) continue;
 
-          city.routes.forEach(inject);
+          // A city's `og/` images are drawn with Node at build time, which the
+          // preview's Worker cannot do. Its pages fall back to the city card.
+          city.routes
+            .filter((route) => !previewMode || !route.pattern.includes("/og/"))
+            .forEach(inject);
 
           // Into every page, not just the city's own: its session and speaker
           // pages are the shared ones, and they are that city's pages too. The
@@ -268,7 +272,13 @@ export default defineConfig({
   // and keyed by collection name rather than by city, so a shared cache would
   // also carry the previous build's cities into this one — hence the same key
   // for `cacheDir`.
-  outDir: `./dist/${targetKey}`,
+  //
+  // `scripts/og.ts` builds only to read the session cards' data, and its build
+  // has no images in it; it goes to a directory of its own so as not to leave
+  // a real build of the same target looking as if it had lost them.
+  outDir: process.env.OG_EXPORT
+    ? `./dist/og-export/${targetKey}`
+    : `./dist/${targetKey}`,
   cacheDir: `./node_modules/.astro/${targetKey}`,
   build: {
     /**

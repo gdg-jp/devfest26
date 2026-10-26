@@ -8,6 +8,7 @@ import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
 import Analytics from "../components/Analytics.astro";
 import type { ResolvedTenant } from "../tenants";
+import type { CardImage } from "../lib/sessionCard";
 import { tenantPath } from "../lib/url";
 import { messages } from "../i18n";
 import {
@@ -27,6 +28,8 @@ interface Props {
    * the event; a speaker page describes a Person.
    */
   jsonLd?: Record<string, unknown>;
+  /** A card for this page alone, in place of the city's. Root-relative. */
+  ogImage?: CardImage;
 }
 
 /*
@@ -62,17 +65,24 @@ const jaUrl = isDefault ? canonical : alternateUrl;
 const enUrl = isDefault ? alternateUrl : canonical;
 
 /*
-  The card lives in this city's own directory, in this page's language, under
-  a name that is not known yet: the build makes the card after the pages and
+  A page with a card of its own passes it in — a session, in a city that draws
+  them; see `src/lib/sessionCard.ts`. Everything else uses the city's.
+
+  The city's card lives in its own directory, in this page's language, under a
+  name that is not known yet: the build makes the card after the pages and
   writes its name in over the placeholder. See `src/lib/og.ts`.
 */
-const ogImage =
-  Astro.site && makesOgCards
-    ? new URL(
-        tenantPath(site.tenant, `/${ogCardFile(OG_CARD_PENDING)}`),
-        Astro.site,
-      ).href
-    : undefined;
+const ogImage = !Astro.site
+  ? undefined
+  : Astro.props.ogImage
+    ? new URL(Astro.props.ogImage.path, Astro.site).href
+    : makesOgCards
+      ? new URL(
+          tenantPath(site.tenant, `/${ogCardFile(OG_CARD_PENDING)}`),
+          Astro.site,
+        ).href
+      : undefined;
+const ogImageAlt = Astro.props.ogImage?.alt ?? siteName;
 
 const eventSchema = clean({
   "@context": "https://schema.org",
@@ -159,10 +169,13 @@ const eventSchema = clean({
     {ogImage && <meta property="og:image" content={ogImage} />}
     {ogImage && <meta property="og:image:width" content="1200" />}
     {ogImage && <meta property="og:image:height" content="630" />}
+    {ogImage && <meta property="og:image:type" content="image/png" />}
+    {ogImage && <meta property="og:image:alt" content={clean(ogImageAlt)} />}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     {ogImage && <meta name="twitter:image" content={ogImage} />}
+    {ogImage && <meta name="twitter:image:alt" content={clean(ogImageAlt)} />}
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

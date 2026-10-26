@@ -19,7 +19,7 @@
 
 import { sanityEnabled } from "../lib/sanity/env";
 import { previewMode } from "../preview/mode";
-import { language, DEFAULT_LANGUAGE } from "../i18n/language";
+import { language } from "../i18n/language";
 import { discoverCitySlugs } from "./discovery";
 import { DEFAULT_TENANT, LOCAL_TENANT_IDS, PORTAL_TARGET } from "./ids";
 
@@ -94,18 +94,13 @@ export const strictTenants = Boolean(process.env.STRICT_TENANTS?.trim());
  * are bare file names — `tracks/a.md` is what makes `track: a` resolve. Two
  * cities in one store would collide on those ids, so rather than rewrite forty
  * files to carry a prefix, a build with no CMS behind it takes one city.
+ *
+ * `SITE_LANG` still picks the language of the chrome. The Markdown is the
+ * Japanese source either way; a page that carries both languages (Kansai's)
+ * switches its own copy, and the rest of the text stays as written.
  */
 export const LOCAL_TENANT: string = (() => {
   if (sanityEnabled()) return requestedCities?.[0] ?? DEFAULT_TENANT;
-
-  if (language !== DEFAULT_LANGUAGE) {
-    throw new Error(
-      `SITE_LANG=${language} was requested, but a build with no SANITY_PROJECT_ID ` +
-        `reads the tenant configs in src/tenants/, which are Japanese-only. Set ` +
-        `SANITY_PROJECT_ID to build an English site, or drop SITE_LANG to build ` +
-        `the default Japanese one.`,
-    );
-  }
 
   const asked = requestedCities;
   if (!asked || asked.length === 0) return DEFAULT_TENANT;

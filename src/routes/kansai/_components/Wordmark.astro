@@ -1,0 +1,92 @@
+---
+/**
+ * The event's own lockup, as on the OG image: 「{ DevFest Kansai }」 on one
+ * line, the DevFest braces in blue. The braces are the mark's own outline,
+ * lifted from `src/assets/brand/logo-brackets.svg`; the name between them is
+ * set in Google Sans so it takes the city.
+ *
+ * Sized by its width — the lettering scales with the box it is given.
+ */
+interface Props {
+  class?: string;
+  /** The accessible name. Pass "" where a heading already names the event. */
+  label?: string;
+}
+
+const { class: className, label = "DevFest Kansai" } = Astro.props;
+
+const BRACE =
+  "m 0,0 h 20.555 c 7.327,0 13.266,-5.939 13.266,-13.266 V -117.07 c 0,-36.632 29.696,-66.328 66.327,-66.328 h 53.049 c 2.931,0 5.306,2.376 5.306,5.306 v 74.423 c 0,2.93 -2.376,5.306 -5.306,5.306 h -40.719 c -7.326,0 -13.266,5.939 -13.266,13.265 v 258.546 c 0,7.326 5.94,13.266 13.266,13.266 h 40.719 c 2.931,0 5.306,2.375 5.306,5.306 v 74.422 c 0,2.931 -2.376,5.306 -5.306,5.306 h -53.049 c -36.631,0 -66.327,-29.696 -66.327,-66.327 V 101.616 C 33.821,94.29 27.882,88.35 20.555,88.35 H 0 c -2.931,0 -5.306,-2.375 -5.306,-5.306 V 5.306 C -5.306,2.376 -2.931,0 0,0";
+---
+
+<span
+  class:list={["k-wm", className]}
+  role={label ? "img" : undefined}
+  aria-label={label || undefined}
+  aria-hidden={label ? undefined : "true"}
+>
+  <span class="k-wm__row">
+    <svg
+      class="k-wm__brace"
+      viewBox="-10.1 -276.5 173.4 464.7"
+      aria-hidden="true"
+      data-k-wm-brace="l"
+    >
+      <path d={BRACE} transform="scale(1 -1)"></path>
+    </svg>
+    <span class="k-wm__text" aria-hidden="true" data-k-wm-text
+      ><span>DevFest</span> <span>Kansai</span></span
+    >
+    <svg
+      class="k-wm__brace"
+      viewBox="-163.3 -276.5 173.4 464.7"
+      aria-hidden="true"
+      data-k-wm-brace="r"
+    >
+      <path d={BRACE} transform="scale(-1 -1)"></path>
+    </svg>
+  </span>
+</span>
+
+<style>
+  .k-wm {
+    display: block;
+    container-type: inline-size;
+    color: inherit;
+  }
+
+  .k-wm__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.6cqi;
+    line-height: 1;
+  }
+
+  .k-wm__brace {
+    flex: none;
+    height: 1.22em;
+    width: auto;
+    overflow: visible;
+  }
+
+  .k-wm__brace path {
+    fill: var(--ht-blue);
+    stroke: var(--ink);
+    stroke-width: 9.557;
+  }
+
+  .k-wm__text {
+    display: inline-flex;
+    gap: 0.24em;
+    padding-bottom: 0.04em;
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    white-space: nowrap;
+  }
+
+  .k-wm__text > span {
+    display: inline-block;
+  }
+</style>

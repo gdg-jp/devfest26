@@ -1,0 +1,100 @@
+---
+import Shell from "./Shell.astro";
+import Arrow from "../_components/Arrow.astro";
+import Closing from "../_components/Closing.astro";
+import type { ResolvedTenant } from "../../../tenants";
+
+/**
+ * The pages behind the programme — one session, one speaker — in the home
+ * page's frame: the same header and footer, the same folder panels on the
+ * graph paper, and the register button to close.
+ *
+ * The header floats here rather than docking under a key visual, so the page
+ * starts below it.
+ */
+interface Props {
+  site: ResolvedTenant;
+  /** The page's own name. The event's is appended here. */
+  title: string;
+  description?: string;
+  jsonLd?: Record<string, unknown>;
+  back: { href: string; label: string };
+  placement: string;
+}
+
+const { site, title, description, jsonLd, back, placement } = Astro.props;
+---
+
+<Shell
+  site={site}
+  title={`${title}｜${site.fullTitle ?? site.title}`}
+  description={description}
+  jsonLd={jsonLd}
+>
+  <div class="k-detail">
+    <nav class="k-wrap k-wrap--panel k-detail__crumb">
+      <a class="k-back" href={back.href}>
+        <span class="k-back__disc"><Arrow /></span>
+        {back.label}
+      </a>
+    </nav>
+    <slot />
+    <Closing site={site} placement={placement} />
+  </div>
+</Shell>
+
+<style>
+  .k-detail {
+    padding: calc(var(--k-header-h) + clamp(12px, 2.4vw, 28px)) 0
+      clamp(48px, 7vw, 96px);
+  }
+
+  .k-detail__crumb {
+    padding-bottom: 4px;
+  }
+
+  .k-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 18px 4px 4px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.3s var(--k-ease);
+  }
+
+  .k-back__disc {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ht-yellow);
+    transition: transform 0.4s var(--k-ease);
+  }
+
+  .k-back__disc :global(svg) {
+    width: 15px;
+    transform: scaleX(-1);
+  }
+
+  .k-back:hover {
+    background: var(--ground);
+  }
+
+  .k-back:hover .k-back__disc {
+    transform: translateX(-3px);
+  }
+
+  .k-back:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 3px;
+  }
+</style>

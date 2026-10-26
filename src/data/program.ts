@@ -29,7 +29,7 @@ import type { CollectionEntry } from "astro:content";
 import { getTracks, type Track } from "./tracks";
 import { byTenant, partitionByTenant } from "./collections";
 import { previewMode } from "../preview/mode";
-import { reject, report } from "../preview/problems";
+import { reject, report, warn } from "../preview/problems";
 import { tenantPath } from "../lib/url";
 
 export type Session = CollectionEntry<"sessions">;
@@ -308,12 +308,22 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     (talk) => talk.data.session!.id,
   );
 
-  // 3. Ensure no orphaned talks exist (every talk must belong to exactly one session).
+  /*
+    3. A talk nothing claimed.
+
+    Warned about rather than thrown on, unlike every other rule here. The
+    others describe a page that would come out wrong; this one describes a
+    document that simply never appears — and making it fatal meant a single
+    "TBA" placeholder left in the Studio took down every session page, every
+    speaker page and the build with them. The talk is left off the programme,
+    which is what it already was.
+  */
   for (const talk of talkSplit.mine) {
     if (!claimedBy.has(talk.id)) {
-      reject(
+      warn(
         "programme",
-        `Talk "${talk.id}" belongs to no session. Add it to a session's "talks" list.`,
+        `Talk "${talk.id}" belongs to no session, so it is not on the page. ` +
+          `Add it to a session's "talks" list, or delete it.`,
       );
     }
   }

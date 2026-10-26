@@ -1,0 +1,133 @@
+---
+/**
+ * The key visual: four fields, drawn as the brand's capsules, crossing at one
+ * point. It is this year's theme — AI meeting robotics, fashion and games —
+ * said without words, and it is the one shape the splash, the hero and the
+ * closing call all share, so the page opens and closes on the same gesture.
+ *
+ * Only markup and resting geometry live here. How it arrives, drifts and
+ * answers the pointer is `_scripts/crossing.ts`, keyed on `data-k-crossing`.
+ */
+interface Props {
+  labels: readonly string[];
+  /** `splash` and `final` play their own entrances; `hero` idles. */
+  mode: "splash" | "hero" | "final";
+  class?: string;
+}
+
+const { labels, mode, class: className } = Astro.props;
+
+// Order is paint order too: the last arm lies on top at the crossing.
+const ARMS = [
+  { angle: -45, color: "var(--green)", ink: "var(--ink)", end: "start" },
+  { angle: 45, color: "var(--red)", ink: "var(--surface)", end: "end" },
+  { angle: 90, color: "var(--yellow)", ink: "var(--ink)", end: "end" },
+  { angle: 0, color: "var(--blue)", ink: "var(--surface)", end: "end" },
+] as const;
+---
+
+<div
+  class:list={["k-x", `k-x--${mode}`, className]}
+  data-k-crossing={mode}
+  aria-hidden="true"
+>
+  <div class="k-x__spin" data-k-x-spin>
+    {
+      ARMS.map((arm, i) => (
+        <div
+          class="k-x__arm"
+          style={`--a:${arm.angle}deg;--c:${arm.color};--on:${arm.ink}`}
+          data-k-x-arm={i}
+        >
+          <span class:list={["k-x__pill", `k-x__pill--${arm.end}`]}>
+            <span class="k-x__label">{labels[i] ?? ""}</span>
+          </span>
+        </div>
+      ))
+    }
+    <span class="k-x__core" data-k-x-core>
+      <svg viewBox="0 0 40 40" fill="none">
+        <path
+          d="M12 12l16 16M28 12L12 28"
+          stroke="currentColor"
+          stroke-width="4.4"
+          stroke-linecap="round"></path>
+      </svg>
+    </span>
+  </div>
+</div>
+
+<style>
+  .k-x {
+    --size: 480px;
+    position: relative;
+    width: var(--size);
+    aspect-ratio: 1;
+    flex: none;
+    container-type: inline-size;
+  }
+
+  .k-x__spin {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+  }
+
+  /* Arms reach past the square, so the labels at their ends sit clear of
+     where the others cross. */
+  .k-x__arm {
+    position: absolute;
+    inset: 0 -14%;
+    display: grid;
+    align-items: center;
+    transform: rotate(var(--a));
+    pointer-events: none;
+  }
+
+  .k-x__pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 22cqi;
+    padding-inline: 8cqi;
+    border: max(2px, 0.55cqi) solid var(--ink);
+    border-radius: 999px;
+    background: var(--c);
+    color: var(--on);
+    will-change: transform;
+    pointer-events: auto;
+    transition: filter 0.3s;
+  }
+
+  .k-x__pill--end {
+    justify-content: flex-end;
+  }
+
+  .k-x__label {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 8cqi;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .k-x__core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 26cqi;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    translate: -50% -50%;
+    border: max(2px, 0.55cqi) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .k-x__core svg {
+    width: 58%;
+  }
+</style>

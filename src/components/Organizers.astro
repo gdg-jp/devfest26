@@ -1,0 +1,359 @@
+---
+import { Image } from "astro:assets";
+import {
+  TOKYO_ORGANIZERS,
+  type OrganizerSection,
+} from "../data/tokyo/organizers";
+
+interface Props {
+  sections?: OrganizerSection[];
+  title?: string;
+  eyebrow?: string;
+}
+
+const {
+  sections = TOKYO_ORGANIZERS,
+  title = "運営",
+  eyebrow = "Organizers",
+} = Astro.props;
+---
+
+<section class="sec" id="organizers">
+  <div id="partners" class="anchor-alias" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="eyebrow" data-reveal="up">
+      {eyebrow}
+    </p>
+    <h2 class="sec-h" data-reveal="up">
+      {title}
+    </h2>
+
+    <div class="groups">
+      {
+        sections.map((section) => (
+          <div class="group" data-reveal="up">
+            <h3 class="group-title">{section.title}</h3>
+            <div class="orgs-list" data-stagger>
+              {section.items.map((item) => (
+                <div class="panel" data-reveal="up">
+                  <div class="org-head">
+                    <h4 class="org-name">{item.name}</h4>
+                    {item.socials && item.socials.length > 0 && (
+                      <div class="org-socials">
+                        {item.socials.map((social) => (
+                          <a
+                            href={social.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="social-icon-link"
+                            aria-label={social.label}
+                            title={social.label}
+                          >
+                            {social.type === "x" && (
+                              <svg
+                                width="19"
+                                height="19"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              >
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                              </svg>
+                            )}
+                            {social.type === "instagram" && (
+                              <svg
+                                width="19"
+                                height="19"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                              >
+                                <rect
+                                  width="20"
+                                  height="20"
+                                  x="2"
+                                  y="2"
+                                  rx="5"
+                                  ry="5"
+                                />
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                              </svg>
+                            )}
+                            {social.type === "linkedin" && (
+                              <svg
+                                width="19"
+                                height="19"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              >
+                                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                              </svg>
+                            )}
+                            {social.type === "connpass" && (
+                              <svg
+                                width="19"
+                                height="19"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                aria-hidden="true"
+                              >
+                                <path d="M4 4.5l7 7.5-7 7.5h4l7-7.5-7-7.5H4zm8 0l7 7.5-7 7.5h4l7-7.5-7-7.5h-4z" />
+                              </svg>
+                            )}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {item.description && (
+                    <div class="org-body">
+                      {item.description.split("\n\n").map((block) => (
+                        <p>{block}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.links && item.links.length > 0 && (
+                    <div class="org-links">
+                      {item.links.map((link) => (
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="link-pill"
+                        >
+                          <svg
+                            class="link-icon"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                          </svg>
+                          <span>{link.label}</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.logo && (
+                    <div class="org-logo">
+                      {item.logo.url ? (
+                        <a
+                          href={item.logo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="logo-link"
+                          aria-label={item.logo.alt}
+                        >
+                          {typeof item.logo.image === "string" ? (
+                            <img
+                              src={item.logo.image}
+                              alt={item.logo.alt}
+                              width={item.logo.width || 220}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <Image
+                              src={item.logo.image}
+                              alt={item.logo.alt}
+                              width={item.logo.width || 220}
+                              loading="lazy"
+                            />
+                          )}
+                        </a>
+                      ) : typeof item.logo.image === "string" ? (
+                        <img
+                          src={item.logo.image}
+                          alt={item.logo.alt}
+                          width={item.logo.width || 220}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Image
+                          src={item.logo.image}
+                          alt={item.logo.alt}
+                          width={item.logo.width || 220}
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .anchor-alias {
+    position: relative;
+    top: -84px;
+    height: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    margin-top: 28px;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .group-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid var(--rule);
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .orgs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .panel {
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    border: var(--bw) solid var(--stroke);
+    padding: clamp(20px, 3vw, 34px);
+  }
+
+  .org-head {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 16px;
+    margin-bottom: 14px;
+    white-space: nowrap;
+  }
+
+  .org-name {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ink);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .org-socials {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .social-icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    text-decoration: none;
+    transition:
+      transform 0.18s var(--ease-out),
+      color 0.18s var(--ease-out),
+      filter 0.18s var(--ease-out);
+    line-height: 1;
+  }
+
+  .social-icon-link:hover {
+    color: var(--ink);
+    transform: translateY(-2px);
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 12%));
+  }
+
+  .social-icon-link svg {
+    display: block;
+  }
+
+  .org-body {
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--ink);
+    white-space: pre-line;
+  }
+
+  .org-body p {
+    margin: 0 0 12px;
+  }
+
+  .org-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .org-links {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1.8px solid var(--stroke);
+    border-radius: 999px;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    text-decoration: none;
+  }
+
+  .link-pill:hover {
+    background: var(--surface);
+  }
+
+  .link-icon {
+    flex-shrink: 0;
+    color: var(--muted);
+  }
+
+  .org-logo {
+    margin-top: 14px;
+    padding-top: 6px;
+  }
+
+  .logo-link {
+    display: inline-block;
+  }
+
+  .org-logo img {
+    height: auto;
+    object-fit: contain;
+  }
+</style>

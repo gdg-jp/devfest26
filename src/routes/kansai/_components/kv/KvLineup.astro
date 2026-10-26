@@ -1,0 +1,517 @@
+---
+import Wordmark from "../Wordmark.astro";
+import Arrow from "../Arrow.astro";
+import Portrait from "../Portrait.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { CAPACITY, copy, localized } from "../../_content";
+import type { FeaturedSpeaker } from "../../_data";
+
+/**
+ * Key visual B — the lineup. For a free event the strongest reason to sign up
+ * is who is on stage, so the headliners' faces are the key visual: each in
+ * one of the brand's shapes, duotoned onto a brand colour so seven different
+ * photographs read as one set, with a name tag saying why the name matters.
+ * The name, the date and the button sit in the clearing in the middle.
+ *
+ * On a phone the faces tile above the name instead of around it.
+ */
+interface Props {
+  site: ResolvedTenant;
+  featured: FeaturedSpeaker[];
+  /** Everyone on the programme, to say how many more there are. */
+  total: number;
+}
+
+const { site, featured, total } = Astro.props;
+const { event, links } = site;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const [, month, day] = event.isoDate.split("-");
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+const more = Math.max(0, total - featured.length);
+
+const TONES: Record<string, string> = {
+  blue: "var(--ht-blue)",
+  green: "var(--ht-green)",
+  yellow: "var(--ht-yellow)",
+  red: "var(--ht-red)",
+};
+
+/*
+  Where each headliner sits around the clearing, in FEATURED's order: left
+  and top as a share of the stage, width in `--u` (a vw that shrinks on short
+  screens), the frame's shape, a resting tilt and a parallax depth.
+*/
+const SPOTS = [
+  { x: 5, y: 2, w: 14, shape: "capsule", rot: -4, depth: 1.4 },
+  { x: 80, y: 0, w: 14.5, shape: "circle", rot: 3, depth: 1.1 },
+  { x: 17, y: 42, w: 12, shape: "squircle", rot: 3, depth: 0.8 },
+  { x: 84, y: 50, w: 11, shape: "arch", rot: -3, depth: 1.6 },
+  { x: 72.5, y: 30, w: 11.5, shape: "circle", rot: 2, depth: 0.7 },
+  { x: 3.5, y: 64, w: 11, shape: "leaf", rot: 4, depth: 1.3 },
+  { x: 21, y: 76, w: 8, shape: "circle", rot: -2, depth: 0.6 },
+] as const;
+const MORE_SPOT = { x: 71, y: 80, depth: 0.9 };
+---
+
+<section class="kv-b" data-k-hero data-kv="b" aria-labelledby="kv-b-title">
+  <ul class="kv-b__faces" aria-label={c.featuredHeading}>
+    {
+      featured.map((f, i) => {
+        const spot = SPOTS[i % SPOTS.length];
+        return (
+          <li
+            class:list={["kv-b__face", `kv-b__face--${spot.shape}`]}
+            style={`--x:${spot.x}%;--y:${spot.y}%;--w:${spot.w};--rot:${spot.rot}deg;--tone:${TONES[f.tone]};--bob:${5 + (i % 3)}s`}
+            data-kv-depth={spot.depth}
+          >
+            <a class="kv-b__link" href={f.talk.href} data-kv-in="face">
+              <span class="kv-b__frame">
+                <Portrait
+                  speaker={f.program.speaker}
+                  size={240}
+                  class="kv-b__img"
+                  tone={TONES[f.tone]}
+                  eager
+                />
+              </span>
+              <span class="kv-b__tag">
+                <b>{bare(f.program.speaker.data.name)}</b>
+                <small>{localized(f.short, lang)}</small>
+              </span>
+            </a>
+          </li>
+        );
+      })
+    }
+    {
+      more > 0 && (
+        <li
+          class="kv-b__face kv-b__face--more"
+          style={`--x:${MORE_SPOT.x}%;--y:${MORE_SPOT.y}%`}
+          data-kv-depth={MORE_SPOT.depth}
+        >
+          <a class="kv-b__more" href="#speakers" data-kv-in="pop">
+            {c.kvMore(more)}
+            <Arrow />
+          </a>
+        </li>
+      )
+    }
+  </ul>
+
+  <div class="kv-b__core">
+    <h1 class="kv-b__title" id="kv-b-title" data-kv-in="pop">
+      <span class="visually-hidden">{site.title}</span>
+      <Wordmark class="kv-b__wm" label="" />
+    </h1>
+
+    <p class="kv-b__catch" data-kv-in="up">
+      {c.catchLead}<em>{c.catchMark}</em>{c.catchTail}
+    </p>
+
+    <dl class="kv-b__facts" data-kv-in="up">
+      <div>
+        <dt class="visually-hidden">{c.factDate}</dt>
+        <dd>
+          <time datetime={event.startsAt}>
+            <b>{Number(month)}.{Number(day)}</b>
+            <span class="kv-b__dow">{event.dayOfWeekEn}</span>
+          </time>
+          <span class="kv-b__hours">{event.hours.replace(" – ", "–")}</span>
+        </dd>
+      </div>
+      <div>
+        <dt class="visually-hidden">{c.factVenue}</dt>
+        <dd class="kv-b__venue">
+          <b>{event.venue.name}</b>
+          <span>{c.venueArea}</span>
+        </dd>
+      </div>
+    </dl>
+
+    <a
+      class="k-btn k-btn--lg kv-b__cta"
+      href={links.register}
+      target="_blank"
+      rel="noopener"
+      data-analytics="register_click"
+      data-placement="hero"
+      data-k-magnet
+      data-kv-in="pop"
+    >
+      {c.register}
+      <span class="k-btn__disc"><Arrow /></span>
+    </a>
+
+    <p class="kv-b__terms" data-kv-in="up">
+      <span>{c.kvOnsite(CAPACITY.onsite)}</span>
+      <span>{c.kvOnline}</span>
+    </p>
+  </div>
+</section>
+
+<style>
+  .kv-b {
+    --u: min(1vw, 1.55vh);
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: min(100svh, 1000px);
+    padding: calc(var(--k-header-h) + 24px) var(--k-gutter) 40px;
+    background: var(--ground);
+    overflow: clip;
+  }
+
+  /* ---- faces -------------------------------------------------------- */
+
+  .kv-b__faces {
+    position: absolute;
+    inset: calc(var(--k-header-h) + 12px) var(--k-gutter) 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .kv-b__face {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: calc(var(--w) * var(--u));
+  }
+
+  .kv-b__link {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    color: var(--ink);
+    text-decoration: none;
+    rotate: var(--rot);
+    transition: rotate 0.5s var(--k-ease-back);
+  }
+
+  .kv-b__link:hover,
+  .kv-b__link:focus-visible {
+    rotate: 0deg;
+  }
+
+  .kv-b__frame {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--tone);
+    overflow: hidden;
+    isolation: isolate;
+    transition: border-radius 0.5s var(--k-ease);
+  }
+
+  .kv-b__face--capsule .kv-b__frame {
+    aspect-ratio: 3 / 4;
+    border-radius: 999px;
+  }
+
+  .kv-b__face--squircle .kv-b__frame {
+    border-radius: 30%;
+  }
+
+  .kv-b__face--arch .kv-b__frame {
+    aspect-ratio: 4 / 5;
+    border-radius: 999px 999px 22px 22px;
+  }
+
+  .kv-b__face--leaf .kv-b__frame {
+    border-radius: 50% 14% 50% 14%;
+  }
+
+  .kv-b__frame :global(.kv-b__img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-size: 48px;
+    filter: grayscale(1) contrast(1.08);
+    mix-blend-mode: multiply;
+    transition:
+      filter 0.5s var(--k-ease),
+      transform 0.7s var(--k-ease);
+  }
+
+  .kv-b__link:hover :global(.kv-b__img),
+  .kv-b__link:focus-visible :global(.kv-b__img) {
+    filter: grayscale(0);
+    mix-blend-mode: normal;
+    transform: scale(1.06);
+  }
+
+  .kv-b__tag {
+    display: grid;
+    justify-items: center;
+    margin-top: -18px;
+    padding: 6px 14px 7px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    text-align: center;
+    white-space: nowrap;
+    z-index: 1;
+    transition: background 0.3s;
+  }
+
+  .kv-b__link:hover .kv-b__tag {
+    background: var(--ht-yellow);
+  }
+
+  .kv-b__tag b {
+    font-family: var(--k-f-display);
+    font-size: clamp(13px, 1.15vw, 16px);
+    line-height: 1.2;
+  }
+
+  .kv-b__tag small {
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--muted);
+  }
+
+  .kv-b__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.3s;
+  }
+
+  .kv-b__more :global(svg) {
+    width: 16px;
+  }
+
+  .kv-b__more:hover {
+    background: var(--blue);
+  }
+
+  /* Each face bobs on its own period, so the collage never holds still in
+     step. */
+  @media (prefers-reduced-motion: no-preference) {
+    .kv-b__frame {
+      animation: kv-b-bob var(--bob, 6s) ease-in-out infinite alternate;
+    }
+  }
+
+  @keyframes kv-b-bob {
+    to {
+      translate: 0 -7px;
+    }
+  }
+
+  /* ---- the clearing ------------------------------------------------- */
+
+  .kv-b__core {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    gap: clamp(14px, 2.2vh, 22px);
+    width: min(100%, clamp(460px, 38vw, 540px));
+    text-align: center;
+  }
+
+  .kv-b__title {
+    width: 100%;
+    margin: 0;
+  }
+
+  .kv-b__catch {
+    margin: 0;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(19px, 2vw, 25px);
+    line-height: 1.4;
+  }
+
+  .kv-b__catch em {
+    font-style: normal;
+    background: linear-gradient(
+      transparent 62%,
+      var(--ht-blue) 62% 92%,
+      transparent 92%
+    );
+  }
+
+  .kv-b__facts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .kv-b__facts dd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+    margin: 0;
+    padding: 10px 20px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+  }
+
+  .kv-b__facts time {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .kv-b__facts time b {
+    font-family: var(--k-f-display);
+    font-size: 28px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .kv-b__dow,
+  .kv-b__hours {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .kv-b__facts .kv-b__venue {
+    flex-direction: column;
+    align-items: start;
+    gap: 0;
+    text-align: left;
+  }
+
+  .kv-b__venue b {
+    font-family: var(--k-f-jp);
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .kv-b__venue span {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .kv-b__terms {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 14px;
+    margin: -4px 0 0;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .kv-b__terms span + span::before {
+    content: "・";
+    margin-right: 14px;
+  }
+
+  /* ---- entrance ----------------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) .kv-b [data-kv-in] {
+      opacity: 0;
+    }
+  }
+
+  /* ---- narrow: the faces tile above the name ------------------------- */
+
+  @media (width < 900px) {
+    .kv-b {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      padding-top: calc(var(--k-header-h) + 16px);
+    }
+
+    .kv-b__faces {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px 10px;
+      width: min(100%, 520px);
+    }
+
+    .kv-b__face {
+      position: static;
+      width: auto;
+    }
+
+    .kv-b__face .kv-b__frame {
+      aspect-ratio: 1;
+    }
+
+    .kv-b__face--capsule .kv-b__frame {
+      border-radius: 999px 999px 40% 40%;
+    }
+
+    .kv-b__tag {
+      margin-top: -10px;
+      padding: 3px 8px 4px;
+    }
+
+    .kv-b__tag b {
+      font-size: 11px;
+    }
+
+    .kv-b__tag small {
+      display: none;
+    }
+
+    .kv-b__face--more {
+      display: grid;
+      place-items: center;
+    }
+
+    .kv-b__more {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      aspect-ratio: 1;
+      padding: 8px;
+      border-radius: 50%;
+      font-size: 12px;
+      text-align: center;
+      white-space: normal;
+      line-height: 1.3;
+    }
+
+    .kv-b__more :global(svg) {
+      display: none;
+    }
+
+    .kv-b__core {
+      gap: 16px;
+    }
+
+    .kv-b__cta {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>

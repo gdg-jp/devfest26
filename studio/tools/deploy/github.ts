@@ -33,34 +33,31 @@ const WORKFLOW = "build.yml";
 /**
  * Only the runs that can change the site.
  *
- * Most runs of `build.yml` cannot. A pull request builds every city and stops
- * there, and so does a merge to `main`: `publish` runs for the two events that
- * mean a person asked for a deploy, and neither of those is one of them. A
- * green check run says nothing at all about what is being served, and a red
- * one is a problem for the branch rather than for the site. Showing either
- * here would answer a different question than the one this panel is for.
+ * A pull request builds every city and stops there. A push to `main` publishes,
+ * and so do a manual run and a leftover Studio dispatch. A green pull-request
+ * run says nothing about what is being served. Showing it here would answer a
+ * different question than the one this panel is for.
  *
- * Which takes both filters. The branch drops pull requests, which carry their
- * topic branch as `head_branch`, while a `repository_dispatch` (GitHub runs it
- * on the default branch) and a `workflow_dispatch` started from main carry
- * this one; the event then drops the merges. What the branch filter also hides
- * is a `workflow_dispatch` started from a topic branch, which does publish —
- * rare enough, and visible on GitHub, to be worth the simpler rule.
+ * The branch filter drops pull requests, which carry their topic branch as
+ * `head_branch`. What it also hides is a `workflow_dispatch` started from a
+ * topic branch, which does publish — rare enough, and visible on GitHub, to
+ * be worth the simpler rule.
  */
 const BRANCH = "main";
 
 /**
  * The events `build.yml` publishes for — the `if:` on its `publish` job, kept
- * in step by hand.
+ * in step by hand. A pull request is the one event that builds and stops.
  *
- * GitHub's runs endpoint takes one `event` at a time and there are two of
- * them, so the filtering happens here instead: a page of recent runs on the
- * branch, and the newest of them that deployed. A page rather than a single
- * run, because merges to `main` now sit in between — thirty covers a busy
- * afternoon of them, and the alternative of one request per event would spend
- * the scarcer thing (sixty requests an hour) to save the cheaper one.
+ * GitHub's runs endpoint takes one `event` at a time, so the filtering happens
+ * here: a page of recent runs on the branch, and the newest of them that
+ * deployed.
  */
-const PUBLISHING_EVENTS = new Set(["repository_dispatch", "workflow_dispatch"]);
+const PUBLISHING_EVENTS = new Set([
+  "push",
+  "repository_dispatch",
+  "workflow_dispatch",
+]);
 const PAGE = 30;
 
 const HEADERS = {

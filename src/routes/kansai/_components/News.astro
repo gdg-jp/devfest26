@@ -1,0 +1,161 @@
+---
+import Arrow from "./Arrow.astro";
+import Panel from "./Panel.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, localized, NEWS } from "../_content";
+
+/**
+ * The latest three, as a strip rather than a section: news earns a glance on
+ * the way down, not a stop. A visitor coming back to check what changed finds
+ * it in the first scroll.
+ */
+const lang = currentLanguage();
+const c = copy(lang);
+const items = [...NEWS]
+  .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+  .slice(0, 3);
+---
+
+{
+  items.length > 0 && (
+    <section
+      class="k-news k-wrap k-wrap--panel"
+      id="news"
+      aria-labelledby="k-news-h"
+    >
+      <Panel
+        title={c.newsHeading}
+        id="k-news-h"
+        tone="var(--red)"
+        stickers={["plus", "period"]}
+      >
+        <p class="k-news__sub">{c.newsSub}</p>
+        <ul class="k-news__list" data-k-stagger>
+          {items.map((item) => {
+            const inner = (
+              <>
+                <time datetime={item.date}>
+                  {item.date.replaceAll("-", ".")}
+                </time>
+                <span class="k-news__text">{localized(item.text, lang)}</span>
+                {item.href && (
+                  <span class="k-news__go">
+                    <Arrow />
+                  </span>
+                )}
+              </>
+            );
+            return (
+              <li data-k-reveal="up">
+                {item.href ? (
+                  <a
+                    class="k-news__row"
+                    href={item.href}
+                    {...(item.href.startsWith("http")
+                      ? { target: "_blank", rel: "noopener" }
+                      : {})}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div class="k-news__row">{inner}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
+    </section>
+  )
+}
+
+<style>
+  .k-news {
+    margin-block: 24px;
+  }
+
+  .k-news__sub {
+    margin: 0 0 4px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .k-news__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-news__list li + li {
+    border-top: 1.5px dashed var(--k-hair);
+  }
+
+  .k-news__row {
+    display: grid;
+    grid-template-columns: 110px 1fr 36px;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .k-news__row time {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .k-news__text {
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .k-news__go {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    transition:
+      background 0.3s var(--k-ease),
+      transform 0.4s var(--k-ease);
+  }
+
+  .k-news__go :global(svg) {
+    width: 16px;
+  }
+
+  a.k-news__row:hover .k-news__go {
+    background: var(--ht-yellow);
+    transform: translateX(4px);
+  }
+
+  @media (width < 760px) {
+    .k-news__row {
+      grid-template-columns: 1fr 32px;
+      gap: 2px 12px;
+    }
+
+    .k-news__row time {
+      grid-column: 1;
+    }
+
+    .k-news__text {
+      grid-column: 1;
+      font-size: 14.5px;
+    }
+
+    .k-news__go {
+      grid-column: 2;
+      grid-row: 1 / 3;
+      width: 32px;
+    }
+  }
+</style>

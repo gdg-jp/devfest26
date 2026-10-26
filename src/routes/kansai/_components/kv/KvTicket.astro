@@ -1,0 +1,515 @@
+---
+import Wordmark from "../Wordmark.astro";
+import Arrow from "../Arrow.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { CAPACITY, copy } from "../../_content";
+import type { FeaturedSpeaker } from "../../_data";
+
+/**
+ * Key visual D — the ticket. The thing a visitor is here to get is the key
+ * visual: an admission ticket for ¥0 with the lineup printed on it like a
+ * gig's, and the stub is the button. A stamp counts the days left.
+ *
+ * The notches at the perforation are ground-coloured discs sitting on the
+ * seam, half of each clipped away by the ticket's own edge — so the cut-outs
+ * carry the keyline without an outline having to be drawn to fit.
+ */
+interface Props {
+  site: ResolvedTenant;
+  featured: FeaturedSpeaker[];
+  total: number;
+}
+
+const { site, featured, total } = Astro.props;
+const { event, links } = site;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const date = event.isoDate.replaceAll("-", ".");
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+const more = Math.max(0, total - featured.length);
+---
+
+<section class="kv-d" data-k-hero data-kv="d" aria-labelledby="kv-d-title">
+  <div class="kv-d__stage">
+    <div class="kv-d__ticket" data-kv-in="ticket">
+      <div class="kv-d__body">
+        <p class="kv-d__head">
+          <span class="kv-d__admit">{c.kvAdmission}</span>
+          <span class="kv-d__year">2026</span>
+        </p>
+
+        <h1 class="kv-d__title" id="kv-d-title">
+          <span class="visually-hidden">{site.title}</span>
+          <Wordmark class="kv-d__wm" label="" />
+        </h1>
+
+        <p class="kv-d__catch">
+          {c.catchLead}{c.catchMark}{c.catchTail}
+        </p>
+
+        <div class="kv-d__lineup">
+          <span class="kv-d__label">{c.kvLineup}</span>
+          <p>
+            {
+              featured.map((f, i) => (
+                <>
+                  <a href={f.talk.href}>{bare(f.program.speaker.data.name)}</a>
+                  {i < featured.length - 1 && <i>／</i>}
+                </>
+              ))
+            }
+            {more > 0 && <span class="kv-d__more">{c.kvMore(more)}</span>}
+          </p>
+        </div>
+
+        <dl class="kv-d__facts">
+          <div>
+            <dt>{c.factDate}</dt>
+            <dd>
+              <time datetime={event.startsAt}>
+                <b>{date}</b>
+                {event.dayOfWeekEn.toUpperCase()}
+              </time>
+              <span>{event.hours.replace(" – ", "–")}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>{c.factVenue}</dt>
+            <dd>
+              <b>{event.venue.name}</b>
+              <span>{c.venueArea}</span>
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <a
+        class="kv-d__stub"
+        href={links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="hero"
+      >
+        <span class="kv-d__price"><small>¥</small>0</span>
+        <span class="kv-d__seats">
+          <span>{c.kvOnsite(CAPACITY.onsite)}</span>
+          <span>{c.kvOnline}</span>
+        </span>
+        <span class="kv-d__go">
+          {c.kvTicketCta}
+          <span class="kv-d__disc"><Arrow /></span>
+        </span>
+        <i class="kv-d__hole kv-d__hole--a" aria-hidden="true"></i>
+        <i class="kv-d__hole kv-d__hole--b" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    <p
+      class="kv-d__stamp"
+      data-kv-days={event.isoDate}
+      data-kv-left={c.kvDaysLeft(0).replace("0", "{n}")}
+      data-kv-today={c.kvToday}
+      data-kv-in="stamp"
+      data-kv-at="0.9"
+      hidden
+    >
+      <span data-kv-days-text></span>
+    </p>
+  </div>
+</section>
+
+<style>
+  .kv-d {
+    --stub: clamp(230px, 26%, 300px);
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: min(100svh, 1000px);
+    padding: calc(var(--k-header-h) + 32px) var(--k-gutter) 48px;
+    background-color: var(--ground);
+    background-image: radial-gradient(var(--k-dots) 1.3px, transparent 1.7px);
+    background-size: 26px 26px;
+    overflow: clip;
+  }
+
+  .kv-d__stage {
+    position: relative;
+    width: min(100%, 1040px);
+    perspective: 1400px;
+  }
+
+  /* ---- the ticket --------------------------------------------------- */
+
+  .kv-d__ticket {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr var(--stub);
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-lg);
+    background: var(--surface);
+    overflow: hidden;
+    rotate: -1.5deg;
+  }
+
+  .kv-d__body {
+    display: grid;
+    gap: clamp(14px, 2vh, 20px);
+    padding: clamp(22px, 3vw, 40px) clamp(22px, 3.4vw, 48px);
+  }
+
+  .kv-d__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+  }
+
+  .kv-d__admit {
+    padding: 5px 14px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+
+  .kv-d__year {
+    padding: 5px 14px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--pa-blue);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.1;
+  }
+
+  .kv-d__title {
+    width: min(100%, 560px);
+    margin: 0;
+  }
+
+  .kv-d__catch {
+    margin: -4px 0 0;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(16px, 1.7vw, 21px);
+  }
+
+  .kv-d__lineup {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 14px;
+    padding-block: 14px;
+    border-block: var(--k-line) dashed var(--k-hair);
+  }
+
+  .kv-d__label,
+  .kv-d__facts dt {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .kv-d__lineup p {
+    margin: 0;
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(17px, 1.9vw, 24px);
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+
+  .kv-d__lineup a {
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+    background: linear-gradient(var(--ht-yellow), var(--ht-yellow)) 0 88% / 0
+      34% no-repeat;
+    transition: background-size 0.35s var(--k-ease);
+  }
+
+  .kv-d__lineup a:hover {
+    background-size: 100% 34%;
+  }
+
+  .kv-d__lineup i {
+    font-style: normal;
+    color: var(--k-hair);
+    margin-inline: 0.1em;
+  }
+
+  .kv-d__more {
+    margin-left: 0.5em;
+    font-family: var(--k-f-jp);
+    font-size: 0.72em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .kv-d__facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    margin: 0;
+  }
+
+  .kv-d__facts > div {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 12px;
+  }
+
+  .kv-d__facts dd {
+    display: grid;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .kv-d__facts time {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .kv-d__facts time b {
+    margin-right: 6px;
+    font-size: clamp(22px, 2.3vw, 30px);
+    letter-spacing: -0.02em;
+  }
+
+  .kv-d__facts dd > b {
+    font-family: var(--k-f-jp);
+    font-size: 16px;
+  }
+
+  .kv-d__facts dd > span {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ---- stub = the button -------------------------------------------- */
+
+  .kv-d__stub {
+    position: relative;
+    display: grid;
+    align-content: space-between;
+    justify-items: start;
+    gap: 16px;
+    padding: clamp(22px, 3vw, 36px) clamp(20px, 2.6vw, 32px);
+    border-left: var(--k-line) dashed var(--ink);
+    background: var(--ht-yellow);
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+
+  .kv-d__stub:hover,
+  .kv-d__stub:focus-visible {
+    background: var(--ht-green);
+  }
+
+  .kv-d__stub:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: -8px;
+  }
+
+  .kv-d__price {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(96px, 11vw, 150px);
+    line-height: 0.8;
+    letter-spacing: -0.06em;
+  }
+
+  .kv-d__price small {
+    font-size: 0.42em;
+    letter-spacing: 0;
+    margin-right: 0.04em;
+    vertical-align: 0.9em;
+  }
+
+  .kv-d__seats {
+    display: grid;
+    gap: 2px;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .kv-d__go {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 8px 8px 20px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  .kv-d__disc {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    transition: transform 0.45s var(--k-ease);
+  }
+
+  .kv-d__disc :global(svg) {
+    width: 18px;
+  }
+
+  .kv-d__stub:hover .kv-d__disc {
+    transform: rotate(-45deg);
+  }
+
+  /* The punched notches at either end of the perforation: discs centred on
+     the seam's ends, half of each clipped away by the ticket's edge. */
+  .kv-d__hole {
+    position: absolute;
+    left: 0;
+    width: 34px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ground);
+  }
+
+  .kv-d__hole--a {
+    top: 0;
+    translate: -50% -50%;
+  }
+
+  .kv-d__hole--b {
+    bottom: 0;
+    translate: -50% 50%;
+  }
+
+  /* ---- stamp -------------------------------------------------------- */
+
+  .kv-d__stamp {
+    position: absolute;
+    right: calc(var(--stub) - 64px);
+    top: -58px;
+    display: grid;
+    place-items: center;
+    width: 128px;
+    aspect-ratio: 1;
+    margin: 0;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--red);
+    color: var(--surface);
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1.2;
+    text-align: center;
+    rotate: 12deg;
+    z-index: 2;
+  }
+
+  .kv-d__stamp[hidden] {
+    display: none;
+  }
+
+  /* ---- entrance ----------------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) .kv-d [data-kv-in] {
+      opacity: 0;
+    }
+  }
+
+  /* ---- narrow: stub below ------------------------------------------- */
+
+  @media (width < 760px) {
+    .kv-d {
+      min-height: 0;
+      place-items: start center;
+      padding-top: calc(var(--k-header-h) + 44px);
+    }
+
+    .kv-d__head {
+      justify-content: start;
+      gap: 8px;
+    }
+
+    .kv-d__ticket {
+      grid-template-columns: 1fr;
+      rotate: 0deg;
+    }
+
+    .kv-d__body {
+      gap: 14px;
+      padding: 22px 20px 20px;
+    }
+
+    .kv-d__lineup {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .kv-d__label {
+      justify-self: start;
+    }
+
+    .kv-d__facts {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .kv-d__stub {
+      grid-template-columns: auto 1fr;
+      align-items: end;
+      padding: 22px 20px 20px;
+      border-left: 0;
+      border-top: var(--k-line) dashed var(--ink);
+    }
+
+    .kv-d__price {
+      font-size: 88px;
+    }
+
+    .kv-d__go {
+      grid-column: 1 / -1;
+    }
+
+    .kv-d__hole--b {
+      top: 0;
+      bottom: auto;
+      left: auto;
+      right: 0;
+      translate: 50% -50%;
+    }
+
+    .kv-d__stamp {
+      right: -6px;
+      top: -40px;
+      width: 96px;
+      font-size: 15px;
+    }
+  }
+</style>

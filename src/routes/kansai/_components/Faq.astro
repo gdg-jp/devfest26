@@ -1,0 +1,175 @@
+---
+import Panel from "./Panel.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, FAQ, localized } from "../_content";
+
+/**
+ * The doubts that stop someone registering, answered before they have to ask.
+ * `<details>` so it works with no script at all; `_scripts/faq.ts` only adds
+ * the height animation. The safety policy sits beside it — it is the answer to
+ * the one question people do not ask out loud.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+---
+
+<section class="k-sec k-sec--panel k-faq" id="faq" aria-labelledby="k-faq-h">
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title={c.faqHeading}
+      id="k-faq-h"
+      tone="var(--red)"
+      stickers={["slash", "chevron"]}
+    >
+      <div class="k-faq__list" data-k-stagger>
+        {
+          FAQ.map((item) => (
+            <details class="k-faq__item" data-k-faq data-k-reveal="up">
+              <summary>
+                <span>{localized(item.q, lang)}</span>
+                <i aria-hidden="true" />
+              </summary>
+              <div class="k-faq__a" data-k-faq-body>
+                <p>{localized(item.a, lang)}</p>
+              </div>
+            </details>
+          ))
+        }
+      </div>
+
+      <aside class="k-coc" id="coc" data-k-reveal="up">
+        <h3>{c.cocHeading}</h3>
+        <p>{c.cocLede}</p>
+        <div class="k-coc__links">
+          <a
+            href={site.links.cocJa}
+            target="_blank"
+            rel="noopener"
+            class="k-link"
+          >
+            {c.cocJa} ↗
+          </a>
+          <a
+            href={site.links.cocEn}
+            target="_blank"
+            rel="noopener"
+            class="k-link"
+          >
+            {c.cocEn} ↗
+          </a>
+        </div>
+      </aside>
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .k-faq__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .k-faq__item {
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-md);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .k-faq__item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 18px 24px;
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(16px, 1.4vw, 18px);
+    line-height: 1.5;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .k-faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .k-faq__item summary i {
+    position: relative;
+    display: block;
+    flex: none;
+    width: 32px;
+    aspect-ratio: 1;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ground);
+    transition:
+      transform 0.45s var(--k-ease),
+      background 0.3s;
+  }
+
+  .k-faq__item summary i::before,
+  .k-faq__item summary i::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 2.4px;
+    border-radius: 2px;
+    background: var(--ink);
+    translate: -50% -50%;
+  }
+
+  .k-faq__item summary i::after {
+    rotate: 90deg;
+  }
+
+  .k-faq__item[open] summary i {
+    transform: rotate(135deg);
+    background: var(--ht-yellow);
+  }
+
+  .k-faq__a {
+    padding: 0 24px 22px;
+    color: var(--ink);
+    line-height: 1.9;
+  }
+
+  .k-faq__a p {
+    margin: 0;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--k-hair);
+  }
+
+  .k-coc {
+    margin-top: 28px;
+    padding: 24px 26px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-md);
+    background: var(--pa-blue);
+  }
+
+  .k-coc h3 {
+    font-size: 19px;
+    margin-bottom: 8px;
+  }
+
+  .k-coc p {
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  .k-coc__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-size: 14px;
+  }
+</style>

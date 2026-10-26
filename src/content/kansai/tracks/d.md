@@ -1,7 +1,7 @@
 ---
 order: 4
 label: "Track D"
-sub: "トーク・ハンズオン"
+sub: "ハンズオン・ワークショップ"
 color: "var(--red)"
 textColor: "var(--red)"
 ---

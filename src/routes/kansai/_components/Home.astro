@@ -1,0 +1,76 @@
+---
+import Shell from "../_layout/Shell.astro";
+import Hero from "./Hero.astro";
+import KvBento from "./kv/KvBento.astro";
+import KvLineup from "./kv/KvLineup.astro";
+import KvPoster from "./kv/KvPoster.astro";
+import KvTicket from "./kv/KvTicket.astro";
+import Featured from "./Featured.astro";
+import News from "./News.astro";
+import PreEvent from "./PreEvent.astro";
+import Timetable from "./Timetable.astro";
+import Speakers from "./Speakers.astro";
+import Sponsors from "./Sponsors.astro";
+import Faq from "./Faq.astro";
+import StickyCta from "./StickyCta.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { homeData, type KvName } from "../_data";
+
+/**
+ * Kansai's home page: the key visual, the headliners, then the programme
+ * from the top down. The register button is in the header throughout and
+ * follows the reader down the page once the key visual's own has gone.
+ *
+ * The key visual is swappable while the proposals are compared — `current`
+ * is the one in production, `a`–`d` are the candidates; see
+ * `src/routes/kansai/kv/[variant].astro`.
+ */
+interface Props {
+  site: ResolvedTenant;
+  kv?: KvName;
+}
+
+const { site, kv = "current" } = Astro.props;
+const { featured, featuredSessions, speakers, counts } = await homeData(
+  site.tenant,
+);
+---
+
+<Shell site={site} splash={kv === "current"} docked={kv === "current"}>
+  {kv === "current" && <Hero site={site} slot="hero" />}
+  {kv === "a" && <KvBento site={site} />}
+  {
+    kv === "b" && (
+      <KvLineup site={site} featured={featured} total={counts.speakers} />
+    )
+  }
+  {kv === "c" && <KvPoster site={site} />}
+  {
+    kv === "d" && (
+      <KvTicket site={site} featured={featured} total={counts.speakers} />
+    )
+  }
+  <Featured featured={featured} />
+  <News />
+  <PreEvent tenant={site.tenant} />
+  {
+    /*
+      The session and speaker pages link back to `#sessions`, a list this page
+      no longer has — every session is reached from the timetable, so the
+      anchor lands there.
+    */
+  }
+  <span id="sessions" class="k-anchor" aria-hidden="true"></span>
+  <Timetable site={site} featured={featuredSessions} />
+  <Speakers speakers={speakers} />
+  <Sponsors site={site} />
+  <Faq site={site} />
+  <StickyCta site={site} slot="after" />
+</Shell>
+
+<style>
+  .k-anchor {
+    display: block;
+    scroll-margin-top: var(--k-header-h);
+  }
+</style>

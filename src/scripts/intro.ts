@@ -24,6 +24,10 @@ function showHero(items: HTMLElement[], startDelay: number) {
  * design — the page is already moving by the time it is uncovered.
  */
 export function initIntro() {
+  // A city page that plays its own splash owns `.is-loading` from here on —
+  // see `src/routes/kansai/_scripts/splash.ts`.
+  if (document.querySelector("[data-k-splash]")) return;
+
   const root = document.documentElement;
   const items = heroItems();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;

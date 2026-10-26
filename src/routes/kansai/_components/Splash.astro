@@ -1,0 +1,159 @@
+---
+import Crossing from "./Crossing.astro";
+import Wordmark from "./Wordmark.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * The first thing a first-time visitor sees, for about two seconds: the four
+ * fields fly in from the edges of the screen and cross, the name opens out
+ * beneath them, and the whole thing opens out into the hero.
+ *
+ * Shown only when `<html>` carries `.is-loading` — set before first paint by
+ * Base.astro, for a first visit with motion allowed — and kept up by the
+ * script's own `.k-splashing` once it takes over, so that Base's three-second
+ * safety net cannot cut it off halfway. Any click or key skips it.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const c = copy(currentLanguage());
+const { event } = site;
+const date = event.isoDate.replaceAll("-", ".");
+---
+
+<div
+  class="k-splash on-dark"
+  data-k-splash
+  role="presentation"
+  aria-hidden="true"
+>
+  <div class="k-splash__stage">
+    <Crossing labels={c.disciplines} mode="splash" class="k-splash__x" />
+  </div>
+
+  <div class="k-splash__type">
+    <Wordmark class="k-splash__logo" label="" />
+    <p class="k-splash__line" data-k-splash-line>
+      <span class="k-splash__date"
+        >{date} {event.dayOfWeekEn.toUpperCase()}</span
+      >
+    </p>
+  </div>
+
+  <div class="k-splash__foot">
+    <span class="k-splash__count" data-k-splash-count>000</span>
+    <button type="button" class="k-splash__skip" data-k-splash-skip>
+      {c.skipSplash}
+    </button>
+  </div>
+</div>
+
+<style>
+  .k-splash {
+    display: none;
+  }
+
+  :global(html.is-loading) .k-splash,
+  :global(html.k-splashing) .k-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    justify-items: center;
+    align-items: center;
+    padding: clamp(20px, 4vw, 40px);
+    background: var(--ink);
+    color: var(--surface);
+    overflow: hidden;
+    clip-path: circle(150% at 50% 50%);
+    will-change: clip-path;
+  }
+
+  :global(html.k-splashing) body,
+  :global(html.is-loading) body {
+    overflow: hidden;
+  }
+
+  .k-splash__stage {
+    display: grid;
+    place-items: center;
+    align-self: end;
+  }
+
+  .k-splash :global(.k-splash__x) {
+    --size: min(52vmin, 440px);
+  }
+
+  .k-splash__type {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    margin-top: clamp(20px, 4vh, 44px);
+    align-self: start;
+  }
+
+  .k-splash :global(.k-splash__logo) {
+    width: min(80vw, 460px);
+  }
+
+  .k-splash__line {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    margin: 0;
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(20px, 3vw, 28px);
+    letter-spacing: -0.01em;
+  }
+
+  .k-splash__date {
+    font-family: var(--f-mono);
+    font-size: 0.64em;
+    letter-spacing: 0.14em;
+    color: var(--k-on-dark-muted);
+  }
+
+  .k-splash__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-family: var(--f-mono);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+
+  .k-splash__count {
+    color: var(--k-on-dark-muted);
+  }
+
+  .k-splash__skip {
+    appearance: none;
+    padding: 8px 18px;
+    border: 1.5px solid var(--k-on-dark-hair);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--surface);
+    font: inherit;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .k-splash__skip:hover {
+    border-color: var(--surface);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.is-loading) .k-splash,
+    :global(html.k-splashing) .k-splash {
+      display: none;
+    }
+  }
+</style>

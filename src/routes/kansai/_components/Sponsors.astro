@@ -1,0 +1,203 @@
+---
+import Panel from "./Panel.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { byTenant } from "../../../data/collections";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, localized, SPONSORS } from "../_content";
+
+/**
+ * Who makes the day possible: sponsors in neutral, labelled frames — their
+ * marks are theirs and are not recoloured — and the communities co-hosting.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const partners = (await byTenant("partners", site.tenant)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<section
+  class="k-sec k-sec--panel k-sponsors"
+  id="sponsors"
+  aria-labelledby="k-sponsors-h"
+>
+  <div class="k-wrap k-wrap--panel">
+    <Panel
+      title="Sponsors"
+      id="k-sponsors-h"
+      tone="var(--ht-blue)"
+      stickers={["scallop", "multiply"]}
+    >
+      {
+        SPONSORS.length > 0 && (
+          <ul class="k-spons" data-k-stagger>
+            {SPONSORS.map((s) => (
+              <li data-k-reveal="pop">
+                <a
+                  class="k-spons__card"
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {s.note && (
+                    <span class="k-spons__note">{localized(s.note, lang)}</span>
+                  )}
+                  <img
+                    src={s.logo}
+                    alt={s.name}
+                    width={s.width}
+                    height={s.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span class="k-spons__name">{s.name}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      {
+        partners.length > 0 && (
+          <>
+            <h3 class="k-partners__h" data-k-reveal="up">
+              {c.partnersHeading}
+            </h3>
+            <ul class="k-partners" data-k-stagger>
+              {partners.map(({ data }) => (
+                <li
+                  class="k-partners__card"
+                  style={`--rail:var(--${data.rail})`}
+                  data-k-reveal="up"
+                >
+                  <a href={data.url} target="_blank" rel="noopener">
+                    <span class="k-partners__name">{data.name}</span>
+                    <span class="k-partners__handle">{data.handle}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .k-spons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-spons__card {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: 14px;
+    min-height: 220px;
+    padding: 36px 28px 20px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: var(--k-r-lg);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      transform 0.4s var(--k-ease),
+      box-shadow 0.4s var(--k-ease);
+  }
+
+  .k-spons__card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+
+  .k-spons__card img {
+    max-width: 78%;
+    max-height: 110px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .k-spons__name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .k-spons__note {
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    padding: 2px 12px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ht-yellow);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 12.5px;
+  }
+
+  .k-partners__h {
+    margin: clamp(56px, 7vw, 96px) 0 20px;
+    font-size: clamp(20px, 2.2vw, 26px);
+  }
+
+  .k-partners {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-partners__card a {
+    display: grid;
+    gap: 2px;
+    height: 100%;
+    padding: 16px 20px;
+    border: var(--k-line) solid var(--ink);
+    border-left-width: 10px;
+    border-left-color: var(--rail);
+    border-radius: var(--k-r-md);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 0.4s var(--k-ease);
+  }
+
+  .k-partners__card a:hover {
+    transform: translateY(-3px);
+  }
+
+  .k-partners__name {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: 17px;
+  }
+
+  .k-partners__handle {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  @media (width < 560px) {
+    .k-partners {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

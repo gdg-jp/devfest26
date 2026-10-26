@@ -20,10 +20,27 @@ import { currentLanguage } from "../i18n/language";
 
 interface Props {
   site: ResolvedTenant;
+  /**
+   * Session slugs to badge as highlights on the grid. Optional, and a city
+   * that names none gets the grid exactly as before.
+   */
+  featured?: readonly string[];
+  /** The badge's text, in the city's own words. */
+  featuredLabel?: string;
 }
 
-const { site } = Astro.props;
+const { site, featured = [], featuredLabel = "Pick" } = Astro.props;
 const t = messages(currentLanguage());
+const isFeatured = (key: string) =>
+  featured.some((slug) => key === `session:${slug}`);
+
+/*
+  A city may hand over a layout of its own for phones in the `mobile` slot —
+  the day as one track at a time, say, instead of four columns scrolled
+  sideways. When it does, the grid gives way to it below the breakpoint; the
+  section, its heading and its anchor stay the same either way.
+*/
+const hasMobile = Astro.slots.has("mobile");
 
 // "3 トラック" is a fact about this city's configuration, not a constant.
 const trackCount = (await getTracks(site.tenant)).filter(
@@ -93,7 +110,10 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
     {
       timetable && (
-        <div class="tt-frame" data-reveal="up">
+        <div
+          class:list={["tt-frame", { "has-mobile": hasMobile }]}
+          data-reveal="up"
+        >
           <div class="tt-scroll head" data-tt-head>
             <div
               class="tt-hd"
@@ -161,6 +181,9 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
                     href={cell.href}
                     style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
                   >
+                    {isFeatured(cell.key) && (
+                      <span class="pick">{featuredLabel}</span>
+                    )}
                     <b>{cell.label}</b>
                     {cell.note && <span class="note">{cell.note}</span>}
                     <div class="foot">
@@ -196,6 +219,14 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
               })}
             </div>
           </div>
+        </div>
+      )
+    }
+
+    {
+      timetable && hasMobile && (
+        <div class="tt-mobile">
+          <slot name="mobile" />
         </div>
       )
     }
@@ -292,6 +323,22 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
   .tt-scroll {
     overflow-x: auto;
+  }
+
+  /* A city's own phone layout, from the `mobile` slot, takes the grid's place
+     below the width where four columns stop fitting side by side. */
+  .tt-mobile {
+    display: none;
+  }
+
+  @media (width <= 720px) {
+    .tt-frame.has-mobile {
+      display: none;
+    }
+
+    .tt-mobile {
+      display: block;
+    }
   }
 
   /* The head row is a scroller of its own rather than a copy laid over the
@@ -533,6 +580,21 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
     font-family: var(--f-display);
     font-size: 13px;
     line-height: 1.3;
+  }
+
+  /* A highlight the city picked. The theme colour on its own, the one solid
+     fill on a grid of pastels, so it is found before it is read. */
+  .tt-cell .pick {
+    align-self: flex-start;
+    padding: 1px 8px;
+    border: 1.5px solid var(--stroke);
+    border-radius: 999px;
+    background: var(--t);
+    color: var(--t-on);
+    font-family: var(--f-display);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.5;
   }
 
   /* A fixture's aside, where a session has names. */

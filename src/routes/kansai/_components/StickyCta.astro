@@ -1,0 +1,99 @@
+---
+import Arrow from "./Arrow.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * The register button, following the reader down the page once the hero's
+ * own has scrolled away — and stepping aside wherever another one is already
+ * on screen (the tickets and the closing call). `_scripts/sticky.ts`.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const { event } = site;
+const date = `${event.dateShort}${lang === "ja" ? `（${event.dayOfWeek}）` : ` ${event.dayOfWeek}`}`;
+---
+
+<div class="k-sticky" data-k-sticky>
+  <p class="k-sticky__note">
+    <b>DevFest Kansai</b>
+    <span>{c.stickyNote(date)}</span>
+  </p>
+  <a
+    class="k-btn k-btn--light k-sticky__btn"
+    href={site.links.register}
+    target="_blank"
+    rel="noopener"
+    data-analytics="register_click"
+    data-placement="sticky"
+  >
+    {c.registerShort}
+    <span class="k-btn__disc"><Arrow /></span>
+  </a>
+</div>
+
+<style>
+  .k-sticky {
+    position: fixed;
+    z-index: 60;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: min(calc(100% - 24px), 520px);
+    padding: 8px 8px 8px 22px;
+    border: var(--k-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    translate: -50% calc(100% + 40px);
+    transition: translate 0.6s var(--k-ease);
+  }
+
+  .k-sticky.is-shown {
+    translate: -50% 0;
+  }
+
+  .k-sticky__note {
+    display: grid;
+    margin: 0;
+    line-height: 1.35;
+    min-width: 0;
+  }
+
+  .k-sticky__note b {
+    font-family: var(--k-f-display);
+    font-size: 15px;
+  }
+
+  .k-sticky__note span {
+    font-size: 12.5px;
+    color: var(--k-on-dark-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .k-sticky__btn {
+    margin-left: auto;
+    min-height: 50px;
+  }
+
+  .k-sticky__btn :global(.k-btn__disc),
+  .k-sticky__btn::before {
+    width: 36px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .k-sticky {
+      transition: none;
+    }
+  }
+</style>

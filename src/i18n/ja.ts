@@ -188,7 +188,9 @@ export const ja = {
   },
 
   sessionCard: {
-    pendingAbstract: "セッション概要は調整中です。",
+    /* "Coming soon" rather than "being finalized": the same fact, said as
+       something to come back for instead of as something unfinished. */
+    pendingAbstract: "セッション概要は近日公開予定です。",
   },
 
   detail: {
@@ -200,6 +202,9 @@ export const ja = {
     metaFallback: (title: string, names: string) => `${title}／登壇：${names}`,
     speakerMetaFallback: (name: string, role: string, siteTitle: string) =>
       `${name}（${role}）が ${siteTitle} に登壇します。`,
+    registerSession: "このセッションを聴きに行く（参加登録）",
+    registerSpeaker: "この登壇を聴きに行く（参加登録）",
+    registerNote: (fee: string) => `参加費：${fee}`,
   },
 
   portal: {

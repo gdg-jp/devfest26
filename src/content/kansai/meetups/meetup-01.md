@@ -2,7 +2,7 @@
 no: 1
 title: "AIどう使ってる？LT会 in 大阪"
 subtitle: "〜疑問と経験を共有しよう〜"
-status: open
+status: done
 date: 2026-08-28
 doorsAt: "18:30"
 startsAt: "19:00"

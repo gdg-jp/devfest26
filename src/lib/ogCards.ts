@@ -62,9 +62,11 @@ export const ogCards: AstroIntegration = {
   name: "devfest:og-cards",
   hooks: {
     "astro:config:setup": ({ command, logger, updateConfig }) => {
-      chrome = command === "build" && !previewMode ? findChrome() : undefined;
+      const enabled =
+        command === "build" && !previewMode && !process.env.OG_EXPORT;
+      chrome = enabled ? findChrome() : undefined;
 
-      if (command === "build" && !previewMode && !chrome) {
+      if (enabled && !chrome) {
         const message =
           "Chrome was not found, so this build makes no OG cards and its " +
           "pages carry no og:image. Set CHROME_PATH to the executable.";

@@ -1,0 +1,180 @@
+---
+import Wordmark from "./Wordmark.astro";
+import Logo from "../../../components/Logo.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { isHome, tenantHome } from "../../../lib/url";
+import { photoCredits } from "../../../lib/photos";
+import {
+  alternatePath,
+  currentAlternateLanguage,
+  currentLanguage,
+  LANGUAGE_NAMES,
+} from "../../../i18n/language";
+import { copy, SOCIAL } from "../_content";
+
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
+const credits = await photoCredits(site.tenant);
+const year = new Date().getFullYear();
+
+const switchTo = currentAlternateLanguage();
+const switchHref = alternatePath(Astro.url.pathname);
+
+const follow = [
+  { label: "X", href: SOCIAL.x },
+  { label: "Instagram", href: SOCIAL.instagram },
+  { label: "connpass", href: site.links.connpass },
+  ...(site.links.luma ? [{ label: "Luma", href: site.links.luma }] : []),
+  { label: "GDG Community", href: site.links.community },
+];
+---
+
+<footer class="k-footer k-dark on-dark">
+  <div class="k-wrap">
+    <Wordmark class="k-footer__wm" label="" />
+
+    <div class="k-footer__grid">
+      <div class="k-footer__about">
+        <Logo variant="primary" class="k-footer__logo" />
+        <p class="k-footer__tag">{SOCIAL.hashtag}</p>
+      </div>
+
+      <nav aria-label="Footer">
+        <ul class="k-footer__nav">
+          {
+            site.footerNav.map((item) => (
+              <li>
+                <a href={`${prefix}${item.href}`}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div>
+        <p class="k-footer__label">{c.footerFollow}</p>
+        <ul class="k-footer__nav">
+          {
+            follow.map((item) => (
+              <li>
+                <a href={item.href} target="_blank" rel="noopener">
+                  {item.label} ↗
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="k-footer__base">
+      <p>© {year} {site.event.host}</p>
+      {credits.length > 0 && <p>Photo: {credits.join(", ")}</p>}
+      <a href={switchHref} hreflang={switchTo}>{LANGUAGE_NAMES[switchTo]}</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .k-footer {
+    padding: clamp(64px, 9vw, 120px) 0 32px;
+    border-top: var(--k-line) solid var(--ink);
+    overflow: clip;
+  }
+
+  .k-footer :global(.k-footer__wm) {
+    margin: 0 0 clamp(48px, 6vw, 72px);
+  }
+
+  .k-footer__grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 48px;
+    border-bottom: 1.5px solid var(--k-on-dark-hair);
+  }
+
+  .k-footer :global(.k-footer__logo) {
+    width: 200px;
+    height: auto;
+    margin-bottom: 18px;
+  }
+
+  .k-footer__about p {
+    max-width: 30em;
+    font-size: 14px;
+    color: var(--k-on-dark-muted);
+  }
+
+  .k-footer__tag {
+    font-family: var(--f-mono);
+    font-weight: 700;
+    color: var(--ht-yellow) !important;
+  }
+
+  .k-footer__label {
+    margin: 0 0 10px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--k-on-dark-muted);
+  }
+
+  .k-footer__nav {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-footer__nav a,
+  .k-footer__base a {
+    color: var(--surface);
+    font-weight: 500;
+    font-size: 14.5px;
+    text-decoration: none;
+  }
+
+  .k-footer__nav a:hover,
+  .k-footer__base a:hover {
+    text-decoration: underline;
+  }
+
+  .k-footer__base {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    align-items: center;
+    padding-top: 24px;
+    font-size: 12.5px;
+    color: var(--k-on-dark-muted);
+  }
+
+  .k-footer__base p {
+    margin: 0;
+  }
+
+  .k-footer__base a {
+    margin-left: auto;
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+  }
+
+  @media (width < 800px) {
+    .k-footer__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .k-footer__about {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

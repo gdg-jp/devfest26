@@ -2,15 +2,49 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--port",
+        "4321"
+      ],
+      "port": 4321
+    },
+    {
+      "name": "dev-4322",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--port",
+        "4322"
+      ],
+      "port": 4322
+    },
+    {
       "name": "preview",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["run", "preview:dev", "--port", "4321"],
+      "runtimeArgs": [
+        "run",
+        "preview:dev",
+        "--port",
+        "4321"
+      ],
       "port": 4321
     },
     {
       "name": "studio",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--dir", "studio", "run", "dev", "--port", "3333"],
+      "runtimeArgs": [
+        "--dir",
+        "studio",
+        "run",
+        "dev",
+        "--port",
+        "3333"
+      ],
       "port": 3333
     },
     {

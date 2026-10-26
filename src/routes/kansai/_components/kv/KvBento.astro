@@ -1,0 +1,506 @@
+---
+import Wordmark from "../Wordmark.astro";
+import Arrow from "../Arrow.astro";
+import Glyph from "./Glyph.astro";
+import gdgMark from "../../../../assets/brand/gdg.svg?raw";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { CAPACITY, copy } from "../../_content";
+
+/**
+ * Key visual A — "Save the date", in the DF26 social GIFs' own grammar: one
+ * big keylined panel with a corner bitten out of it, the date typed into it,
+ * and the small things — the year pill, three dots, an asterisk — sitting in
+ * the bite. Everything a visitor needs to decide is on this one panel.
+ *
+ * The panel's outline is drawn by `_scripts/kv.ts` to fit the bite, which is
+ * whatever size `[data-kv-cut]` lays out at; until then (or without script)
+ * it is a plain rounded box.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { event, links } = site;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const [year, month, day] = event.isoDate.split("-");
+const md = `${Number(month)}.${Number(day)}`;
+---
+
+<section class="kv-a" data-k-hero data-kv="a" aria-labelledby="kv-a-title">
+  <div class="kv-a__stage">
+    <div class="kv-a__top">
+      <h1 class="kv-a__title" id="kv-a-title" data-kv-in="pop">
+        <span class="visually-hidden">{site.title}</span>
+        <Wordmark class="kv-a__wm" label="" />
+      </h1>
+      <span class="kv-a__gdg" data-kv-in="pop" set:html={gdgMark} />
+    </div>
+
+    <div class="kv-a__panel" data-kv-notch data-kv-in="panel">
+      <svg class="kv-a__shape" aria-hidden="true" data-kv-shape>
+        <path></path>
+      </svg>
+
+      <p class="kv-a__date">
+        <time datetime={event.startsAt}>
+          <span class="kv-a__md" data-kv-type
+            >{[...md].map((ch) => <i>{ch}</i>)}</span
+          >
+          <span class="kv-a__dow" data-kv-in="up">{event.dayOfWeekEn}</span>
+        </time>
+        <span class="kv-a__hours" data-kv-in="up"
+          >{event.hours.replace(" – ", "–")}</span
+        >
+      </p>
+
+      <div class="kv-a__cut" data-kv-cut aria-hidden="true">
+        <span class="kv-a__year" data-kv-in="pop">{year}</span>
+        <span class="kv-a__dots">
+          <i data-kv-in="pop"></i><i data-kv-in="pop"></i><i data-kv-in="pop"
+          ></i>
+        </span>
+        <span class="kv-a__ast" data-kv-in="spin"
+          ><Glyph name="asterisk" /></span
+        >
+      </div>
+
+      <div class="kv-a__row">
+        <p class="kv-a__catch" data-kv-in="up">
+          <span>{c.catchLead}<em>{c.catchMark}</em>{c.catchTail}</span>
+          <span class="kv-a__kicker">{c.kicker}</span>
+        </p>
+        <p class="kv-a__venue" data-kv-in="up">
+          <Glyph name="globe" class="kv-a__globe" />
+          <span>
+            <b>{event.venue.name}</b>
+            <small>{c.venueArea}</small>
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="kv-a__foot">
+      <ul class="kv-a__tags">
+        <li class="kv-a__tag kv-a__tag--free" data-kv-in="pop">{c.kvFree}</li>
+        <li class="kv-a__tag" data-kv-in="pop">
+          {c.kvOnsite(CAPACITY.onsite)}
+        </li>
+        <li class="kv-a__tag" data-kv-in="pop">{c.kvOnline}</li>
+      </ul>
+      <span class="kv-a__arrow" data-kv-in="slide"><Glyph name="arrow" /></span>
+      <a
+        class="k-btn k-btn--lg kv-a__cta"
+        href={links.register}
+        target="_blank"
+        rel="noopener"
+        data-analytics="register_click"
+        data-placement="hero"
+        data-k-magnet
+        data-kv-in="pop"
+      >
+        {c.register}
+        <span class="k-btn__disc"><Arrow /></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .kv-a {
+    --line: var(--k-line);
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: min(100svh, 1000px);
+    padding: calc(var(--k-header-h) + clamp(20px, 4vh, 48px)) var(--k-gutter)
+      clamp(32px, 6vh, 64px);
+    background: var(--ground);
+    overflow: clip;
+  }
+
+  .kv-a__stage {
+    display: grid;
+    gap: clamp(16px, 2.4vh, 26px);
+    width: min(100%, 1080px);
+  }
+
+  /* ---- name --------------------------------------------------------- */
+
+  .kv-a__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .kv-a__title {
+    width: min(100%, 640px);
+    margin: 0;
+  }
+
+  .kv-a__gdg {
+    flex: none;
+    width: clamp(52px, 6vw, 76px);
+  }
+
+  .kv-a__gdg :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ---- the panel ---------------------------------------------------- */
+
+  .kv-a__panel {
+    --cut-w: clamp(150px, 30%, 330px);
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 1fr var(--cut-w);
+    grid-template-areas:
+      "date cut"
+      "row  row";
+    padding: 0;
+  }
+
+  /* Before the outline is drawn to fit the bite — and if it never is — a
+     plain box keeps the panel legible. */
+  .kv-a__panel:not(:global(.is-shaped)) {
+    border: var(--line) solid var(--ink);
+    border-radius: var(--k-r-xl);
+    background: var(--surface);
+  }
+
+  .kv-a__shape {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .kv-a__shape path {
+    fill: var(--surface);
+    stroke: var(--ink);
+    stroke-width: var(--line);
+    stroke-linejoin: round;
+  }
+
+  .kv-a__date {
+    grid-area: date;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: end;
+    column-gap: clamp(10px, 1.6vw, 20px);
+    margin: 0;
+    padding: clamp(18px, 3vw, 36px) clamp(20px, 3.4vw, 44px) 0;
+  }
+
+  .kv-a__date time {
+    display: contents;
+  }
+
+  .kv-a__md {
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(84px, 14vw, 196px);
+    line-height: 0.86;
+    letter-spacing: -0.055em;
+    white-space: nowrap;
+  }
+
+  .kv-a__md :global(i) {
+    font-style: normal;
+  }
+
+  .kv-a__dow {
+    align-self: end;
+    justify-self: start;
+    margin-bottom: 0.35em;
+    padding: 0.18em 0.7em;
+    border: var(--line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--pa-blue);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(16px, 1.9vw, 26px);
+    line-height: 1.1;
+  }
+
+  .kv-a__hours {
+    grid-column: 1 / -1;
+    margin-top: clamp(8px, 1.2vw, 14px);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(22px, 2.8vw, 38px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* The bite: on the ground, outside the panel's outline. */
+  .kv-a__cut {
+    grid-area: cut;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    align-content: start;
+    justify-content: end;
+    gap: 12px 16px;
+    padding: 0 0 clamp(20px, 2.6vw, 30px) clamp(20px, 2.6vw, 30px);
+  }
+
+  .kv-a__year {
+    align-self: start;
+    padding: 0.28em 0.9em;
+    border: var(--line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--blue);
+    color: var(--surface);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(18px, 2vw, 26px);
+    line-height: 1;
+  }
+
+  .kv-a__dots {
+    grid-row: span 2;
+    display: grid;
+    gap: 8px;
+  }
+
+  .kv-a__dots i {
+    display: block;
+    width: clamp(30px, 3.4vw, 46px);
+    aspect-ratio: 1;
+    border: var(--line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--pa-green);
+  }
+
+  .kv-a__ast {
+    justify-self: center;
+    width: clamp(44px, 5vw, 70px);
+    color: var(--ink);
+  }
+
+  .kv-a__ast :global(svg) {
+    width: 100%;
+    animation: kv-a-turn 24s linear infinite;
+  }
+
+  @keyframes kv-a-turn {
+    to {
+      rotate: 1turn;
+    }
+  }
+
+  .kv-a__row {
+    grid-area: row;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 18px 32px;
+    padding: clamp(18px, 2.6vw, 30px) clamp(20px, 3.4vw, 44px)
+      clamp(20px, 3vw, 36px);
+  }
+
+  .kv-a__catch {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: clamp(19px, 2.2vw, 28px);
+    line-height: 1.35;
+  }
+
+  .kv-a__catch em {
+    font-style: normal;
+    background: linear-gradient(
+      transparent 62%,
+      var(--ht-blue) 62% 92%,
+      transparent 92%
+    );
+  }
+
+  .kv-a__kicker {
+    font-size: 0.56em;
+    color: var(--blue);
+  }
+
+  .kv-a__venue {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .kv-a__venue :global(.kv-a__globe) {
+    flex: none;
+    width: clamp(40px, 4.4vw, 56px);
+  }
+
+  .kv-a__venue span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .kv-a__venue b {
+    font-family: var(--k-f-jp);
+    font-size: clamp(16px, 1.7vw, 20px);
+    line-height: 1.3;
+  }
+
+  .kv-a__venue small {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ---- foot: the terms and the one button --------------------------- */
+
+  .kv-a__foot {
+    display: flex;
+    align-items: center;
+    gap: 16px 20px;
+  }
+
+  .kv-a__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 auto 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .kv-a__tag {
+    padding: 8px 16px;
+    border: var(--line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-family: var(--k-f-jp);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .kv-a__tag--free {
+    background: var(--ht-yellow);
+    font-size: 16px;
+  }
+
+  .kv-a__arrow {
+    flex: none;
+    width: clamp(56px, 6vw, 84px);
+  }
+
+  .kv-a__arrow :global(svg) {
+    width: 100%;
+  }
+
+  /* ---- entrance ----------------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion)) .kv-a [data-kv-in],
+    :global(html.js:not(.no-motion)) .kv-a [data-kv-type] :global(i) {
+      opacity: 0;
+    }
+  }
+
+  /* ---- narrow ------------------------------------------------------- */
+
+  @media (width < 720px) {
+    .kv-a {
+      min-height: 0;
+      place-items: start center;
+    }
+
+    .kv-a__gdg {
+      width: 44px;
+    }
+
+    .kv-a__panel {
+      --cut-w: 92px;
+    }
+
+    .kv-a__date {
+      grid-template-columns: 1fr;
+      row-gap: 10px;
+      padding: 18px 16px 0 20px;
+    }
+
+    .kv-a__md {
+      font-size: clamp(64px, 20vw, 92px);
+    }
+
+    .kv-a__dow {
+      grid-row: 2;
+      margin: 0;
+    }
+
+    .kv-a__hours {
+      grid-row: 3;
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .kv-a__cut {
+      grid-template-columns: auto;
+      justify-items: end;
+      padding: 0 0 16px 14px;
+    }
+
+    .kv-a__year {
+      font-size: 15px;
+    }
+
+    .kv-a__dots {
+      grid-row: auto;
+      grid-auto-flow: column;
+      gap: 5px;
+    }
+
+    .kv-a__dots i {
+      width: 16px;
+    }
+
+    .kv-a__ast {
+      width: 40px;
+    }
+
+    .kv-a__row {
+      padding: 16px 20px 20px;
+    }
+
+    .kv-a__foot {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .kv-a__tag {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .kv-a__tag--free {
+      font-size: 14px;
+    }
+
+    .kv-a__arrow {
+      display: none;
+    }
+
+    .kv-a__cta {
+      justify-content: space-between;
+    }
+  }
+</style>

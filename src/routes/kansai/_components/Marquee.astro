@@ -1,0 +1,114 @@
+---
+import { currentLanguage } from "../../../i18n/language";
+import { copy } from "../_content";
+
+/**
+ * Two bands of subjects that cross like the key visual's arms, running in
+ * opposite directions. Scrolling pushes them faster (`_scripts/marquee.ts`).
+ *
+ * The words are the day's actual subjects, taken from the talk titles, so
+ * even decoration says something true about the programme.
+ */
+const c = copy(currentLanguage());
+const words = c.marquee;
+const half = Math.ceil(words.length / 2);
+const rows = [
+  { words: [...words.slice(half), ...words.slice(0, half)], tone: "blue" },
+  { words, tone: "ink" },
+];
+const dots = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
+---
+
+<div class="k-marquee" aria-hidden="true">
+  {
+    rows.map((row, r) => (
+      <div
+        class:list={["k-marquee__band", `k-marquee__band--${row.tone}`]}
+        data-k-marquee={r === 0 ? "-1" : "1"}
+      >
+        <div class="k-marquee__track" data-k-marquee-track>
+          {[0, 1].map(() => (
+            <ul class="k-marquee__set">
+              {row.words.map((word, i) => (
+                <li>
+                  <span>{word}</span>
+                  <i style={`--c:${dots[(i + r) % 4]}`} />
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .k-marquee {
+    position: relative;
+    height: clamp(150px, 16vw, 230px);
+    margin-block: calc(clamp(56px, 8vh, 96px) * -1) 0;
+    overflow: clip;
+    pointer-events: none;
+  }
+
+  .k-marquee__band {
+    position: absolute;
+    left: -5%;
+    right: -5%;
+    top: 50%;
+    border-block: var(--k-line) solid var(--ink);
+    overflow: clip;
+  }
+
+  .k-marquee__band--blue {
+    background: var(--blue);
+    color: var(--surface);
+    transform: translateY(-50%) rotate(-3.2deg);
+  }
+
+  .k-marquee__band--ink {
+    background: var(--ink);
+    color: var(--surface);
+    transform: translateY(-50%) rotate(2.4deg);
+  }
+
+  .k-marquee__track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+
+  .k-marquee__set {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .k-marquee__set li {
+    display: flex;
+    align-items: center;
+    gap: clamp(18px, 2.4vw, 34px);
+    padding: clamp(10px, 1.2vw, 16px) 0 clamp(10px, 1.2vw, 16px)
+      clamp(18px, 2.4vw, 34px);
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    font-size: clamp(24px, 3.4vw, 48px);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .k-marquee__set i {
+    width: 0.5em;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: var(--k-line) solid var(--ink);
+    background: var(--c);
+  }
+
+  .k-marquee__band--ink .k-marquee__set i {
+    border-color: var(--surface);
+  }
+</style>

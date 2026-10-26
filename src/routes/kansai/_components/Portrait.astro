@@ -1,0 +1,78 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+import { isRemotePhoto } from "../../../lib/photo";
+
+/**
+ * A speaker's photo at whatever size a section wants it, from either source:
+ * a file beside the Markdown (resized here) or a CDN URL (already cropped).
+ * With no photo at all, the initial on a brand colour — never an empty frame.
+ */
+interface Props {
+  speaker: CollectionEntry<"speakers">;
+  /** Largest drawn width in CSS px. The file is fetched at twice that. */
+  size: number;
+  class?: string;
+  eager?: boolean;
+  /** Fill colour behind a missing photo. */
+  tone?: string;
+}
+
+const {
+  speaker,
+  size,
+  class: className,
+  eager = false,
+  tone = "var(--ht-yellow)",
+} = Astro.props;
+const { photo, initial, name } = speaker.data;
+const loading = eager ? "eager" : "lazy";
+const px = Math.round(size * 2);
+---
+
+{
+  photo ? (
+    isRemotePhoto(photo) ? (
+      <img
+        class={className}
+        src={photo.src}
+        alt=""
+        width={photo.width}
+        height={photo.height}
+        loading={loading}
+        decoding="async"
+      />
+    ) : (
+      <Image
+        class={className}
+        src={photo}
+        alt=""
+        width={Math.min(px, photo.width)}
+        height={Math.round(
+          (Math.min(px, photo.width) * photo.height) / photo.width,
+        )}
+        loading={loading}
+        decoding="async"
+      />
+    )
+  ) : (
+    <span
+      class:list={[className, "k-portrait-fallback"]}
+      style={`background:${tone}`}
+      aria-hidden="true"
+    >
+      {initial ?? name.replace(/\s*氏$/, "").slice(0, 1)}
+    </span>
+  )
+}
+
+<style>
+  .k-portrait-fallback {
+    display: grid;
+    place-items: center;
+    font-family: var(--k-f-display);
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 2em;
+  }
+</style>
