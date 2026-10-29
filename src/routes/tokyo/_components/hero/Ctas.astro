@@ -1,0 +1,71 @@
+---
+import Arrow from "../Arrow.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { copy } from "../../_content";
+import type { HeroFacts } from "./facts";
+
+/**
+ * The key visual's two buttons, in the page's own button: register in the
+ * theme red, the sessions in white. Side by side, then stacked full width
+ * for a thumb.
+ */
+interface Props {
+  site: ResolvedTenant;
+  facts: HeroFacts;
+}
+
+const { site, facts } = Astro.props;
+const c = copy(currentLanguage());
+---
+
+<div class="tkh-ctas">
+  <a
+    class="tk-btn tk-btn--lg tkh-ctas__register"
+    href={site.links.register}
+    target="_blank"
+    rel="noopener"
+    data-analytics="register_click"
+    data-placement="hero"
+    data-tk-magnet
+  >
+    {c.register}
+    <span class="tk-btn__disc"><Arrow /></span>
+  </a>
+  <a class="tk-btn tk-btn--lg tk-btn--light" href="#sessions" data-tk-magnet>
+    {facts.text("sessions")}
+    <span class="tk-btn__disc"><Arrow class="tkh-ctas__down" /></span>
+  </a>
+</div>
+
+<style>
+  .tkh-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .tkh-ctas .tkh-ctas__register {
+    --tk-btn-bg: var(--tk-accent);
+    --tk-btn-fg: var(--tk-accent-on);
+    --tk-btn-flood: var(--ink);
+  }
+
+  .tkh-ctas :global(.tkh-ctas__down) {
+    rotate: 90deg;
+  }
+
+  @media (width < 560px) {
+    .tkh-ctas {
+      flex-direction: column;
+      align-items: stretch;
+      width: min(100%, 420px);
+      margin-inline: auto;
+    }
+
+    .tkh-ctas a {
+      justify-content: space-between;
+    }
+  }
+</style>

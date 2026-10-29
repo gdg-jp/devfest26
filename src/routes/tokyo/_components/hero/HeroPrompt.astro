@@ -1,0 +1,642 @@
+---
+import Org from "./Org.astro";
+import Wordmark from "../Wordmark.astro";
+import Icon from "../Icon.astro";
+import Arrow from "../Arrow.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { copy } from "../../_content";
+import { heroFacts } from "./facts";
+
+/**
+ * Key visual B, "Prompt": the theme taken at its word. Vibe coding is asking
+ * an AI for something and watching it appear, so the key visual is a chat:
+ * the visitor's request types itself out, the reply thinks for a moment, then
+ * answers with the event — the lockup, the theme, the day and the place.
+ *
+ * The box at the foot is where the next request would go; its send button is
+ * the register button, and the suggestions above it are the page's sections.
+ * Without script, or with reduced motion, the conversation is simply there.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const f = heroFacts(site, lang);
+const date = `${f.year}.${f.month}.${f.day} (${f.dow}) ${f.start}–${f.end}`;
+---
+
+<section class="tkh-b" aria-labelledby="tkh-b-title" data-tkh-b>
+  <Org facts={f} />
+
+  <div class="tkh-b__field" aria-hidden="true">
+    <svg class="tkh-b__spark" viewBox="0 0 100 100">
+      <path
+        d="M50 4C54 38 62 46 96 50C62 54 54 62 50 96C46 62 38 54 4 50C38 46 46 38 50 4Z"
+      ></path>
+    </svg>
+    <svg class="tkh-b__spark tkh-b__spark--sm" viewBox="0 0 100 100">
+      <path
+        d="M50 4C54 38 62 46 96 50C62 54 54 62 50 96C46 62 38 54 4 50C38 46 46 38 50 4Z"
+      ></path>
+    </svg>
+    <span class="tkh-b__key">⌘ + Enter</span>
+    <span class="tkh-b__key tkh-b__key--2">{"</>"}</span>
+  </div>
+
+  <div class="tkh-b__stage">
+    <div class="tkh-b__win">
+      <div class="tkh-b__bar" aria-hidden="true">
+        <span></span><span></span><span></span>
+        <b>DevFest Tokyo</b>
+      </div>
+
+      <div class="tkh-b__chat">
+        <p class="tkh-b__ask">
+          <span class="visually-hidden">{f.text("prompt")}</span>
+          <span aria-hidden="true" data-tkh-b-ask={f.text("prompt")}
+            >{f.text("prompt")}</span
+          >
+        </p>
+
+        <div class="tkh-b__reply">
+          <span class="tkh-b__avatar" aria-hidden="true">
+            <Icon name="sparkles" />
+          </span>
+          <div class="tkh-b__body">
+            <p class="tkh-b__thinking" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </p>
+            <p class="tkh-b__done" style="--i:0">{f.text("promptDone")}</p>
+            <p class="tkh-b__by" style="--i:1">{f.text("by")}</p>
+            <h1 class="tkh-b__title" id="tkh-b-title" style="--i:2">
+              <span class="visually-hidden">{site.title}</span>
+              <Wordmark class="tkh-b__wm" label="" split />
+            </h1>
+            <p class="tkh-b__tagline" style="--i:3">
+              {f.tagline.lead}<em>{f.tagline.accent}</em>
+            </p>
+            <ul class="tkh-b__facts" style="--i:4">
+              <li>
+                <Icon name="calendar" />
+                <time datetime={f.startsAt}>{date}</time>
+              </li>
+              <li><Icon name="pin" />{f.venue}</li>
+              <li class="tkh-b__walk">
+                <Icon name="train" />{f.station}<b>{f.walk}</b>
+              </li>
+              <li><Icon name="ticket" />{f.fee}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tkh-b__compose">
+        <div class="tkh-b__suggest">
+          <a href="#sessions">{f.text("sessions")}</a>
+          <a href="#overview">{f.text("overview")}</a>
+        </div>
+        <div class="tkh-b__input">
+          <span class="tkh-b__placeholder" aria-hidden="true"
+            >{f.text("promptAsk")}…</span
+          >
+          <a
+            class="tk-btn tkh-b__send"
+            href={site.links.register}
+            target="_blank"
+            rel="noopener"
+            data-analytics="register_click"
+            data-placement="hero"
+          >
+            {c.register}
+            <span class="tk-btn__disc"><Arrow class="tkh-b__up" /></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  /*
+    The request types itself out, the reply thinks, then the answer comes in
+    a part at a time (CSS staggers it on `is-replied`). Holds still for
+    reduced motion.
+  */
+  const root = document.querySelector<HTMLElement>("[data-tkh-b]");
+  const ask = root?.querySelector<HTMLElement>("[data-tkh-b-ask]");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  if (root && ask) {
+    if (reduced) {
+      root.classList.add("is-armed", "is-asked", "is-replied");
+    } else {
+      const text = ask.dataset.tkhBAsk ?? "";
+      ask.textContent = "";
+      root.classList.add("is-armed");
+      (async () => {
+        await wait(500);
+        for (const ch of text) {
+          ask.textContent += ch;
+          await wait(/[、。,.]/.test(ch) ? 180 : 45);
+        }
+        root.classList.add("is-asked");
+        await wait(1100);
+        root.classList.add("is-replied");
+      })();
+    }
+  }
+</script>
+
+<style>
+  .tkh-b {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    min-height: 100svh;
+    overflow: clip;
+  }
+
+  .tkh-b__stage {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    padding: clamp(84px, 12vh, 120px) var(--tk-gutter) clamp(32px, 6vh, 64px);
+  }
+
+  /* ---- the window --------------------------------------------------- */
+
+  .tkh-b__win {
+    position: relative;
+    width: min(100%, 860px);
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    background: var(--surface);
+  }
+
+  /* A second sheet behind, in the theme pink, for depth without a shadow. */
+  .tkh-b__win::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: inherit;
+    background: var(--tk-accent-ht);
+    translate: 14px 14px;
+    rotate: 1.5deg;
+  }
+
+  .tkh-b__bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 20px;
+    border-bottom: var(--tk-line) solid var(--ink);
+  }
+
+  .tkh-b__bar span {
+    width: 13px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--tk-accent);
+  }
+
+  .tkh-b__bar span:nth-child(2) {
+    background: var(--ht-yellow);
+  }
+
+  .tkh-b__bar span:nth-child(3) {
+    background: var(--ht-green);
+  }
+
+  .tkh-b__bar b {
+    margin-inline: auto;
+    padding-right: 54px;
+    font: 500 14px/1 var(--tk-f-display);
+    color: var(--muted, #666);
+  }
+
+  .tkh-b__chat {
+    display: grid;
+    gap: clamp(16px, 2.4vh, 24px);
+    padding: clamp(18px, 3vw, 32px) clamp(18px, 3.4vw, 40px) 8px;
+  }
+
+  /* ---- the request -------------------------------------------------- */
+
+  .tkh-b__ask {
+    justify-self: end;
+    max-width: min(88%, 540px);
+    min-height: 1.5em;
+    margin: 0;
+    padding: 12px 20px;
+    border-radius: 22px 22px 6px 22px;
+    background: var(--ink);
+    color: var(--surface);
+    font: 700 clamp(14px, 1.5vw, 17px) / 1.5 var(--tk-f-jp);
+  }
+
+  /* The caret follows the text while it types. */
+  .tkh-b__ask [data-tkh-b-ask]::after {
+    content: "";
+    display: inline-block;
+    vertical-align: -0.15em;
+    width: 2px;
+    height: 1.1em;
+    margin-left: 2px;
+    background: var(--tk-accent-ht);
+    animation: tkh-b-blink 1s steps(1) infinite;
+  }
+
+  .tkh-b:global(.is-asked) .tkh-b__ask [data-tkh-b-ask]::after {
+    display: none;
+  }
+
+  @keyframes tkh-b-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* ---- the reply ---------------------------------------------------- */
+
+  .tkh-b__reply {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(10px, 1.6vw, 18px);
+    align-items: start;
+  }
+
+  .tkh-b__avatar {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--tk-accent);
+    color: var(--surface);
+  }
+
+  .tkh-b__avatar :global(svg) {
+    width: 22px;
+    height: 22px;
+  }
+
+  .tkh-b__body {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+    padding-top: 8px;
+  }
+
+  .tkh-b__body > p,
+  .tkh-b__title {
+    margin: 0;
+  }
+
+  .tkh-b__thinking {
+    display: none;
+    gap: 6px;
+    padding-top: 6px;
+  }
+
+  .tkh-b__thinking span {
+    width: 9px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--ink);
+    animation: tkh-b-think 1s ease-in-out infinite;
+  }
+
+  .tkh-b__thinking span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .tkh-b__thinking span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
+  @keyframes tkh-b-think {
+    0%,
+    60%,
+    100% {
+      opacity: 0.25;
+    }
+    30% {
+      opacity: 1;
+    }
+  }
+
+  .tkh-b__done {
+    font: 500 14px/1.5 var(--tk-f-jp);
+    color: var(--muted, #666);
+  }
+
+  .tkh-b__body > .tkh-b__by {
+    margin-top: 6px;
+    font: 500 clamp(14px, 1.5vw, 18px) / 1.2 var(--tk-f-display);
+  }
+
+  .tkh-b__title {
+    width: clamp(260px, 52vw, 560px);
+    font-size: inherit;
+  }
+
+  .tkh-b__tagline {
+    font: 800 clamp(20px, 2.6vw, 32px) / 1.3 var(--tk-f-display);
+    letter-spacing: -0.015em;
+  }
+
+  .tkh-b__tagline em {
+    font-style: normal;
+    background: linear-gradient(
+      transparent 60%,
+      var(--tk-accent-ht) 60% 92%,
+      transparent 92%
+    );
+  }
+
+  .tkh-b__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tkh-b__facts li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px 7px 11px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ground);
+    font: 700 clamp(13px, 1.3vw, 15px) / 1.3 var(--tk-f-jp);
+  }
+
+  .tkh-b__facts :global(svg) {
+    flex: none;
+    width: 17px;
+    height: 17px;
+  }
+
+  .tkh-b__walk b {
+    margin-left: 0.3em;
+    background: linear-gradient(
+      transparent 58%,
+      var(--ht-yellow) 58% 92%,
+      transparent 92%
+    );
+  }
+
+  /* ---- the next request --------------------------------------------- */
+
+  .tkh-b__compose {
+    display: grid;
+    gap: 10px;
+    padding: clamp(16px, 2.4vw, 24px) clamp(14px, 2.4vw, 24px)
+      clamp(14px, 2.4vw, 22px);
+  }
+
+  .tkh-b__suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tkh-b__suggest a {
+    padding: 7px 14px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: 700 13px/1.2 var(--tk-f-jp);
+    text-decoration: none;
+    transition:
+      background-color 0.2s,
+      translate 0.3s var(--tk-ease-back);
+  }
+
+  .tkh-b__suggest a:hover {
+    background: var(--tk-accent-pa);
+    translate: 0 -2px;
+  }
+
+  .tkh-b__input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 6px 6px 20px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ground);
+  }
+
+  .tkh-b__placeholder {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted, #666);
+    font: 500 15px/1 var(--tk-f-jp);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tkh-b__input .tkh-b__send {
+    --tk-btn-bg: var(--tk-accent);
+    --tk-btn-fg: var(--tk-accent-on);
+    --tk-btn-flood: var(--ink);
+    flex: none;
+  }
+
+  .tkh-b__send :global(.tkh-b__up) {
+    rotate: -90deg;
+  }
+
+  /* ---- the field ---------------------------------------------------- */
+
+  .tkh-b__field {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .tkh-b__spark {
+    position: absolute;
+    top: 14%;
+    right: max(4%, calc(50% - 560px));
+    width: clamp(48px, 5vw, 76px);
+    overflow: visible;
+  }
+
+  .tkh-b__spark--sm {
+    top: auto;
+    right: auto;
+    bottom: 12%;
+    left: max(4%, calc(50% - 580px));
+    width: clamp(30px, 3vw, 44px);
+  }
+
+  .tkh-b__spark path {
+    fill: var(--tk-accent-ht);
+    stroke: var(--ink);
+    stroke-width: 5;
+    stroke-linejoin: round;
+  }
+
+  .tkh-b__key {
+    position: absolute;
+    top: 34%;
+    left: max(3%, calc(50% - 610px));
+    padding: 8px 14px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 12px;
+    border-bottom-width: 5px;
+    background: var(--surface);
+    font: 700 15px/1 var(--tk-f-display);
+    rotate: -8deg;
+  }
+
+  .tkh-b__key--2 {
+    top: auto;
+    left: auto;
+    bottom: 22%;
+    right: max(3%, calc(50% - 600px));
+    background: var(--ht-yellow);
+    rotate: 7deg;
+  }
+
+  /* ---- the conversation, played --------------------------------------
+     Hidden only once the script has taken it over (`is-armed`), so a page
+     whose script never runs shows the whole thing. */
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js:not(.no-motion))
+      .tkh-b:not(:global(.is-armed))
+      .tkh-b__ask {
+      opacity: 0;
+    }
+
+    :global(html.js:not(.no-motion)) .tkh-b:global(.is-armed) .tkh-b__ask {
+      animation: tkh-b-in 0.5s var(--tk-ease) both;
+    }
+
+    :global(html.js:not(.no-motion)) .tkh-b:global(.is-armed) .tkh-b__reply {
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    :global(html.js:not(.no-motion)) .tkh-b:global(.is-asked) .tkh-b__reply {
+      opacity: 1;
+    }
+
+    .tkh-b:global(.is-asked:not(.is-replied)) .tkh-b__thinking {
+      display: flex;
+    }
+
+    :global(html.js:not(.no-motion))
+      .tkh-b:global(.is-armed:not(.is-replied))
+      .tkh-b__body
+      > [style] {
+      display: none;
+    }
+
+    .tkh-b:global(.is-replied) .tkh-b__body > [style] {
+      animation: tkh-b-in 0.6s var(--tk-ease) both;
+      animation-delay: calc(var(--i) * 0.14s);
+    }
+
+    .tkh-b__spark path {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: tkh-b-twinkle 3.2s var(--tk-ease) infinite;
+    }
+
+    .tkh-b__spark--sm path {
+      animation-delay: -1.6s;
+    }
+  }
+
+  @keyframes tkh-b-in {
+    from {
+      opacity: 0;
+      translate: 0 12px;
+    }
+  }
+
+  @keyframes tkh-b-twinkle {
+    0%,
+    70%,
+    100% {
+      transform: scale(1) rotate(0);
+    }
+    80% {
+      transform: scale(1.18) rotate(20deg);
+    }
+  }
+
+  /* ---- narrow ------------------------------------------------------- */
+
+  /* The keys only where there is room beside the window for them. */
+  @media (width < 1240px) {
+    .tkh-b__key {
+      display: none;
+    }
+  }
+
+  @media (width < 860px) {
+    .tkh-b__spark {
+      top: 9%;
+      width: 40px;
+    }
+
+    .tkh-b__spark--sm {
+      display: none;
+    }
+  }
+
+  @media (width < 560px) {
+    .tkh-b__win::before {
+      translate: 8px 8px;
+    }
+
+    .tkh-b__reply {
+      grid-template-columns: 1fr;
+    }
+
+    .tkh-b__avatar {
+      width: 32px;
+    }
+
+    /* A little short of the column: the braces' keyline overhangs. */
+    .tkh-b__title {
+      width: 94%;
+    }
+
+    .tkh-b__placeholder {
+      display: none;
+    }
+
+    .tkh-b__input {
+      padding: 0;
+      border: 0;
+      background: none;
+    }
+
+    .tkh-b__input .tkh-b__send {
+      flex: 1;
+      justify-content: space-between;
+    }
+  }
+</style>

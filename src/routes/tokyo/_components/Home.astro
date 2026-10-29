@@ -1,7 +1,13 @@
 ---
 import Shell from "../_layout/Shell.astro";
 import Hero from "../../../components/Hero.astro";
+import HeroWave from "./hero/HeroWave.astro";
+import HeroPrompt from "./hero/HeroPrompt.astro";
+import HeroSplit from "./hero/HeroSplit.astro";
+import HeroStation from "./hero/HeroStation.astro";
+import HeroSwitch from "./hero/HeroSwitch.astro";
 import Featured from "./Featured.astro";
+import Theme from "./Theme.astro";
 import Overview from "./Overview.astro";
 import News from "./News.astro";
 import PreEvent from "./PreEvent.astro";
@@ -18,9 +24,12 @@ import { homeData } from "../_data";
  * Tokyo's day is not settled yet (`Sessions`, where Kansai has its timetable). The register button stays in the header,
  * which pins to the top of the screen, all the way down.
  *
- * The key visual is the shared hero, untouched — Tokyo's theme, date and
- * venue are still to be settled. It sits on the plain ground rather than the
- * graph paper the rest of the page is drawn on, so it looks as it always has.
+ * The key visual is one of the candidates in `hero/`, drawn on the same graph
+ * paper as the rest of the page. `HERO` is the one the site ships with. In
+ * development every candidate is on the page and `?hero=<id>` picks which
+ * one shows, with a switch in the corner (a static page cannot read the query
+ * on the server). `shared` is the hero every city started from, on its plain
+ * ground.
  */
 interface Props {
   site: ResolvedTenant;
@@ -28,12 +37,51 @@ interface Props {
 
 const { site } = Astro.props;
 const { featured, speakers } = await homeData(site.tenant);
+
+const HEROES = {
+  a: { label: "Wave", Component: HeroWave },
+  b: { label: "Prompt", Component: HeroPrompt },
+  c: { label: "Split", Component: HeroSplit },
+  d: { label: "Station", Component: HeroStation },
+  shared: { label: "Shared", Component: Hero },
+} as const;
+type HeroId = keyof typeof HEROES;
+const HERO = "c" as HeroId;
+
+const KeyVisual = HEROES[HERO].Component;
+const candidates = Object.entries(HEROES).map(([id, { label, Component }]) => ({
+  id,
+  label,
+  Component,
+}));
 ---
 
 <Shell site={site} docked>
-  <div class="tk-hero" slot="hero" data-tk-hero>
-    <Hero site={site} />
+  <div
+    class:list={["tk-hero", { "tk-hero--plain": HERO === "shared" }]}
+    slot="hero"
+    data-tk-hero
+  >
+    {
+      import.meta.env.DEV ? (
+        <>
+          {candidates.map(({ id, Component }) => (
+            <div
+              class:list={{ "tk-hero--plain": id === "shared" }}
+              data-tk-hero-candidate={id}
+              hidden={id !== HERO}
+            >
+              <Component site={site} />
+            </div>
+          ))}
+          <HeroSwitch options={candidates} current={HERO} />
+        </>
+      ) : (
+        <KeyVisual site={site} />
+      )
+    }
   </div>
+  <Theme site={site} />
   <Overview site={site} />
   <Featured featured={featured} />
   <News />
@@ -47,6 +95,9 @@ const { featured, speakers } = await homeData(site.tenant);
 <style>
   .tk-hero {
     position: relative;
+  }
+
+  .tk-hero--plain {
     background: var(--ground);
   }
 </style>

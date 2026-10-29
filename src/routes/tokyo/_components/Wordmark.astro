@@ -6,21 +6,30 @@
  * set in Google Sans so it takes the city.
  *
  * Sized by its width — the lettering scales with the box it is given.
+ *
+ * With `split`, the braces take the session cards' two reds instead (see
+ * `src/lib/og/render.ts`): pale on the left, the brand red on the right — as
+ * the key visuals draw it.
  */
 interface Props {
   class?: string;
   /** The accessible name. Pass "" where a heading already names the event. */
   label?: string;
+  split?: boolean;
 }
 
-const { class: className, label = "DevFest Tokyo" } = Astro.props;
+const {
+  class: className,
+  label = "DevFest Tokyo",
+  split = false,
+} = Astro.props;
 
 const BRACE =
   "m 0,0 h 20.555 c 7.327,0 13.266,-5.939 13.266,-13.266 V -117.07 c 0,-36.632 29.696,-66.328 66.327,-66.328 h 53.049 c 2.931,0 5.306,2.376 5.306,5.306 v 74.423 c 0,2.93 -2.376,5.306 -5.306,5.306 h -40.719 c -7.326,0 -13.266,5.939 -13.266,13.265 v 258.546 c 0,7.326 5.94,13.266 13.266,13.266 h 40.719 c 2.931,0 5.306,2.375 5.306,5.306 v 74.422 c 0,2.931 -2.376,5.306 -5.306,5.306 h -53.049 c -36.631,0 -66.327,-29.696 -66.327,-66.327 V 101.616 C 33.821,94.29 27.882,88.35 20.555,88.35 H 0 c -2.931,0 -5.306,-2.375 -5.306,-5.306 V 5.306 C -5.306,2.376 -2.931,0 0,0";
 ---
 
 <span
-  class:list={["tk-wm", className]}
+  class:list={["tk-wm", { "tk-wm--split": split }, className]}
   role={label ? "img" : undefined}
   aria-label={label || undefined}
   aria-hidden={label ? undefined : "true"}
@@ -74,6 +83,14 @@ const BRACE =
     fill: var(--tk-accent-ht);
     stroke: var(--ink);
     stroke-width: 9.557;
+  }
+
+  .tk-wm--split [data-tk-wm-brace="l"] path {
+    fill: var(--tk-accent-pa);
+  }
+
+  .tk-wm--split [data-tk-wm-brace="r"] path {
+    fill: var(--tk-accent);
   }
 
   .tk-wm__text {

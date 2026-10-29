@@ -1,0 +1,887 @@
+---
+import Org from "./Org.astro";
+import Ctas from "./Ctas.astro";
+import Wordmark from "../Wordmark.astro";
+import Icon from "../Icon.astro";
+import Level from "../Level.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { getProgram } from "../../../../data/program";
+import { currentLanguage } from "../../../../i18n/language";
+import { CATEGORIES, LANES, type Lane } from "../../_content";
+import { trackTone } from "../track";
+import { heroFacts } from "./facts";
+
+/**
+ * Key visual C, "Split": the theme's two halves, side by side. The screen is
+ * cut on a slant — Meet the Vibes on the left in its lane's pastel, Beyond the
+ * Vibes on the right in its own — and the event sits on top of the cut: the
+ * name, the day and the place first, so the screen says what this is before
+ * it says how it is split. Under them the two halves face each other across
+ * the seam, each with only its name and its categories — what the halves mean
+ * is the overview's job, just below — and the buttons close it, one on each
+ * side of the seam, in the same columns as the halves above them.
+ *
+ * The two names differ only in what is drawn under them: a hand-drawn wave
+ * under Meet's (the loose, friendly half), a dimension line under Beyond's
+ * (the planned one), a dot running along it. The words themselves stay plain
+ * so they read at a glance.
+ *
+ * The margins say who each half is for: on Meet's side the beginner's leaf
+ * (the 若葉マーク of a new driver), a sprout and a one-star "for beginners"
+ * tag; on Beyond's a summit flag, a rocket and a three-star "intermediate &
+ * up" tag.
+ *
+ * On a phone the screen is tall, so the cut turns nearly level: Meet's pink
+ * from the top — the event, then Meet with its level tag — and Beyond's green
+ * from a gently sloping seam to the foot, Beyond and then the two buttons on
+ * it. Both kinds, the name, the day and the place are on the first screen;
+ * on a short one the categories step aside to keep it so.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const f = heroFacts(site, lang);
+
+const program = await getProgram(site.tenant);
+const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
+  const categories = CATEGORIES.filter((c) => c.lane === lane).flatMap((c) => {
+    const group = program.find(({ track }) => track.id === c.track);
+    if (!group) return [];
+    return [
+      {
+        icon: c.icon,
+        id: group.track.id,
+        label: group.track.data.label,
+        tone: trackTone(group.track),
+        linked: group.sessions.length > 0,
+      },
+    ];
+  });
+  const [head, ...rest] = LANES[lane].title.split(" ");
+  return {
+    lane,
+    head,
+    rest: rest.join(" "),
+    fill: categories[0]?.tone.pa ?? "var(--surface)",
+    categories,
+  };
+});
+const [meet, beyond] = lanes;
+
+// The cut, in percent of the width at the top and at the foot.
+const CUT = { top: 54, foot: 46 };
+
+// Meet's underline: a hand-drawn wave, four and a half swells.
+const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9} 26 0`).join(" ")}`;
+---
+
+<section
+  class="tkh-c"
+  aria-labelledby="tkh-c-title"
+  style={`--tkh-c-meet:${meet.fill};--tkh-c-beyond:${beyond.fill}`}
+>
+  <svg
+    class="tkh-c__ground"
+    viewBox="0 0 100 100"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+  >
+    <polygon
+      class="tkh-c__fill--meet"
+      points={`0,0 ${CUT.top},0 ${CUT.foot},100 0,100`}></polygon>
+    <polygon
+      class="tkh-c__fill--beyond"
+      points={`${CUT.top},0 100,0 100,100 ${CUT.foot},100`}></polygon>
+    <line x1={CUT.top} y1="0" x2={CUT.foot} y2="100"></line>
+  </svg>
+  <div class="tkh-c__lines" aria-hidden="true"></div>
+
+  <div class="tkh-c__stickers" aria-hidden="true">
+    <svg class="tkh-c__sticker tkh-c__leaf" viewBox="0 0 60 80">
+      <path class="tkh-c__leaf-l" d="M30 18 4 4v50l26 22Z"></path>
+      <path class="tkh-c__leaf-r" d="m30 18 26-14v50L30 76Z"></path>
+    </svg>
+    <span class="tkh-c__sticker tkh-c__badge tkh-c__badge--sprout">
+      <Icon name="sprout" />
+    </span>
+    <span class="tkh-c__sticker tkh-c__sidetag tkh-c__sidetag--meet">
+      <Level lane="meet" />
+    </span>
+    <span class="tkh-c__sticker tkh-c__badge tkh-c__badge--summit">
+      <Icon name="summit" />
+    </span>
+    <span class="tkh-c__sticker tkh-c__badge tkh-c__badge--rocket">
+      <Icon name="rocket" />
+    </span>
+    <span class="tkh-c__sticker tkh-c__sidetag tkh-c__sidetag--beyond">
+      <Level lane="beyond" />
+    </span>
+  </div>
+
+  <Org facts={f} />
+
+  <header class="tkh-c__head">
+    <p class="tkh-c__by">{f.text("by")}</p>
+    <h1 class="tkh-c__title" id="tkh-c-title">
+      <span class="visually-hidden">{site.title}</span>
+      <Wordmark label="" split />
+    </h1>
+    <dl class="tkh-c__facts">
+      <div>
+        <dt class="visually-hidden">Date</dt>
+        <dd class="tkh-c__when">
+          <time datetime={f.startsAt}>
+            <span class="tkh-c__ymd">{f.year}.{f.month}.{f.day}</span>
+            <span class="tkh-c__dow">({f.dow})</span>
+            <span class="tkh-c__hours">{f.start}–{f.end}</span>
+          </time>
+        </dd>
+      </div>
+      <div>
+        <dt class="visually-hidden">Venue</dt>
+        <dd class="tkh-c__where">
+          <span class="tkh-c__walk"
+            ><Icon name="train" />{f.station}<b>{f.walk}</b></span
+          >
+          <span class="tkh-c__venue">{f.venue}</span>
+        </dd>
+      </div>
+    </dl>
+  </header>
+
+  <div class="tkh-c__lanes">
+    {
+      lanes.map(({ lane, head, rest, categories }) => (
+        <div class:list={["tkh-c__lane", `tkh-c__lane--${lane}`]}>
+          <span class="tkh-c__level">
+            <Level lane={lane} />
+          </span>
+          <p class:list={["tkh-c__name", `tkh-c__name--${lane}`]}>
+            <span class="visually-hidden">{`${head} ${rest}`}</span>
+            {lane === "meet" ? (
+              <span class="tkh-c__set" aria-hidden="true">
+                <span>{head}</span>
+                <span class="tkh-c__rest">
+                  {rest}
+                  <svg
+                    class="tkh-c__wave"
+                    viewBox="0 0 240 20"
+                    preserveAspectRatio="none"
+                  >
+                    <path d={WAVE} pathLength="1" />
+                  </svg>
+                </span>
+              </span>
+            ) : (
+              <span class="tkh-c__set" aria-hidden="true">
+                <span>{head}</span>
+                <span class="tkh-c__rest">{rest}</span>
+                <span class="tkh-c__dim" />
+              </span>
+            )}
+          </p>
+          <ul class="tkh-c__cats">
+            {categories.map(({ icon, id, label, tone, linked }) => {
+              const Tag = linked ? "a" : "span";
+              return (
+                <li>
+                  <Tag
+                    class="tkh-c__cat"
+                    href={linked ? `#tk-sessions-${id}` : undefined}
+                    style={`--tkh-c-cat:${tone.ht}`}
+                  >
+                    <span class="tkh-c__icon">
+                      <Icon name={icon} />
+                    </span>
+                    <span class="tkh-c__label">{label}</span>
+                  </Tag>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="tkh-c__ctas">
+    <Ctas site={site} facts={f} />
+  </div>
+</section>
+
+<style>
+  .tkh-c {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    --tkh-c-gap: clamp(72px, 11vw, 168px);
+    gap: clamp(32px, 6vh, 64px);
+    min-height: 100svh;
+    padding: clamp(84px, 11vh, 112px) var(--tk-gutter)
+      calc(clamp(24px, 4vh, 44px) + env(safe-area-inset-bottom));
+    overflow: clip;
+  }
+
+  /* ---- the ground: two pastels, cut on a slant ---------------------- */
+
+  .tkh-c__ground,
+  .tkh-c__lines,
+  .tkh-c__stickers {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .tkh-c__fill--meet {
+    fill: var(--tkh-c-meet);
+  }
+
+  .tkh-c__fill--beyond {
+    fill: var(--tkh-c-beyond);
+  }
+
+  .tkh-c__ground line {
+    stroke: var(--ink);
+    stroke-width: var(--tk-line);
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* The page's graph paper, over both pastels. */
+  .tkh-c__lines {
+    --tkh-c-grid: color-mix(in srgb, var(--ink) 8%, transparent);
+    background:
+      linear-gradient(var(--tkh-c-grid) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, var(--tkh-c-grid) 1px, transparent 1px) 0 0 / 32px
+        32px;
+  }
+
+  /* ---- the margins: who each half is for -----------------------------
+     Meet's on the left, Beyond's on the right, clear of the words. */
+
+  .tkh-c__sticker {
+    position: absolute;
+  }
+
+  .tkh-c__leaf {
+    top: 17%;
+    left: 6.5%;
+    width: clamp(48px, 4.6vw, 72px);
+    overflow: visible;
+    rotate: -10deg;
+  }
+
+  .tkh-c__leaf path {
+    stroke: var(--ink);
+    stroke-width: var(--tk-line);
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .tkh-c__leaf-l {
+    fill: var(--ht-yellow);
+  }
+
+  .tkh-c__leaf-r {
+    fill: var(--green);
+  }
+
+  .tkh-c__badge {
+    display: grid;
+    place-items: center;
+    width: clamp(56px, 5.6vw, 88px);
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+  }
+
+  .tkh-c__badge :global(svg) {
+    width: 48%;
+    height: 48%;
+  }
+
+  .tkh-c__badge--sprout {
+    bottom: 15%;
+    left: 5%;
+    background: var(--surface);
+    rotate: 8deg;
+  }
+
+  .tkh-c__badge--summit {
+    top: 17%;
+    right: 6%;
+    background: var(--ht-green);
+    rotate: 8deg;
+  }
+
+  .tkh-c__badge--rocket {
+    bottom: 14%;
+    right: 5%;
+    background: var(--surface);
+    rotate: -10deg;
+  }
+
+  /* The level tags, a size up, in the middle of each margin. */
+  .tkh-c__sidetag {
+    top: 50%;
+  }
+
+  .tkh-c__sidetag--meet {
+    left: 2.5%;
+    rotate: -6deg;
+  }
+
+  .tkh-c__sidetag--beyond {
+    right: 2.5%;
+    rotate: 5deg;
+  }
+
+  .tkh-c__sidetag :global(.tk-level) {
+    gap: 8px;
+    padding: 8px 16px 8px 12px;
+    font-size: clamp(13px, 1.1vw, 16px);
+  }
+
+  .tkh-c__sidetag :global(.tk-level svg) {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* The lanes' own tags are the phone's; the margins say it on a wide
+     screen. */
+  .tkh-c__level {
+    display: none;
+  }
+
+  /* ---- the event, first --------------------------------------------- */
+
+  .tkh-c__head {
+    display: grid;
+    justify-items: center;
+    gap: clamp(8px, 1.4vh, 14px);
+    text-align: center;
+  }
+
+  .tkh-c__by {
+    margin: 0;
+    font: 500 clamp(14px, 1.5vw, 19px) / 1 var(--tk-f-display);
+  }
+
+  .tkh-c__title {
+    width: clamp(280px, 46vw, 680px);
+    margin: 0;
+    font-size: inherit;
+  }
+
+  /* When and where on one white strip, laid across the seam. */
+  .tkh-c__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 22px;
+    margin: 4px 0 0;
+    padding: 10px 26px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    background: var(--surface);
+  }
+
+  .tkh-c__facts dd {
+    margin: 0;
+  }
+
+  .tkh-c__when time {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .tkh-c__ymd {
+    font-size: clamp(26px, 2.8vw, 38px);
+    letter-spacing: -0.03em;
+  }
+
+  .tkh-c__dow {
+    margin-left: -4px;
+    font-family: var(--tk-f-jp);
+    font-size: 15px;
+  }
+
+  .tkh-c__hours {
+    font-size: clamp(16px, 1.5vw, 20px);
+  }
+
+  .tkh-c__where {
+    display: grid;
+    justify-items: start;
+    padding-left: 22px;
+    border-left: var(--tk-line) solid var(--ink);
+    text-align: left;
+  }
+
+  .tkh-c__walk {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 700 14px/1.4 var(--tk-f-jp);
+  }
+
+  .tkh-c__walk :global(svg) {
+    width: 17px;
+    height: 17px;
+  }
+
+  .tkh-c__walk b {
+    font-size: 1.15em;
+    background: linear-gradient(
+      transparent 58%,
+      var(--ht-yellow) 58% 92%,
+      transparent 92%
+    );
+  }
+
+  .tkh-c__venue {
+    font: 500 12px/1.4 var(--tk-f-jp);
+  }
+
+  /* ---- the two halves, facing across the seam ----------------------- */
+
+  .tkh-c__lanes {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--tkh-c-gap);
+    width: min(100%, 1080px);
+    margin-inline: auto;
+  }
+
+  .tkh-c__lane {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 2.2vh, 22px);
+  }
+
+  .tkh-c__lane--meet {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .tkh-c__lane--beyond {
+    align-items: flex-start;
+  }
+
+  .tkh-c__name {
+    display: grid;
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(34px, 4.6vw, 76px);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+
+  .tkh-c__set {
+    position: relative;
+    display: grid;
+  }
+
+  .tkh-c__rest {
+    position: relative;
+    color: var(--surface);
+    -webkit-text-stroke: var(--tk-line) var(--ink);
+  }
+
+  /* ---- Meet: a hand-drawn wave under the Vibes ---------------------- */
+
+  .tkh-c__wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.2em;
+    width: 100%;
+    height: 0.18em;
+    overflow: visible;
+  }
+
+  .tkh-c__wave path {
+    fill: none;
+    stroke: var(--tk-accent);
+    stroke-width: 4px;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* ---- Beyond: a dimension line under the Vibes -------------------- */
+
+  /* A dimension line: ticks at both ends, a dot travelling along. */
+  .tkh-c__dim {
+    position: relative;
+    height: 0.18em;
+    margin-top: 0.06em;
+    border-inline: var(--tk-line) solid var(--ink);
+  }
+
+  .tkh-c__dim::before {
+    content: "";
+    position: absolute;
+    inset: 50% 0 auto;
+    height: var(--tk-line);
+    margin-top: calc(var(--tk-line) / -2);
+    background: var(--ink);
+  }
+
+  .tkh-c__dim::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 0.12em;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--ht-green);
+    translate: -50% -50%;
+  }
+
+  .tkh-c__cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tkh-c__lane--meet .tkh-c__cats {
+    justify-content: flex-end;
+  }
+
+  .tkh-c__cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 14px 4px 4px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font: 700 clamp(12px, 1.1vw, 14px) / 1.2 var(--tk-f-jp);
+    text-decoration: none;
+    transition: translate 0.3s var(--tk-ease-back);
+  }
+
+  a.tkh-c__cat:hover {
+    translate: 0 -3px;
+  }
+
+  .tkh-c__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--tkh-c-cat);
+  }
+
+  .tkh-c__icon :global(svg) {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* ---- the buttons: one in each half -------------------------------
+     The same two columns and the same gap as the halves, so each button
+     stands on its own colour, the seam running between them. */
+
+  .tkh-c__ctas :global(.tkh-ctas) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--tkh-c-gap);
+    width: min(100%, 1080px);
+    margin-inline: auto;
+  }
+
+  .tkh-c__ctas :global(.tkh-ctas > :first-child) {
+    justify-self: end;
+  }
+
+  .tkh-c__ctas :global(.tkh-ctas > :last-child) {
+    justify-self: start;
+  }
+
+  /* ---- entrance ----------------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tkh-c__head {
+      animation: tkh-c-pop 0.8s var(--tk-ease-back) both;
+    }
+
+    .tkh-c__lane--meet {
+      --tkh-c-from: -40px;
+      animation: tkh-c-from 0.9s var(--tk-ease) 0.2s both;
+    }
+
+    .tkh-c__lane--beyond {
+      --tkh-c-from: 40px;
+      animation: tkh-c-from 0.9s var(--tk-ease) 0.32s both;
+    }
+
+    .tkh-c__sticker {
+      animation: tkh-c-float 5s ease-in-out infinite alternate;
+    }
+
+    .tkh-c__sidetag {
+      animation-duration: 6s;
+    }
+
+    .tkh-c__wave path {
+      stroke-dasharray: 1;
+      animation: tkh-c-draw 1.2s var(--tk-ease) 0.6s both;
+    }
+
+    .tkh-c__dim::after {
+      animation: tkh-c-run 3.2s var(--tk-ease-io) infinite alternate;
+    }
+
+    .tkh-c__sticker:nth-child(2n) {
+      animation-delay: -2.5s;
+    }
+  }
+
+  @keyframes tkh-c-pop {
+    from {
+      opacity: 0;
+      scale: 0.94;
+    }
+  }
+
+  @keyframes tkh-c-from {
+    from {
+      opacity: 0;
+      translate: var(--tkh-c-from) 0;
+    }
+  }
+
+  @keyframes tkh-c-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes tkh-c-run {
+    to {
+      left: 100%;
+    }
+  }
+
+  @keyframes tkh-c-float {
+    to {
+      translate: 0 -12px;
+    }
+  }
+
+  /* ---- narrow: between a phone and a wide screen ----------------------
+     The margins get too thin for the level tags; the other marks stay. */
+
+  @media (width < 1120px) {
+    .tkh-c__sidetag {
+      display: none;
+    }
+  }
+
+  /* ---- phone: the cut turned nearly level ---------------------------- */
+
+  @media (width < 760px) {
+    .tkh-c {
+      --tkh-c-cut: 44px;
+      --tkh-c-grid: color-mix(in srgb, var(--ink) 8%, transparent);
+      --tkh-c-lines:
+        linear-gradient(var(--tkh-c-grid) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(90deg, var(--tkh-c-grid) 1px, transparent 1px) 0 0 /
+          32px 32px;
+      justify-content: flex-start;
+      gap: 0;
+      padding-top: 76px;
+      padding-bottom: 0;
+      /* Meet's pink from the top; Beyond's green is painted below the seam. */
+      background: var(--tkh-c-lines), var(--tkh-c-meet);
+    }
+
+    .tkh-c__ground,
+    .tkh-c__lines,
+    .tkh-c__stickers {
+      display: none;
+    }
+
+    /* Spare room is shared: half above the event, half above the lanes. */
+    .tkh-c__head {
+      margin-block: auto 18px;
+    }
+
+    .tkh-c__title {
+      width: min(100%, 340px);
+    }
+
+    .tkh-c__facts {
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 18px 12px;
+    }
+
+    .tkh-c__where {
+      justify-items: center;
+      padding: 6px 0 0;
+      border-left: 0;
+      border-top: var(--tk-line) solid var(--ink);
+      text-align: center;
+    }
+
+    /* The lanes and the buttons keep together at the foot. */
+    .tkh-c__lanes {
+      grid-template-columns: 1fr;
+      width: auto;
+      margin: auto calc(var(--tk-gutter) * -1) 0;
+    }
+
+    .tkh-c__lane {
+      position: relative;
+      gap: 8px;
+      padding: 12px var(--tk-gutter);
+    }
+
+    .tkh-c__lane--meet {
+      align-items: flex-start;
+      padding-bottom: 8px;
+      text-align: left;
+    }
+
+    /* Green from the seam down: the seam rises gently to the right. */
+    .tkh-c__lane--beyond {
+      align-items: flex-end;
+      padding-top: calc(10px + var(--tkh-c-cut));
+      text-align: right;
+      background: var(--tkh-c-lines), var(--tkh-c-beyond);
+      clip-path: polygon(0 var(--tkh-c-cut), 100% 0, 100% 100%, 0 100%);
+    }
+
+    /* The seam, corner to corner across the cut. */
+    .tkh-c__lane--beyond::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: var(--tkh-c-cut);
+      background: linear-gradient(
+        to bottom right,
+        transparent calc(50% - 1px),
+        var(--ink) calc(50% - 1px) calc(50% + 1px),
+        transparent calc(50% + 1px)
+      );
+    }
+
+    /* The buttons on the green too, down to the foot of the screen. */
+    .tkh-c__ctas {
+      margin-inline: calc(var(--tk-gutter) * -1);
+      padding: 6px var(--tk-gutter) calc(16px + env(safe-area-inset-bottom));
+      background: var(--tkh-c-lines), var(--tkh-c-beyond);
+    }
+
+    .tkh-c__level {
+      display: block;
+    }
+
+    /* Each name on one line, its mark under the Vibes. */
+    .tkh-c__name {
+      font-size: clamp(26px, 8.4vw, 38px);
+    }
+
+    .tkh-c__set {
+      grid-template-columns: auto auto;
+      column-gap: 0.22em;
+      justify-content: start;
+    }
+
+    .tkh-c__name--beyond .tkh-c__set {
+      justify-content: end;
+    }
+
+    /* Under the Vibes, as Meet's wave is. */
+    .tkh-c__dim {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .tkh-c__cats {
+      gap: 8px;
+    }
+
+    .tkh-c__lane--meet .tkh-c__cats {
+      justify-content: flex-start;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__cats {
+      justify-content: flex-end;
+    }
+
+    .tkh-c__cat {
+      padding: 3px 12px 3px 3px;
+      font-size: 12px;
+    }
+
+    .tkh-c__icon {
+      width: 24px;
+    }
+  }
+
+  /* A short phone: the categories step aside (the overview lists them just
+     below) so both halves and the first button stay on the first screen. */
+  @media (width < 760px) and (height < 760px) {
+    .tkh-c {
+      padding-top: 68px;
+    }
+
+    .tkh-c__head {
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .tkh-c__title {
+      width: min(100%, 300px);
+    }
+
+    .tkh-c__cats {
+      display: none;
+    }
+  }
+
+  /* Stacked full width, as everywhere on a phone, with room between, and a
+     size down so both clear the fold. */
+  @media (width < 560px) {
+    .tkh-c__ctas :global(.tkh-ctas) {
+      display: flex;
+      gap: 12px;
+    }
+
+    .tkh-c__ctas :global(.tk-btn--lg) {
+      min-height: 58px;
+    }
+
+    .tkh-c__ctas :global(.tk-btn--lg .tk-btn__disc) {
+      width: 42px;
+    }
+  }
+</style>

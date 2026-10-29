@@ -1,7 +1,6 @@
 import { initReveal, initSplit } from "./reveal";
 import { initCarousels } from "./carousel";
 import { initPanels } from "./panel";
-import { initOverview } from "./overview";
 import {
   initFaq,
   initMagnets,
@@ -31,5 +30,4 @@ initMarquee();
 initMagnets();
 initTilt();
 initFaq();
-initOverview();
 initMenu();

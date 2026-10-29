@@ -1,0 +1,52 @@
+---
+import gdgLogo from "../../../../assets/brand/gdg.svg?url";
+import type { HeroFacts } from "./facts";
+
+/**
+ * The organiser, in the screen's top-left corner, as on Kansai's key visual:
+ * the GDG mark beside "Organized by" over the chapter's name.
+ */
+interface Props {
+  facts: HeroFacts;
+}
+
+const { facts } = Astro.props;
+---
+
+<p class="tkh-org">
+  <img src={gdgLogo} alt="" width="100" height="100" />
+  <span><small>{facts.text("organizedBy")}</small>{facts.host}</span>
+</p>
+
+<style>
+  .tkh-org {
+    position: absolute;
+    z-index: 3;
+    top: clamp(16px, 2.4vw, 28px);
+    left: var(--tk-gutter);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-weight: 500;
+    font-size: clamp(16px, 1.5vw, 21px);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .tkh-org span {
+    display: grid;
+  }
+
+  .tkh-org small {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
+  /* As tall as the two lines beside it. */
+  .tkh-org img {
+    width: auto;
+    height: calc(12px * 1.2 + 1.2em);
+  }
+</style>

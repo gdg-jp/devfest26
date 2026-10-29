@@ -11,9 +11,7 @@ import {
   LANES,
   localized,
   OVERVIEW,
-  QUIZ,
   type Lane,
-  type QuizStep,
 } from "../_content";
 import { trackTone } from "./track";
 
@@ -23,10 +21,9 @@ import { trackTone } from "./track";
  * the categories sit underneath in the theme's two halves, each a card that
  * drops down to its own folder in `Sessions` further down the page.
  *
- * Beside the facts, two questions that light up the category that suits the
- * reader (`_scripts/overview.ts`). The quiz is `hidden` until the script shows
- * it, and the facts take the whole width until then: without the script the
- * categories are all there, just not picked out.
+ * The four cards are one size: the two lanes share their rows, so a card
+ * with a longer line under its name makes its neighbour across the way as
+ * tall, and both rows match the taller of the two.
  */
 interface Props {
   site: ResolvedTenant;
@@ -59,17 +56,6 @@ const lanes = (Object.keys(LANES) as Lane[])
     categories: categories.filter((category) => category.lane === lane),
   }))
   .filter(({ categories }) => categories.length > 0);
-
-// Flattened so every question is in the page and the script only swaps them.
-const steps: { id: string; depth: number; step: QuizStep }[] = [];
-const flatten = (step: QuizStep, id: string, depth: number) => {
-  steps.push({ id, depth, step });
-  step.answers.forEach((answer, i) => {
-    if (answer.next) flatten(answer.next, `${id}-${i}`, depth + 1);
-  });
-};
-flatten(QUIZ, "q", 1);
-const depth = Math.max(...steps.map((s) => s.depth));
 
 const date =
   lang === "ja"
@@ -154,71 +140,18 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
               <span class="visually-hidden">{c.overviewFee}</span>
             </dt>
             <dd>
-              <span class="tk-overview__big">{event.fee}</span>
-              <span>{localized(OVERVIEW.seats, lang)}</span>
+              <span class="tk-overview__big">
+                {localized(OVERVIEW.fee, lang)}
+              </span>
               <span class="tk-overview__note">
                 ※ {localized(OVERVIEW.feeNote, lang)}
               </span>
             </dd>
           </div>
         </dl>
-
-        <div
-          class="tk-quiz"
-          data-tk-quiz
-          data-tk-quiz-template={c.quizResult("{name}")}
-          hidden
-        >
-          <p class="tk-quiz__lead">{c.quizLead}</p>
-          {
-            steps.map(({ id, depth: n, step }) => (
-              <div
-                class="tk-quiz__step"
-                data-tk-quiz-step={id}
-                hidden={id !== "q"}
-              >
-                <p class="tk-quiz__q">
-                  <span>{c.quizStep(n, depth)}</span>
-                  {localized(step.q, lang)}
-                </p>
-                <div class="tk-quiz__answers">
-                  {step.answers.map((answer, i) => (
-                    <button
-                      type="button"
-                      class="tk-quiz__answer"
-                      data-tk-quiz-next={answer.next ? `${id}-${i}` : undefined}
-                      data-tk-quiz-pick={answer.pick}
-                    >
-                      {localized(answer.label, lang)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))
-          }
-          <div class="tk-quiz__step" data-tk-quiz-done hidden>
-            <p class="tk-quiz__q" aria-live="polite" data-tk-quiz-result></p>
-            <div class="tk-quiz__answers">
-              <a
-                class="tk-btn tk-btn--sm tk-btn--light"
-                href={site.links.register}
-                target="_blank"
-                rel="noopener"
-                data-analytics="register_click"
-                data-placement="overview_quiz"
-              >
-                {c.register}
-                <span class="tk-btn__disc"><Arrow /></span>
-              </a>
-              <button type="button" class="tk-quiz__again" data-tk-quiz-again>
-                {c.quizAgain}
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <div class="tk-overview__lanes" data-tk-quiz-board>
+      <div class="tk-overview__lanes">
         {
           lanes.map(({ lane, title, sub, categories }) => (
             <div
@@ -234,13 +167,8 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
                   class="tk-cat"
                   href={Card === "a" ? `#tk-sessions-${track.id}` : undefined}
                   style={`--tk-cat:${tone.ht}`}
-                  data-tk-quiz-card={track.id}
-                  data-tk-quiz-name={track.data.label.trim()}
                   data-tk-reveal="up"
                 >
-                  <span class="tk-cat__badge" aria-hidden="true">
-                    {c.quizPicked}
-                  </span>
                   <span class="tk-cat__icon">
                     <Icon name={icon} />
                   </span>
@@ -270,18 +198,10 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     scroll-margin-top: var(--tk-header-h);
   }
 
-  /* ---- the facts and the quiz ---- */
+  /* ---- the facts ---- */
 
   .tk-overview__head {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-    align-items: start;
-    gap: clamp(16px, 2.4vw, 28px);
-  }
-
-  /* Until the script shows the quiz, the facts have the row to themselves. */
-  .tk-overview__head:has(> .tk-quiz[hidden]) {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .tk-overview__facts {
@@ -389,127 +309,49 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     color: var(--muted);
   }
 
-  /* ---- the quiz ---- */
-
-  .tk-quiz {
-    display: grid;
-    gap: 12px;
-    padding: 20px;
-    border-radius: var(--tk-r-md);
-    background: var(--ink);
-    color: var(--surface);
-  }
-
-  .tk-quiz[hidden],
-  .tk-quiz__step[hidden] {
-    display: none;
-  }
-
-  .tk-quiz__lead {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ht-yellow);
-  }
-
-  .tk-quiz__step {
-    display: grid;
-    gap: 14px;
-  }
-
-  .tk-quiz__q {
-    display: grid;
-    gap: 2px;
-    margin: 0;
-    font-family: var(--tk-f-display);
-    font-weight: 700;
-    font-size: 19px;
-    line-height: 1.4;
-  }
-
-  .tk-quiz__q span {
-    font-family: var(--f-mono);
-    font-size: 12px;
-    color: var(--tk-on-dark-muted);
-  }
-
-  .tk-quiz__answers {
-    display: grid;
-    gap: 8px;
-  }
-
-  .tk-quiz__answer,
-  .tk-quiz__again {
-    padding: 11px 18px;
-    border: var(--tk-line) solid var(--surface);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    text-align: left;
-    cursor: pointer;
-    transition:
-      background 0.2s,
-      translate 0.3s var(--tk-ease-back);
-  }
-
-  .tk-quiz__answer:hover,
-  .tk-quiz__answer:focus-visible {
-    background: var(--ht-yellow);
-    translate: 4px 0;
-  }
-
-  .tk-quiz__answers .tk-btn {
-    justify-content: space-between;
-  }
-
-  .tk-quiz__again {
-    background: transparent;
-    color: var(--surface);
-    border-color: var(--tk-on-dark-hair);
-    text-align: center;
-  }
-
-  .tk-quiz__again:hover {
-    border-color: var(--surface);
-  }
-
   /* ---- the two lanes and their categories ---- */
 
+  /* Two lanes side by side sharing three rows — the head, then a card, then
+     a card — and the card rows are `1fr` in a grid sized by its content, so
+     every card is as tall as the tallest. On a phone the lanes stack, six
+     rows. */
   .tk-overview__lanes {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr 1fr;
     gap: 16px;
     margin-top: clamp(16px, 2.4vw, 24px);
   }
 
   .tk-lane {
     display: grid;
-    align-content: start;
-    /* Room above each card for the quiz's badge. */
-    gap: 20px;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    gap: 12px;
     padding: 16px;
     border: var(--tk-line) solid var(--ink);
     border-radius: var(--tk-r-md);
     background: var(--tk-lane);
   }
 
+  /* The half's name on the left, what it covers on the right, always on one
+     line: both shrink with the lane rather than the second one wrapping
+     under a longer name ("Beyond the Vibes" in a two-column panel). */
   .tk-lane__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 4px 10px;
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
     padding-inline: 4px;
   }
 
   .tk-lane__head h3 {
     margin: 0;
     font-family: var(--tk-f-display);
-    font-size: 20px;
+    font-size: min(20px, 5.2cqi);
     letter-spacing: -0.02em;
+    white-space: nowrap;
   }
 
   .tk-lane__head span {
@@ -517,8 +359,9 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     border: var(--tk-line) solid var(--ink);
     border-radius: 999px;
     background: var(--surface);
-    font-size: 12px;
+    font-size: min(12px, 3.8cqi);
     font-weight: 700;
+    white-space: nowrap;
   }
 
   .tk-cat {
@@ -533,10 +376,7 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     background: var(--surface);
     color: var(--ink);
     text-decoration: none;
-    transition:
-      filter 0.4s var(--tk-ease),
-      box-shadow 0.4s var(--tk-ease),
-      translate 0.4s var(--tk-ease);
+    transition: translate 0.4s var(--tk-ease);
   }
 
   .tk-cat__icon {
@@ -554,8 +394,7 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     width: 24px;
   }
 
-  a.tk-cat:hover .tk-cat__icon,
-  .tk-cat.is-picked .tk-cat__icon {
+  a.tk-cat:hover .tk-cat__icon {
     rotate: -8deg;
   }
 
@@ -601,51 +440,15 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     background: var(--tk-cat);
   }
 
-  /* The quiz's answer: the pick lifts onto a hard shadow, the rest fade. */
-  .tk-cat__badge {
-    position: absolute;
-    top: -13px;
-    right: 14px;
-    padding: 3px 12px;
-    border: var(--tk-line) solid var(--ink);
-    border-radius: 999px;
-    background: var(--ht-yellow);
-    font-size: 12px;
-    font-weight: 700;
-    opacity: 0;
-    scale: 0.4;
-    rotate: -8deg;
-    transition:
-      opacity 0.3s,
-      scale 0.5s var(--tk-ease-back),
-      rotate 0.5s var(--tk-ease-back);
-  }
-
-  /* A filter rather than `opacity`, which the reveal leaves inline. */
-  .tk-overview__lanes.is-picking .tk-cat:not(.is-picked) {
-    filter: opacity(0.38) grayscale(0.6);
-  }
-
-  .tk-cat.is-picked {
-    translate: -4px -4px;
-    box-shadow: 6px 6px 0 var(--ink);
-  }
-
-  .tk-cat.is-picked .tk-cat__badge {
-    opacity: 1;
-    scale: 1;
-    rotate: 4deg;
-  }
-
   @media (width < 720px) {
-    .tk-overview__head {
+    .tk-overview__lanes {
       grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: repeat(2, auto 1fr 1fr);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .tk-cat,
-    .tk-cat__badge,
     .tk-cat__icon,
     .tk-cat__disc {
       transition: none;
