@@ -311,24 +311,26 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
 
   /* ---- the two lanes and their categories ---- */
 
-  /* Two lanes side by side sharing three rows — the head, then a card, then
-     a card — and the card rows are `1fr` in a grid sized by its content, so
-     every card is as tall as the tallest. On a phone the lanes stack, six
-     rows. */
+  /* Two lanes side by side sharing their rows — the head, a card, a card —
+     and the card rows are `1fr` in a grid sized by its content, so all four
+     cards are as tall as the tallest. The lane's foot is a row of its own
+     (4px, plus the gap above it) rather than padding: a subgrid's padding
+     is added to the cards in its last row, which would make that row's
+     cards shorter than the row above. On a phone the lanes stack. */
   .tk-overview__lanes {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto 1fr 1fr;
+    grid-template-rows: auto 1fr 1fr 4px;
     gap: 16px;
     margin-top: clamp(16px, 2.4vw, 24px);
   }
 
   .tk-lane {
     display: grid;
-    grid-row: span 3;
+    grid-row: span 4;
     grid-template-rows: subgrid;
     gap: 12px;
-    padding: 16px;
+    padding: 16px 16px 0;
     border: var(--tk-line) solid var(--ink);
     border-radius: var(--tk-r-md);
     background: var(--tk-lane);
@@ -443,7 +445,7 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
   @media (width < 720px) {
     .tk-overview__lanes {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: repeat(2, auto 1fr 1fr);
+      grid-template-rows: repeat(2, auto 1fr 1fr 4px);
     }
   }
 

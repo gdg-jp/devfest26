@@ -26,16 +26,18 @@ import { heroFacts } from "./facts";
  * (the planned one), a dot running along it. The words themselves stay plain
  * so they read at a glance.
  *
- * The margins say who each half is for: on Meet's side the beginner's leaf
- * (the 若葉マーク of a new driver), a sprout and a one-star "for beginners"
- * tag; on Beyond's a summit flag, a rocket and a three-star "intermediate &
- * up" tag.
+ * The margins say who each half is for and what is in it: on Meet's side a
+ * sprout (for beginners), its two categories' icons and a one-star "for
+ * beginners" tag; on Beyond's a summit (intermediate and up), its two
+ * categories' icons and a three-star tag.
  *
- * On a phone the screen is tall, so the cut turns nearly level: Meet's pink
- * from the top — the event, then Meet with its level tag — and Beyond's green
- * from a gently sloping seam to the foot, Beyond and then the two buttons on
- * it. Both kinds, the name, the day and the place are on the first screen;
- * on a short one the categories step aside to keep it so.
+ * On a phone the screen is tall, so the cut turns nearly level and the
+ * column is read as the wide screen is: Meet up top on its pink, the event in
+ * the middle with the seam running behind the card of the day and the place,
+ * Beyond below on its green, then the two buttons. The names are set smaller
+ * than the event's, and each half's two categories are just their icons,
+ * scattered round its name — still links to their sessions. Both kinds, the
+ * name, the day and the place are on the first screen.
  */
 interface Props {
   site: ResolvedTenant;
@@ -100,25 +102,40 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   <div class="tkh-c__lines" aria-hidden="true"></div>
 
   <div class="tkh-c__stickers" aria-hidden="true">
-    <svg class="tkh-c__sticker tkh-c__leaf" viewBox="0 0 60 80">
-      <path class="tkh-c__leaf-l" d="M30 18 4 4v50l26 22Z"></path>
-      <path class="tkh-c__leaf-r" d="m30 18 26-14v50L30 76Z"></path>
-    </svg>
-    <span class="tkh-c__sticker tkh-c__badge tkh-c__badge--sprout">
-      <Icon name="sprout" />
-    </span>
-    <span class="tkh-c__sticker tkh-c__sidetag tkh-c__sidetag--meet">
-      <Level lane="meet" />
-    </span>
-    <span class="tkh-c__sticker tkh-c__badge tkh-c__badge--summit">
-      <Icon name="summit" />
-    </span>
-    <span class="tkh-c__sticker tkh-c__badge tkh-c__badge--rocket">
-      <Icon name="rocket" />
-    </span>
-    <span class="tkh-c__sticker tkh-c__sidetag tkh-c__sidetag--beyond">
-      <Level lane="beyond" />
-    </span>
+    {
+      lanes.map(({ lane, categories }) => (
+        <>
+          <span
+            class:list={[
+              "tkh-c__sticker tkh-c__badge tkh-c__badge--level",
+              `tkh-c__badge--${lane}-level`,
+            ]}
+            style={`--tkh-c-cat:${categories[0]?.tone.ht}`}
+          >
+            <Icon name={lane === "meet" ? "sprout" : "summit"} />
+          </span>
+          {categories.map(({ icon, tone }, i) => (
+            <span
+              class:list={[
+                "tkh-c__sticker tkh-c__badge",
+                `tkh-c__badge--${lane}-${i}`,
+              ]}
+              style={`--tkh-c-cat:${tone.ht}`}
+            >
+              <Icon name={icon} />
+            </span>
+          ))}
+          <span
+            class:list={[
+              "tkh-c__sticker tkh-c__sidetag",
+              `tkh-c__sidetag--${lane}`,
+            ]}
+          >
+            <Level lane={lane} />
+          </span>
+        </>
+      ))
+    }
   </div>
 
   <Org facts={f} />
@@ -156,9 +173,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     {
       lanes.map(({ lane, head, rest, categories }) => (
         <div class:list={["tkh-c__lane", `tkh-c__lane--${lane}`]}>
-          <span class="tkh-c__level">
-            <Level lane={lane} />
-          </span>
           <p class:list={["tkh-c__name", `tkh-c__name--${lane}`]}>
             <span class="visually-hidden">{`${head} ${rest}`}</span>
             {lane === "meet" ? (
@@ -183,6 +197,13 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
               </span>
             )}
           </p>
+          <span
+            class="tkh-c__lvl"
+            aria-hidden="true"
+            style={`--tkh-c-cat:${categories[0]?.tone.ht}`}
+          >
+            <Icon name={lane === "meet" ? "sprout" : "summit"} />
+          </span>
           <ul class="tkh-c__cats">
             {categories.map(({ icon, id, label, tone, linked }) => {
               const Tag = linked ? "a" : "span";
@@ -270,36 +291,14 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     position: absolute;
   }
 
-  .tkh-c__leaf {
-    top: 17%;
-    left: 6.5%;
-    width: clamp(48px, 4.6vw, 72px);
-    overflow: visible;
-    rotate: -10deg;
-  }
-
-  .tkh-c__leaf path {
-    stroke: var(--ink);
-    stroke-width: var(--tk-line);
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-  }
-
-  .tkh-c__leaf-l {
-    fill: var(--ht-yellow);
-  }
-
-  .tkh-c__leaf-r {
-    fill: var(--green);
-  }
-
   .tkh-c__badge {
     display: grid;
     place-items: center;
-    width: clamp(56px, 5.6vw, 88px);
+    width: clamp(48px, 4.6vw, 72px);
     aspect-ratio: 1;
     border: var(--tk-line) solid var(--ink);
     border-radius: 50%;
+    background: var(--tkh-c-cat);
   }
 
   .tkh-c__badge :global(svg) {
@@ -307,25 +306,47 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     height: 48%;
   }
 
-  .tkh-c__badge--sprout {
+  /* The level's mark, a size up and in its half's colour, leads each
+     margin. */
+  .tkh-c__badge--level {
+    width: clamp(60px, 5.8vw, 92px);
+  }
+
+  .tkh-c__badge--meet-level {
+    top: 14%;
+    left: 6%;
+    rotate: -8deg;
+  }
+
+  /* In from the edge, but never as far as the card of the day and place. */
+  .tkh-c__badge--meet-0 {
+    top: 31%;
+    left: clamp(2%, calc(50% - 420px), 14%);
+    rotate: 10deg;
+  }
+
+  .tkh-c__badge--meet-1 {
     bottom: 15%;
-    left: 5%;
-    background: var(--surface);
-    rotate: 8deg;
+    left: 6%;
+    rotate: -6deg;
   }
 
-  .tkh-c__badge--summit {
-    top: 17%;
+  .tkh-c__badge--beyond-level {
+    top: 14%;
     right: 6%;
-    background: var(--ht-green);
     rotate: 8deg;
   }
 
-  .tkh-c__badge--rocket {
-    bottom: 14%;
-    right: 5%;
-    background: var(--surface);
+  .tkh-c__badge--beyond-0 {
+    top: 31%;
+    right: clamp(2%, calc(50% - 420px), 14%);
     rotate: -10deg;
+  }
+
+  .tkh-c__badge--beyond-1 {
+    bottom: 15%;
+    right: 6%;
+    rotate: 6deg;
   }
 
   /* The level tags, a size up, in the middle of each margin. */
@@ -352,12 +373,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   .tkh-c__sidetag :global(.tk-level svg) {
     width: 17px;
     height: 17px;
-  }
-
-  /* The lanes' own tags are the phone's; the margins say it on a wide
-     screen. */
-  .tkh-c__level {
-    display: none;
   }
 
   /* ---- the event, first --------------------------------------------- */
@@ -554,6 +569,12 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     translate: -50% -50%;
   }
 
+  /* The level mark beside the name is the phone's; the margins carry it on
+     a wide screen. */
+  .tkh-c__lvl {
+    display: none;
+  }
+
   .tkh-c__cats {
     display: flex;
     flex-wrap: wrap;
@@ -704,7 +725,7 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     }
   }
 
-  /* ---- phone: the cut turned nearly level ---------------------------- */
+  /* ---- phone: Meet, the event across the seam, Beyond ----------------- */
 
   @media (width < 760px) {
     .tkh-c {
@@ -714,11 +735,12 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
         linear-gradient(var(--tkh-c-grid) 1px, transparent 1px) 0 0 / 32px 32px,
         linear-gradient(90deg, var(--tkh-c-grid) 1px, transparent 1px) 0 0 /
           32px 32px;
-      justify-content: flex-start;
-      gap: 0;
+      justify-content: space-between;
+      gap: 14px;
       padding-top: 76px;
-      padding-bottom: 0;
-      /* Meet's pink from the top; Beyond's green is painted below the seam. */
+      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+      /* Meet's pink from the top; the event paints Beyond's green under the
+         seam, down to the foot. */
       background: var(--tkh-c-lines), var(--tkh-c-meet);
     }
 
@@ -728,9 +750,68 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       display: none;
     }
 
-    /* Spare room is shared: half above the event, half above the lanes. */
+    /* The lanes join the column, so the event can sit between them. */
+    .tkh-c__lanes {
+      display: contents;
+    }
+
+    .tkh-c__lane--meet {
+      order: 1;
+    }
+
     .tkh-c__head {
-      margin-block: auto 18px;
+      order: 2;
+    }
+
+    .tkh-c__lane--beyond {
+      order: 3;
+    }
+
+    .tkh-c__ctas {
+      order: 4;
+    }
+
+    /* Green from a seam through the middle of the card of the day and the
+       place — rising gently to the right — to the foot of the screen, and
+       the seam itself; the card's white covers both. They run the width of
+       the screen from the centred card: half the screen less half the card
+       out to each side, so the graph paper lines up with the pink's. */
+    .tkh-c__facts {
+      position: relative;
+    }
+
+    .tkh-c__facts::before,
+    .tkh-c__facts::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      left: calc(50% - 50vw);
+      right: calc(50% - 50vw);
+      top: calc(50% - var(--tkh-c-cut) / 2);
+    }
+
+    .tkh-c__facts::before {
+      height: 200vh;
+      background: var(--tkh-c-lines), var(--tkh-c-beyond);
+      clip-path: polygon(0 var(--tkh-c-cut), 100% 0, 100% 100%, 0 100%);
+    }
+
+    .tkh-c__facts::after {
+      height: var(--tkh-c-cut);
+      background: linear-gradient(
+        to bottom right,
+        transparent calc(50% - 1px),
+        var(--ink) calc(50% - 1px) calc(50% + 1px),
+        transparent calc(50% + 1px)
+      );
+    }
+
+    .tkh-c__head {
+      gap: 6px;
+    }
+
+    .tkh-c__by {
+      font-size: 14px;
     }
 
     .tkh-c__title {
@@ -751,62 +832,25 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       text-align: center;
     }
 
-    /* The lanes and the buttons keep together at the foot. */
-    .tkh-c__lanes {
-      grid-template-columns: 1fr;
-      width: auto;
-      margin: auto calc(var(--tk-gutter) * -1) 0;
-    }
-
     .tkh-c__lane {
       position: relative;
       gap: 8px;
-      padding: 12px var(--tk-gutter);
     }
 
     .tkh-c__lane--meet {
       align-items: flex-start;
-      padding-bottom: 8px;
       text-align: left;
     }
 
-    /* Green from the seam down: the seam rises gently to the right. */
     .tkh-c__lane--beyond {
       align-items: flex-end;
-      padding-top: calc(10px + var(--tkh-c-cut));
       text-align: right;
-      background: var(--tkh-c-lines), var(--tkh-c-beyond);
-      clip-path: polygon(0 var(--tkh-c-cut), 100% 0, 100% 100%, 0 100%);
     }
 
-    /* The seam, corner to corner across the cut. */
-    .tkh-c__lane--beyond::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto;
-      height: var(--tkh-c-cut);
-      background: linear-gradient(
-        to bottom right,
-        transparent calc(50% - 1px),
-        var(--ink) calc(50% - 1px) calc(50% + 1px),
-        transparent calc(50% + 1px)
-      );
-    }
-
-    /* The buttons on the green too, down to the foot of the screen. */
-    .tkh-c__ctas {
-      margin-inline: calc(var(--tk-gutter) * -1);
-      padding: 6px var(--tk-gutter) calc(16px + env(safe-area-inset-bottom));
-      background: var(--tkh-c-lines), var(--tkh-c-beyond);
-    }
-
-    .tkh-c__level {
-      display: block;
-    }
-
-    /* Each name on one line, its mark under the Vibes. */
+    /* Each name on one line, its mark under the Vibes, a size under the
+       event's name so that reads first. */
     .tkh-c__name {
-      font-size: clamp(26px, 8.4vw, 38px);
+      font-size: clamp(22px, 6.6vw, 30px);
     }
 
     .tkh-c__set {
@@ -825,46 +869,108 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       grid-row: 2;
     }
 
+    /* The categories as their icons alone, with the level's mark between
+       them, scattered round the name on the side it leaves open: one above,
+       the mark level with the name, one below. The names stay for screen
+       readers and the links still go to the sessions. */
     .tkh-c__cats {
-      gap: 8px;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
     }
 
-    .tkh-c__lane--meet .tkh-c__cats {
-      justify-content: flex-start;
-    }
-
-    .tkh-c__lane--beyond .tkh-c__cats {
-      justify-content: flex-end;
+    .tkh-c__cats li {
+      position: absolute;
+      pointer-events: auto;
     }
 
     .tkh-c__cat {
-      padding: 3px 12px 3px 3px;
-      font-size: 12px;
+      padding: 0;
+      border: 0;
+      background: none;
+    }
+
+    .tkh-c__lane--meet li:nth-child(1) {
+      top: -34px;
+      right: 2%;
+      rotate: -10deg;
+    }
+
+    .tkh-c__lane--meet li:nth-child(2) {
+      bottom: -48px;
+      right: 6%;
+      rotate: 8deg;
+    }
+
+    .tkh-c__lane--beyond li:nth-child(1) {
+      top: -46px;
+      left: 4%;
+      rotate: 9deg;
+    }
+
+    .tkh-c__lane--beyond li:nth-child(2) {
+      bottom: -40px;
+      left: 6%;
+      rotate: -7deg;
+    }
+
+    .tkh-c__lvl {
+      position: absolute;
+      top: 50%;
+      display: grid;
+      place-items: center;
+      width: clamp(38px, 11vw, 46px);
+      aspect-ratio: 1;
+      border: var(--tk-line) solid var(--ink);
+      border-radius: 50%;
+      background: var(--tkh-c-cat);
+      translate: 0 -50%;
+    }
+
+    .tkh-c__lvl :global(svg) {
+      width: 50%;
+      height: 50%;
+    }
+
+    .tkh-c__lane--meet .tkh-c__lvl {
+      right: 24%;
+      rotate: 6deg;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__lvl {
+      left: 22%;
+      rotate: -6deg;
     }
 
     .tkh-c__icon {
-      width: 24px;
+      width: clamp(38px, 11vw, 46px);
+    }
+
+    .tkh-c__icon :global(svg) {
+      width: 50%;
+      height: 50%;
+    }
+
+    .tkh-c__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   }
 
-  /* A short phone: the categories step aside (the overview lists them just
-     below) so both halves and the first button stay on the first screen. */
+  /* A short phone: a little tighter, so both halves and the first button
+     stay on the first screen. */
   @media (width < 760px) and (height < 760px) {
     .tkh-c {
+      gap: 10px;
       padding-top: 68px;
-    }
-
-    .tkh-c__head {
-      gap: 6px;
-      margin-bottom: 12px;
     }
 
     .tkh-c__title {
       width: min(100%, 300px);
-    }
-
-    .tkh-c__cats {
-      display: none;
     }
   }
 
