@@ -711,7 +711,13 @@ async function framed(
   const { w, h, notch } = frame;
   const src =
     speaker.photo &&
-    (await framedPhoto(speaker.photo, w, h, speaker.name, frame.framing));
+    (await framedPhoto(
+      speaker.photo,
+      w,
+      h,
+      speaker.name,
+      speaker.framing ?? frame.framing,
+    ));
   const whole = h - notch.h;
   const notchOnTop = notch.corner.startsWith("top");
 

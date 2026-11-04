@@ -1,6 +1,7 @@
 import type { ResolvedTenant } from "../tenants";
 import type { ProgramSession, Speaker } from "../data/program";
 import type { CardInput, PhotoInput } from "./og/input";
+import { PLACEMENTS } from "./og/placements";
 import { isRemotePhoto } from "./photo";
 import { dataset, projectId } from "./sanity/env";
 import { hasCityRoute } from "./cityRoutes";
@@ -76,6 +77,7 @@ export function sessionCard(
       role: speaker.data.role,
       initial: speaker.data.initial,
       photo: photoOf(speaker),
+      framing: PLACEMENTS[session.slug]?.[speaker.data.slug ?? speaker.id],
     })),
     lang: currentLanguage(),
     theme: site.theme,

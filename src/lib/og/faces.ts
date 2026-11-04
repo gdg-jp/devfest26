@@ -260,10 +260,29 @@ export interface Framing {
    * as the image allows; given, the cut goes closer if it has to to get there.
    */
   across?: number;
+  /**
+   * Where the face is, as fractions of the image — the size against its
+   * height — for a photo the cascade cannot read. Replaces the search.
+   */
+  at?: { x: number; y: number; size: number };
+  /**
+   * Lets the cut run past the photo's edges, where the photo stops short of
+   * what the framing asks for. `blur` repeats the pixels at the edge and blurs
+   * them so they do not read as streaks, which suits a plain background and
+   * shows anywhere else. `stretch` draws the foot of the photo out to fill
+   * what is below it, which keeps clothes running out of the frame continuous;
+   * the other edges are repeated.
+   */
+  bleed?: "blur" | "stretch";
 }
 
 /** A head-and-shoulders portrait: the face a third of the height, high. */
 export const PORTRAIT: Framing = { faceHeight: 0.34, eyeLine: 0.42 };
+
+/** How far `bleed: "blur"` goes, against the photo's longer side. */
+const BLEED_BLUR = 0.02;
+/** How much of the photo's height `bleed: "stretch"` draws out: never a face. */
+const BLEED_FOOT = 0.14;
 
 /**
  * With no face to place, how much of what the cut leaves over goes above it:
@@ -296,22 +315,24 @@ export async function cropToFace(
 ): Promise<{ jpeg: Buffer; face?: Face }> {
   // Upright first, so that the face is found where it will be cut from.
   const upright = await sharp(image).rotate().toBuffer();
-  const [face] = await findFaces(upright);
-
   const { width: iw = width, height: ih = height } =
     await sharp(upright).metadata();
   const aspect = width / height;
+
+  const { at, across, bleed } = framing;
+  const face = at
+    ? { x: at.x * iw, y: at.y * ih, size: at.size * ih, score: 0 }
+    : (await findFaces(upright))[0];
 
   let left: number, top: number, cw: number, ch: number;
   if (face) {
     // The cut the framing asks for, shrunk to fit the image if it has to be.
     ch = face.size / framing.faceHeight;
     cw = ch * aspect;
-    const fit = Math.min(1, iw / cw, ih / ch);
+    const fit = bleed ? 1 : Math.min(1, iw / cw, ih / ch);
     ch *= fit;
     cw *= fit;
-    const { across } = framing;
-    if (across !== undefined) {
+    if (across !== undefined && !bleed) {
       const closer = Math.min(
         1,
         face.x / (across * cw),
@@ -320,8 +341,12 @@ export async function cropToFace(
       ch *= closer;
       cw *= closer;
     }
-    left = Math.min(Math.max(face.x - cw * (across ?? 0.5), 0), iw - cw);
-    top = Math.min(Math.max(face.y - ch * framing.eyeLine, 0), ih - ch);
+    left = face.x - cw * (across ?? 0.5);
+    top = face.y - ch * framing.eyeLine;
+    if (!bleed) {
+      left = Math.min(Math.max(left, 0), iw - cw);
+      top = Math.min(Math.max(top, 0), ih - ch);
+    }
   } else {
     cw = Math.min(iw, ih * aspect);
     ch = cw / aspect;
@@ -329,12 +354,48 @@ export async function cropToFace(
     top = (ih - ch) * UNFOUND_TOP;
   }
 
-  const jpeg = await sharp(upright)
+  // What the cut runs past the photo's edges by, which only `bleed` allows.
+  const [x, y] = [Math.round(left), Math.round(top)];
+  const [w, h] = [Math.round(cw), Math.round(ch)];
+  const past = {
+    left: Math.max(0, -x),
+    top: Math.max(0, -y),
+    right: bleed ? Math.max(0, x + w - iw) : 0,
+    bottom: bleed ? Math.max(0, y + h - ih) : 0,
+  };
+  let whole = upright;
+  if (bleed === "stretch") {
+    const strip = Math.round(ih * BLEED_FOOT);
+    whole = await sharp(upright)
+      .extend({ ...past, extendWith: "copy" })
+      .composite([
+        {
+          input: await sharp(upright)
+            .extract({ left: 0, top: ih - strip, width: iw, height: strip })
+            .resize(iw, strip + past.bottom, { fit: "fill" })
+            .toBuffer(),
+          left: past.left,
+          top: past.top + ih - strip,
+        },
+      ])
+      .toBuffer();
+  } else if (bleed === "blur") {
+    whole = await sharp(
+      await sharp(upright)
+        .extend({ ...past, extendWith: "copy" })
+        .blur(Math.max(iw, ih) * BLEED_BLUR)
+        .toBuffer(),
+    )
+      .composite([{ input: upright, left: past.left, top: past.top }])
+      .toBuffer();
+  }
+
+  const jpeg = await sharp(whole)
     .extract({
-      left: Math.round(left),
-      top: Math.round(top),
-      width: Math.min(iw - Math.round(left), Math.round(cw)),
-      height: Math.min(ih - Math.round(top), Math.round(ch)),
+      left: x + past.left,
+      top: y + past.top,
+      width: Math.min(iw + past.right - x, w),
+      height: Math.min(ih + past.bottom - y, h),
     })
     .resize(width, height, { fit: "cover" })
     .jpeg({ quality: 85 })
