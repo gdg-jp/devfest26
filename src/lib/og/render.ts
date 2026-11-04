@@ -5,7 +5,7 @@ import satori from "satori";
 import sharp from "sharp";
 import { cardInput, type Card, type CardInput } from "./input";
 import { framedPhoto } from "./photos";
-import { breakLines, type Lines } from "./lines";
+import { breakLines, measure, type Lines } from "./lines";
 import { placeStickers, stickerSvg, type Rect } from "./stickers";
 
 /**
@@ -53,14 +53,8 @@ const MARGIN = 80;
  */
 const FONT_FAMILY = '"Google Sans Flex", "Noto Sans JP", sans-serif';
 
-/** The few words the card supplies itself. */
-const WORDS = {
-  ja: { separator: "、", others: (n: number) => `ほか ${n} 名` },
-  en: { separator: ", ", others: (n: number) => `and ${n} more` },
-} as const;
-
-/** How many speakers a card names in full; the rest are counted. */
-const NAMED = 2;
+/** What the card puts between names. */
+const SEPARATOR = { ja: "、", en: ", " } as const;
 
 /* ---- Type ----------------------------------------------------------------
    In pixels of the 1080 frame. */
@@ -84,6 +78,8 @@ const TYPE = {
   title: steps(140, 56),
   titleLastResort: steps(56, 36).slice(1),
   name: 60,
+  /** Three speakers on share a list, which steps down to keep to its lines. */
+  names: steps(60, 40),
   /** One speaker has room for a larger line under the name. */
   role: { single: 48, several: 40 },
   tag: 40,
@@ -92,6 +88,8 @@ const TYPE = {
 const TITLE_LINE = 1.2;
 const NAME_LINE = 1.25;
 const ROLE_LINE = 1.35;
+/** The list of names takes this many lines before it goes smaller still. */
+const NAME_LINES = 2;
 
 /* ---- The photo frames -----------------------------------------------------
    Drawn the way DevFest Tokyo 2025's cards framed their speakers: a rounded
@@ -686,33 +684,94 @@ async function framed(
 }
 
 /**
- * The names under the title, and what each does. One or two people are named
- * in full; past that, the first two and a count.
+ * Names as lines of at most `width` at `size`. A line ends only between two
+ * names — never inside one — and the lines are then evened out: as narrow as
+ * they can be without taking another line.
+ */
+function nameLines(
+  names: string[],
+  separator: string,
+  size: number,
+  width: number,
+): string[] {
+  const wrap = (limit: number) => {
+    const lines: string[] = [];
+    names.forEach((name, i) => {
+      const text = i < names.length - 1 ? name + separator : name;
+      const last = lines.at(-1);
+      if (last !== undefined && measure(last + text, size) <= limit) {
+        lines[lines.length - 1] = last + text;
+      } else {
+        lines.push(text);
+      }
+    });
+    return lines;
+  };
+
+  let even = wrap(width);
+  for (let limit = width - 8; limit > 0; limit -= 8) {
+    const narrower = wrap(limit);
+    if (narrower.length > even.length) break;
+    even = narrower;
+  }
+  return even.map((line) => line.trimEnd());
+}
+
+/**
+ * Everyone's names, at the largest size that keeps them to `NAME_LINES`. Past
+ * the smallest size the list takes more lines rather than lose a name.
+ */
+function fitNames(
+  names: string[],
+  separator: string,
+  width: number,
+): { size: number; lines: string[] } {
+  const fits = TYPE.names.find((size) => {
+    const lines = nameLines(names, separator, size, width);
+    return (
+      lines.length <= NAME_LINES &&
+      lines.every((line) => measure(line, size) <= width)
+    );
+  });
+  const size = fits ?? TYPE.names.at(-1)!;
+  return { size, lines: nameLines(names, separator, size, width) };
+}
+
+/**
+ * The names under the title. One or two people are named with what each does;
+ * three or more, as a list of every name.
  */
 function people(card: Card) {
-  const words = WORDS[card.lang];
-  const shown = card.speakers.slice(0, NAMED);
-  const others = card.speakers.length - shown.length;
+  const shown = card.speakers;
   const single = shown.length === 1;
   const role = single ? TYPE.role.single : TYPE.role.several;
   const rowGap = 16;
   const columnWidth = TEXT_WIDTH - SPARKLE_SIZE - 40;
 
-  const rows: Child[] = others
-    ? [
+  const list =
+    shown.length > 2
+      ? fitNames(
+          shown.map((s) => s.name),
+          SEPARATOR[card.lang],
+          columnWidth,
+        )
+      : undefined;
+
+  const rows: Child[] = list
+    ? list.lines.map((line) =>
         el(
           "div",
           {
             style: {
-              fontSize: TYPE.name,
+              fontSize: list.size,
               fontWeight: 700,
               lineHeight: NAME_LINE,
-              ...clamp(2),
+              whiteSpace: "nowrap",
             },
           },
-          `${shown.map((s) => s.name).join(words.separator)} ${words.others(others)}`,
+          line,
         ),
-      ]
+      )
     : shown.map((speaker) =>
         el(
           "div",
@@ -749,22 +808,23 @@ function people(card: Card) {
   // What the rows take up at most, for the title to work around, and how
   // wide they run, for the stickers to keep clear of.
   const nameHeight = TYPE.name * NAME_LINE;
-  const height = others
-    ? 2 * nameHeight
+  const height = list
+    ? list.lines.length * list.size * NAME_LINE
     : single
       ? nameHeight + 2 + 2 * role * ROLE_LINE
       : 2 * (nameHeight + 2 + role * ROLE_LINE) + rowGap;
-  const width = Math.min(
-    columnWidth,
-    Math.max(
-      ...shown.flatMap((s) => [
-        widthAt(s.name, TYPE.name),
-        // A role that wraps fills the column; one that does not, its own width.
-        widthAt(s.role, role),
-      ]),
-      others ? columnWidth : 0,
-    ),
-  );
+  const width = list
+    ? Math.max(...list.lines.map((line) => measure(line, list.size)))
+    : Math.min(
+        columnWidth,
+        Math.max(
+          ...shown.flatMap((s) => [
+            widthAt(s.name, TYPE.name),
+            // A role that wraps fills the column; one that does not, its own width.
+            widthAt(s.role, role),
+          ]),
+        ),
+      );
 
   return {
     height,
@@ -780,7 +840,7 @@ function people(card: Card) {
           style: {
             display: "flex",
             flexDirection: "column",
-            gap: rowGap,
+            gap: list ? 0 : rowGap,
             width: columnWidth,
             color: INK,
           },
