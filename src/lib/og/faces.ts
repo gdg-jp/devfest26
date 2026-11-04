@@ -255,6 +255,11 @@ export interface Framing {
   faceHeight: number;
   /** The face's centre, down from the top. */
   eyeLine: number;
+  /**
+   * The face's centre, in from the left. Left out, the face is centred as far
+   * as the image allows; given, the cut goes closer if it has to to get there.
+   */
+  across?: number;
 }
 
 /** A head-and-shoulders portrait: the face a third of the height, high. */
@@ -305,7 +310,17 @@ export async function cropToFace(
     const fit = Math.min(1, iw / cw, ih / ch);
     ch *= fit;
     cw *= fit;
-    left = Math.min(Math.max(face.x - cw / 2, 0), iw - cw);
+    const { across } = framing;
+    if (across !== undefined) {
+      const closer = Math.min(
+        1,
+        face.x / (across * cw),
+        (iw - face.x) / ((1 - across) * cw),
+      );
+      ch *= closer;
+      cw *= closer;
+    }
+    left = Math.min(Math.max(face.x - cw * (across ?? 0.5), 0), iw - cw);
     top = Math.min(Math.max(face.y - ch * framing.eyeLine, 0), ih - ch);
   } else {
     cw = Math.min(iw, ih * aspect);

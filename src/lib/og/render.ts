@@ -4,6 +4,7 @@ import { join } from "node:path";
 import satori from "satori";
 import sharp from "sharp";
 import { cardInput, type Card, type CardInput } from "./input";
+import type { Framing } from "./faces";
 import { framedPhoto } from "./photos";
 import { breakLines, measure, type Lines } from "./lines";
 import { placeStickers, stickerSvg, type Rect } from "./stickers";
@@ -98,14 +99,16 @@ const NAME_LINES = 2;
 
    One speaker fills a single tall frame. Two sit on a diagonal, as on the
    2025 two-speaker cards. Three are two frames side by side above a wide one,
-   as on the 2025 three-speaker cards. A fourth speaker on is named, not
-   pictured. */
+   as on the 2025 three-speaker cards. Four are two such steps, one in each
+   half of the area. A fifth speaker on is named, not pictured. */
 
 type Corner = "bottom-right" | "top-left" | "top-right" | "bottom-left";
 
 interface Frame extends Rect {
   /** The stepped-in corner, and how far in it steps. */
   notch: { w: number; h: number; corner: Corner };
+  /** Where a found face goes, in a frame that places it itself. */
+  framing?: Framing;
 }
 
 /** Where the frames are; the text column runs up to `x`. */
@@ -189,8 +192,62 @@ const TRIO: Frame[] = (() => {
   ];
 })();
 
+const QUARTET: Frame[] = (() => {
+  // A narrow, tall frame and a wide, short one step around each other in the
+  // top half; the bottom half is the same two turned half a circle, so the
+  // frames read left to right, then top to bottom, in running order. `split`
+  // is where the top left frame widens under the top right one's corner.
+  const narrow = Math.floor((FRAMES.right - FRAMES.x - FRAME_GAP) / 2);
+  const wide = 482;
+  const tall = 500;
+  const short = FRAMES.bottom - FRAMES.y - tall - FRAME_GAP;
+  const split = 230;
+  const w = FRAMES.x + narrow + FRAME_GAP - (FRAMES.right - wide);
+  const onTall = { w, h: split + FRAME_GAP - FRAMES.y };
+  const onShort = { w, h: FRAMES.y + short - split };
+  return [
+    {
+      x: FRAMES.x,
+      y: FRAMES.y,
+      w: narrow,
+      h: tall,
+      notch: { ...onTall, corner: "top-right" },
+      // The notch cuts into the top of the frame, so the head sits below it.
+      framing: { faceHeight: 0.34, eyeLine: 0.47 },
+    },
+    {
+      x: FRAMES.right - wide,
+      y: FRAMES.y,
+      w: wide,
+      h: short,
+      notch: { ...onShort, corner: "bottom-left" },
+    },
+    {
+      x: FRAMES.x,
+      y: FRAMES.bottom - short,
+      w: wide,
+      h: short,
+      notch: { ...onShort, corner: "top-right" },
+      // The notch comes down beside the head, so the head keeps to its left.
+      framing: { faceHeight: 0.34, eyeLine: 0.53, across: 0.41 },
+    },
+    {
+      x: FRAMES.right - narrow,
+      y: FRAMES.bottom - tall,
+      w: narrow,
+      h: tall,
+      notch: { ...onTall, corner: "bottom-left" },
+    },
+  ];
+})();
+
 /** Every frame a photo is cut into, by layout. `scripts/og-faces.ts` shows them. */
-export const SPEAKER_FRAMES = { single: SINGLE, pair: PAIR, trio: TRIO };
+export const SPEAKER_FRAMES = {
+  single: SINGLE,
+  pair: PAIR,
+  trio: TRIO,
+  quartet: QUARTET,
+};
 
 /**
  * A frame's outline with its bottom-right corner stepped in, inset by half
@@ -653,7 +710,8 @@ async function framed(
 ): Promise<Node[]> {
   const { w, h, notch } = frame;
   const src =
-    speaker.photo && (await framedPhoto(speaker.photo, w, h, speaker.name));
+    speaker.photo &&
+    (await framedPhoto(speaker.photo, w, h, speaker.name, frame.framing));
   const whole = h - notch.h;
   const notchOnTop = notch.corner.startsWith("top");
 
@@ -907,11 +965,13 @@ export async function renderCard(
   const pastel = PASTEL[card.theme];
 
   const frames =
-    card.speakers.length >= 3
-      ? TRIO
-      : card.speakers.length === 2
-        ? PAIR
-        : SINGLE;
+    card.speakers.length >= 4
+      ? QUARTET
+      : card.speakers.length === 3
+        ? TRIO
+        : card.speakers.length === 2
+          ? PAIR
+          : SINGLE;
   const pictured = (
     await Promise.all(
       frames.map((frame, i) => framed(card.speakers[i], frame, pastel)),

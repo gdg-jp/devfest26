@@ -5,7 +5,7 @@
  *
  * One row per speaker on Sanity: the photo as uploaded, with the faces the
  * detector found boxed (the one the card uses in green), then the photo in
- * each frame shape a card can put it in — one speaker, two, three — with the
+ * each frame shape a card can put it in — one speaker, two, three, four — with the
  * frame's notch cut out, exactly as `src/lib/og/photos.ts` cuts it.
  *
  * Photos in which no face was found are listed at the end of the run: those
@@ -66,6 +66,7 @@ const frames = [
   ...SPEAKER_FRAMES.single.map((f) => ({ ...f, label: "1人" })),
   ...SPEAKER_FRAMES.pair.map((f, i) => ({ ...f, label: `2人 #${i + 1}` })),
   ...SPEAKER_FRAMES.trio.map((f, i) => ({ ...f, label: `3人 #${i + 1}` })),
+  ...SPEAKER_FRAMES.quartet.map((f, i) => ({ ...f, label: `4人 #${i + 1}` })),
 ];
 /** Frames drawn at this fraction of their size on the card. */
 const SCALE = 0.3;
@@ -119,7 +120,13 @@ for (const speaker of speakers) {
 
   const cut = await Promise.all(
     frames.map(async (frame) => {
-      const src = await framedPhoto(photo, frame.w, frame.h, label);
+      const src = await framedPhoto(
+        photo,
+        frame.w,
+        frame.h,
+        label,
+        frame.framing,
+      );
       const svg = frameSvg(frame, src ?? "#ddd");
       return `<figure><img src="${dataUri("image/svg+xml", svg)}" width="${Math.round(frame.w * SCALE)}" height="${Math.round(frame.h * SCALE)}"><figcaption>${frame.label}</figcaption></figure>`;
     }),
