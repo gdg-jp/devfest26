@@ -3,7 +3,6 @@ import Org from "./Org.astro";
 import Ctas from "./Ctas.astro";
 import Wordmark from "../Wordmark.astro";
 import Icon from "../Icon.astro";
-import Level from "../Level.astro";
 import type { ResolvedTenant } from "../../../../tenants";
 import { getProgram } from "../../../../data/program";
 import { currentLanguage } from "../../../../i18n/language";
@@ -27,9 +26,8 @@ import { heroFacts } from "./facts";
  * so they read at a glance.
  *
  * The margins say who each half is for and what is in it: on Meet's side a
- * sprout (for beginners), its two categories' icons and a one-star "for
- * beginners" tag; on Beyond's a summit (intermediate and up), its two
- * categories' icons and a three-star tag.
+ * sprout (for beginners) and its two categories' icons; on Beyond's a
+ * summit (intermediate and up) and its two.
  *
  * On a phone the screen is tall, so the cut turns nearly level and the
  * column is read as the wide screen is: Meet up top on its pink, the event in
@@ -125,14 +123,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
               <Icon name={icon} />
             </span>
           ))}
-          <span
-            class:list={[
-              "tkh-c__sticker tkh-c__sidetag",
-              `tkh-c__sidetag--${lane}`,
-            ]}
-          >
-            <Level lane={lane} />
-          </span>
         </>
       ))
     }
@@ -312,67 +302,43 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     width: clamp(60px, 5.8vw, 92px);
   }
 
+  /* Three down each margin at even steps — top, middle, foot — swinging
+     in and out so they do not stand in a column. */
   .tkh-c__badge--meet-level {
-    top: 14%;
+    top: 15%;
     left: 6%;
     rotate: -8deg;
   }
 
   /* In from the edge, but never as far as the card of the day and place. */
   .tkh-c__badge--meet-0 {
-    top: 31%;
-    left: clamp(2%, calc(50% - 420px), 14%);
+    top: 43%;
+    left: clamp(2%, calc(50% - 420px), 12%);
     rotate: 10deg;
   }
 
   .tkh-c__badge--meet-1 {
-    bottom: 15%;
-    left: 6%;
+    top: 71%;
+    left: 5%;
     rotate: -6deg;
   }
 
   .tkh-c__badge--beyond-level {
-    top: 14%;
+    top: 15%;
     right: 6%;
     rotate: 8deg;
   }
 
   .tkh-c__badge--beyond-0 {
-    top: 31%;
-    right: clamp(2%, calc(50% - 420px), 14%);
+    top: 43%;
+    right: clamp(2%, calc(50% - 420px), 12%);
     rotate: -10deg;
   }
 
   .tkh-c__badge--beyond-1 {
-    bottom: 15%;
-    right: 6%;
+    top: 71%;
+    right: 5%;
     rotate: 6deg;
-  }
-
-  /* The level tags, a size up, in the middle of each margin. */
-  .tkh-c__sidetag {
-    top: 50%;
-  }
-
-  .tkh-c__sidetag--meet {
-    left: 2.5%;
-    rotate: -6deg;
-  }
-
-  .tkh-c__sidetag--beyond {
-    right: 2.5%;
-    rotate: 5deg;
-  }
-
-  .tkh-c__sidetag :global(.tk-level) {
-    gap: 8px;
-    padding: 8px 16px 8px 12px;
-    font-size: clamp(13px, 1.1vw, 16px);
-  }
-
-  .tkh-c__sidetag :global(.tk-level svg) {
-    width: 17px;
-    height: 17px;
   }
 
   /* ---- the event, first --------------------------------------------- */
@@ -663,10 +629,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       animation: tkh-c-float 5s ease-in-out infinite alternate;
     }
 
-    .tkh-c__sidetag {
-      animation-duration: 6s;
-    }
-
     .tkh-c__wave path {
       stroke-dasharray: 1;
       animation: tkh-c-draw 1.2s var(--tk-ease) 0.6s both;
@@ -713,15 +675,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   @keyframes tkh-c-float {
     to {
       translate: 0 -12px;
-    }
-  }
-
-  /* ---- narrow: between a phone and a wide screen ----------------------
-     The margins get too thin for the level tags; the other marks stay. */
-
-  @media (width < 1120px) {
-    .tkh-c__sidetag {
-      display: none;
     }
   }
 
@@ -814,14 +767,44 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       font-size: 14px;
     }
 
+    /* The name, as large as the screen allows: out into the gutters, a
+       little short of the edges. */
     .tkh-c__title {
-      width: min(100%, 340px);
+      --tkh-c-title-w: min(100vw - 20px, 420px);
+      width: var(--tkh-c-title-w);
+      margin-inline: calc((100% - var(--tkh-c-title-w)) / 2);
     }
 
+    /* The day and the place a size down, under the larger name. */
     .tkh-c__facts {
       flex-direction: column;
-      gap: 6px;
-      padding: 10px 18px 12px;
+      gap: 4px;
+      padding: 8px 16px 10px;
+    }
+
+    .tkh-c__ymd {
+      font-size: 22px;
+    }
+
+    .tkh-c__dow {
+      font-size: 13px;
+    }
+
+    .tkh-c__hours {
+      font-size: 14px;
+    }
+
+    .tkh-c__walk {
+      font-size: 12px;
+    }
+
+    .tkh-c__walk :global(svg) {
+      width: 15px;
+      height: 15px;
+    }
+
+    .tkh-c__venue {
+      font-size: 11px;
     }
 
     .tkh-c__where {
@@ -850,7 +833,7 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     /* Each name on one line, its mark under the Vibes, a size under the
        event's name so that reads first. */
     .tkh-c__name {
-      font-size: clamp(22px, 6.6vw, 30px);
+      font-size: clamp(19px, 5.4vw, 25px);
     }
 
     .tkh-c__set {
@@ -870,18 +853,67 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     }
 
     /* The categories as their icons alone, with the level's mark between
-       them, scattered round the name on the side it leaves open: one above,
-       the mark level with the name, one below. The names stay for screen
-       readers and the links still go to the sessions. */
-    .tkh-c__cats {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
+       them, in a row: under Meet's name, over Beyond's — each set towards
+       the open side and nudged up and down so the row reads as scattered.
+       The names stay for screen readers and the links still go to the
+       sessions. */
+    .tkh-c__lane {
+      display: grid;
+      align-items: center;
+      row-gap: 10px;
     }
 
-    .tkh-c__cats li {
-      position: absolute;
-      pointer-events: auto;
+    .tkh-c__lane--meet {
+      grid-template-columns: auto auto 1fr;
+      justify-items: start;
+    }
+
+    .tkh-c__lane--beyond {
+      grid-template-columns: 1fr auto auto;
+      justify-items: end;
+    }
+
+    .tkh-c__lane--meet .tkh-c__name {
+      grid-area: 1 / 1 / 2 / -1;
+    }
+
+    .tkh-c__lane--meet .tkh-c__lvl {
+      grid-area: 2 / 2;
+      margin-left: 10px;
+    }
+
+    .tkh-c__lane--meet .tkh-c__cats {
+      grid-area: 2 / 1;
+      padding-left: 6%;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__name {
+      grid-area: 2 / 1 / 3 / -1;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__lvl {
+      grid-area: 1 / 2;
+      margin-right: 10px;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__cats {
+      grid-area: 1 / 3;
+      padding-right: 6%;
+    }
+
+    /* The two categories, apart, with the level's mark set beside them. */
+    .tkh-c__cats {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 14px;
+    }
+
+    .tkh-c__lane--meet .tkh-c__cats {
+      flex-direction: row;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__cats {
+      flex-direction: row-reverse;
     }
 
     .tkh-c__cat {
@@ -890,33 +922,17 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       background: none;
     }
 
-    .tkh-c__lane--meet li:nth-child(1) {
-      top: -34px;
-      right: 2%;
+    .tkh-c__cats li:nth-child(1) {
       rotate: -10deg;
+      translate: 0 -5px;
     }
 
-    .tkh-c__lane--meet li:nth-child(2) {
-      bottom: -48px;
-      right: 6%;
+    .tkh-c__cats li:nth-child(2) {
       rotate: 8deg;
-    }
-
-    .tkh-c__lane--beyond li:nth-child(1) {
-      top: -46px;
-      left: 4%;
-      rotate: 9deg;
-    }
-
-    .tkh-c__lane--beyond li:nth-child(2) {
-      bottom: -40px;
-      left: 6%;
-      rotate: -7deg;
+      translate: 0 7px;
     }
 
     .tkh-c__lvl {
-      position: absolute;
-      top: 50%;
       display: grid;
       place-items: center;
       width: clamp(38px, 11vw, 46px);
@@ -924,7 +940,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       border: var(--tk-line) solid var(--ink);
       border-radius: 50%;
       background: var(--tkh-c-cat);
-      translate: 0 -50%;
     }
 
     .tkh-c__lvl :global(svg) {
@@ -933,13 +948,13 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     }
 
     .tkh-c__lane--meet .tkh-c__lvl {
-      right: 24%;
       rotate: 6deg;
+      translate: 0 -4px;
     }
 
     .tkh-c__lane--beyond .tkh-c__lvl {
-      left: 22%;
       rotate: -6deg;
+      translate: 0 5px;
     }
 
     .tkh-c__icon {
@@ -970,7 +985,7 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     }
 
     .tkh-c__title {
-      width: min(100%, 300px);
+      --tkh-c-title-w: min(100vw - 24px, 360px);
     }
   }
 
