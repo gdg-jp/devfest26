@@ -115,7 +115,7 @@ interface Frame extends Rect {
 const FRAMES = { x: 1234, y: MARGIN, right: W - MARGIN, bottom: H - MARGIN };
 /** Between two frames, where one steps around the other. */
 const FRAME_GAP = 21;
-const FRAME_STROKE = 9;
+const FRAME_STROKE = 5;
 const RADIUS = 52;
 /** The two corners where the frame turns into the notch. */
 const JOIN = 38;
@@ -139,9 +139,11 @@ const PAIR: Frame[] = (() => {
     w: side,
     h: FRAMES.bottom - 446,
   };
-  // How far the two overlap, plus the gap each step leaves around the other.
+  // Each steps in half of how far the two overlap across, so that they fit
+  // into each other's steps rather than both clearing the overlap and leaving
+  // a hole between them; the gap runs along the whole of the seam.
   const notch = {
-    w: first.x + first.w - second.x + FRAME_GAP,
+    w: (first.x + first.w - second.x + FRAME_GAP) / 2,
     h: first.y + first.h - second.y + FRAME_GAP,
   };
   return [
@@ -932,16 +934,20 @@ let fonts: Promise<Font[]> | undefined;
  */
 function loadFonts() {
   const dir = join(process.cwd(), "src/assets/fonts");
+  // Google Sans Flex stops at Bold: its Black reads too heavy on a title in
+  // Latin, so a title is Noto Sans JP Black with Google Sans Flex Bold.
   const cuts = [
-    [500, "Medium"],
-    [700, "Bold"],
-    [900, "Black"],
+    [500, "Medium", 500],
+    [700, "Bold", 700],
+    [900, "Black", 700],
   ] as const;
   fonts ??= Promise.all(
-    cuts.flatMap(([weight, name]) => [
-      readFile(join(dir, `GoogleSansFlex-${weight}.ttf`)).then(
-        (data): Font => ({ name: "Google Sans Flex", weight, data }),
-      ),
+    cuts.flatMap(([weight, name, latin]) => [
+      readFile(join(dir, `GoogleSansFlex-${latin}.ttf`)).then((data): Font => ({
+        name: "Google Sans Flex",
+        weight,
+        data,
+      })),
       readFile(join(dir, `NotoSansJP-${name}.otf`)).then((data): Font => ({
         name: "Noto Sans JP",
         weight,

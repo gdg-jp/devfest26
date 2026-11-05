@@ -27,7 +27,7 @@ import { previewMode } from "../preview/mode";
  */
 
 /** Bump when the drawing changes, so every card's URL changes with it. */
-const DESIGN_VERSION = 11;
+const DESIGN_VERSION = 12;
 
 /** The pattern a city's directory adds to have session cards. */
 const route = (tenant: string) => `/${tenant}/og/sessions/[slug].png`;
