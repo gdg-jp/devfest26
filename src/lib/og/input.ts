@@ -70,7 +70,7 @@ export const cardInput = z.object({
    */
   title: z.string().min(1),
   speakers: z.array(speakerInput).min(1),
-  /** The language of the few words the card supplies itself ("ほか 2 名"). */
+  /** The language of what the card puts between names: "、" or ", ". */
   lang: z.enum(["ja", "en"]).default("ja"),
   /** The city's theme: the pastel behind a speaker with no photo. */
   theme: z.enum(["blue", "green", "yellow", "red"]).default("red"),
