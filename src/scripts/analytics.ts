@@ -21,9 +21,9 @@ declare global {
  * `data-analytics="register_click"` on the anchor and nothing in this file.
  */
 export function initAnalytics() {
-  // The tag is absent whenever `GA_MEASUREMENT_ID` is not set — local runs,
-  // pull request builds, the whole of the draft preview — and this bundle
-  // ships either way. See `src/components/Analytics.astro`.
+  // The tag is absent whenever there is nothing to report to — local runs,
+  // pull request builds (`NO_ANALYTICS`), the whole of the draft preview — and
+  // this bundle ships either way. See `src/components/Analytics.astro`.
   if (typeof window.gtag !== "function") return;
 
   document.addEventListener("click", (event) => {

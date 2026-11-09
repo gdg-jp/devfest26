@@ -1,0 +1,38 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  // The published site as a pull request would publish it: the same files
+  // `build.yml` builds for GitHub Pages, served from a Workers Preview named
+  // after the pull request. See `README.md` beside this file.
+  //
+  // Not `devfest26-preview`. That one is the draft preview — server-rendered,
+  // behind a sign-in gate, reading Sanity's drafts. This one runs no code at
+  // all and holds nothing that is not about to be public anyway.
+  "name": "devfest26-site",
+  // An assets-only Worker has no code for this to apply to; wrangler asks for
+  // one all the same.
+  "compatibility_date": "2026-10-19",
+
+  // Assembled by the `pr-preview` job in `build.yml` from that run's build
+  // artifacts, the way `publish` grafts them onto `gh-pages`. Nothing else
+  // writes here, so `wrangler preview` outside that job has nothing to upload.
+  "assets": {
+    "directory": "../dist/pr-preview",
+    // What GitHub Pages does: `/kansai` redirects to `/kansai/` and serves its
+    // `index.html`. The draft preview drops the slash instead, because it
+    // renders `trailingSlash: "never"` routes; this one serves the static
+    // build, and should behave the way production will with it.
+    "html_handling": "auto-trailing-slash"
+  },
+
+  // Production is GitHub Pages, so this Worker has no production of its own:
+  // its `workers.dev` hostname stays off, and only the Preview URLs answer.
+  // Read when `wrangler preview` creates the Worker on its first run; nothing
+  // here ever runs `wrangler deploy` to change it afterwards.
+  "workers_dev": false,
+  "preview_urls": true,
+
+  // Required for `wrangler preview`, and empty because there is nothing to put
+  // in it: no bindings, no variables, no secrets. Every Preview gets the same
+  // static files and nothing else.
+  "previews": {}
+}

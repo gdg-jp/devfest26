@@ -2,10 +2,11 @@
  * Google Analytics is opt-in, the same way Sanity is.
  *
  * With nothing configured nothing is emitted at all — not a script tag, not a
- * preconnect. That is what keeps local builds and pull request builds out of
- * the numbers without anyone having to remember: the site-wide id is a
- * repository variable, so it reaches the production workflow and nowhere else.
- * See `.github/workflows/build.yml`.
+ * preconnect. That is what keeps local builds out of the numbers without
+ * anyone having to remember: the site-wide id is a repository variable, so it
+ * reaches the workflow and nowhere else. Pull request builds do reach it, and
+ * are served; `NO_ANALYTICS` keeps those out — see `measuring` below and
+ * `.github/workflows/build.yml`.
  *
  * A page reports to two properties, not one:
  *
@@ -110,7 +111,25 @@ export function measurementIds(cityId?: string): string[] {
   const city =
     cityId && checkedMeasurementId(cityId, "A city's Measurement ID");
 
-  return [...new Set([rollupMeasurementId(), city || undefined])].filter(
+  const ids = [...new Set([rollupMeasurementId(), city || undefined])].filter(
     (id): id is string => id !== undefined,
   );
+
+  return measuring() ? ids : [];
+}
+
+/**
+ * Whether this build's pages report to anything at all.
+ *
+ * Not for a pull request. Its build is served — as a Workers Preview, to the
+ * people reviewing it (`pr-preview/README.md`) — and it carries the same ids
+ * a push to `main` does: the roll-up from the repository variable, and each
+ * city's own from the Studio. Unsetting `GA_MEASUREMENT_ID` there would only
+ * take care of the first, so `build.yml` sets `NO_ANALYTICS` instead.
+ *
+ * Asked after the ids are read rather than instead of reading them, so that a
+ * malformed one still fails the pull request that would publish it.
+ */
+function measuring(): boolean {
+  return !process.env.NO_ANALYTICS?.trim();
 }
