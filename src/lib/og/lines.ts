@@ -39,10 +39,10 @@ let fonts: Font[] | undefined;
 
 /**
  * The title's two faces, in the order satori falls through them: Google Sans
- * Flex for what it has, Noto Sans JP for the rest. Black, the title's weight.
+ * Flex Bold for what it has, Noto Sans JP Black for the rest: the title's cuts.
  */
 function titleFonts(): Font[] {
-  fonts ??= ["GoogleSansFlex-900.ttf", "NotoSansJP-Black.otf"].map((file) => {
+  fonts ??= ["GoogleSansFlex-700.ttf", "NotoSansJP-Black.otf"].map((file) => {
     const data = readFileSync(join(process.cwd(), "src/assets/fonts", file));
     return opentype.parse(
       data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),

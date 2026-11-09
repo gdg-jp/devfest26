@@ -47,12 +47,23 @@ export const photoInput = z.union([
   z.string().min(1),
 ]);
 
+/** Where a speaker's face goes in their frame: `Framing` in `./faces.ts`. */
+const framingInput = z.object({
+  faceHeight: z.number(),
+  eyeLine: z.number(),
+  across: z.number().optional(),
+  at: z.object({ x: z.number(), y: z.number(), size: z.number() }).optional(),
+  bleed: z.enum(["blur", "stretch"]).optional(),
+});
+
 export const speakerInput = z.object({
   name: z.string().min(1),
   role: z.string().default(""),
   /** Shown in place of a photo. The name's first character by default. */
   initial: z.string().max(2).optional(),
   photo: photoInput.optional(),
+  /** Placed by hand, over whatever the frame would do with the face. */
+  framing: framingInput.optional(),
 });
 
 export const cardInput = z.object({
