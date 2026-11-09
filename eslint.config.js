@@ -20,6 +20,9 @@ const gitignorePaths = [".gitignore", "studio/.gitignore"].map((p) =>
 
 export default defineConfig([
   ...includeIgnoreFile(gitignorePaths, { gitignoreResolution: true }),
+  // Design material kept for reference, not part of any build: the key
+  // visual candidates the Tokyo site did not ship (design/tokyo-hero/).
+  { ignores: ["design/"] },
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
     plugins: { js },

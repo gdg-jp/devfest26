@@ -1,11 +1,12 @@
 import type { ResolvedTenant } from "../../../../tenants";
 import type { Language } from "../../../../i18n";
-import { HERO, LANES, OVERVIEW, localized } from "../../_content";
+import { HERO, OVERVIEW, localized } from "../../_content";
 
 /**
- * What every key visual prints, read once: the day split for setting at
+ * What the key visual prints, read once: the day split for setting at
  * different sizes, the venue with its walk from the station, and the words
- * from `HERO`. The candidates only differ in how they lay these out.
+ * from `HERO`. The fields only the other candidates read are kept with them,
+ * in `design/tokyo-hero/candidates/hero-extras.ts`.
  */
 export function heroFacts(site: ResolvedTenant, lang: Language) {
   const { event } = site;
@@ -23,19 +24,8 @@ export function heroFacts(site: ResolvedTenant, lang: Language) {
     venue: event.venue.name,
     station: localized(OVERVIEW.station, lang),
     walk: localized(OVERVIEW.walk, lang),
-    fee: event.fee,
     host: event.host,
-    tagline: site.tagline,
-    /** The name as the lockup spells it (see `Wordmark`), then the theme's
-        two halves: what `HeroWave` types. */
-    words: ["DevFest Tokyo", LANES.meet.title, LANES.beyond.title],
     text,
-    /** The catch, a line per entry and a run per line: `em` is underlined. */
-    catchLines: text("catch")
-      .split("\n")
-      .map((line) =>
-        line.split("*").map((run, i) => ({ run, em: i % 2 === 1 })),
-      ),
   };
 }
 

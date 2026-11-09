@@ -34,30 +34,16 @@ export const SHOW_TIMES = false;
 
 /**
  * The words on the key visual that the event document does not carry. The
- * catch is a draft — the theme's two halves said as one sentence — until
- * GDG Tokyo gives one. Words between asterisks are underlined in the accent.
+ * words only the other key visual candidates used are kept with them, in
+ * `design/tokyo-hero/candidates/hero-extras.ts`.
  */
 export const HERO = {
   by: { ja: "Google Developers 主催", en: "Hosted by Google Developers" },
   organizedBy: { ja: "Organized by", en: "Organized by" },
-  catch: {
-    ja: "AI と*ノリでつくる*入門から、\n*設計して届ける*実践まで。",
-    en: "From *vibing with AI*\nto *shipping by design*.",
-  },
   sessions: { ja: "セッションを見る", en: "See the sessions" },
-  overview: { ja: "開催概要を見る", en: "See the overview" },
-  /** `HeroPrompt`: what the visitor "asks for", typed into the chat. */
-  prompt: {
-    ja: "東京駅のそばで、AI と一日ものづくりできる日をつくって",
-    en: "Plan a day of building with AI, a minute from Tokyo Station",
-  },
-  promptDone: { ja: "できました。", en: "Here you go." },
-  promptAsk: { ja: "続けて頼む", en: "Ask next" },
-  /** `HeroSplit`: who each half is for, on its tag. */
+  /** `Level`: who each half of the theme is for, on its tag. */
   meetLevel: { ja: "初心者向け", en: "For beginners" },
   beyondLevel: { ja: "中・上級者向け", en: "Intermediate & up" },
-  /** `HeroStation`: the pin on the venue's tower. */
-  venuePin: { ja: "ここが会場", en: "The venue" },
 } satisfies Record<string, Localized>;
 
 /* -------------------------------------------------------------------------- */
