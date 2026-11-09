@@ -50,43 +50,39 @@ const grouped = (await getProgram(tenant)).map(({ track, sessions }) => ({
   </Gutter>
 
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Sessions &amp; Speakers</p>
-    <h2 class="sec-h" data-reveal="up">{t.sessions.heading}</h2>
+    <p class="eyebrow" data-reveal="up">
+      Sessions &amp; Speakers
+    </p>
+    <h2 class="sec-h" data-reveal="up">
+      {t.sessions.heading}
+    </h2>
     <p class="sec-lede" data-reveal="up">
       {t.sessions.lede}
     </p>
 
-    {
-      grouped.map(({ track, sessions }) => (
-        <>
-          <div
-            class:list={[
-              "track-head",
-              { ink: track.data.darkInk, plain: track.data.pending },
-            ]}
-            style={`--trk:${track.data.color}`}
-            data-reveal="up"
-          >
-            <h3>{track.data.label}</h3>
-            <span class="sub">{track.data.sub}</span>
-            <span class="count">{sessions.length} sessions</span>
-          </div>
-          <div
-            class="cards"
-            style={`--trk:${track.data.textColor}`}
-            data-stagger
-          >
-            {sessions.map((s) => (
-              <SessionCard session={s.session} pastelFrom={s.pastelFrom} />
-            ))}
-          </div>
-        </>
-      ))
-    }
+    {grouped.map(({ track, sessions }) => (
+      <>
+        <div
+          class:list={[
+            "track-head",
+            { ink: track.data.darkInk, plain: track.data.pending },
+          ]}
+          style={`--trk:${track.data.color}`}
+          data-reveal="up"
+        >
+          <h3>{track.data.label}</h3>
+          <span class="sub">{track.data.sub}</span>
+          <span class="count">{sessions.length} sessions</span>
+        </div>
+        <div class="cards" style={`--trk:${track.data.textColor}`} data-stagger>
+          {sessions.map((s) => (
+            <SessionCard session={s.session} pastelFrom={s.pastelFrom} />
+          ))}
+        </div>
+      </>
+    ))}
 
-    <p class="note">
-      {t.sessions.note}
-    </p>
+    <p class="note">{t.sessions.note}</p>
   </div>
 </section>
 

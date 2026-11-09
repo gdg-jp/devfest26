@@ -48,13 +48,11 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       <span class="edition">{site.editionEn}</span>
     </a>
     <nav aria-label={t.topbar.sectionNavAria}>
-      {
-        site.nav.map((item) => (
-          <a href={prefix + item.href} data-spy={item.href.slice(1)}>
-            {item.label}
-          </a>
-        ))
-      }
+      {site.nav.map((item) => (
+        <a href={prefix + item.href} data-spy={item.href.slice(1)}>
+          {item.label}
+        </a>
+      ))}
     </nav>
     <a class="lang-switch" href={switchHref} hreflang={switchTo}>
       {switchLabel}
@@ -65,10 +63,14 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       target="_blank"
       rel="noopener"
       data-analytics="register_click"
-      data-placement="topbar">{t.topbar.registerCta}</a
+      data-placement="topbar"
     >
+      {t.topbar.registerCta}
+    </a>
   </div>
-  <div class="progress" aria-hidden="true"><span data-progress></span></div>
+  <div class="progress" aria-hidden="true">
+    <span data-progress></span>
+  </div>
 </header>
 
 <style>

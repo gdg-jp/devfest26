@@ -43,39 +43,37 @@ const blocks = talks.map((talk) => ({
   <div class="card-top">
     <p class="no">{label}</p>
     <h4 class:list={{ tbd: !hasTitle }}>
-      <a class="stretch" href={href}>{entry.data.title ?? "TBD"}</a>
+      <a class="stretch" href={href}>
+        {entry.data.title ?? "TBD"}
+      </a>
     </h4>
-    {
-      abstract ? (
-        <div class="abst">
-          <Content />
-        </div>
-      ) : (
-        !listsTalks && <p class="abst tbd">{t.sessionCard.pendingAbstract}</p>
-      )
-    }
+    {abstract ? (
+      <div class="abst">
+        <Content />
+      </div>
+    ) : (
+      !listsTalks && <p class="abst tbd">{t.sessionCard.pendingAbstract}</p>
+    )}
   </div>
 
   <div class="talks">
-    {
-      blocks.map(({ talk, toSpeaker }, i) => (
-        <div
-          class:list={["talk", { linkbox: talk.standalone || toSpeaker }]}
-          style={`--pa:var(--pa-${pastelCycle[(pastelFrom + i) % pastelCycle.length]})`}
-        >
-          {talk.standalone && (
-            <h5 class="talk-t">
-              <a class="stretch" href={talk.href}>
-                {talk.title ?? "TBD"}
-              </a>
-            </h5>
-          )}
-          {talk.speakers.map((speaker) => (
-            <SpeakerRow speaker={speaker} stretch={toSpeaker} />
-          ))}
-        </div>
-      ))
-    }
+    {blocks.map(({ talk, toSpeaker }, i) => (
+      <div
+        class:list={["talk", { linkbox: talk.standalone || toSpeaker }]}
+        style={`--pa:var(--pa-${pastelCycle[(pastelFrom + i) % pastelCycle.length]})`}
+      >
+        {talk.standalone && (
+          <h5 class="talk-t">
+            <a class="stretch" href={talk.href}>
+              {talk.title ?? "TBD"}
+            </a>
+          </h5>
+        )}
+        {talk.speakers.map((speaker) => (
+          <SpeakerRow speaker={speaker} stretch={toSpeaker} />
+        ))}
+      </div>
+    ))}
   </div>
 </article>
 

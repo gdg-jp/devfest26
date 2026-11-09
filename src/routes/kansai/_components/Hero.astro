@@ -31,7 +31,10 @@ const [first] = c.kvTheme;
 <section class="k-hero" aria-labelledby="k-hero-title" data-k-hero>
   <p class="k-hero__org">
     <img src={gdgLogo} alt="" width="100" height="100" />
-    <span><small>{c.organizedBy}</small>{c.organizer}</span>
+    <span>
+      <small>{c.organizedBy}</small>
+      {c.organizer}
+    </span>
   </p>
   <div class="k-hero__sym" aria-hidden="true">
     <svg class="k-hero__point" viewBox="0 0 196.5 151.5">
@@ -57,7 +60,12 @@ const [first] = c.kvTheme;
       >
         <ellipse cx="2195.67" cy="712.07" rx="110.25" ry="101.13"></ellipse>
         <ellipse cx="2195.67" cy="712.07" rx="47.59" ry="101.13"></ellipse>
-        <ellipse cx="2195.67" cy="712.07" rx="0" ry="101.13" opacity="0"
+        <ellipse
+          cx="2195.67"
+          cy="712.07"
+          rx="0"
+          ry="101.13"
+          opacity="0"
         ></ellipse>
         <line x1="2093.16" y1="674.6" x2="2298.09" y2="674.6"></line>
         <line x1="2093.16" y1="749.37" x2="2298.09" y2="749.37"></line>
@@ -66,17 +74,15 @@ const [first] = c.kvTheme;
   </div>
 
   <div class="k-hero__shapes" aria-hidden="true" data-k-shapes>
-    {
-      HERO_SHAPES.map((shape, i) => (
-        <svg
-          class="k-hero__shape"
-          viewBox={shape.viewBox}
-          style={`--i:${i}`}
-          data-k-shape={shape.name}
-          set:html={shape.body}
-        />
-      ))
-    }
+    {HERO_SHAPES.map((shape, i) => (
+      <svg
+        class="k-hero__shape"
+        viewBox={shape.viewBox}
+        style={`--i:${i}`}
+        data-k-shape={shape.name}
+        set:html={shape.body}
+      />
+    ))}
   </div>
 
   <div class="k-hero__intro">
@@ -92,12 +98,14 @@ const [first] = c.kvTheme;
           <path
             d={BRACE}
             transform={BRACE_TRANSFORM.left}
-            stroke-width={BRACE_STROKE}></path>
+            stroke-width={BRACE_STROKE}
+          ></path>
         </svg>
         <span class="k-hero__type">
-          <span class="k-hero__word" data-k-word={JSON.stringify(c.kvTheme)}
-            >{first}</span
-          ><span class="k-hero__caret"></span>
+          <span class="k-hero__word" data-k-word={JSON.stringify(c.kvTheme)}>
+            {first}
+          </span>
+          <span class="k-hero__caret"></span>
         </span>
         <svg
           class="k-hero__brace k-hero__brace--r"
@@ -106,19 +114,18 @@ const [first] = c.kvTheme;
           <path
             d={BRACE}
             transform={BRACE_TRANSFORM.right}
-            stroke-width={BRACE_STROKE}></path>
+            stroke-width={BRACE_STROKE}
+          ></path>
         </svg>
       </span>
     </h1>
 
     <p class="k-hero__catch">
-      {
-        c.kvCatch.map((line) => (
-          <span>
-            {line.split("*").map((part, i) => (i % 2 ? <em>{part}</em> : part))}
-          </span>
-        ))
-      }
+      {c.kvCatch.map((line) => (
+        <span>
+          {line.split("*").map((part, i) => (i % 2 ? <em>{part}</em> : part))}
+        </span>
+      ))}
     </p>
 
     <div class="k-hero__card">
@@ -128,7 +135,9 @@ const [first] = c.kvTheme;
           <dd class="k-hero__when">
             <span class="k-hero__year">{year}</span>
             <time class="k-hero__date" datetime={event.startsAt}>
-              <span class="k-hero__md">{month}.{day}</span>
+              <span class="k-hero__md">
+                {month}.{day}
+              </span>
               <span class="k-hero__dow">({event.dayOfWeek})</span>
               <span class="k-hero__hours">
                 <small>{c.kvOnlineShort}</small>
@@ -141,12 +150,11 @@ const [first] = c.kvTheme;
         <div>
           <dt class="visually-hidden">{c.factVenue}</dt>
           <dd class="k-hero__place">
-            <span class="k-hero__at">@</span><span class="k-hero__access"
-              >{c.venueAccess}</span
-            >
-            <span class="k-hero__venue" title={c.venueCampus}
-              >{c.venueShort}</span
-            >
+            <span class="k-hero__at">@</span>
+            <span class="k-hero__access">{c.venueAccess}</span>
+            <span class="k-hero__venue" title={c.venueCampus}>
+              {c.venueShort}
+            </span>
           </dd>
         </div>
       </dl>

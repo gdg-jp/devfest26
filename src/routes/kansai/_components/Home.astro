@@ -39,27 +39,21 @@ const { featured, featuredSessions, speakers, counts } = await homeData(
 <Shell site={site} splash={kv === "current"} docked={kv === "current"}>
   {kv === "current" && <Hero site={site} slot="hero" />}
   {kv === "a" && <KvBento site={site} />}
-  {
-    kv === "b" && (
-      <KvLineup site={site} featured={featured} total={counts.speakers} />
-    )
-  }
+  {kv === "b" && (
+    <KvLineup site={site} featured={featured} total={counts.speakers} />
+  )}
   {kv === "c" && <KvPoster site={site} />}
-  {
-    kv === "d" && (
-      <KvTicket site={site} featured={featured} total={counts.speakers} />
-    )
-  }
+  {kv === "d" && (
+    <KvTicket site={site} featured={featured} total={counts.speakers} />
+  )}
   <Featured featured={featured} />
   <News />
   <PreEvent tenant={site.tenant} />
-  {
-    /*
+  {/*
       The session and speaker pages link back to `#sessions`, a list this page
       no longer has — every session is reached from the timetable, so the
       anchor lands there.
-    */
-  }
+    */}
   <span id="sessions" class="k-anchor" aria-hidden="true"></span>
   <Timetable site={site} featured={featuredSessions} />
   <Speakers speakers={speakers} />

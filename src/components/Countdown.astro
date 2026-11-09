@@ -30,30 +30,23 @@ const cells = [
 ---
 
 <div class="band pa cd-band">
-  {
-    backdrop && (
-      <div class="bd" aria-hidden="true">
-        {isRemotePhoto(backdrop.image) ? (
-          <img
-            src={backdrop.image.src}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <Image
-            src={backdrop.image}
-            alt=""
-            width={BACKDROP_WIDTH}
-            height={backdropHeight}
-            quality={BACKDROP_QUALITY}
-            loading="lazy"
-            decoding="async"
-          />
-        )}
-      </div>
-    )
-  }
+  {backdrop && (
+    <div class="bd" aria-hidden="true">
+      {isRemotePhoto(backdrop.image) ? (
+        <img src={backdrop.image.src} alt="" loading="lazy" decoding="async" />
+      ) : (
+        <Image
+          src={backdrop.image}
+          alt=""
+          width={BACKDROP_WIDTH}
+          height={backdropHeight}
+          quality={BACKDROP_QUALITY}
+          loading="lazy"
+          decoding="async"
+        />
+      )}
+    </div>
+  )}
 
   <div class="countdown wrap">
     <div class="cd-head">
@@ -66,16 +59,14 @@ const cells = [
       aria-live="off"
       data-countdown={site.event.startsAt}
     >
-      {
-        cells.map((c) => (
-          <div class="cd-cell" data-reveal="scale">
-            <div class="cd-num" data-cd={c.key}>
-              —
-            </div>
-            <div class="cd-lab">{c.label}</div>
+      {cells.map((c) => (
+        <div class="cd-cell" data-reveal="scale">
+          <div class="cd-num" data-cd={c.key}>
+            —
           </div>
-        ))
-      }
+          <div class="cd-lab">{c.label}</div>
+        </div>
+      ))}
     </div>
   </div>
 </div>

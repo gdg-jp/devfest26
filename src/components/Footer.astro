@@ -45,16 +45,14 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       </div>
       <div>
         <nav class="foot-nav" aria-label={t.footer.navAria}>
-          {
-            site.footerNav.map((item) => (
-              <a href={prefix + item.href}>{item.label}</a>
-            ))
-          }
+          {site.footerNav.map((item) => (
+            <a href={prefix + item.href}>{item.label}</a>
+          ))}
         </nav>
         <div class="tags">
-          <span class="tag" style="background:var(--t-pa)"
-            >Hosted by {event.host}</span
-          >
+          <span class="tag" style="background:var(--t-pa)">
+            Hosted by {event.host}
+          </span>
           <a
             class="tag link"
             href={site.links.connpass}
@@ -103,11 +101,9 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     <p class="copy colophon">
       © {year}
       {event.host}
-      {
-        credits.length > 0 && (
-          <> ／ Photos: {credits.join(t.common.nameSeparator)}</>
-        )
-      }
+      {credits.length > 0 && (
+        <> ／ Photos: {credits.join(t.common.nameSeparator)}</>
+      )}
     </p>
   </div>
 </footer>

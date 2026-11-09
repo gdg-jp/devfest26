@@ -51,13 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
       # A missing token is not a smaller preview, it is a silent copy of
       # production wearing a preview URL — the one outcome that would make an
       # editor trust "my draft is not in there yet". The deployed Worker
@@ -74,7 +67,10 @@ jobs:
             exit 1
           fi
 
-      - run: pnpm install --frozen-lockfile
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
 
       # No TARGETS: one deployment, the front page and every city in it. The
       # routes are resolved per request, so which cities exist is a question

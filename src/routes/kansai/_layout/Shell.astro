@@ -38,10 +38,8 @@ const {
 ---
 
 <Base site={site} title={title} description={description} jsonLd={jsonLd}>
-  {
-    /* Base's own fallback only knows about the shared bundle. This one covers
-       Kansai's: if it has not run within three seconds, nothing waits on it. */
-  }
+  {/* Base's own fallback only knows about the shared bundle. This one covers
+       Kansai's: if it has not run within three seconds, nothing waits on it. */}
   <script is:inline>
     setTimeout(function () {
       if (!window.__k26Ready) {

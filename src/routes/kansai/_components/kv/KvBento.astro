@@ -47,30 +47,41 @@ const md = `${Number(month)}.${Number(day)}`;
 
       <p class="kv-a__date">
         <time datetime={event.startsAt}>
-          <span class="kv-a__md" data-kv-type
-            >{[...md].map((ch) => <i>{ch}</i>)}</span
-          >
-          <span class="kv-a__dow" data-kv-in="up">{event.dayOfWeekEn}</span>
+          <span class="kv-a__md" data-kv-type>
+            {[...md].map((ch) => (
+              <i>{ch}</i>
+            ))}
+          </span>
+          <span class="kv-a__dow" data-kv-in="up">
+            {event.dayOfWeekEn}
+          </span>
         </time>
-        <span class="kv-a__hours" data-kv-in="up"
-          >{event.hours.replace(" – ", "–")}</span
-        >
+        <span class="kv-a__hours" data-kv-in="up">
+          {event.hours.replace(" – ", "–")}
+        </span>
       </p>
 
       <div class="kv-a__cut" data-kv-cut aria-hidden="true">
-        <span class="kv-a__year" data-kv-in="pop">{year}</span>
-        <span class="kv-a__dots">
-          <i data-kv-in="pop"></i><i data-kv-in="pop"></i><i data-kv-in="pop"
-          ></i>
+        <span class="kv-a__year" data-kv-in="pop">
+          {year}
         </span>
-        <span class="kv-a__ast" data-kv-in="spin"
-          ><Glyph name="asterisk" /></span
-        >
+        <span class="kv-a__dots">
+          <i data-kv-in="pop"></i>
+          <i data-kv-in="pop"></i>
+          <i data-kv-in="pop"></i>
+        </span>
+        <span class="kv-a__ast" data-kv-in="spin">
+          <Glyph name="asterisk" />
+        </span>
       </div>
 
       <div class="kv-a__row">
         <p class="kv-a__catch" data-kv-in="up">
-          <span>{c.catchLead}<em>{c.catchMark}</em>{c.catchTail}</span>
+          <span>
+            {c.catchLead}
+            <em>{c.catchMark}</em>
+            {c.catchTail}
+          </span>
           <span class="kv-a__kicker">{c.kicker}</span>
         </p>
         <p class="kv-a__venue" data-kv-in="up">
@@ -85,13 +96,19 @@ const md = `${Number(month)}.${Number(day)}`;
 
     <div class="kv-a__foot">
       <ul class="kv-a__tags">
-        <li class="kv-a__tag kv-a__tag--free" data-kv-in="pop">{c.kvFree}</li>
+        <li class="kv-a__tag kv-a__tag--free" data-kv-in="pop">
+          {c.kvFree}
+        </li>
         <li class="kv-a__tag" data-kv-in="pop">
           {c.kvOnsite(CAPACITY.onsite)}
         </li>
-        <li class="kv-a__tag" data-kv-in="pop">{c.kvOnline}</li>
+        <li class="kv-a__tag" data-kv-in="pop">
+          {c.kvOnline}
+        </li>
       </ul>
-      <span class="kv-a__arrow" data-kv-in="slide"><Glyph name="arrow" /></span>
+      <span class="kv-a__arrow" data-kv-in="slide">
+        <Glyph name="arrow" />
+      </span>
       <a
         class="k-btn k-btn--lg kv-a__cta"
         href={links.register}
@@ -103,7 +120,9 @@ const md = `${Number(month)}.${Number(day)}`;
         data-kv-in="pop"
       >
         {c.register}
-        <span class="k-btn__disc"><Arrow /></span>
+        <span class="k-btn__disc">
+          <Arrow />
+        </span>
       </a>
     </div>
   </div>

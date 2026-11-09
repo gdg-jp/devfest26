@@ -39,17 +39,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v3
         with:
-          node-version-file: .nvmrc
-          cache: "pnpm"
-
-      - name: Install node modules
-        run: pnpm install --frozen-lockfile
+          cache: true
+          require-lockfile: true
 
       # Both are checks, not fixes: `format:fix` and `lint:fix` are the local
       # counterparts. CI reports, the developer rewrites.
@@ -83,39 +77,29 @@ jobs:
           # than reaching for the CMS.
           - name: site
             dir: .
-            lockfile: pnpm-lock.yaml
             script: type-check
           # The Worker, from the site's install, against its own tsconfig.
           - name: preview
             dir: .
-            lockfile: pnpm-lock.yaml
             script: type-check:preview
           - name: studio
             dir: studio
-            lockfile: studio/pnpm-lock.yaml
             script: type-check
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      # `studio/` sits outside the site's pnpm workspace and carries a
+      # lockfile of its own; `working-directory` scopes both the install and
+      # the store cache key to the project being checked.
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v3
         with:
-          node-version-file: .nvmrc
-          cache: "pnpm"
-          # Keyed on the lockfile of the project being checked. `studio/` sits
-          # outside the site's pnpm workspace and carries a lockfile of its
-          # own; pointing the cache at the root one would restore the wrong
-          # `node_modules` for it.
-          cache-dependency-path: ${{ matrix.lockfile }}
-
-      - name: Install node modules
-        working-directory: ${{ matrix.dir }}
-        run: pnpm install --frozen-lockfile
+          working-directory: ${{ matrix.dir }}
+          node-version-file: ${{ matrix.dir == 'studio' && '../.nvmrc' || '.nvmrc' }}
+          cache: true
+          require-lockfile: true
 
       - name: Run Type Check
         working-directory: ${{ matrix.dir }}

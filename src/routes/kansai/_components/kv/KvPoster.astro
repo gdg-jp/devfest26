@@ -40,12 +40,14 @@ const [first] = c.kvTheme;
           <path
             d={BRACE}
             transform={BRACE_TRANSFORM.left}
-            stroke-width={BRACE_STROKE}></path>
+            stroke-width={BRACE_STROKE}
+          ></path>
         </svg>
         <span class="kv-c__type">
-          <span class="kv-c__word" data-kv-word={JSON.stringify(c.kvTheme)}
-            >{first}</span
-          ><span class="kv-c__caret"></span>
+          <span class="kv-c__word" data-kv-word={JSON.stringify(c.kvTheme)}>
+            {first}
+          </span>
+          <span class="kv-c__caret"></span>
         </span>
         <svg
           class="kv-c__brace kv-c__brace--r"
@@ -56,9 +58,12 @@ const [first] = c.kvTheme;
           <path
             d={BRACE}
             transform={BRACE_TRANSFORM.right}
-            stroke-width={BRACE_STROKE}></path>
+            stroke-width={BRACE_STROKE}
+          ></path>
         </svg>
-        <span class="kv-c__year" data-kv-in="pop" data-kv-at="0.7">2026</span>
+        <span class="kv-c__year" data-kv-in="pop" data-kv-at="0.7">
+          2026
+        </span>
       </span>
     </h1>
 
@@ -76,7 +81,11 @@ const [first] = c.kvTheme;
     </p>
 
     <p class="kv-c__corner kv-c__corner--bl" data-kv-in="up" data-kv-at="0.66">
-      <b>{c.catchLead}{c.catchMark}{c.catchTail}</b>
+      <b>
+        {c.catchLead}
+        {c.catchMark}
+        {c.catchTail}
+      </b>
       <span class="kv-c__sub">{c.kicker}</span>
     </p>
 
@@ -100,7 +109,9 @@ const [first] = c.kvTheme;
         data-k-magnet
       >
         {c.register}
-        <span class="k-btn__disc"><Arrow /></span>
+        <span class="k-btn__disc">
+          <Arrow />
+        </span>
       </a>
     </div>
   </div>

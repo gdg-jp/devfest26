@@ -87,52 +87,48 @@ const jsonLd = {
     </div>
   </div>
 
-  {
-    profile && (
-      <div class="prose">
-        <Content />
-      </div>
-    )
-  }
+  {profile && (
+    <div class="prose">
+      <Content />
+    </div>
+  )}
 
   <h2 class="d-h">{t.detail.appearancesHeading}</h2>
   <ul class="d-list">
-    {
-      appearances.map(({ session, talk }) => (
-        <li class="d-card linkbox">
-          <p class="a-meta">
-            <span
-              class:list={[
-                "d-trk",
-                {
-                  ink: session.track.data.darkInk,
-                  plain: session.track.data.pending,
-                },
-              ]}
-              style={`--trk:${session.track.data.color}`}
-            >
-              {session.track.data.label}
-            </span>
-            <span class="d-no">{session.label}</span>
-            {talk.start && <span class="d-time">{talk.start}</span>}
-          </p>
-          <h3 class="a-title">
-            <a class="stretch" href={talk.href}>
-              {talk.title ?? "TBD"}
+    {appearances.map(({ session, talk }) => (
+      <li class="d-card linkbox">
+        <p class="a-meta">
+          <span
+            class:list={[
+              "d-trk",
+              {
+                ink: session.track.data.darkInk,
+                plain: session.track.data.pending,
+              },
+            ]}
+            style={`--trk:${session.track.data.color}`}
+          >
+            {session.track.data.label}
+          </span>
+          <span class="d-no">{session.label}</span>
+          {talk.start && <span class="d-time">{talk.start}</span>}
+        </p>
+        <h3 class="a-title">
+          <a class="stretch" href={talk.href}>
+            {talk.title ?? "TBD"}
+          </a>
+        </h3>
+        {/* Only worth naming the slot when the talk is not the whole of it. */}
+        {talk.standalone && (
+          <p class="a-in">
+            {t.detail.sessionPrefix}
+            <a href={session.href}>
+              {session.entry.data.title ?? session.label}
             </a>
-          </h3>
-          {/* Only worth naming the slot when the talk is not the whole of it. */}
-          {talk.standalone && (
-            <p class="a-in">
-              {t.detail.sessionPrefix}
-              <a href={session.href}>
-                {session.entry.data.title ?? session.label}
-              </a>
-            </p>
-          )}
-        </li>
-      ))
-    }
+          </p>
+        )}
+      </li>
+    ))}
   </ul>
 </Page>
 

@@ -66,9 +66,9 @@ const meetupDow = meetupDates?.dayOfWeek ?? null;
     <div class="lockup" data-intro="1">
       <Logo variant="brackets" class="brackets" />
       <span class="yr">{event.isoDate.slice(0, 4)}</span>
-      <span class="where"
-        >{event.dateShort} ({event.dayOfWeekEn}) {event.venue.cityEn}</span
-      >
+      <span class="where">
+        {event.dateShort} ({event.dayOfWeekEn}) {event.venue.cityEn}
+      </span>
     </div>
 
     <h1 data-intro="2">
@@ -76,30 +76,29 @@ const meetupDow = meetupDates?.dayOfWeek ?? null;
       {site.subtitle && <span class="hero-subtitle">{site.subtitle}</span>}
     </h1>
     <p class="tagline" data-intro="3">
-      {tagline.lead}<em>{tagline.accent}</em>
+      {tagline.lead}
+      <em>{tagline.accent}</em>
     </p>
 
     <div class="metas" data-intro="4">
-      <span class="pill"
-        ><span class="dot" style="background:var(--blue)"></span><b
-          >{event.dateLabel}</b
-        >{t.dates.dowSuffix(event.dayOfWeek)}{event.hoursCompact}</span
-      >
-      <span class="pill"
-        ><span class="dot" style="background:var(--green)"></span>{
-          event.venue.name
-        }</span
-      >
-      <span class="pill"
-        ><span class="dot" style="background:var(--red)"></span>{
-          event.formatShort
-        }</span
-      >
-      <span class="pill"
-        ><span class="dot" style="background:var(--yellow)"></span>{
-          t.hero.feeLabel
-        }{" "}<b>{event.fee}</b></span
-      >
+      <span class="pill">
+        <span class="dot" style="background:var(--blue)"></span>
+        <b>{event.dateLabel}</b>
+        {t.dates.dowSuffix(event.dayOfWeek)}
+        {event.hoursCompact}
+      </span>
+      <span class="pill">
+        <span class="dot" style="background:var(--green)"></span>
+        {event.venue.name}
+      </span>
+      <span class="pill">
+        <span class="dot" style="background:var(--red)"></span>
+        {event.formatShort}
+      </span>
+      <span class="pill">
+        <span class="dot" style="background:var(--yellow)"></span>
+        {t.hero.feeLabel} <b>{event.fee}</b>
+      </span>
     </div>
 
     <div class="cta-row" data-intro="5">
@@ -109,20 +108,20 @@ const meetupDow = meetupDates?.dayOfWeek ?? null;
         target="_blank"
         rel="noopener"
         data-analytics="register_click"
-        data-placement="hero">{t.hero.registerCta}</a
+        data-placement="hero"
       >
-      <a class="btn ghost" href="#sessions">{t.hero.sessionsCta}</a>
-      {
-        openMeetup && (
-          <span class="cta-note">
-            {t.hero.preeventBefore}{" "}
-            <a href="#preevent">
-              {t.hero.preeventLinkLabel(openMeetup.data.no)}
-            </a>{" "}
-            {t.hero.preeventAfter(meetupDate ?? "", meetupDow ?? "")}
-          </span>
-        )
-      }
+        {t.hero.registerCta}
+      </a>
+      <a class="btn ghost" href="#sessions">
+        {t.hero.sessionsCta}
+      </a>
+      {openMeetup && (
+        <span class="cta-note">
+          {t.hero.preeventBefore}{" "}
+          <a href="#preevent">{t.hero.preeventLinkLabel(openMeetup.data.no)}</a>{" "}
+          {t.hero.preeventAfter(meetupDate ?? "", meetupDow ?? "")}
+        </span>
+      )}
     </div>
   </div>
 </section>
