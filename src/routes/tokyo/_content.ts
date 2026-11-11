@@ -68,10 +68,6 @@ export const OVERVIEW = {
   /** The line under the venue: where from, then how far — the bigger words. */
   station: { ja: "東京駅から", en: "From Tokyo Station" },
   walk: { ja: "徒歩約 1 分", en: "1-min walk" },
-  exit: {
-    ja: "JR 丸の内南口の目の前",
-    en: "Right across from the Marunouchi South Exit",
-  },
   fee: { ja: "無料・入退場自由", en: "Free · come and go freely" },
   feeNote: {
     ja: "懇親会は有料です",
@@ -232,8 +228,8 @@ export const FAQ: readonly Faq[] = [
   {
     q: { ja: "参加費はかかりますか？", en: "Is there a fee?" },
     a: {
-      ja: "無料です。現地参加・オンライン参加のどちらも参加費はかかりません。現地参加の方には限定グッズを 1 点プレゼントします。",
-      en: "No. Both on-site and online attendance are free, and on-site attendees get a gift.",
+      ja: "無料です。参加者の方には限定グッズを 1 点プレゼントします。",
+      en: "No, it is free, and every attendee gets a gift.",
     },
   },
   {

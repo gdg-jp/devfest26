@@ -123,10 +123,7 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
                 {venue.name}
                 <Icon name="external" />
               </a>
-              <span class="tk-overview__note">
-                {localized(OVERVIEW.exit, lang)}
-                {address && ` ・ ${address}`}
-              </span>
+              {address && <span class="tk-overview__note">{address}</span>}
               <span class="tk-overview__walk">
                 <Icon name="train" />
                 <span>{localized(OVERVIEW.station, lang)}</span>

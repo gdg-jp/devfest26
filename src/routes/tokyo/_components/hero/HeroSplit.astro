@@ -229,6 +229,14 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
             <b>{f.walk}</b>
           </span>
           <span class="tkh-c__venue">{f.venue}</span>
+          <svg
+            class="tkh-c__seam-sp"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <line x1="0" y1="100" x2="100" y2="0"></line>
+          </svg>
         </dd>
       </div>
     </dl>
@@ -526,6 +534,11 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
 
   .tkh-c__venue {
     font: 500 12px/1.4 var(--tk-f-jp);
+  }
+
+  /* The phone's seam; a wide screen draws its own across the ground. */
+  .tkh-c__seam-sp {
+    display: none;
   }
 
   /* ---- the two halves, facing across the seam ----------------------- */
@@ -831,8 +844,7 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
     }
 
     .tkh-c__facts::before,
-    .tkh-c__facts::after {
-      content: "";
+    .tkh-c__seam-sp {
       position: absolute;
       z-index: -1;
       left: calc(50% - 50vw);
@@ -841,19 +853,27 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
     }
 
     .tkh-c__facts::before {
+      content: "";
       height: 200vh;
       background: var(--tkh-c-lines), var(--tkh-c-beyond);
       clip-path: polygon(0 var(--tkh-c-cut), 100% 0, 100% 100%, 0 100%);
     }
 
-    .tkh-c__facts::after {
+    /* The seam itself, drawn as a vector line (an SVG in the venue's dd, as
+       the card is its nearest positioned box) so it stays smooth at any
+       slant and density — a hard-stopped gradient stepped along it. */
+    .tkh-c__seam-sp {
+      display: block;
+      width: 100vw;
       height: var(--tkh-c-cut);
-      background: linear-gradient(
-        to bottom right,
-        transparent calc(50% - 1px),
-        var(--ink) calc(50% - 1px) calc(50% + 1px),
-        transparent calc(50% + 1px)
-      );
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .tkh-c__seam-sp line {
+      stroke: var(--ink);
+      stroke-width: var(--tk-line);
+      vector-effect: non-scaling-stroke;
     }
 
     .tkh-c__head {
@@ -1225,7 +1245,7 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
 
     .tkh-c--tape .tkh-c__fill-b,
     .tkh-c--tape .tkh-c__facts::before,
-    .tkh-c--tape .tkh-c__facts::after {
+    .tkh-c--tape .tkh-c__seam-sp {
       display: none;
     }
 
