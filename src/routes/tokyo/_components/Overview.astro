@@ -152,42 +152,40 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
       </div>
 
       <div class="tk-overview__lanes">
-        {
-          lanes.map(({ lane, title, sub, categories }) => (
-            <div
-              class:list={["tk-lane", `tk-lane--${lane}`]}
-              style={`--tk-lane:${categories[0].tone.pa}`}
-            >
-              <div class="tk-lane__head">
-                <h3>{title}</h3>
-                <span>{localized(sub, lang)}</span>
-              </div>
-              {categories.map(({ track, tone, icon, Card }) => (
-                <Card
-                  class="tk-cat"
-                  href={Card === "a" ? `#tk-sessions-${track.id}` : undefined}
-                  style={`--tk-cat:${tone.ht}`}
-                  data-tk-reveal="up"
-                >
-                  <span class="tk-cat__icon">
-                    <Icon name={icon} />
-                  </span>
-                  <div class="tk-cat__text">
-                    <h4 class="tk-cat__name">{track.data.label}</h4>
-                    {track.data.sub && (
-                      <span class="tk-cat__sub">{track.data.sub}</span>
-                    )}
-                  </div>
-                  {Card === "a" && (
-                    <span class="tk-cat__disc" aria-hidden="true">
-                      <Arrow />
-                    </span>
-                  )}
-                </Card>
-              ))}
+        {lanes.map(({ lane, title, sub, categories }) => (
+          <div
+            class:list={["tk-lane", `tk-lane--${lane}`]}
+            style={`--tk-lane:${categories[0].tone.pa}`}
+          >
+            <div class="tk-lane__head">
+              <h3>{title}</h3>
+              <span>{localized(sub, lang)}</span>
             </div>
-          ))
-        }
+            {categories.map(({ track, tone, icon, Card }) => (
+              <Card
+                class="tk-cat"
+                href={Card === "a" ? `#tk-sessions-${track.id}` : undefined}
+                style={`--tk-cat:${tone.ht}`}
+                data-tk-reveal="up"
+              >
+                <span class="tk-cat__icon">
+                  <Icon name={icon} />
+                </span>
+                <div class="tk-cat__text">
+                  <h4 class="tk-cat__name">{track.data.label}</h4>
+                  {track.data.sub && (
+                    <span class="tk-cat__sub">{track.data.sub}</span>
+                  )}
+                </div>
+                {Card === "a" && (
+                  <span class="tk-cat__disc" aria-hidden="true">
+                    <Arrow />
+                  </span>
+                )}
+              </Card>
+            ))}
+          </div>
+        ))}
       </div>
     </Panel>
   </div>

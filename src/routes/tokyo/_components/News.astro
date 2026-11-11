@@ -16,58 +16,54 @@ const items = [...NEWS]
   .slice(0, 3);
 ---
 
-{
-  items.length > 0 && (
-    <section
-      class="tk-news tk-wrap tk-wrap--panel"
-      id="news"
-      aria-labelledby="tk-news-h"
+{items.length > 0 && (
+  <section
+    class="tk-news tk-wrap tk-wrap--panel"
+    id="news"
+    aria-labelledby="tk-news-h"
+  >
+    <Panel
+      title={c.newsHeading}
+      id="tk-news-h"
+      tone="var(--red)"
+      stickers={["plus", "period"]}
     >
-      <Panel
-        title={c.newsHeading}
-        id="tk-news-h"
-        tone="var(--red)"
-        stickers={["plus", "period"]}
-      >
-        <p class="tk-news__sub">{c.newsSub}</p>
-        <ul class="tk-news__list" data-tk-stagger>
-          {items.map((item) => {
-            const inner = (
-              <>
-                <time datetime={item.date}>
-                  {item.date.replaceAll("-", ".")}
-                </time>
-                <span class="tk-news__text">{localized(item.text, lang)}</span>
-                {item.href && (
-                  <span class="tk-news__go">
-                    <Arrow />
-                  </span>
-                )}
-              </>
-            );
-            return (
-              <li data-tk-reveal="up">
-                {item.href ? (
-                  <a
-                    class="tk-news__row"
-                    href={item.href}
-                    {...(item.href.startsWith("http")
-                      ? { target: "_blank", rel: "noopener" }
-                      : {})}
-                  >
-                    {inner}
-                  </a>
-                ) : (
-                  <div class="tk-news__row">{inner}</div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </Panel>
-    </section>
-  )
-}
+      <p class="tk-news__sub">{c.newsSub}</p>
+      <ul class="tk-news__list" data-tk-stagger>
+        {items.map((item) => {
+          const inner = (
+            <>
+              <time datetime={item.date}>{item.date.replaceAll("-", ".")}</time>
+              <span class="tk-news__text">{localized(item.text, lang)}</span>
+              {item.href && (
+                <span class="tk-news__go">
+                  <Arrow />
+                </span>
+              )}
+            </>
+          );
+          return (
+            <li data-tk-reveal="up">
+              {item.href ? (
+                <a
+                  class="tk-news__row"
+                  href={item.href}
+                  {...(item.href.startsWith("http")
+                    ? { target: "_blank", rel: "noopener" }
+                    : {})}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div class="tk-news__row">{inner}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  </section>
+)}
 
 <style>
   .tk-news {

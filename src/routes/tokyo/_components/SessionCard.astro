@@ -52,29 +52,27 @@ const time = [session.start, session.start && end].filter(Boolean).join(" – ")
   style={`--fill:${tone.pa};--trk:${tone.solid};--trk-ink:${tone.ink}`}
 >
   {kicker && <span class="tk-sc__kicker">{kicker}</span>}
-  {
-    (!trackless || (time && !timeless)) && (
-      <span class="tk-sc__chips">
-        {!trackless && <span class="tk-sc__track">{track.data.label}</span>}
-        {time && !timeless && <time class="tk-sc__time">{time}</time>}
-      </span>
-    )
-  }
+  {(!trackless || (time && !timeless)) && (
+    <span class="tk-sc__chips">
+      {!trackless && <span class="tk-sc__track">{track.data.label}</span>}
+      {time && !timeless && <time class="tk-sc__time">{time}</time>}
+    </span>
+  )}
   <span class:list={["tk-sc__title", { "is-tba": !entry.data.title }]}>
     {entry.data.title ?? c.titleTba}
   </span>
   <span class="tk-sc__foot">
     <span class="tk-sc__who">
-      {
-        speakers.map((speaker) => (
-          <span class="tk-sc__person">
-            <Portrait speaker={speaker} size={28} class="tk-sc__av" />
-            {bare(speaker.data.name)}
-          </span>
-        ))
-      }
+      {speakers.map((speaker) => (
+        <span class="tk-sc__person">
+          <Portrait speaker={speaker} size={28} class="tk-sc__av" />
+          {bare(speaker.data.name)}
+        </span>
+      ))}
     </span>
-    <span class="tk-sc__go" aria-hidden="true"><Arrow /></span>
+    <span class="tk-sc__go" aria-hidden="true">
+      <Arrow />
+    </span>
   </span>
 </a>
 

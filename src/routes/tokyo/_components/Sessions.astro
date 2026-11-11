@@ -30,54 +30,49 @@ const groups = (await getProgram(site.tenant)).filter(
 );
 ---
 
-{
-  groups.length > 0 && (
-    <section
-      class="tk-sec tk-sec--panel tk-sessions"
-      id="sessions"
-      aria-labelledby="tk-sessions-h"
-    >
-      <div class="tk-wrap tk-wrap--panel tk-sessions__stack">
-        <Panel
-          title={c.sessionsHeading}
-          id="tk-sessions-h"
-          tone="var(--ht-yellow)"
-          stickers={["colon", "equals"]}
-          ja={lang === "ja"}
-        >
-          <div class="tk-sessions__groups">
-            {groups.map(({ track, sessions }) => {
-              const tone = trackTone(track);
-              return (
-                <div class="tk-sessions__group" style={`--tk-group:${tone.ht}`}>
-                  <div class="tk-sessions__head">
-                    <h3
-                      class="tk-sessions__track"
-                      id={`tk-sessions-${track.id}`}
-                    >
-                      {track.data.label}
-                    </h3>
-                    {track.data.sub && (
-                      <p class="tk-sessions__sub">{track.data.sub}</p>
-                    )}
-                  </div>
-                  <ul class="tk-sessions__list" data-tk-stagger>
-                    {sessions.map((session) => (
-                      <li data-tk-reveal="up">
-                        <SessionCard session={session} timeless trackless />
-                      </li>
-                    ))}
-                  </ul>
+{groups.length > 0 && (
+  <section
+    class="tk-sec tk-sec--panel tk-sessions"
+    id="sessions"
+    aria-labelledby="tk-sessions-h"
+  >
+    <div class="tk-wrap tk-wrap--panel tk-sessions__stack">
+      <Panel
+        title={c.sessionsHeading}
+        id="tk-sessions-h"
+        tone="var(--ht-yellow)"
+        stickers={["colon", "equals"]}
+        ja={lang === "ja"}
+      >
+        <div class="tk-sessions__groups">
+          {groups.map(({ track, sessions }) => {
+            const tone = trackTone(track);
+            return (
+              <div class="tk-sessions__group" style={`--tk-group:${tone.ht}`}>
+                <div class="tk-sessions__head">
+                  <h3 class="tk-sessions__track" id={`tk-sessions-${track.id}`}>
+                    {track.data.label}
+                  </h3>
+                  {track.data.sub && (
+                    <p class="tk-sessions__sub">{track.data.sub}</p>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </Panel>
-        <p class="tk-sessions__note">{c.sessionsNote}</p>
-      </div>
-    </section>
-  )
-}
+                <ul class="tk-sessions__list" data-tk-stagger>
+                  {sessions.map((session) => (
+                    <li data-tk-reveal="up">
+                      <SessionCard session={session} timeless trackless />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
+      <p class="tk-sessions__note">{c.sessionsNote}</p>
+    </div>
+  </section>
+)}
 
 <style>
   .tk-sessions {

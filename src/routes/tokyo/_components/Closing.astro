@@ -29,10 +29,15 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
   <div class="tk-wrap tk-wrap--panel">
     <div class="tk-closing__card tk-dark" data-tk-reveal="rise">
       <p class="tk-closing__when">
-        <span class="tk-closing__dots" aria-hidden="true"
-          ><i></i><i></i><i></i><i></i></span
-        >
-        <time datetime={event.isoDate}>{date} {day}</time>
+        <span class="tk-closing__dots" aria-hidden="true">
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+        </span>
+        <time datetime={event.isoDate}>
+          {date} {day}
+        </time>
         <span>{event.venue.name}</span>
       </p>
       <h2 class="tk-closing__title" id="tk-closing-h">
@@ -51,7 +56,9 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
           data-tk-magnet
         >
           {c.register}
-          <span class="tk-btn__disc"><Arrow /></span>
+          <span class="tk-btn__disc">
+            <Arrow />
+          </span>
         </a>
         <p class="tk-closing__note">{t.register.note(event.fee)}</p>
       </div>

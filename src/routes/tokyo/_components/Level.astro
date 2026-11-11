@@ -32,15 +32,13 @@ const { stars, label } = LEVELS[lane];
     className,
   ]}
 >
-  {
-    showStars && (
-      <span class="tk-level__stars" aria-hidden="true">
-        {[1, 2, 3].map((n) => (
-          <Icon name="star" class={n <= stars ? "is-on" : undefined} />
-        ))}
-      </span>
-    )
-  }
+  {showStars && (
+    <span class="tk-level__stars" aria-hidden="true">
+      {[1, 2, 3].map((n) => (
+        <Icon name="star" class={n <= stars ? "is-on" : undefined} />
+      ))}
+    </span>
+  )}
   {label}
 </span>
 

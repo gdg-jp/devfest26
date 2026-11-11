@@ -31,23 +31,21 @@ const c = copy(lang);
       tone="var(--red)"
       stickers={["slash", "chevron"]}
     >
-      {
-        FAQ.length > 0 && (
-          <div class="tk-faq__list" data-tk-stagger>
-            {FAQ.map((item) => (
-              <details class="tk-faq__item" data-tk-faq data-tk-reveal="up">
-                <summary>
-                  <span>{localized(item.q, lang)}</span>
-                  <i aria-hidden="true" />
-                </summary>
-                <div class="tk-faq__a" data-tk-faq-body>
-                  <p>{localized(item.a, lang)}</p>
-                </div>
-              </details>
-            ))}
-          </div>
-        )
-      }
+      {FAQ.length > 0 && (
+        <div class="tk-faq__list" data-tk-stagger>
+          {FAQ.map((item) => (
+            <details class="tk-faq__item" data-tk-faq data-tk-reveal="up">
+              <summary>
+                <span>{localized(item.q, lang)}</span>
+                <i aria-hidden="true" />
+              </summary>
+              <div class="tk-faq__a" data-tk-faq-body>
+                <p>{localized(item.a, lang)}</p>
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
 
       <aside class="tk-coc" id="coc" data-tk-reveal="up">
         <h3>{c.cocHeading}</h3>

@@ -33,84 +33,82 @@ const TONES: Record<string, string> = {
 };
 ---
 
-{
-  featured.length > 0 && (
-    <section
-      class="tk-sec tk-sec--panel tk-featured"
-      id="featured"
-      aria-labelledby="tk-featured-h"
-      data-tk-car
-    >
-      <div class="tk-wrap tk-wrap--panel">
-        <Panel
-          title={c.featuredHeading}
-          id="tk-featured-h"
-          tone="var(--tk-accent-ht)"
-          stickers={["arrow", "ellipsis"]}
-          ja={lang === "ja"}
-          class="tk-featured__panel"
+{featured.length > 0 && (
+  <section
+    class="tk-sec tk-sec--panel tk-featured"
+    id="featured"
+    aria-labelledby="tk-featured-h"
+    data-tk-car
+  >
+    <div class="tk-wrap tk-wrap--panel">
+      <Panel
+        title={c.featuredHeading}
+        id="tk-featured-h"
+        tone="var(--tk-accent-ht)"
+        stickers={["arrow", "ellipsis"]}
+        ja={lang === "ja"}
+        class="tk-featured__panel"
+      >
+        <ul
+          class="tk-car"
+          data-tk-car-track
+          data-tk-car-start={start}
+          data-tk-reveal="rise"
         >
-          <ul
-            class="tk-car"
-            data-tk-car-track
-            data-tk-car-start={start}
-            data-tk-reveal="rise"
-          >
-            {featured.map((f, i) => {
-              const { speaker } = f.program;
-              return (
-                <li class="tk-car__item">
-                  <a class="tk-card" href={f.talk.href} draggable="false">
-                    <span class="tk-card__frame">
-                      <span class="tk-card__pan" data-tk-car-pan>
-                        <Portrait
-                          speaker={speaker}
-                          size={320}
-                          class="tk-card__img"
-                          tone={TONES[f.tone]}
-                          eager={Math.abs(i - start) < 2}
-                        />
-                      </span>
-                      {f.talk.start && (
-                        <span class="tk-card__time">{f.talk.start}</span>
-                      )}
+          {featured.map((f, i) => {
+            const { speaker } = f.program;
+            return (
+              <li class="tk-car__item">
+                <a class="tk-card" href={f.talk.href} draggable="false">
+                  <span class="tk-card__frame">
+                    <span class="tk-card__pan" data-tk-car-pan>
+                      <Portrait
+                        speaker={speaker}
+                        size={320}
+                        class="tk-card__img"
+                        tone={TONES[f.tone]}
+                        eager={Math.abs(i - start) < 2}
+                      />
                     </span>
-                    <span class="tk-card__name">{bare(speaker.data.name)}</span>
-                    <span class="tk-card__hook">{localized(f.hook, lang)}</span>
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
+                    {f.talk.start && (
+                      <span class="tk-card__time">{f.talk.start}</span>
+                    )}
+                  </span>
+                  <span class="tk-card__name">{bare(speaker.data.name)}</span>
+                  <span class="tk-card__hook">{localized(f.hook, lang)}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
 
-          <div class="tk-car__foot">
-            <div class="tk-car__bar" aria-hidden="true">
-              <span data-tk-car-progress />
-            </div>
-            <div class="tk-car__nav">
-              <button
-                type="button"
-                class="tk-car__btn tk-car__btn--prev"
-                aria-label={c.prev}
-                data-tk-car-prev
-              >
-                <Arrow />
-              </button>
-              <button
-                type="button"
-                class="tk-car__btn"
-                aria-label={c.next}
-                data-tk-car-next
-              >
-                <Arrow />
-              </button>
-            </div>
+        <div class="tk-car__foot">
+          <div class="tk-car__bar" aria-hidden="true">
+            <span data-tk-car-progress />
           </div>
-        </Panel>
-      </div>
-    </section>
-  )
-}
+          <div class="tk-car__nav">
+            <button
+              type="button"
+              class="tk-car__btn tk-car__btn--prev"
+              aria-label={c.prev}
+              data-tk-car-prev
+            >
+              <Arrow />
+            </button>
+            <button
+              type="button"
+              class="tk-car__btn"
+              aria-label={c.next}
+              data-tk-car-next
+            >
+              <Arrow />
+            </button>
+          </div>
+        </div>
+      </Panel>
+    </div>
+  </section>
+)}
 
 <style>
   /* Neighbours peek in up to the card's keyline, not its padding. */

@@ -54,20 +54,18 @@ const Tab = tag;
   </Tab>
 
   <div class="tk-panel__shelf" aria-hidden="true">
-    {
-      stickers.map((name) => {
-        const s = STICKERS[name];
-        return (
-          <svg
-            class="tk-panel__sticker"
-            viewBox={`0 0 ${s.width} ${s.height}`}
-            style={`width:calc(${s.width} * var(--tk-sticker-u))`}
-          >
-            <g transform={s.transform} set:html={s.shapes} />
-          </svg>
-        );
-      })
-    }
+    {stickers.map((name) => {
+      const s = STICKERS[name];
+      return (
+        <svg
+          class="tk-panel__sticker"
+          viewBox={`0 0 ${s.width} ${s.height}`}
+          style={`width:calc(${s.width} * var(--tk-sticker-u))`}
+        >
+          <g transform={s.transform} set:html={s.shapes} />
+        </svg>
+      );
+    })}
   </div>
 
   <div class="tk-panel__body">

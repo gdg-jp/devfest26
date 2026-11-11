@@ -156,44 +156,42 @@ const jsonLd = {
 
           <div class="tk-sp__id">
             {pick && <p class="tk-sp__hook">{localized(pick.hook, lang)}</p>}
-            <h1 class="tk-sp__name" id="tk-sp-name">{bare(name)}</h1>
+            <h1 class="tk-sp__name" id="tk-sp-name">
+              {bare(name)}
+            </h1>
             <ul class="tk-sp__role">
-              {
-                role
-                  .split(/\s*／\s*/)
-                  .filter(Boolean)
-                  .map((line) => <li>{line}</li>)
-              }
+              {role
+                .split(/\s*／\s*/)
+                .filter(Boolean)
+                .map((line) => (
+                  <li>{line}</li>
+                ))}
             </ul>
             <ul class="tk-sp__slots">
-              {
-                appearances.map(({ session }) => (
-                  <li>
-                    <a
-                      class="tk-sp__slot"
-                      href={session.href}
-                      style={`--trk:${onTheme(session.track.data.color)};--trk-ink:${session.track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
-                    >
-                      <b>{session.track.data.label}</b>
-                      {SHOW_TIMES && session.start && (
-                        <time>{session.start}</time>
-                      )}
-                      <Arrow />
-                    </a>
-                  </li>
-                ))
-              }
+              {appearances.map(({ session }) => (
+                <li>
+                  <a
+                    class="tk-sp__slot"
+                    href={session.href}
+                    style={`--trk:${onTheme(session.track.data.color)};--trk-ink:${session.track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+                  >
+                    <b>{session.track.data.label}</b>
+                    {SHOW_TIMES && session.start && (
+                      <time>{session.start}</time>
+                    )}
+                    <Arrow />
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {
-          profile && (
-            <div class="tk-prose tk-sp__bio">
-              <Content />
-            </div>
-          )
-        }
+        {profile && (
+          <div class="tk-prose tk-sp__bio">
+            <Content />
+          </div>
+        )}
       </Panel>
     </div>
   </section>
@@ -208,61 +206,57 @@ const jsonLd = {
       >
         <p class="tk-sub">{c.appearancesSub}</p>
         <ul class="tk-sp__cards">
-          {
-            appearances.map(({ session }) => (
-              <li>
-                <SessionCard session={session} end={endOf(session)} />
-              </li>
-            ))
-          }
+          {appearances.map(({ session }) => (
+            <li>
+              <SessionCard session={session} end={endOf(session)} />
+            </li>
+          ))}
         </ul>
       </Panel>
     </div>
   </section>
 
-  {
-    others.length > 0 && (
-      <section class="tk-sec tk-sec--panel" aria-labelledby="tk-sp-more">
-        <div class="tk-wrap tk-wrap--panel">
-          <Panel
-            title="More"
-            id="tk-sp-more"
-            tone={moreTone}
-            stickers={["scallop", "multiply"]}
-          >
-            <p class="tk-sub">{c.moreSpeakersSub}</p>
-            <ul class="tk-more" data-tk-stagger>
-              {others.map((entry, i) => (
-                <li data-tk-reveal="pop">
-                  <a class="tk-more__item" href={speakerHref(entry.speaker)}>
-                    <span
-                      class="tk-more__ring"
-                      style={`--ring:${ring[i % ring.length]}`}
-                    >
-                      <Portrait
-                        speaker={entry.speaker}
-                        size={88}
-                        class="tk-more__img"
-                        tone={ring[i % ring.length]}
-                      />
-                    </span>
-                    <span class="tk-more__name">
-                      {bare(entry.speaker.data.name)}
-                    </span>
-                    <span class="tk-more__role">{entry.speaker.data.role}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <a class="tk-link tk-more__all" href={`${home}#speakers`}>
-              {c.allSpeakers}
-              <Arrow />
-            </a>
-          </Panel>
-        </div>
-      </section>
-    )
-  }
+  {others.length > 0 && (
+    <section class="tk-sec tk-sec--panel" aria-labelledby="tk-sp-more">
+      <div class="tk-wrap tk-wrap--panel">
+        <Panel
+          title="More"
+          id="tk-sp-more"
+          tone={moreTone}
+          stickers={["scallop", "multiply"]}
+        >
+          <p class="tk-sub">{c.moreSpeakersSub}</p>
+          <ul class="tk-more" data-tk-stagger>
+            {others.map((entry, i) => (
+              <li data-tk-reveal="pop">
+                <a class="tk-more__item" href={speakerHref(entry.speaker)}>
+                  <span
+                    class="tk-more__ring"
+                    style={`--ring:${ring[i % ring.length]}`}
+                  >
+                    <Portrait
+                      speaker={entry.speaker}
+                      size={88}
+                      class="tk-more__img"
+                      tone={ring[i % ring.length]}
+                    />
+                  </span>
+                  <span class="tk-more__name">
+                    {bare(entry.speaker.data.name)}
+                  </span>
+                  <span class="tk-more__role">{entry.speaker.data.role}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a class="tk-link tk-more__all" href={`${home}#speakers`}>
+            {c.allSpeakers}
+            <Arrow />
+          </a>
+        </Panel>
+      </div>
+    </section>
+  )}
 </Detail>
 
 <style>

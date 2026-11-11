@@ -46,10 +46,8 @@ const {
   jsonLd={jsonLd}
   ogImage={ogImage}
 >
-  {
-    /* Base's own fallback only knows about the shared bundle. This one covers
-       Tokyo's: if it has not run within three seconds, nothing waits on it. */
-  }
+  {/* Base's own fallback only knows about the shared bundle. This one covers
+       Tokyo's: if it has not run within three seconds, nothing waits on it. */}
   <script is:inline>
     setTimeout(function () {
       if (!window.__tk26Ready) {

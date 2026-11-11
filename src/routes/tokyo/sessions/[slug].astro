@@ -189,24 +189,20 @@ const jsonLd = title
       >
         <div class="tk-sh">
           <p class="tk-sh__meta">
-            {
-              SHOW_TIMES && start && (
-                <span class="tk-sh__time">
-                  <time>{start}</time>
-                  {end && (
-                    <>
-                      <span aria-hidden="true">–</span>
-                      <time>{end}</time>
-                    </>
-                  )}
-                </span>
-              )
-            }
-            {
-              SHOW_TIMES && length && (
-                <span class="tk-sh__len">{c.minutes(length)}</span>
-              )
-            }
+            {SHOW_TIMES && start && (
+              <span class="tk-sh__time">
+                <time>{start}</time>
+                {end && (
+                  <>
+                    <span aria-hidden="true">–</span>
+                    <time>{end}</time>
+                  </>
+                )}
+              </span>
+            )}
+            {SHOW_TIMES && length && (
+              <span class="tk-sh__len">{c.minutes(length)}</span>
+            )}
             <span class="tk-sh__no">{label}</span>
             {featured && <span class="tk-sh__badge">{c.featuredBadge}</span>}
           </p>
@@ -223,66 +219,62 @@ const jsonLd = title
           </p>
 
           <ul class="tk-sh__cast">
-            {
-              cast.map((person) => (
-                <li>
-                  <a class="tk-sh__person" href={person.href}>
-                    <span class="tk-sh__ring" style={`--ring:${person.ring}`}>
-                      <Portrait
-                        speaker={person.speaker}
-                        size={64}
-                        class="tk-sh__av"
-                        tone={person.ring}
-                        eager
-                      />
-                    </span>
-                    <span class="tk-sh__id">
-                      <b>{bare(person.speaker.data.name)}</b>
-                      <small>{person.speaker.data.role}</small>
-                    </span>
-                  </a>
-                </li>
-              ))
-            }
+            {cast.map((person) => (
+              <li>
+                <a class="tk-sh__person" href={person.href}>
+                  <span class="tk-sh__ring" style={`--ring:${person.ring}`}>
+                    <Portrait
+                      speaker={person.speaker}
+                      size={64}
+                      class="tk-sh__av"
+                      tone={person.ring}
+                      eager
+                    />
+                  </span>
+                  <span class="tk-sh__id">
+                    <b>{bare(person.speaker.data.name)}</b>
+                    <small>{person.speaker.data.role}</small>
+                  </span>
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       </Panel>
     </div>
   </section>
 
-  {
-    (abstract || ownTalks.length > 0) && (
-      <section class="tk-sec tk-sec--panel" aria-labelledby="tk-about-h">
-        <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
-          <Panel
-            title="About"
-            id="tk-about-h"
-            tone={tone.pa}
-            stickers={["quoteOpen", "quoteClose"]}
-          >
-            <p class="tk-sub">{c.aboutSub}</p>
-            {abstract && (
-              <div class="tk-prose tk-about">
-                <Content />
-              </div>
-            )}
-            {ownTalks.length > 0 && (
-              <ol class="tk-talks">
-                {ownTalks.map((talk) => (
-                  <li>
-                    <a class="tk-link" href={talk.href}>
-                      {SHOW_TIMES && talk.start && <time>{talk.start}</time>}
-                      {talk.title ?? c.titleTba}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Panel>
-        </div>
-      </section>
-    )
-  }
+  {(abstract || ownTalks.length > 0) && (
+    <section class="tk-sec tk-sec--panel" aria-labelledby="tk-about-h">
+      <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
+        <Panel
+          title="About"
+          id="tk-about-h"
+          tone={tone.pa}
+          stickers={["quoteOpen", "quoteClose"]}
+        >
+          <p class="tk-sub">{c.aboutSub}</p>
+          {abstract && (
+            <div class="tk-prose tk-about">
+              <Content />
+            </div>
+          )}
+          {ownTalks.length > 0 && (
+            <ol class="tk-talks">
+              {ownTalks.map((talk) => (
+                <li>
+                  <a class="tk-link" href={talk.href}>
+                    {SHOW_TIMES && talk.start && <time>{talk.start}</time>}
+                    {talk.title ?? c.titleTba}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+      </div>
+    </section>
+  )}
 
   <section class="tk-sec tk-sec--panel" aria-labelledby="tk-cast-h">
     <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
@@ -294,44 +286,42 @@ const jsonLd = title
       >
         <p class="tk-sub">{c.speakersSub}</p>
         <div class="tk-bios">
-          {
-            cast.map(({ speaker, href, ring, hook, Bio }) => (
-              <article class="tk-bio">
-                <a
-                  class="tk-bio__face"
-                  href={href}
-                  style={`--ring:${ring}`}
-                  tabindex="-1"
-                  aria-hidden="true"
-                >
-                  <Portrait
-                    speaker={speaker}
-                    size={132}
-                    class="tk-bio__img"
-                    tone={ring}
-                  />
+          {cast.map(({ speaker, href, ring, hook, Bio }) => (
+            <article class="tk-bio">
+              <a
+                class="tk-bio__face"
+                href={href}
+                style={`--ring:${ring}`}
+                tabindex="-1"
+                aria-hidden="true"
+              >
+                <Portrait
+                  speaker={speaker}
+                  size={132}
+                  class="tk-bio__img"
+                  tone={ring}
+                />
+              </a>
+              <div class="tk-bio__body">
+                {hook && (
+                  <p class="tk-bio__hook">{localized(hook.hook, lang)}</p>
+                )}
+                <h3 class="tk-bio__name">
+                  <a href={href}>{bare(speaker.data.name)}</a>
+                </h3>
+                <p class="tk-bio__role">{speaker.data.role}</p>
+                {Bio && (
+                  <div class="tk-prose tk-bio__text">
+                    <Bio />
+                  </div>
+                )}
+                <a class="tk-link tk-bio__more" href={href}>
+                  {c.profile}
+                  <Arrow />
                 </a>
-                <div class="tk-bio__body">
-                  {hook && (
-                    <p class="tk-bio__hook">{localized(hook.hook, lang)}</p>
-                  )}
-                  <h3 class="tk-bio__name">
-                    <a href={href}>{bare(speaker.data.name)}</a>
-                  </h3>
-                  <p class="tk-bio__role">{speaker.data.role}</p>
-                  {Bio && (
-                    <div class="tk-prose tk-bio__text">
-                      <Bio />
-                    </div>
-                  )}
-                  <a class="tk-link tk-bio__more" href={href}>
-                    {c.profile}
-                    <Arrow />
-                  </a>
-                </div>
-              </article>
-            ))
-          }
+              </div>
+            </article>
+          ))}
         </div>
       </Panel>
     </div>
@@ -345,64 +335,58 @@ const jsonLd = title
         tone="var(--ht-green)"
         stickers={["colon", "equals"]}
       >
-        {
-          !SHOW_TIMES && sameTheme.length > 0 && (
-            <>
-              <h3 class="tk-sub">{c.sameThemeSub(track.data.label)}</h3>
-              <ul class="tk-cards">
-                {sameTheme.map((other) => (
-                  <li>
-                    <SessionCard session={other} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )
-        }
+        {!SHOW_TIMES && sameTheme.length > 0 && (
+          <>
+            <h3 class="tk-sub">{c.sameThemeSub(track.data.label)}</h3>
+            <ul class="tk-cards">
+              {sameTheme.map((other) => (
+                <li>
+                  <SessionCard session={other} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
-        {
-          SHOW_TIMES && alongside.length > 0 && (
-            <>
-              <h3 class="tk-sub">{c.sameTimeSub}</h3>
-              <ul class="tk-cards">
-                {alongside.map((other) => (
-                  <li>
-                    <SessionCard session={other} end={endOf(other)} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )
-        }
+        {SHOW_TIMES && alongside.length > 0 && (
+          <>
+            <h3 class="tk-sub">{c.sameTimeSub}</h3>
+            <ul class="tk-cards">
+              {alongside.map((other) => (
+                <li>
+                  <SessionCard session={other} end={endOf(other)} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
-        {
-          SHOW_TIMES && (prev || next) && (
-            <>
-              <h3 class="tk-sub">{c.trackSub(track.data.label)}</h3>
-              <ul class="tk-cards tk-cards--lane">
-                {prev && (
-                  <li>
-                    <SessionCard
-                      session={prev}
-                      end={endOf(prev)}
-                      kicker={c.prevSession}
-                      back
-                    />
-                  </li>
-                )}
-                {next && (
-                  <li class="tk-cards__next">
-                    <SessionCard
-                      session={next}
-                      end={endOf(next)}
-                      kicker={c.nextSession}
-                    />
-                  </li>
-                )}
-              </ul>
-            </>
-          )
-        }
+        {SHOW_TIMES && (prev || next) && (
+          <>
+            <h3 class="tk-sub">{c.trackSub(track.data.label)}</h3>
+            <ul class="tk-cards tk-cards--lane">
+              {prev && (
+                <li>
+                  <SessionCard
+                    session={prev}
+                    end={endOf(prev)}
+                    kicker={c.prevSession}
+                    back
+                  />
+                </li>
+              )}
+              {next && (
+                <li class="tk-cards__next">
+                  <SessionCard
+                    session={next}
+                    end={endOf(next)}
+                    kicker={c.nextSession}
+                  />
+                </li>
+              )}
+            </ul>
+          </>
+        )}
 
         <a class="tk-link tk-day__all" href={`${home}#sessions`}>
           {c.allSessions}

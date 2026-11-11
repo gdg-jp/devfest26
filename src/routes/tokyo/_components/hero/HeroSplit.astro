@@ -91,41 +91,41 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   >
     <polygon
       class="tkh-c__fill--meet"
-      points={`0,0 ${CUT.top},0 ${CUT.foot},100 0,100`}></polygon>
+      points={`0,0 ${CUT.top},0 ${CUT.foot},100 0,100`}
+    ></polygon>
     <polygon
       class="tkh-c__fill--beyond"
-      points={`${CUT.top},0 100,0 100,100 ${CUT.foot},100`}></polygon>
+      points={`${CUT.top},0 100,0 100,100 ${CUT.foot},100`}
+    ></polygon>
     <line x1={CUT.top} y1="0" x2={CUT.foot} y2="100"></line>
   </svg>
   <div class="tkh-c__lines" aria-hidden="true"></div>
 
   <div class="tkh-c__stickers" aria-hidden="true">
-    {
-      lanes.map(({ lane, categories }) => (
-        <>
+    {lanes.map(({ lane, categories }) => (
+      <>
+        <span
+          class:list={[
+            "tkh-c__sticker tkh-c__badge tkh-c__badge--level",
+            `tkh-c__badge--${lane}-level`,
+          ]}
+          style={`--tkh-c-cat:${categories[0]?.tone.ht}`}
+        >
+          <Icon name={lane === "meet" ? "sprout" : "summit"} />
+        </span>
+        {categories.map(({ icon, tone }, i) => (
           <span
             class:list={[
-              "tkh-c__sticker tkh-c__badge tkh-c__badge--level",
-              `tkh-c__badge--${lane}-level`,
+              "tkh-c__sticker tkh-c__badge",
+              `tkh-c__badge--${lane}-${i}`,
             ]}
-            style={`--tkh-c-cat:${categories[0]?.tone.ht}`}
+            style={`--tkh-c-cat:${tone.ht}`}
           >
-            <Icon name={lane === "meet" ? "sprout" : "summit"} />
+            <Icon name={icon} />
           </span>
-          {categories.map(({ icon, tone }, i) => (
-            <span
-              class:list={[
-                "tkh-c__sticker tkh-c__badge",
-                `tkh-c__badge--${lane}-${i}`,
-              ]}
-              style={`--tkh-c-cat:${tone.ht}`}
-            >
-              <Icon name={icon} />
-            </span>
-          ))}
-        </>
-      ))
-    }
+        ))}
+      </>
+    ))}
   </div>
 
   <Org facts={f} />
@@ -141,18 +141,24 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
         <dt class="visually-hidden">Date</dt>
         <dd class="tkh-c__when">
           <time datetime={f.startsAt}>
-            <span class="tkh-c__ymd">{f.year}.{f.month}.{f.day}</span>
+            <span class="tkh-c__ymd">
+              {f.year}.{f.month}.{f.day}
+            </span>
             <span class="tkh-c__dow">({f.dow})</span>
-            <span class="tkh-c__hours">{f.start}–{f.end}</span>
+            <span class="tkh-c__hours">
+              {f.start}–{f.end}
+            </span>
           </time>
         </dd>
       </div>
       <div>
         <dt class="visually-hidden">Venue</dt>
         <dd class="tkh-c__where">
-          <span class="tkh-c__walk"
-            ><Icon name="train" />{f.station}<b>{f.walk}</b></span
-          >
+          <span class="tkh-c__walk">
+            <Icon name="train" />
+            {f.station}
+            <b>{f.walk}</b>
+          </span>
           <span class="tkh-c__venue">{f.venue}</span>
         </dd>
       </div>
@@ -160,62 +166,60 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   </header>
 
   <div class="tkh-c__lanes">
-    {
-      lanes.map(({ lane, head, rest, categories }) => (
-        <div class:list={["tkh-c__lane", `tkh-c__lane--${lane}`]}>
-          <p class:list={["tkh-c__name", `tkh-c__name--${lane}`]}>
-            <span class="visually-hidden">{`${head} ${rest}`}</span>
-            {lane === "meet" ? (
-              <span class="tkh-c__set" aria-hidden="true">
-                <span>{head}</span>
-                <span class="tkh-c__rest">
-                  {rest}
-                  <svg
-                    class="tkh-c__wave"
-                    viewBox="0 0 240 20"
-                    preserveAspectRatio="none"
-                  >
-                    <path d={WAVE} pathLength="1" />
-                  </svg>
-                </span>
+    {lanes.map(({ lane, head, rest, categories }) => (
+      <div class:list={["tkh-c__lane", `tkh-c__lane--${lane}`]}>
+        <p class:list={["tkh-c__name", `tkh-c__name--${lane}`]}>
+          <span class="visually-hidden">{`${head} ${rest}`}</span>
+          {lane === "meet" ? (
+            <span class="tkh-c__set" aria-hidden="true">
+              <span>{head}</span>
+              <span class="tkh-c__rest">
+                {rest}
+                <svg
+                  class="tkh-c__wave"
+                  viewBox="0 0 240 20"
+                  preserveAspectRatio="none"
+                >
+                  <path d={WAVE} pathLength="1" />
+                </svg>
               </span>
-            ) : (
-              <span class="tkh-c__set" aria-hidden="true">
-                <span>{head}</span>
-                <span class="tkh-c__rest">{rest}</span>
-                <span class="tkh-c__dim" />
-              </span>
-            )}
-          </p>
-          <span
-            class="tkh-c__lvl"
-            aria-hidden="true"
-            style={`--tkh-c-cat:${categories[0]?.tone.ht}`}
-          >
-            <Icon name={lane === "meet" ? "sprout" : "summit"} />
-          </span>
-          <ul class="tkh-c__cats">
-            {categories.map(({ icon, id, label, tone, linked }) => {
-              const Tag = linked ? "a" : "span";
-              return (
-                <li>
-                  <Tag
-                    class="tkh-c__cat"
-                    href={linked ? `#tk-sessions-${id}` : undefined}
-                    style={`--tkh-c-cat:${tone.ht}`}
-                  >
-                    <span class="tkh-c__icon">
-                      <Icon name={icon} />
-                    </span>
-                    <span class="tkh-c__label">{label}</span>
-                  </Tag>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))
-    }
+            </span>
+          ) : (
+            <span class="tkh-c__set" aria-hidden="true">
+              <span>{head}</span>
+              <span class="tkh-c__rest">{rest}</span>
+              <span class="tkh-c__dim" />
+            </span>
+          )}
+        </p>
+        <span
+          class="tkh-c__lvl"
+          aria-hidden="true"
+          style={`--tkh-c-cat:${categories[0]?.tone.ht}`}
+        >
+          <Icon name={lane === "meet" ? "sprout" : "summit"} />
+        </span>
+        <ul class="tkh-c__cats">
+          {categories.map(({ icon, id, label, tone, linked }) => {
+            const Tag = linked ? "a" : "span";
+            return (
+              <li>
+                <Tag
+                  class="tkh-c__cat"
+                  href={linked ? `#tk-sessions-${id}` : undefined}
+                  style={`--tkh-c-cat:${tone.ht}`}
+                >
+                  <span class="tkh-c__icon">
+                    <Icon name={icon} />
+                  </span>
+                  <span class="tkh-c__label">{label}</span>
+                </Tag>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))}
   </div>
 
   <div class="tkh-c__ctas">

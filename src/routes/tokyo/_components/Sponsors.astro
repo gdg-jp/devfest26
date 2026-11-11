@@ -57,120 +57,116 @@ const logoWidth = (item: OrganizerItem) => item.logo?.width ?? 220;
       tone="var(--tk-accent-ht)"
       stickers={["scallop", "multiply"]}
     >
-      {
-        groups.map((section, i) => (
-          <>
-            <h3
-              class:list={[
-                "tk-partners__h",
-                { "tk-partners__h--first": i === 0 },
-              ]}
-              data-tk-reveal="up"
-            >
-              {titleOf(section)}
-            </h3>
-            <ul class="tk-partners" data-tk-stagger>
-              {section.items.map((item) => (
-                <li
-                  class="tk-partners__card"
-                  style={`--rail:${nextRail()}`}
-                  data-tk-reveal="up"
-                >
-                  <div class="tk-partners__head">
-                    <span class="tk-partners__name">{item.name}</span>
-                    {item.socials && item.socials.length > 0 && (
-                      <span class="tk-partners__socials">
-                        {item.socials.map((social) => (
-                          <a
-                            href={social.url}
-                            target="_blank"
-                            rel="noopener"
-                            aria-label={social.label}
-                            title={social.label}
-                          >
-                            {SOCIAL_LABEL[social.type] ?? social.type} ↗
-                          </a>
-                        ))}
-                      </span>
-                    )}
-                  </div>
-                  {item.description && (
-                    <div class="tk-partners__body">
-                      {item.description.split("\n\n").map((block) => (
-                        <p>{block}</p>
-                      ))}
-                    </div>
-                  )}
-                  {item.links && item.links.length > 0 && (
+      {groups.map((section, i) => (
+        <>
+          <h3
+            class:list={[
+              "tk-partners__h",
+              { "tk-partners__h--first": i === 0 },
+            ]}
+            data-tk-reveal="up"
+          >
+            {titleOf(section)}
+          </h3>
+          <ul class="tk-partners" data-tk-stagger>
+            {section.items.map((item) => (
+              <li
+                class="tk-partners__card"
+                style={`--rail:${nextRail()}`}
+                data-tk-reveal="up"
+              >
+                <div class="tk-partners__head">
+                  <span class="tk-partners__name">{item.name}</span>
+                  {item.socials && item.socials.length > 0 && (
                     <span class="tk-partners__socials">
-                      {item.links.map((link) => (
-                        <a href={link.url} target="_blank" rel="noopener">
-                          {link.label} ↗
+                      {item.socials.map((social) => (
+                        <a
+                          href={social.url}
+                          target="_blank"
+                          rel="noopener"
+                          aria-label={social.label}
+                          title={social.label}
+                        >
+                          {SOCIAL_LABEL[social.type] ?? social.type} ↗
                         </a>
                       ))}
                     </span>
                   )}
-                </li>
-              ))}
-            </ul>
-          </>
-        ))
-      }
-
-      {
-        sponsors.map((section) => (
-          <>
-            <h3 class="tk-partners__h" data-tk-reveal="up">
-              {titleOf(section)}
-            </h3>
-            <ul class="tk-spons" data-tk-stagger>
-              {section.items.map((item) => {
-                const href = item.logo?.url ?? item.xUrl;
-                const mark = item.logo ? (
-                  typeof item.logo.image === "string" ? (
-                    <img
-                      src={item.logo.image}
-                      alt={item.logo.alt}
-                      width={logoWidth(item)}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  ) : (
-                    <Image
-                      src={item.logo.image}
-                      alt={item.logo.alt}
-                      width={logoWidth(item)}
-                      loading="lazy"
-                    />
-                  )
-                ) : null;
-                const inner = (
-                  <>
-                    {mark}
-                    <span class="tk-spons__name">{item.name}</span>
-                  </>
-                );
-                return (
-                  <li data-tk-reveal="pop">
-                    {href ? (
-                      <a
-                        class="tk-spons__card"
-                        href={href}
-                        target="_blank"
-                        rel="noopener"
-                      >
-                        {inner}
+                </div>
+                {item.description && (
+                  <div class="tk-partners__body">
+                    {item.description.split("\n\n").map((block) => (
+                      <p>{block}</p>
+                    ))}
+                  </div>
+                )}
+                {item.links && item.links.length > 0 && (
+                  <span class="tk-partners__socials">
+                    {item.links.map((link) => (
+                      <a href={link.url} target="_blank" rel="noopener">
+                        {link.label} ↗
                       </a>
-                    ) : (
-                      <div class="tk-spons__card">{inner}</div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        ))
-      }
+                    ))}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      ))}
+
+      {sponsors.map((section) => (
+        <>
+          <h3 class="tk-partners__h" data-tk-reveal="up">
+            {titleOf(section)}
+          </h3>
+          <ul class="tk-spons" data-tk-stagger>
+            {section.items.map((item) => {
+              const href = item.logo?.url ?? item.xUrl;
+              const mark = item.logo ? (
+                typeof item.logo.image === "string" ? (
+                  <img
+                    src={item.logo.image}
+                    alt={item.logo.alt}
+                    width={logoWidth(item)}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <Image
+                    src={item.logo.image}
+                    alt={item.logo.alt}
+                    width={logoWidth(item)}
+                    loading="lazy"
+                  />
+                )
+              ) : null;
+              const inner = (
+                <>
+                  {mark}
+                  <span class="tk-spons__name">{item.name}</span>
+                </>
+              );
+              return (
+                <li data-tk-reveal="pop">
+                  {href ? (
+                    <a
+                      class="tk-spons__card"
+                      href={href}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {inner}
+                    </a>
+                  ) : (
+                    <div class="tk-spons__card">{inner}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ))}
     </Panel>
   </div>
 </section>

@@ -27,27 +27,25 @@ const cycle = ["var(--tk-accent)", "var(--yellow)", "var(--green)"];
       stickers={["quoteOpen", "quoteClose"]}
     >
       <ul class="tk-grid" data-tk-stagger>
-        {
-          speakers.map((s, i) => (
-            <li data-tk-reveal="pop">
-              <a class="tk-grid__item" href={speakerHref(s.speaker)}>
-                <span
-                  class="tk-grid__ring"
-                  style={`--ring:${cycle[i % cycle.length]}`}
-                >
-                  <Portrait
-                    speaker={s.speaker}
-                    size={96}
-                    class="tk-grid__img"
-                    tone={cycle[i % cycle.length]}
-                  />
-                </span>
-                <span class="tk-grid__name">{bare(s.speaker.data.name)}</span>
-                <span class="tk-grid__role">{s.speaker.data.role}</span>
-              </a>
-            </li>
-          ))
-        }
+        {speakers.map((s, i) => (
+          <li data-tk-reveal="pop">
+            <a class="tk-grid__item" href={speakerHref(s.speaker)}>
+              <span
+                class="tk-grid__ring"
+                style={`--ring:${cycle[i % cycle.length]}`}
+              >
+                <Portrait
+                  speaker={s.speaker}
+                  size={96}
+                  class="tk-grid__img"
+                  tone={cycle[i % cycle.length]}
+                />
+              </span>
+              <span class="tk-grid__name">{bare(s.speaker.data.name)}</span>
+              <span class="tk-grid__role">{s.speaker.data.role}</span>
+            </a>
+          </li>
+        ))}
       </ul>
     </Panel>
   </div>

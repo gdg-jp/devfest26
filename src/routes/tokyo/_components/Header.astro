@@ -55,15 +55,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 
     <nav class="tk-header__nav" aria-label="Main">
       <ul>
-        {
-          nav.bar.map((item) => (
-            <li>
-              <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
+        {nav.bar.map((item) => (
+          <li>
+            <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
+              {item.label}
+            </a>
+          </li>
+        ))}
       </ul>
     </nav>
 
@@ -86,7 +84,9 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
         data-placement="topbar"
       >
         {c.registerShort}
-        <span class="tk-btn__disc"><Arrow /></span>
+        <span class="tk-btn__disc">
+          <Arrow />
+        </span>
       </a>
       <button
         type="button"
@@ -95,8 +95,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
         aria-controls="tk-menu"
         data-tk-menu-toggle
       >
-        <span class="visually-hidden" data-tk-menu-label>{c.menu}</span>
-        <span class="tk-header__burger" aria-hidden="true"><i></i><i></i></span>
+        <span class="visually-hidden" data-tk-menu-label>
+          {c.menu}
+        </span>
+        <span class="tk-header__burger" aria-hidden="true">
+          <i></i>
+          <i></i>
+        </span>
       </button>
     </div>
   </div>
@@ -105,16 +110,14 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 <div class="tk-menu" id="tk-menu" data-tk-menu hidden>
   <nav aria-label="Menu">
     <ol>
-      {
-        nav.menu.map((item, i) => (
-          <li data-tk-menu-item>
-            <a href={`${prefix}${item.href}`} data-tk-menu-link>
-              <span class="tk-menu__no">{String(i + 1).padStart(2, "0")}</span>
-              {item.label}
-            </a>
-          </li>
-        ))
-      }
+      {nav.menu.map((item, i) => (
+        <li data-tk-menu-item>
+          <a href={`${prefix}${item.href}`} data-tk-menu-link>
+            <span class="tk-menu__no">{String(i + 1).padStart(2, "0")}</span>
+            {item.label}
+          </a>
+        </li>
+      ))}
     </ol>
   </nav>
   <div class="tk-menu__foot" data-tk-menu-item>
@@ -127,11 +130,13 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       data-placement="menu"
     >
       {c.register}
-      <span class="tk-btn__disc"><Arrow /></span>
+      <span class="tk-btn__disc">
+        <Arrow />
+      </span>
     </a>
-    <a class="tk-menu__lang" href={switchHref} hreflang={switchTo}
-      >{switchLabel}</a
-    >
+    <a class="tk-menu__lang" href={switchHref} hreflang={switchTo}>
+      {switchLabel}
+    </a>
   </div>
 </div>
 

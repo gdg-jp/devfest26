@@ -65,31 +65,29 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
       ja={lang === "ja"}
     >
       <div class="tk-theme__grid">
-        {
-          lanes.map(({ lane, title, fill, ht, mark, lead, body, forWhom }) => (
-            <article
-              class:list={["tk-theme__card", `tk-theme__card--${lane}`]}
-              style={`--tk-theme-fill:${fill};--tk-theme-ht:${ht}`}
-              data-tk-reveal="up"
-            >
-              <span class="tk-theme__mark" aria-hidden="true">
-                <Icon name={mark} />
-              </span>
-              <Level lane={lane} stars={false} />
-              <h3 class="tk-theme__title">{title}</h3>
-              <p class="tk-theme__lead">{localized(lead, lang)}</p>
-              <p class="tk-theme__body">{localized(body, lang)}</p>
-              <div class="tk-theme__for">
-                <p>{c.themeFor}</p>
-                <ul>
-                  {forWhom.map((line) => (
-                    <li>{localized(line, lang)}</li>
-                  ))}
-                </ul>
-              </div>
-            </article>
-          ))
-        }
+        {lanes.map(({ lane, title, fill, ht, mark, lead, body, forWhom }) => (
+          <article
+            class:list={["tk-theme__card", `tk-theme__card--${lane}`]}
+            style={`--tk-theme-fill:${fill};--tk-theme-ht:${ht}`}
+            data-tk-reveal="up"
+          >
+            <span class="tk-theme__mark" aria-hidden="true">
+              <Icon name={mark} />
+            </span>
+            <Level lane={lane} stars={false} />
+            <h3 class="tk-theme__title">{title}</h3>
+            <p class="tk-theme__lead">{localized(lead, lang)}</p>
+            <p class="tk-theme__body">{localized(body, lang)}</p>
+            <div class="tk-theme__for">
+              <p>{c.themeFor}</p>
+              <ul>
+                {forWhom.map((line) => (
+                  <li>{localized(line, lang)}</li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ))}
       </div>
     </Panel>
   </div>

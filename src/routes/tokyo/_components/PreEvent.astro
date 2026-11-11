@@ -34,33 +34,31 @@ const upcoming = (await byTenant("meetups", tenant))
   });
 ---
 
-{
-  upcoming.length > 0 && (
-    <aside class="tk-pre tk-wrap" id="preevent" aria-label={c.preEventHeading}>
-      {upcoming.map(({ m, when }) => (
-        <a
-          class="tk-pre__row"
-          href={m.data.url}
-          target="_blank"
-          rel="noopener"
-          data-tk-reveal="up"
-        >
-          <span class="tk-pre__tag">
-            {c.preEventHeading} #{m.data.no}
-          </span>
-          <span class="tk-pre__when">
-            {when} {m.data.startsAt}
-          </span>
-          <span class="tk-pre__title">{m.data.title}</span>
-          <span class="tk-pre__cta">
-            {c.preEventCta}
-            <Arrow />
-          </span>
-        </a>
-      ))}
-    </aside>
-  )
-}
+{upcoming.length > 0 && (
+  <aside class="tk-pre tk-wrap" id="preevent" aria-label={c.preEventHeading}>
+    {upcoming.map(({ m, when }) => (
+      <a
+        class="tk-pre__row"
+        href={m.data.url}
+        target="_blank"
+        rel="noopener"
+        data-tk-reveal="up"
+      >
+        <span class="tk-pre__tag">
+          {c.preEventHeading} #{m.data.no}
+        </span>
+        <span class="tk-pre__when">
+          {when} {m.data.startsAt}
+        </span>
+        <span class="tk-pre__title">{m.data.title}</span>
+        <span class="tk-pre__cta">
+          {c.preEventCta}
+          <Arrow />
+        </span>
+      </a>
+    ))}
+  </aside>
+)}
 
 <style>
   .tk-pre {
