@@ -1,0 +1,126 @@
+---
+import Shell from "../_layout/Shell.astro";
+import HeroSplit, {
+  type SplitCta,
+  type SplitVariant,
+} from "./hero/HeroSplit.astro";
+import HeroSwitch from "./hero/HeroSwitch.astro";
+import Featured from "./Featured.astro";
+import Theme from "./Theme.astro";
+import Overview from "./Overview.astro";
+import News from "./News.astro";
+import PreEvent from "./PreEvent.astro";
+import Sessions from "./Sessions.astro";
+import Speakers from "./Speakers.astro";
+import Sponsors from "./Sponsors.astro";
+import Faq from "./Faq.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { homeData } from "../_data";
+
+/**
+ * Tokyo's home page, laid out as Kansai's: the key visual, the headliners,
+ * then the programme from the top down — by theme rather than by time, since
+ * Tokyo's day is not settled yet (`Sessions`, where Kansai has its timetable). The register button stays in the header,
+ * which pins to the top of the screen, all the way down.
+ *
+ * The key visual is `hero/HeroSplit.astro` (candidate C), drawn on the same
+ * graph paper as the rest of the page. The other three candidates are kept
+ * out of the build in `design/tokyo-hero/`.
+ *
+ * C is drawn in one of several treatments (`HEROES`); `HERO` and `CTA` are
+ * the ones the site ships with. In development every treatment is on the
+ * page and `?hero=<id>` picks which one shows, `?cta=<id>` where the buttons
+ * stand on a phone, with a switch at the right edge (a static page cannot
+ * read the query on the server).
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const { featured, speakers } = await homeData(site.tenant);
+
+const HEROES: {
+  id: string;
+  label: string;
+  note: string;
+  variant: SplitVariant;
+}[] = [
+  {
+    id: "c",
+    label: "現状",
+    note: "赤と緑の境目は細い線だけ",
+    variant: "split",
+  },
+  {
+    id: "c1",
+    label: "斜めの帯",
+    note: "境目に黒い帯。テーマの文字が帯の上を流れ、イベント名は白いチケットに",
+    variant: "tape",
+  },
+  {
+    id: "c2",
+    label: "大きな文字",
+    note: "背景に、はみ出すほど大きな MEET と BEYOND",
+    variant: "giant",
+  },
+  {
+    id: "c3",
+    label: "Beyond を暗く",
+    note: "Beyond の面を黒に。イベント名は白いチケットに",
+    variant: "night",
+  },
+];
+const CTAS: { id: SplitCta; label: string; note: string }[] = [
+  {
+    id: "field",
+    label: "緑の上（現状）",
+    note: "ボタンが Beyond の緑の上にある",
+  },
+  {
+    id: "tray",
+    label: "方眼の台",
+    note: "ボタンの下だけ、ページと同じ方眼紙の台にする（上辺は黒い線と角丸）",
+  },
+  {
+    id: "ink",
+    label: "黒い帯",
+    note: "ボタンの下だけ、境目と同じ傾きで切った黒い帯にする",
+  },
+];
+const HERO = "c";
+const CTA: SplitCta = "field";
+const shipped = HEROES.find(({ id }) => id === HERO) ?? HEROES[0];
+---
+
+<Shell site={site} docked>
+  <div class="tk-hero" slot="hero" data-tk-hero>
+    {import.meta.env.DEV ? (
+      <>
+        {HEROES.map(({ id, variant }) => (
+          <div data-tk-hero-candidate={id} hidden={id !== HERO}>
+            <HeroSplit site={site} variant={variant} cta={CTA} />
+          </div>
+        ))}
+        <HeroSwitch heroes={HEROES} current={HERO} ctas={CTAS} cta={CTA} />
+      </>
+    ) : (
+      <HeroSplit site={site} variant={shipped.variant} cta={CTA} />
+    )}
+  </div>
+  <Theme site={site} />
+  <Overview site={site} />
+  <Featured featured={featured} />
+  <News />
+  <PreEvent tenant={site.tenant} />
+  <Sessions site={site} />
+  <Speakers speakers={speakers} />
+  <Sponsors />
+  <Faq site={site} />
+</Shell>
+
+<style>
+  .tk-hero {
+    position: relative;
+  }
+</style>

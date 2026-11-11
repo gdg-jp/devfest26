@@ -1,0 +1,77 @@
+---
+import Icon from "./Icon.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { HERO, localized, type Lane } from "../_content";
+
+/**
+ * Who a half of the theme is for, as a tag: three stars, as many filled as
+ * the half asks of you, and the words. Meet the Vibes is one star — for
+ * beginners — and Beyond the Vibes all three — intermediate and up.
+ */
+interface Props {
+  lane: Lane;
+  /** Leave the stars off and keep the words, where the page asks it. */
+  stars?: boolean;
+  class?: string;
+}
+
+const { lane, stars: showStars = true, class: className } = Astro.props;
+const lang = currentLanguage();
+const LEVELS: Record<Lane, { stars: number; label: string }> = {
+  meet: { stars: 1, label: localized(HERO.meetLevel, lang) },
+  beyond: { stars: 3, label: localized(HERO.beyondLevel, lang) },
+};
+const { stars, label } = LEVELS[lane];
+---
+
+<span
+  class:list={[
+    "tk-level",
+    `tk-level--${lane}`,
+    { "tk-level--plain": !showStars },
+    className,
+  ]}
+>
+  {showStars && (
+    <span class="tk-level__stars" aria-hidden="true">
+      {[1, 2, 3].map((n) => (
+        <Icon name="star" class={n <= stars ? "is-on" : undefined} />
+      ))}
+    </span>
+  )}
+  {label}
+</span>
+
+<style>
+  .tk-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 4px 12px 4px 8px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font: 700 13px/1.2 var(--tk-f-jp);
+    white-space: nowrap;
+  }
+
+  .tk-level--plain {
+    padding-left: 12px;
+  }
+
+  .tk-level__stars {
+    display: inline-flex;
+    gap: 1px;
+  }
+
+  .tk-level__stars :global(svg) {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.2;
+  }
+
+  .tk-level__stars :global(svg.is-on) {
+    fill: var(--ht-yellow);
+  }
+</style>

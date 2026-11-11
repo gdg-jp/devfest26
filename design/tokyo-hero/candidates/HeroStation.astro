@@ -1,0 +1,635 @@
+---
+import Org from "./Org.astro";
+import Ctas from "./Ctas.astro";
+import Wordmark from "../Wordmark.astro";
+import Icon from "../Icon.astro";
+import type { ResolvedTenant } from "../../../../tenants";
+import { currentLanguage } from "../../../../i18n/language";
+import { heroFacts } from "./facts";
+
+/**
+ * Key visual D, "Station": the place as the picture. The venue is a minute
+ * from Tokyo Station, and the station's Marunouchi front is already in the
+ * brand's colours — red brick, white bands, dark domes — so it runs along the
+ * foot of the screen in the page's keyline, the towers of Marunouchi behind
+ * it and the venue's own tower pinned. A Yamanote-green train goes by.
+ *
+ * Kansai drew its city as type; Tokyo draws its address. The words above are
+ * Kansai's in order: who, the name, the theme, when, the two buttons.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const f = heroFacts(site, lang);
+
+/* ---- the drawing, on a 1600 × 380 board, ground at y = 330 ---------- */
+
+const GROUND = 330;
+
+// Marunouchi behind: [x, width, top]. The venue's tower is drawn apart.
+const TOWERS: [number, number, number][] = [
+  [20, 120, 120],
+  [150, 90, 80],
+  [250, 130, 150],
+  [395, 110, 96],
+  [660, 90, 118],
+  [880, 120, 70],
+  [1015, 80, 128],
+  [1290, 120, 90],
+  [1420, 70, 140],
+  [1500, 100, 104],
+];
+const VENUE = { x: 515, w: 120, top: 34 };
+// Where the venue's pin points at its tower: high on its right-hand side,
+// in the sky above the station's roofs, so it stays inside the drawing.
+const PIN_Y = 66;
+
+// The station: the long body, the two domed wings, the centre pavilion and
+// the two small towers between.
+const BODY = { x: 300, w: 1000, top: 200 };
+const WINGS = [330, 1110].map((x) => ({ x, w: 160, top: 150 }));
+const CENTRE = { x: 740, w: 120, top: 170 };
+const TURRETS = [590, 970].map((x) => ({ x, w: 40, top: 184 }));
+
+// Arched windows in two rows along the body, three up each wing.
+const windowsAlong = (x0: number, x1: number, rows: number[]) =>
+  rows.flatMap((y) =>
+    Array.from({ length: Math.floor((x1 - x0) / 28) }, (_, i) => ({
+      x: x0 + 10 + i * 28,
+      y,
+    })),
+  );
+const bodyWindows = windowsAlong(BODY.x, BODY.x + BODY.w, [228, 280]).filter(
+  ({ x }) =>
+    ![...WINGS, CENTRE, ...TURRETS].some((b) => x > b.x - 14 && x < b.x + b.w),
+);
+const wingWindows = WINGS.flatMap((w) =>
+  windowsAlong(w.x + 6, w.x + w.w, [176, 228, 280]),
+);
+const centreWindows = windowsAlong(
+  CENTRE.x + 4,
+  CENTRE.x + CENTRE.w,
+  [196, 236],
+);
+const venueRows = Array.from(
+  { length: Math.floor((GROUND - VENUE.top - 20) / 22) },
+  (_, i) => VENUE.top + 20 + i * 22,
+);
+
+const dome = (x: number, w: number, top: number) => {
+  const cx = x + w / 2;
+  return `M${x - 6} ${top}C${x + 4} ${top - 40} ${cx - 46} ${top - 62} ${cx} ${top - 66}C${cx + 46} ${top - 62} ${x + w - 4} ${top - 40} ${x + w + 6} ${top}Z`;
+};
+---
+
+<section class="tkh-d" aria-labelledby="tkh-d-title">
+  <Org facts={f} />
+
+  <p class="tkh-d__walk">
+    <Icon name="train" />
+    <span>{f.station}</span><b>{f.walk}</b>
+  </p>
+
+  <div class="tkh-d__intro">
+    <p class="tkh-d__by">{f.text("by")}</p>
+    <h1 class="tkh-d__title" id="tkh-d-title">
+      <span class="visually-hidden">{site.title}</span>
+      <Wordmark label="" split />
+    </h1>
+    <p class="tkh-d__tagline">
+      {f.tagline.lead}<em>{f.tagline.accent}</em>
+    </p>
+    <p class="tkh-d__when">
+      <time datetime={f.startsAt}>
+        <span class="tkh-d__ymd">{f.year}.{f.month}.{f.day}</span>
+        <span class="tkh-d__dow">({f.dow})</span>
+        <span class="tkh-d__hours">{f.start}–{f.end}</span>
+      </time>
+    </p>
+    <Ctas site={site} facts={f} />
+  </div>
+
+  <div class="tkh-d__scene">
+    <div class="tkh-d__board">
+      <svg
+        class="tkh-d__art"
+        viewBox="0 0 1600 380"
+        aria-hidden="true"
+        preserveAspectRatio="xMidYMax meet"
+      >
+        <g class="tkh-d__city">
+          {
+            TOWERS.map(([x, w, top], i) => (
+              <rect
+                x={x}
+                y={top}
+                width={w}
+                height={GROUND - top}
+                style={`--i:${i}`}
+              />
+            ))
+          }
+        </g>
+
+        <g class="tkh-d__venue">
+          <rect
+            x={VENUE.x}
+            y={VENUE.top}
+            width={VENUE.w}
+            height={GROUND - VENUE.top}></rect>
+          {
+            venueRows.map((y) => (
+              <line
+                x1={VENUE.x + 12}
+                y1={y}
+                x2={VENUE.x + VENUE.w - 12}
+                y2={y}
+              />
+            ))
+          }
+        </g>
+
+        <g class="tkh-d__station">
+          <rect
+            class="tkh-d__brick"
+            x={BODY.x}
+            y={BODY.top}
+            width={BODY.w}
+            height={GROUND - BODY.top}></rect>
+          <path
+            class="tkh-d__band"
+            d={`M${BODY.x} 214H${BODY.x + BODY.w}M${BODY.x} 266H${BODY.x + BODY.w}`}
+          ></path>
+          {
+            bodyWindows.map(({ x, y }) => (
+              <path
+                class="tkh-d__window"
+                d={`M${x} ${y + 26}v-20a6 6 0 0 1 12 0v20Z`}
+              />
+            ))
+          }
+
+          {
+            TURRETS.map(({ x, w, top }) => (
+              <g>
+                <rect
+                  class="tkh-d__brick"
+                  x={x}
+                  y={top}
+                  width={w}
+                  height={GROUND - top}
+                />
+                <path
+                  class="tkh-d__slate"
+                  d={`M${x - 6} ${top}L${x + w / 2} ${top - 26}L${x + w + 6} ${top}Z`}
+                />
+              </g>
+            ))
+          }
+
+          <rect
+            class="tkh-d__brick"
+            x={CENTRE.x}
+            y={CENTRE.top}
+            width={CENTRE.w}
+            height={GROUND - CENTRE.top}></rect>
+          <path
+            class="tkh-d__slate"
+            d={`M${CENTRE.x - 10} ${CENTRE.top}L${CENTRE.x + CENTRE.w / 2} ${CENTRE.top - 40}L${CENTRE.x + CENTRE.w + 10} ${CENTRE.top}Z`}
+          ></path>
+          <path
+            class="tkh-d__band"
+            d={`M${CENTRE.x} 184H${CENTRE.x + CENTRE.w}M${CENTRE.x} 214H${CENTRE.x + CENTRE.w}M${CENTRE.x} 266H${CENTRE.x + CENTRE.w}`}
+          ></path>
+          {
+            centreWindows.map(({ x, y }) => (
+              <path
+                class="tkh-d__window"
+                d={`M${x} ${y + 26}v-20a6 6 0 0 1 12 0v20Z`}
+              />
+            ))
+          }
+          <path
+            class="tkh-d__door"
+            d={`M${CENTRE.x + 36} ${GROUND}v-34a24 24 0 0 1 48 0v34Z`}></path>
+
+          {
+            WINGS.map(({ x, w, top }) => (
+              <g>
+                <rect
+                  class="tkh-d__brick"
+                  x={x}
+                  y={top}
+                  width={w}
+                  height={GROUND - top}
+                />
+                <path class="tkh-d__slate" d={dome(x, w, top)} />
+                <rect
+                  class="tkh-d__slate"
+                  x={x + w / 2 - 10}
+                  y={top - 80}
+                  width="20"
+                  height="16"
+                />
+                <path
+                  class="tkh-d__finial"
+                  d={`M${x + w / 2} ${top - 80}v-18`}
+                />
+                <path
+                  class="tkh-d__band"
+                  d={`M${x} 164H${x + w}M${x} 214H${x + w}M${x} 266H${x + w}`}
+                />
+              </g>
+            ))
+          }
+          {
+            wingWindows.map(({ x, y }) => (
+              <path
+                class="tkh-d__window"
+                d={`M${x} ${y + 26}v-20a6 6 0 0 1 12 0v20Z`}
+              />
+            ))
+          }
+        </g>
+
+        <path class="tkh-d__ground" d={`M0 ${GROUND}H1600`}></path>
+        <path class="tkh-d__rail" d="M0 372H1600"></path>
+
+        <g class="tkh-d__train">
+          {
+            [0, 1, 2].map((car) => (
+              <g transform={`translate(${car * 132} 0)`}>
+                <rect
+                  class="tkh-d__car"
+                  x="0"
+                  y="338"
+                  width="126"
+                  height="30"
+                  rx="8"
+                />
+                <path class="tkh-d__stripe" d="M0 360H126" />
+                {[0, 1, 2, 3].map((w) => (
+                  <rect
+                    class="tkh-d__pane"
+                    x={12 + w * 28}
+                    y="344"
+                    width="18"
+                    height="10"
+                    rx="2"
+                  />
+                ))}
+              </g>
+            ))
+          }
+        </g>
+      </svg>
+
+      <p
+        class="tkh-d__pin"
+        style={`left:${((VENUE.x + VENUE.w) / 1600) * 100}%;top:${(PIN_Y / 380) * 100}%`}
+      >
+        <span>{f.text("venuePin")}</span>
+        <small>{f.venue}</small>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tkh-d {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    overflow: clip;
+  }
+
+  .tkh-d__walk {
+    position: absolute;
+    z-index: 3;
+    top: clamp(18px, 2.6vw, 30px);
+    right: var(--tk-gutter);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 16px 8px 12px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font: 700 clamp(13px, 1.2vw, 15px) / 1.2 var(--tk-f-jp);
+    rotate: 3deg;
+  }
+
+  .tkh-d__walk :global(svg) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tkh-d__walk b {
+    margin-left: 0.2em;
+    font-size: 1.2em;
+    background: linear-gradient(
+      transparent 58%,
+      var(--ht-yellow) 58% 92%,
+      transparent 92%
+    );
+  }
+
+  /* ---- the words ---------------------------------------------------- */
+
+  .tkh-d__intro {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 1.8vh, 18px);
+    padding: clamp(84px, 11vh, 110px) var(--tk-gutter) clamp(12px, 2vh, 24px);
+    text-align: center;
+  }
+
+  .tkh-d__by {
+    margin: 0;
+    font: 500 clamp(15px, 1.5vw, 20px) / 1 var(--tk-f-display);
+  }
+
+  .tkh-d__title {
+    width: clamp(290px, 44vw, 660px);
+    margin: 0;
+    font-size: inherit;
+  }
+
+  .tkh-d__tagline {
+    margin: 0;
+    font: 800 clamp(20px, 2.4vw, 34px) / 1.3 var(--tk-f-display);
+    letter-spacing: -0.015em;
+  }
+
+  .tkh-d__tagline em {
+    font-style: normal;
+    background: linear-gradient(
+      transparent 60%,
+      var(--tk-accent-ht) 60% 92%,
+      transparent 92%
+    );
+  }
+
+  .tkh-d__when {
+    margin: 0 0 6px;
+  }
+
+  .tkh-d__when time {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0 10px;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+  }
+
+  .tkh-d__ymd {
+    font-size: clamp(32px, 3.6vw, 52px);
+    letter-spacing: -0.03em;
+  }
+
+  .tkh-d__dow {
+    margin-left: -6px;
+    font-family: var(--tk-f-jp);
+    font-size: clamp(15px, 1.4vw, 19px);
+  }
+
+  .tkh-d__hours {
+    font-size: clamp(18px, 1.8vw, 24px);
+  }
+
+  /* ---- the scene ---------------------------------------------------- */
+
+  /* At least wide enough that the station keeps its windows on a phone;
+     the sides fall off the screen there. Below the words, never under them:
+     the pin is inside the drawing, so nothing here reaches up into the
+     buttons. */
+  .tkh-d__scene {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .tkh-d__board {
+    position: relative;
+    flex: none;
+    width: max(100%, 920px);
+    max-width: 1800px;
+    aspect-ratio: 1600 / 380;
+  }
+
+  .tkh-d__art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .tkh-d__art :global(*) {
+    stroke: var(--ink);
+    stroke-width: var(--tk-line);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .tkh-d__city rect {
+    fill: var(--surface);
+    stroke: color-mix(in srgb, var(--ink) 35%, transparent);
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  .tkh-d__venue rect {
+    fill: var(--tk-accent-pa);
+  }
+
+  .tkh-d__venue line {
+    stroke: color-mix(in srgb, var(--ink) 40%, transparent);
+    stroke-width: 1px;
+  }
+
+  .tkh-d__brick {
+    fill: var(--tk-accent);
+  }
+
+  .tkh-d__band {
+    stroke: var(--surface);
+    stroke-width: 4px;
+  }
+
+  .tkh-d__window {
+    fill: var(--surface);
+    stroke-width: 1.5px;
+  }
+
+  .tkh-d__door,
+  .tkh-d__slate {
+    fill: var(--ink);
+  }
+
+  .tkh-d__finial {
+    fill: none;
+  }
+
+  .tkh-d__ground {
+    fill: none;
+  }
+
+  .tkh-d__rail {
+    fill: none;
+    stroke-dasharray: 2 10;
+    stroke-width: 4px;
+  }
+
+  .tkh-d__car {
+    fill: var(--surface);
+  }
+
+  .tkh-d__stripe {
+    stroke: var(--ht-green);
+    stroke-width: 5px;
+  }
+
+  .tkh-d__pane {
+    fill: var(--ink);
+    stroke: none;
+  }
+
+  .tkh-d__train {
+    transform: translateX(1180px);
+  }
+
+  /* The venue's pin, a callout pointing left at its tower. */
+  .tkh-d__pin {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    justify-items: start;
+    margin: 0 0 0 14px;
+    padding: 7px 14px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 14px;
+    background: var(--ink);
+    color: var(--surface);
+    translate: 0 -50%;
+    white-space: nowrap;
+  }
+
+  .tkh-d__pin::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    width: 12px;
+    height: 12px;
+    background: var(--ink);
+    translate: 50% -50%;
+    rotate: 45deg;
+  }
+
+  .tkh-d__pin span {
+    font: 800 15px/1.2 var(--tk-f-jp);
+    color: var(--tk-accent-ht);
+  }
+
+  .tkh-d__pin small {
+    font: 500 11px/1.3 var(--tk-f-jp);
+  }
+
+  /* ---- motion ------------------------------------------------------- */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tkh-d__city rect {
+      animation: tkh-d-rise 0.9s var(--tk-ease) both;
+      animation-delay: calc(0.2s + var(--i) * 60ms);
+    }
+
+    .tkh-d__venue,
+    .tkh-d__station {
+      animation: tkh-d-up 1s var(--tk-ease) 0.1s both;
+    }
+
+    .tkh-d__pin {
+      animation:
+        tkh-d-drop 0.7s var(--tk-ease-back) 1s both,
+        tkh-d-bob 2.4s ease-in-out 1.7s infinite;
+    }
+
+    .tkh-d__train {
+      animation: tkh-d-run 16s linear infinite;
+    }
+  }
+
+  @keyframes tkh-d-rise {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  @keyframes tkh-d-up {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+  }
+
+  @keyframes tkh-d-drop {
+    from {
+      opacity: 0;
+      translate: 24px -50%;
+    }
+  }
+
+  @keyframes tkh-d-bob {
+    50% {
+      translate: 6px -50%;
+    }
+  }
+
+  @keyframes tkh-d-run {
+    from {
+      transform: translateX(-420px);
+    }
+    to {
+      transform: translateX(1640px);
+    }
+  }
+
+  /* ---- narrow ------------------------------------------------------- */
+
+  @media (width < 860px) {
+    .tkh-d__walk {
+      top: 84px;
+      right: auto;
+      left: var(--tk-gutter);
+      rotate: -2deg;
+    }
+
+    .tkh-d__intro {
+      padding-top: 150px;
+    }
+
+    .tkh-d__pin span {
+      font-size: 13px;
+    }
+
+    .tkh-d__pin small {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,457 @@
+---
+import Panel from "./Panel.astro";
+import Arrow from "./Arrow.astro";
+import Icon from "./Icon.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { getProgram } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import {
+  CATEGORIES,
+  copy,
+  LANES,
+  localized,
+  OVERVIEW,
+  type Lane,
+} from "../_content";
+import { trackTone } from "./track";
+
+/**
+ * When, where, how much, and the four categories. The facts are marked by
+ * icons rather than labels, and the venue's name opens it in Google Maps;
+ * the categories sit underneath in the theme's two halves, each a card that
+ * drops down to its own folder in `Sessions` further down the page.
+ *
+ * The four cards are one size: the two lanes share their rows, so a card
+ * with a longer line under its name makes its neighbour across the way as
+ * tall, and both rows match the taller of the two.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const { event } = site;
+const { venue } = event;
+
+const program = await getProgram(site.tenant);
+const categories = CATEGORIES.flatMap((category) => {
+  const group = program.find(({ track }) => track.id === category.track);
+  if (!group) return [];
+  return [
+    {
+      ...category,
+      track: group.track,
+      tone: trackTone(group.track),
+      // A category with no sessions yet has no folder below to go to.
+      Card: group.sessions.length > 0 ? ("a" as const) : ("div" as const),
+    },
+  ];
+});
+const lanes = (Object.keys(LANES) as Lane[])
+  .map((lane) => ({
+    lane,
+    ...LANES[lane],
+    categories: categories.filter((category) => category.lane === lane),
+  }))
+  .filter(({ categories }) => categories.length > 0);
+
+const date =
+  lang === "ja"
+    ? `${event.dateLabel}（${event.dayOfWeek}）`
+    : `${event.dayOfWeek}, ${event.dateLabel}`;
+// The Studio's locality and street can share a district ("千代田区丸の内" +
+// "丸の内２丁目…"); each part joins on where the last one left off.
+const address = [venue.addressLocality, venue.streetAddress].reduce<string>(
+  (joined, part) => {
+    if (!part) return joined;
+    const overlap = [...Array(Math.min(joined.length, part.length)).keys()]
+      .map((i) => i + 1)
+      .filter((n) => joined.endsWith(part.slice(0, n)))
+      .pop();
+    return joined + part.slice(overlap ?? 0);
+  },
+  venue.addressRegion ?? "",
+);
+const place = venue.name.replace(/\s*[(（].*[)）]\s*$/, "");
+const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  address ? `${place} ${address}` : place,
+)}`;
+---
+
+<section
+  class="tk-sec tk-sec--panel tk-overview"
+  id="overview"
+  aria-labelledby="tk-overview-h"
+>
+  <div class="tk-wrap tk-wrap--panel">
+    <Panel
+      title={c.overviewHeading}
+      id="tk-overview-h"
+      tone="var(--ht-yellow)"
+      stickers={["slash", "period"]}
+      ja={lang === "ja"}
+    >
+      <div class="tk-overview__head">
+        <dl class="tk-overview__facts">
+          <div class="tk-overview__fact" data-tk-reveal="up">
+            <dt>
+              <Icon name="calendar" />
+              <span class="visually-hidden">{c.overviewDate}</span>
+            </dt>
+            <dd>
+              <time class="tk-overview__big" datetime={event.isoDate}>
+                {date}
+              </time>
+              <span>{event.hours}</span>
+            </dd>
+          </div>
+          <div class="tk-overview__fact" data-tk-reveal="up">
+            <dt>
+              <Icon name="pin" />
+              <span class="visually-hidden">{c.overviewVenue}</span>
+            </dt>
+            <dd>
+              <a
+                class="tk-overview__venue"
+                href={map}
+                target="_blank"
+                rel="noopener"
+                title={c.overviewMap}
+              >
+                {venue.name}
+                <Icon name="external" />
+              </a>
+              <span class="tk-overview__note">
+                {localized(OVERVIEW.exit, lang)}
+                {address && ` ・ ${address}`}
+              </span>
+              <span class="tk-overview__walk">
+                <Icon name="train" />
+                <span>{localized(OVERVIEW.station, lang)}</span>
+                <b>{localized(OVERVIEW.walk, lang)}</b>
+              </span>
+            </dd>
+          </div>
+          <div class="tk-overview__fact" data-tk-reveal="up">
+            <dt>
+              <Icon name="ticket" />
+              <span class="visually-hidden">{c.overviewFee}</span>
+            </dt>
+            <dd>
+              <span class="tk-overview__big">
+                {localized(OVERVIEW.fee, lang)}
+              </span>
+              <span class="tk-overview__note">
+                ※ {localized(OVERVIEW.feeNote, lang)}
+              </span>
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="tk-overview__lanes">
+        {lanes.map(({ lane, title, sub, categories }) => (
+          <div
+            class:list={["tk-lane", `tk-lane--${lane}`]}
+            style={`--tk-lane:${categories[0].tone.pa}`}
+          >
+            <div class="tk-lane__head">
+              <h3>{title}</h3>
+              <span>{localized(sub, lang)}</span>
+            </div>
+            {categories.map(({ track, tone, icon, Card }) => (
+              <Card
+                class="tk-cat"
+                href={Card === "a" ? `#tk-sessions-${track.id}` : undefined}
+                style={`--tk-cat:${tone.ht}`}
+                data-tk-reveal="up"
+              >
+                <span class="tk-cat__icon">
+                  <Icon name={icon} />
+                </span>
+                <div class="tk-cat__text">
+                  <h4 class="tk-cat__name">{track.data.label}</h4>
+                  {track.data.sub && (
+                    <span class="tk-cat__sub">{track.data.sub}</span>
+                  )}
+                </div>
+                {Card === "a" && (
+                  <span class="tk-cat__disc" aria-hidden="true">
+                    <Arrow />
+                  </span>
+                )}
+              </Card>
+            ))}
+          </div>
+        ))}
+      </div>
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .tk-overview {
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  /* ---- the facts ---- */
+
+  .tk-overview__head {
+    display: grid;
+  }
+
+  .tk-overview__facts {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+  }
+
+  .tk-overview__fact {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+  }
+
+  .tk-overview__fact + .tk-overview__fact {
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  .tk-overview__fact dt {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 12px;
+    background: var(--pa-yellow);
+  }
+
+  .tk-overview__fact dt :global(svg) {
+    width: 20px;
+  }
+
+  .tk-overview__fact dd {
+    display: grid;
+    justify-items: start;
+    gap: 4px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .tk-overview__big {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(20px, 2.4vw, 26px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .tk-overview__venue {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(16px, 1.8vw, 19px);
+    line-height: 1.4;
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--tk-hair);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .tk-overview__venue:hover {
+    text-decoration-color: var(--ink);
+  }
+
+  .tk-overview__venue :global(svg) {
+    width: 15px;
+    margin-left: 6px;
+    vertical-align: -1px;
+  }
+
+  /* A minute from Tokyo Station is the venue's best feature: said loudest,
+     but as text under a highlighter stroke — no border, nothing to press. */
+  .tk-overview__walk {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .tk-overview__walk :global(svg) {
+    width: 22px;
+  }
+
+  .tk-overview__walk b {
+    padding-inline: 2px;
+    font-family: var(--tk-f-display);
+    font-size: clamp(22px, 2.6vw, 26px);
+    line-height: 1.1;
+    background: linear-gradient(
+      transparent 58%,
+      var(--ht-yellow) 58%,
+      var(--ht-yellow) 92%,
+      transparent 92%
+    );
+  }
+
+  .tk-overview__note {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---- the two lanes and their categories ---- */
+
+  /* Two lanes side by side sharing their rows — the head, a card, a card —
+     and the card rows are `1fr` in a grid sized by its content, so all four
+     cards are as tall as the tallest. The lane's foot is a row of its own
+     (4px, plus the gap above it) rather than padding: a subgrid's padding
+     is added to the cards in its last row, which would make that row's
+     cards shorter than the row above. On a phone the lanes stack. */
+  .tk-overview__lanes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr 1fr 4px;
+    gap: 16px;
+    margin-top: clamp(16px, 2.4vw, 24px);
+  }
+
+  .tk-lane {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    gap: 12px;
+    padding: 16px 16px 0;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--tk-lane);
+  }
+
+  /* The half's name on the left, what it covers on the right, always on one
+     line: both shrink with the lane rather than the second one wrapping
+     under a longer name ("Beyond the Vibes" in a two-column panel). */
+  .tk-lane__head {
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding-inline: 4px;
+  }
+
+  .tk-lane__head h3 {
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-size: min(20px, 5.2cqi);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .tk-lane__head span {
+    padding: 2px 12px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: min(12px, 3.8cqi);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .tk-cat {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition: translate 0.4s var(--tk-ease);
+  }
+
+  .tk-cat__icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 14px;
+    background: var(--tk-cat);
+    transition: rotate 0.4s var(--tk-ease-back);
+  }
+
+  .tk-cat__icon :global(svg) {
+    width: 24px;
+  }
+
+  a.tk-cat:hover .tk-cat__icon {
+    rotate: -8deg;
+  }
+
+  .tk-cat__text {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tk-cat__name {
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-size: clamp(20px, 2.2vw, 24px);
+    line-height: 1.2;
+  }
+
+  .tk-cat__sub {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* The sessions are further down this page, so the arrow points down. */
+  .tk-cat__disc {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    rotate: 90deg;
+    transition:
+      translate 0.3s var(--tk-ease-back),
+      background 0.2s;
+  }
+
+  .tk-cat__disc :global(svg) {
+    width: 14px;
+  }
+
+  a.tk-cat:hover .tk-cat__disc {
+    translate: 0 3px;
+    background: var(--tk-cat);
+  }
+
+  @media (width < 720px) {
+    .tk-overview__lanes {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: repeat(2, auto 1fr 1fr 4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tk-cat,
+    .tk-cat__icon,
+    .tk-cat__disc {
+      transition: none;
+    }
+  }
+</style>
