@@ -6,7 +6,7 @@ import Icon from "../Icon.astro";
 import type { ResolvedTenant } from "../../../../tenants";
 import { getProgram } from "../../../../data/program";
 import { currentLanguage } from "../../../../i18n/language";
-import { CATEGORIES, LANES, type Lane } from "../../_content";
+import { CATEGORIES, LANES, localized, type Lane } from "../../_content";
 import { trackTone } from "../track";
 import { heroFacts } from "./facts";
 
@@ -37,11 +37,31 @@ import { heroFacts } from "./facts";
  * scattered round its name — still links to their sessions. Both kinds, the
  * name, the day and the place are on the first screen.
  */
+export type SplitVariant = "split" | "tape" | "giant" | "night";
+export type SplitCta = "field" | "tray" | "ink";
+
+/**
+ * `variant` is how the cut is drawn, while the treatments are compared in
+ * development (`Home` flips between them with `?hero=`):
+ * - `split`: a hairline between the two pastels.
+ * - `tape`: a black tape along the cut, the theme running along it, and the
+ *   event on a white ticket laid over it.
+ * - `giant`: MEET and BEYOND as huge pale letters, each in its own half.
+ * - `night`: Beyond's half in ink — the day and the night, the first step
+ *   and what lies past it.
+ *
+ * `cta` is where the buttons stand on a phone (`?cta=`): on Beyond's colour
+ * as on a wide screen (`field`), on a tray of the page's own paper (`tray`),
+ * or on a band of ink cut on the same slant as the seam (`ink`).
+ */
 interface Props {
   site: ResolvedTenant;
+  variant?: SplitVariant;
+  cta?: SplitCta;
 }
 
-const { site } = Astro.props;
+const { site, variant = "split", cta = "field" } = Astro.props;
+const titleId = variant === "split" ? "tkh-c-title" : `tkh-c-title-${variant}`;
 const lang = currentLanguage();
 const f = heroFacts(site, lang);
 
@@ -65,6 +85,7 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
     lane,
     head,
     rest: rest.join(" "),
+    sub: localized(LANES[lane].sub, lang),
     fill: categories[0]?.tone.pa ?? "var(--surface)",
     categories,
   };
@@ -76,12 +97,21 @@ const CUT = { top: 54, foot: 46 };
 
 // Meet's underline: a hand-drawn wave, four and a half swells.
 const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9} 26 0`).join(" ")}`;
+
+// What runs along the tape, end to end.
+const TAPE = [
+  "MEET THE VIBES",
+  "BEYOND THE VIBES",
+  `DEVFEST TOKYO ${f.year}`,
+  `${f.year}.${f.month}.${f.day}`,
+];
+const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
 ---
 
 <section
-  class="tkh-c"
-  aria-labelledby="tkh-c-title"
-  style={`--tkh-c-meet:${meet.fill};--tkh-c-beyond:${beyond.fill}`}
+  class:list={["tkh-c", `tkh-c--${variant}`, `tkh-c--cta-${cta}`]}
+  aria-labelledby={titleId}
+  style={`--tkh-c-meet:${meet.fill};--tkh-c-beyond:${beyondFill}`}
 >
   <svg
     class="tkh-c__ground"
@@ -99,7 +129,38 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     ></polygon>
     <line x1={CUT.top} y1="0" x2={CUT.foot} y2="100"></line>
   </svg>
+  {variant === "tape" && (
+    <div class="tkh-c__seam" aria-hidden="true">
+      <div class="tkh-c__fill-b" />
+      <div class="tkh-c__tape">
+        <div class="tkh-c__band">
+          {[0, 1].map(() => (
+            <span class="tkh-c__run">
+              {[0, 1, 2].map(() =>
+                TAPE.map((t) => (
+                  <>
+                    {t}
+                    <i>✦</i>
+                  </>
+                )),
+              )}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
   <div class="tkh-c__lines" aria-hidden="true"></div>
+  {variant === "giant" && (
+    <div class="tkh-c__giant" aria-hidden="true">
+      <span class="tkh-c__giant-half tkh-c__giant-half--meet">
+        <span>MEET</span>
+      </span>
+      <span class="tkh-c__giant-half tkh-c__giant-half--beyond">
+        <span>BEYOND</span>
+      </span>
+    </div>
+  )}
 
   <div class="tkh-c__stickers" aria-hidden="true">
     {lanes.map(({ lane, categories }) => (
@@ -132,10 +193,18 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
 
   <header class="tkh-c__head">
     <p class="tkh-c__by">{f.text("by")}</p>
-    <h1 class="tkh-c__title" id="tkh-c-title">
+    <h1 class="tkh-c__title" id={titleId}>
       <span class="visually-hidden">{site.title}</span>
       <Wordmark label="" split />
     </h1>
+    <p class="tkh-c__lead">
+      {f
+        .text("lead")
+        .split("|")
+        .map((part) => (
+          <span>{part}</span>
+        ))}
+    </p>
     <dl class="tkh-c__facts">
       <div>
         <dt class="visually-hidden">Date</dt>
@@ -166,7 +235,7 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   </header>
 
   <div class="tkh-c__lanes">
-    {lanes.map(({ lane, head, rest, categories }) => (
+    {lanes.map(({ lane, head, rest, sub, categories }) => (
       <div class:list={["tkh-c__lane", `tkh-c__lane--${lane}`]}>
         <p class:list={["tkh-c__name", `tkh-c__name--${lane}`]}>
           <span class="visually-hidden">{`${head} ${rest}`}</span>
@@ -192,6 +261,7 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
             </span>
           )}
         </p>
+        <p class="tkh-c__sub">{sub}</p>
         <span
           class="tkh-c__lvl"
           aria-hidden="true"
@@ -383,6 +453,24 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     margin: 0;
   }
 
+  /* What the day is, in GDG Tokyo's words, between the name and the card.
+     Each half of the line stays whole when it has to break. */
+  .tkh-c__lead {
+    margin: 0;
+    font: 700 clamp(15px, 1.45vw, 20px) / 1.5 var(--tk-f-jp);
+    letter-spacing: 0.02em;
+  }
+
+  .tkh-c__lead span {
+    display: inline-block;
+  }
+
+  /* What is in each half, under its name. */
+  .tkh-c__sub {
+    margin: 0;
+    font: 700 clamp(12px, 1.05vw, 15px) / 1.4 var(--tk-f-jp);
+  }
+
   .tkh-c__when time {
     display: flex;
     align-items: baseline;
@@ -476,9 +564,12 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     letter-spacing: -0.045em;
   }
 
+  /* A little air between the lines, so Beyond's y clears the Vibes under
+     it. */
   .tkh-c__set {
     position: relative;
     display: grid;
+    row-gap: 0.16em;
   }
 
   .tkh-c__rest {
@@ -513,7 +604,6 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   .tkh-c__dim {
     position: relative;
     height: 0.18em;
-    margin-top: 0.06em;
     border-inline: var(--tk-line) solid var(--ink);
   }
 
@@ -615,8 +705,11 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   /* ---- entrance ----------------------------------------------------- */
 
   @media (prefers-reduced-motion: no-preference) {
+    /* Backwards, not both: once it has played the head must not stay a
+       stacking context, or on a phone Beyond's green, hung from the card,
+       would paint over the giant BEYOND. */
     .tkh-c__head {
-      animation: tkh-c-pop 0.8s var(--tk-ease-back) both;
+      animation: tkh-c-pop 0.8s var(--tk-ease-back) backwards;
     }
 
     .tkh-c__lane--meet {
@@ -834,106 +927,95 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
       text-align: right;
     }
 
-    /* Each name on one line, its mark under the Vibes, a size under the
-       event's name so that reads first. */
+    /* Each name on two lines, as on a wide screen, and large enough for the
+       outlined Vibes to read — still a size under the event's name. The
+       outline is drawn outside the letters (stroke under the fill), so it
+       does not eat into them at this size. */
     .tkh-c__name {
-      font-size: clamp(19px, 5.4vw, 25px);
-    }
-
-    .tkh-c__set {
-      grid-template-columns: auto auto;
-      column-gap: 0.22em;
-      justify-content: start;
+      font-size: clamp(28px, 8.6vw, 36px);
     }
 
     .tkh-c__name--beyond .tkh-c__set {
-      justify-content: end;
-    }
-
-    /* Under the Vibes, as Meet's wave is. */
-    .tkh-c__dim {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    /* The categories as their icons alone, with the level's mark between
-       them, in a row: under Meet's name, over Beyond's — each set towards
-       the open side and nudged up and down so the row reads as scattered.
-       The names stay for screen readers and the links still go to the
-       sessions. */
-    .tkh-c__lane {
-      display: grid;
-      align-items: center;
-      row-gap: 10px;
-    }
-
-    .tkh-c__lane--meet {
-      grid-template-columns: auto auto 1fr;
-      justify-items: start;
-    }
-
-    .tkh-c__lane--beyond {
-      grid-template-columns: 1fr auto auto;
       justify-items: end;
     }
 
-    .tkh-c__lane--meet .tkh-c__name {
-      grid-area: 1 / 1 / 2 / -1;
+    .tkh-c__rest {
+      paint-order: stroke fill;
+      -webkit-text-stroke-width: calc(var(--tk-line) * 2);
     }
 
-    .tkh-c__lane--meet .tkh-c__lvl {
-      grid-area: 2 / 2;
-      margin-left: 10px;
+    .tkh-c__wave path {
+      stroke-width: 3px;
     }
 
-    .tkh-c__lane--meet .tkh-c__cats {
-      grid-area: 2 / 1;
-      padding-left: 6%;
+    .tkh-c__dim {
+      width: 100%;
     }
 
-    .tkh-c__lane--beyond .tkh-c__name {
-      grid-area: 2 / 1 / 3 / -1;
+    /* Each half's three marks spread over its own side rather than bunched
+       in a row. Meet: the level's mark under the name, on the left; the two
+       categories out in the wide margin right of the name — one high and in,
+       one low and out. Beyond turns that round: the level's mark over its
+       name on the right, the categories in the margin to its left, low and
+       in, high and out. The categories are their icons alone; the names stay
+       for screen readers and the links still go to the sessions. */
+    .tkh-c__lane {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .tkh-c__lane--beyond .tkh-c__lvl {
-      grid-area: 1 / 2;
-      margin-right: 10px;
+      order: -1;
     }
 
-    .tkh-c__lane--beyond .tkh-c__cats {
-      grid-area: 1 / 3;
-      padding-right: 6%;
-    }
-
-    /* The two categories, apart, with the level's mark set beside them. */
     .tkh-c__cats {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 14px;
+      position: absolute;
+      inset-block: 0;
+      display: block;
+      width: 42%;
     }
 
     .tkh-c__lane--meet .tkh-c__cats {
-      flex-direction: row;
+      right: 7%;
     }
 
     .tkh-c__lane--beyond .tkh-c__cats {
-      flex-direction: row-reverse;
+      left: 7%;
+    }
+
+    .tkh-c__cats li {
+      position: absolute;
+    }
+
+    .tkh-c__lane--meet .tkh-c__cats li:nth-child(1) {
+      top: 12px;
+      left: 0;
+      rotate: -10deg;
+    }
+
+    .tkh-c__lane--meet .tkh-c__cats li:nth-child(2) {
+      bottom: 2px;
+      right: 6%;
+      rotate: 8deg;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__cats li:nth-child(1) {
+      bottom: 12px;
+      right: 0;
+      rotate: 10deg;
+    }
+
+    .tkh-c__lane--beyond .tkh-c__cats li:nth-child(2) {
+      top: 2px;
+      left: 6%;
+      rotate: -8deg;
     }
 
     .tkh-c__cat {
       padding: 0;
       border: 0;
       background: none;
-    }
-
-    .tkh-c__cats li:nth-child(1) {
-      rotate: -10deg;
-      translate: 0 -5px;
-    }
-
-    .tkh-c__cats li:nth-child(2) {
-      rotate: 8deg;
-      translate: 0 7px;
     }
 
     .tkh-c__lvl {
@@ -952,13 +1034,13 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
     }
 
     .tkh-c__lane--meet .tkh-c__lvl {
+      margin-left: 26%;
       rotate: 6deg;
-      translate: 0 -4px;
     }
 
     .tkh-c__lane--beyond .tkh-c__lvl {
+      margin-right: 26%;
       rotate: -6deg;
-      translate: 0 5px;
     }
 
     .tkh-c__icon {
@@ -1007,6 +1089,349 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
 
     .tkh-c__ctas :global(.tk-btn--lg .tk-btn__disc) {
       width: 42px;
+    }
+  }
+
+  /* The lead and the halves' lines a size down on a phone. */
+  @media (width < 760px) {
+    .tkh-c__lead {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .tkh-c__sub {
+      font-size: 11.5px;
+    }
+  }
+
+  /* ==== variant: tape ===================================================
+     The cut is a black tape with the theme running along it. Its tilt is
+     fixed, not drawn from the box, so the ground is drawn from the tape: the
+     section is Meet's pastel, and Beyond's is a wide sheet hung from the
+     tape's centre line, turned with it. The event is a white ticket laid over
+     the tape, its day and place behind a perforation. */
+
+  .tkh-c--tape {
+    --tkh-c-tape: clamp(40px, 3.4vw, 54px);
+    background: var(--tkh-c-meet);
+  }
+
+  .tkh-c--tape .tkh-c__ground {
+    display: none;
+  }
+
+  .tkh-c__seam {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 260%;
+    translate: 0 -50%;
+    rotate: 7deg;
+    pointer-events: none;
+  }
+
+  .tkh-c__fill-b {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 300vw;
+    background: var(--tkh-c-beyond);
+  }
+
+  .tkh-c__tape {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: var(--tkh-c-tape);
+    translate: -50% 0;
+  }
+
+  .tkh-c__band {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .tkh-c__run {
+    flex: none;
+    writing-mode: vertical-rl;
+    font: 700 calc(var(--tkh-c-tape) * 0.36) / 1 var(--tk-f-display);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .tkh-c__run i {
+    margin-inline: 0.9em;
+    color: var(--ht-yellow);
+    font-style: normal;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tkh-c__run {
+      animation: tkh-c-tape 48s linear infinite;
+    }
+  }
+
+  @keyframes tkh-c-tape {
+    to {
+      translate: var(--tkh-c-run-to, 0 -100%);
+    }
+  }
+
+  /* Night has the same ticket: the name runs across the cut, and half of it
+     would be black on black. */
+  @media (width >= 760px) {
+    .tkh-c--tape .tkh-c__head,
+    .tkh-c--night .tkh-c__head {
+      align-self: center;
+      padding: clamp(18px, 2.8vh, 30px) clamp(32px, 3.4vw, 56px)
+        clamp(16px, 2.4vh, 24px);
+      border: var(--tk-line) solid var(--ink);
+      border-radius: var(--tk-r-xl);
+      background: var(--surface);
+    }
+
+    .tkh-c--tape .tkh-c__facts,
+    .tkh-c--night .tkh-c__facts {
+      align-self: stretch;
+      margin-top: clamp(4px, 1vh, 10px);
+      padding: clamp(12px, 1.8vh, 18px) 0 0;
+      border: 0;
+      border-top: var(--tk-line) dashed var(--ink);
+      border-radius: 0;
+      background: none;
+    }
+  }
+
+  /* On a phone the tape runs across the column, between the event and
+     Beyond, rising to the right like the seam it replaces; Beyond's green
+     hangs from its centre line. */
+  @media (width < 760px) {
+    .tkh-c--tape {
+      --tkh-c-tape: 34px;
+      --tkh-c-tape-w: calc(100vw + 48px);
+      --tkh-c-rise: calc(var(--tkh-c-tape-w) * 0.07);
+    }
+
+    .tkh-c--tape .tkh-c__seam {
+      display: contents;
+    }
+
+    .tkh-c--tape .tkh-c__fill-b,
+    .tkh-c--tape .tkh-c__facts::before,
+    .tkh-c--tape .tkh-c__facts::after {
+      display: none;
+    }
+
+    .tkh-c--tape .tkh-c__lane--beyond {
+      order: 4;
+    }
+
+    .tkh-c--tape .tkh-c__ctas {
+      order: 5;
+    }
+
+    .tkh-c--tape .tkh-c__tape {
+      position: relative;
+      order: 3;
+      inset: auto;
+      flex: none;
+      width: auto;
+      height: var(--tkh-c-tape);
+      margin-inline: calc(-1 * var(--tk-gutter) - 24px);
+      translate: none;
+    }
+
+    .tkh-c--tape .tkh-c__tape::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: calc(50% - var(--tkh-c-rise) / 2);
+      left: 0;
+      right: 0;
+      height: 300vh;
+      background: var(--tkh-c-lines), var(--tkh-c-beyond);
+      clip-path: polygon(0 var(--tkh-c-rise), 100% 0, 100% 100%, 0 100%);
+    }
+
+    .tkh-c--tape .tkh-c__band {
+      flex-direction: row;
+      rotate: -4deg;
+    }
+
+    .tkh-c--tape .tkh-c__run {
+      --tkh-c-run-to: -100% 0;
+      writing-mode: horizontal-tb;
+      font-size: 12px;
+    }
+  }
+
+  /* ==== variant: giant ==================================================
+     MEET and BEYOND, as large as the halves, pale against their pastels:
+     MEET from the top-left corner, BEYOND from the foot of the right, each
+     cut off where its half ends. */
+
+  .tkh-c__giant {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .tkh-c__giant-half {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .tkh-c__giant-half--meet {
+    clip-path: polygon(0 0, 54% 0, 46% 100%, 0 100%);
+  }
+
+  .tkh-c__giant-half--beyond {
+    clip-path: polygon(54% 0, 100% 0, 100% 100%, 46% 100%);
+  }
+
+  .tkh-c__giant-half > span {
+    position: absolute;
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    line-height: 0.74;
+    letter-spacing: -0.06em;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--surface) 70%, transparent);
+    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+
+  .tkh-c__giant-half--meet > span {
+    top: 0.06em;
+    left: -0.05em;
+    font-size: 19vw;
+  }
+
+  .tkh-c__giant-half--beyond > span {
+    right: -0.04em;
+    bottom: 0.02em;
+    font-size: 13vw;
+  }
+
+  /* On a phone the words sit over the ground but under everything else, so
+     the layer comes up to the column's level and the column's own parts are
+     lifted over it. */
+  @media (width < 760px) {
+    .tkh-c__giant {
+      z-index: 0;
+    }
+
+    .tkh-c--giant .tkh-c__head > *,
+    .tkh-c--giant .tkh-c__ctas {
+      position: relative;
+    }
+
+    .tkh-c__giant-half {
+      clip-path: none;
+    }
+
+    .tkh-c__giant-half--meet > span {
+      top: 15%;
+      font-size: 37vw;
+    }
+
+    .tkh-c__giant-half--beyond > span {
+      bottom: 22%;
+      font-size: 25vw;
+    }
+  }
+
+  /* ==== variant: night ==================================================
+     Beyond's half in ink, its graph paper in white, its words turned out:
+     white, and the Vibes outlined in its green. */
+
+  .tkh-c--night {
+    --tkh-c-grid-dark: color-mix(in srgb, var(--surface) 10%, transparent);
+    --tkh-c-lines-dark:
+      linear-gradient(var(--tkh-c-grid-dark) 1px, transparent 1px) 0 0 / 32px
+        32px,
+      linear-gradient(90deg, var(--tkh-c-grid-dark) 1px, transparent 1px) 0 0 /
+        32px 32px;
+  }
+
+  .tkh-c--night .tkh-c__lines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--tkh-c-lines-dark);
+    clip-path: polygon(54% 0, 100% 0, 100% 100%, 46% 100%);
+  }
+
+  .tkh-c--night .tkh-c__name--beyond,
+  .tkh-c--night .tkh-c__lane--beyond .tkh-c__sub {
+    color: var(--surface);
+  }
+
+  .tkh-c--night .tkh-c__name--beyond .tkh-c__rest {
+    color: var(--ink);
+    -webkit-text-stroke-color: var(--ht-green);
+  }
+
+  .tkh-c--night .tkh-c__dim,
+  .tkh-c--night .tkh-c__dim::after,
+  .tkh-c--night [class*="tkh-c__badge--beyond"],
+  .tkh-c--night .tkh-c__lane--beyond .tkh-c__lvl,
+  .tkh-c--night .tkh-c__lane--beyond .tkh-c__icon {
+    border-color: var(--surface);
+  }
+
+  .tkh-c--night .tkh-c__dim::before {
+    background: var(--surface);
+  }
+
+  .tkh-c--night .tkh-c__lane--beyond .tkh-c__cat {
+    color: var(--ink);
+  }
+
+  @media (width < 760px) {
+    .tkh-c--night .tkh-c__facts::before {
+      background: var(--tkh-c-lines-dark), var(--tkh-c-beyond);
+    }
+  }
+
+  /* ==== the buttons on a phone ==========================================
+     `tray`: on a tray of the page's own paper, its top edge rounded and
+     keyed in black, so the buttons read as the start of the page rather
+     than part of Beyond. `ink`: on a band of ink, its top cut on the seam's
+     slant. */
+
+  @media (width < 760px) {
+    .tkh-c--cta-tray .tkh-c__ctas,
+    .tkh-c--cta-ink .tkh-c__ctas {
+      position: relative;
+      margin: 6px calc(-1 * var(--tk-gutter))
+        calc(-16px - env(safe-area-inset-bottom));
+      padding: 20px var(--tk-gutter) calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .tkh-c--cta-tray .tkh-c__ctas {
+      --tkh-c-paper: color-mix(in srgb, var(--ink) 7%, transparent);
+      border-top: var(--tk-line) solid var(--ink);
+      border-radius: var(--tk-r-lg) var(--tk-r-lg) 0 0;
+      background:
+        linear-gradient(var(--tkh-c-paper) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(90deg, var(--tkh-c-paper) 1px, transparent 1px) 0 0 /
+          32px 32px,
+        var(--ground);
+    }
+
+    .tkh-c--cta-ink .tkh-c__ctas {
+      padding-top: 40px;
+      background: var(--ink);
+      clip-path: polygon(0 24px, 100% 0, 100% 100%, 0 100%);
     }
   }
 </style>

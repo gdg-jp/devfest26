@@ -39,6 +39,14 @@ export const SHOW_TIMES = false;
  */
 export const HERO = {
   by: { ja: "Google Developers 主催", en: "Hosted by Google Developers" },
+  /**
+   * What the day is, in GDG Tokyo's own words (their announcement on X,
+   * 2026-11-01). `|` is where the line may break: each side stays whole.
+   */
+  lead: {
+    ja: "Google の最先端 AI と|「つくる・動かす」を極める 1 日",
+    en: "A day to master building and running things|with Google's latest AI",
+  },
   organizedBy: { ja: "Organized by", en: "Organized by" },
   sessions: { ja: "セッションを見る", en: "See the sessions" },
   /** `Level`: who each half of the theme is for, on its tag. */
