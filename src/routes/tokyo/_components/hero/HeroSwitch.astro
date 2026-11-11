@@ -30,29 +30,25 @@ const { heroes, current, ctas, cta } = Astro.props;
     <div class="tkh-switch__row">
       <span class="tkh-switch__key">ヒーロー</span>
       <div class="tkh-switch__seg" role="group" aria-label="ヒーローのパターン">
-        {
-          heroes.map(({ id, label, note }) => (
-            <button
-              type="button"
-              data-key="hero"
-              data-value={id}
-              data-note={note}
-              aria-pressed={id === current ? "true" : "false"}
-            >
-              <b>{id.toUpperCase()}</b>
-              {label}
-            </button>
-          ))
-        }
+        {heroes.map(({ id, label, note }) => (
+          <button
+            type="button"
+            data-key="hero"
+            data-value={id}
+            data-note={note}
+            aria-pressed={id === current ? "true" : "false"}
+          >
+            <b>{id.toUpperCase()}</b>
+            {label}
+          </button>
+        ))}
       </div>
       <select class="tkh-switch__pick" data-key="hero" aria-label="ヒーロー">
-        {
-          heroes.map(({ id, label }) => (
-            <option value={id} selected={id === current}>
-              {`${id.toUpperCase()} ${label}`}
-            </option>
-          ))
-        }
+        {heroes.map(({ id, label }) => (
+          <option value={id} selected={id === current}>
+            {`${id.toUpperCase()} ${label}`}
+          </option>
+        ))}
       </select>
     </div>
     <div class="tkh-switch__row">
@@ -64,28 +60,24 @@ const { heroes, current, ctas, cta } = Astro.props;
         role="group"
         aria-label="スマホのボタンの置き方"
       >
-        {
-          ctas.map(({ id, label, note }) => (
-            <button
-              type="button"
-              data-key="cta"
-              data-value={id}
-              data-note={note}
-              aria-pressed={id === cta ? "true" : "false"}
-            >
-              {label}
-            </button>
-          ))
-        }
+        {ctas.map(({ id, label, note }) => (
+          <button
+            type="button"
+            data-key="cta"
+            data-value={id}
+            data-note={note}
+            aria-pressed={id === cta ? "true" : "false"}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       <select class="tkh-switch__pick" data-key="cta" aria-label="ボタン">
-        {
-          ctas.map(({ id, label }) => (
-            <option value={id} selected={id === cta}>
-              {label}
-            </option>
-          ))
-        }
+        {ctas.map(({ id, label }) => (
+          <option value={id} selected={id === cta}>
+            {label}
+          </option>
+        ))}
       </select>
     </div>
     <p class="tkh-switch__note" aria-live="polite"></p>
@@ -98,7 +90,9 @@ const { heroes, current, ctas, cta } = Astro.props;
     title="たたむ / ひらく"
   >
     <span class="tkh-switch__fold-open">パターン</span>
-    <span class="tkh-switch__fold-close" aria-hidden="true">×</span>
+    <span class="tkh-switch__fold-close" aria-hidden="true">
+      ×
+    </span>
   </button>
 </div>
 
