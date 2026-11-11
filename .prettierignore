@@ -8,7 +8,3 @@ studio/.sanity/
 # pnpm writes the lockfiles; their formatting is its business, not ours.
 pnpm-lock.yaml
 studio/pnpm-lock.yaml
-
-# Design material kept for reference, set aside as it was: the key visual
-# candidates the Tokyo site did not ship (design/tokyo-hero/README.md).
-design/
