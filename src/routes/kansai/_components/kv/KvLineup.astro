@@ -58,48 +58,44 @@ const MORE_SPOT = { x: 71, y: 80, depth: 0.9 };
 
 <section class="kv-b" data-k-hero data-kv="b" aria-labelledby="kv-b-title">
   <ul class="kv-b__faces" aria-label={c.featuredHeading}>
-    {
-      featured.map((f, i) => {
-        const spot = SPOTS[i % SPOTS.length];
-        return (
-          <li
-            class:list={["kv-b__face", `kv-b__face--${spot.shape}`]}
-            style={`--x:${spot.x}%;--y:${spot.y}%;--w:${spot.w};--rot:${spot.rot}deg;--tone:${TONES[f.tone]};--bob:${5 + (i % 3)}s`}
-            data-kv-depth={spot.depth}
-          >
-            <a class="kv-b__link" href={f.talk.href} data-kv-in="face">
-              <span class="kv-b__frame">
-                <Portrait
-                  speaker={f.program.speaker}
-                  size={240}
-                  class="kv-b__img"
-                  tone={TONES[f.tone]}
-                  eager
-                />
-              </span>
-              <span class="kv-b__tag">
-                <b>{bare(f.program.speaker.data.name)}</b>
-                <small>{localized(f.short, lang)}</small>
-              </span>
-            </a>
-          </li>
-        );
-      })
-    }
-    {
-      more > 0 && (
+    {featured.map((f, i) => {
+      const spot = SPOTS[i % SPOTS.length];
+      return (
         <li
-          class="kv-b__face kv-b__face--more"
-          style={`--x:${MORE_SPOT.x}%;--y:${MORE_SPOT.y}%`}
-          data-kv-depth={MORE_SPOT.depth}
+          class:list={["kv-b__face", `kv-b__face--${spot.shape}`]}
+          style={`--x:${spot.x}%;--y:${spot.y}%;--w:${spot.w};--rot:${spot.rot}deg;--tone:${TONES[f.tone]};--bob:${5 + (i % 3)}s`}
+          data-kv-depth={spot.depth}
         >
-          <a class="kv-b__more" href="#speakers" data-kv-in="pop">
-            {c.kvMore(more)}
-            <Arrow />
+          <a class="kv-b__link" href={f.talk.href} data-kv-in="face">
+            <span class="kv-b__frame">
+              <Portrait
+                speaker={f.program.speaker}
+                size={240}
+                class="kv-b__img"
+                tone={TONES[f.tone]}
+                eager
+              />
+            </span>
+            <span class="kv-b__tag">
+              <b>{bare(f.program.speaker.data.name)}</b>
+              <small>{localized(f.short, lang)}</small>
+            </span>
           </a>
         </li>
-      )
-    }
+      );
+    })}
+    {more > 0 && (
+      <li
+        class="kv-b__face kv-b__face--more"
+        style={`--x:${MORE_SPOT.x}%;--y:${MORE_SPOT.y}%`}
+        data-kv-depth={MORE_SPOT.depth}
+      >
+        <a class="kv-b__more" href="#speakers" data-kv-in="pop">
+          {c.kvMore(more)}
+          <Arrow />
+        </a>
+      </li>
+    )}
   </ul>
 
   <div class="kv-b__core">
@@ -109,7 +105,9 @@ const MORE_SPOT = { x: 71, y: 80, depth: 0.9 };
     </h1>
 
     <p class="kv-b__catch" data-kv-in="up">
-      {c.catchLead}<em>{c.catchMark}</em>{c.catchTail}
+      {c.catchLead}
+      <em>{c.catchMark}</em>
+      {c.catchTail}
     </p>
 
     <dl class="kv-b__facts" data-kv-in="up">
@@ -117,7 +115,9 @@ const MORE_SPOT = { x: 71, y: 80, depth: 0.9 };
         <dt class="visually-hidden">{c.factDate}</dt>
         <dd>
           <time datetime={event.startsAt}>
-            <b>{Number(month)}.{Number(day)}</b>
+            <b>
+              {Number(month)}.{Number(day)}
+            </b>
             <span class="kv-b__dow">{event.dayOfWeekEn}</span>
           </time>
           <span class="kv-b__hours">{event.hours.replace(" – ", "–")}</span>
@@ -143,7 +143,9 @@ const MORE_SPOT = { x: 71, y: 80, depth: 0.9 };
       data-kv-in="pop"
     >
       {c.register}
-      <span class="k-btn__disc"><Arrow /></span>
+      <span class="k-btn__disc">
+        <Arrow />
+      </span>
     </a>
 
     <p class="kv-b__terms" data-kv-in="up">

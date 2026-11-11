@@ -1,6 +1,7 @@
 import type { ResolvedTenant } from "../tenants";
 import type { ProgramSession, Speaker } from "../data/program";
 import type { CardInput, PhotoInput } from "./og/input";
+import { PLACEMENTS } from "./og/placements";
 import { isRemotePhoto } from "./photo";
 import { dataset, projectId } from "./sanity/env";
 import { hasCityRoute } from "./cityRoutes";
@@ -26,7 +27,7 @@ import { previewMode } from "../preview/mode";
  */
 
 /** Bump when the drawing changes, so every card's URL changes with it. */
-const DESIGN_VERSION = 9;
+const DESIGN_VERSION = 12;
 
 /** The pattern a city's directory adds to have session cards. */
 const route = (tenant: string) => `/${tenant}/og/sessions/[slug].png`;
@@ -76,6 +77,7 @@ export function sessionCard(
       role: speaker.data.role,
       initial: speaker.data.initial,
       photo: photoOf(speaker),
+      framing: PLACEMENTS[session.slug]?.[speaker.data.slug ?? speaker.id],
     })),
     lang: currentLanguage(),
     theme: site.theme,

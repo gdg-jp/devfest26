@@ -55,33 +55,31 @@ const TONES: Record<string, string> = {
         data-k-car-start={start}
         data-k-reveal="rise"
       >
-        {
-          featured.map((f, i) => {
-            const { speaker } = f.program;
-            return (
-              <li class="k-car__item">
-                <a class="k-card" href={f.talk.href} draggable="false">
-                  <span class="k-card__frame">
-                    <span class="k-card__pan" data-k-car-pan>
-                      <Portrait
-                        speaker={speaker}
-                        size={320}
-                        class="k-card__img"
-                        tone={TONES[f.tone]}
-                        eager={Math.abs(i - start) < 2}
-                      />
-                    </span>
-                    {f.talk.start && (
-                      <span class="k-card__time">{f.talk.start}</span>
-                    )}
+        {featured.map((f, i) => {
+          const { speaker } = f.program;
+          return (
+            <li class="k-car__item">
+              <a class="k-card" href={f.talk.href} draggable="false">
+                <span class="k-card__frame">
+                  <span class="k-card__pan" data-k-car-pan>
+                    <Portrait
+                      speaker={speaker}
+                      size={320}
+                      class="k-card__img"
+                      tone={TONES[f.tone]}
+                      eager={Math.abs(i - start) < 2}
+                    />
                   </span>
-                  <span class="k-card__name">{bare(speaker.data.name)}</span>
-                  <span class="k-card__hook">{localized(f.hook, lang)}</span>
-                </a>
-              </li>
-            );
-          })
-        }
+                  {f.talk.start && (
+                    <span class="k-card__time">{f.talk.start}</span>
+                  )}
+                </span>
+                <span class="k-card__name">{bare(speaker.data.name)}</span>
+                <span class="k-card__hook">{localized(f.hook, lang)}</span>
+              </a>
+            </li>
+          );
+        })}
       </ul>
 
       <div class="k-car__foot">

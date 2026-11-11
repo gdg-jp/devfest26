@@ -4,8 +4,9 @@ import { join } from "node:path";
 import satori from "satori";
 import sharp from "sharp";
 import { cardInput, type Card, type CardInput } from "./input";
+import type { Framing } from "./faces";
 import { framedPhoto } from "./photos";
-import { breakLines, type Lines } from "./lines";
+import { breakLines, measure, type Lines } from "./lines";
 import { placeStickers, stickerSvg, type Rect } from "./stickers";
 
 /**
@@ -53,14 +54,8 @@ const MARGIN = 80;
  */
 const FONT_FAMILY = '"Google Sans Flex", "Noto Sans JP", sans-serif';
 
-/** The few words the card supplies itself. */
-const WORDS = {
-  ja: { separator: "、", others: (n: number) => `ほか ${n} 名` },
-  en: { separator: ", ", others: (n: number) => `and ${n} more` },
-} as const;
-
-/** How many speakers a card names in full; the rest are counted. */
-const NAMED = 2;
+/** What the card puts between names. */
+const SEPARATOR = { ja: "、", en: ", " } as const;
 
 /* ---- Type ----------------------------------------------------------------
    In pixels of the 1080 frame. */
@@ -84,6 +79,8 @@ const TYPE = {
   title: steps(140, 56),
   titleLastResort: steps(56, 36).slice(1),
   name: 60,
+  /** Three speakers on share a list, which steps down to keep to its lines. */
+  names: steps(60, 40),
   /** One speaker has room for a larger line under the name. */
   role: { single: 48, several: 40 },
   tag: 40,
@@ -92,6 +89,8 @@ const TYPE = {
 const TITLE_LINE = 1.2;
 const NAME_LINE = 1.25;
 const ROLE_LINE = 1.35;
+/** The list of names takes this many lines before it goes smaller still. */
+const NAME_LINES = 2;
 
 /* ---- The photo frames -----------------------------------------------------
    Drawn the way DevFest Tokyo 2025's cards framed their speakers: a rounded
@@ -100,21 +99,23 @@ const ROLE_LINE = 1.35;
 
    One speaker fills a single tall frame. Two sit on a diagonal, as on the
    2025 two-speaker cards. Three are two frames side by side above a wide one,
-   as on the 2025 three-speaker cards. A fourth speaker on is named, not
-   pictured. */
+   as on the 2025 three-speaker cards. Four are two such steps, one in each
+   half of the area. A fifth speaker on is named, not pictured. */
 
 type Corner = "bottom-right" | "top-left" | "top-right" | "bottom-left";
 
 interface Frame extends Rect {
   /** The stepped-in corner, and how far in it steps. */
   notch: { w: number; h: number; corner: Corner };
+  /** Where a found face goes, in a frame that places it itself. */
+  framing?: Framing;
 }
 
 /** Where the frames are; the text column runs up to `x`. */
 const FRAMES = { x: 1234, y: MARGIN, right: W - MARGIN, bottom: H - MARGIN };
 /** Between two frames, where one steps around the other. */
 const FRAME_GAP = 21;
-const FRAME_STROKE = 9;
+const FRAME_STROKE = 5;
 const RADIUS = 52;
 /** The two corners where the frame turns into the notch. */
 const JOIN = 38;
@@ -138,9 +139,11 @@ const PAIR: Frame[] = (() => {
     w: side,
     h: FRAMES.bottom - 446,
   };
-  // How far the two overlap, plus the gap each step leaves around the other.
+  // Each steps in half of how far the two overlap across, so that they fit
+  // into each other's steps rather than both clearing the overlap and leaving
+  // a hole between them; the gap runs along the whole of the seam.
   const notch = {
-    w: first.x + first.w - second.x + FRAME_GAP,
+    w: (first.x + first.w - second.x + FRAME_GAP) / 2,
     h: first.y + first.h - second.y + FRAME_GAP,
   };
   return [
@@ -191,8 +194,62 @@ const TRIO: Frame[] = (() => {
   ];
 })();
 
+const QUARTET: Frame[] = (() => {
+  // A narrow, tall frame and a wide, short one step around each other in the
+  // top half; the bottom half is the same two turned half a circle, so the
+  // frames read left to right, then top to bottom, in running order. `split`
+  // is where the top left frame widens under the top right one's corner.
+  const narrow = Math.floor((FRAMES.right - FRAMES.x - FRAME_GAP) / 2);
+  const wide = 482;
+  const tall = 500;
+  const short = FRAMES.bottom - FRAMES.y - tall - FRAME_GAP;
+  const split = 230;
+  const w = FRAMES.x + narrow + FRAME_GAP - (FRAMES.right - wide);
+  const onTall = { w, h: split + FRAME_GAP - FRAMES.y };
+  const onShort = { w, h: FRAMES.y + short - split };
+  return [
+    {
+      x: FRAMES.x,
+      y: FRAMES.y,
+      w: narrow,
+      h: tall,
+      notch: { ...onTall, corner: "top-right" },
+      // The notch cuts into the top of the frame, so the head sits below it.
+      framing: { faceHeight: 0.34, eyeLine: 0.47 },
+    },
+    {
+      x: FRAMES.right - wide,
+      y: FRAMES.y,
+      w: wide,
+      h: short,
+      notch: { ...onShort, corner: "bottom-left" },
+    },
+    {
+      x: FRAMES.x,
+      y: FRAMES.bottom - short,
+      w: wide,
+      h: short,
+      notch: { ...onShort, corner: "top-right" },
+      // The notch comes down beside the head, so the head keeps to its left.
+      framing: { faceHeight: 0.34, eyeLine: 0.53, across: 0.41 },
+    },
+    {
+      x: FRAMES.right - narrow,
+      y: FRAMES.bottom - tall,
+      w: narrow,
+      h: tall,
+      notch: { ...onTall, corner: "bottom-left" },
+    },
+  ];
+})();
+
 /** Every frame a photo is cut into, by layout. `scripts/og-faces.ts` shows them. */
-export const SPEAKER_FRAMES = { single: SINGLE, pair: PAIR, trio: TRIO };
+export const SPEAKER_FRAMES = {
+  single: SINGLE,
+  pair: PAIR,
+  trio: TRIO,
+  quartet: QUARTET,
+};
 
 /**
  * A frame's outline with its bottom-right corner stepped in, inset by half
@@ -655,7 +712,14 @@ async function framed(
 ): Promise<Node[]> {
   const { w, h, notch } = frame;
   const src =
-    speaker.photo && (await framedPhoto(speaker.photo, w, h, speaker.name));
+    speaker.photo &&
+    (await framedPhoto(
+      speaker.photo,
+      w,
+      h,
+      speaker.name,
+      speaker.framing ?? frame.framing,
+    ));
   const whole = h - notch.h;
   const notchOnTop = notch.corner.startsWith("top");
 
@@ -686,33 +750,94 @@ async function framed(
 }
 
 /**
- * The names under the title, and what each does. One or two people are named
- * in full; past that, the first two and a count.
+ * Names as lines of at most `width` at `size`. A line ends only between two
+ * names — never inside one — and the lines are then evened out: as narrow as
+ * they can be without taking another line.
+ */
+function nameLines(
+  names: string[],
+  separator: string,
+  size: number,
+  width: number,
+): string[] {
+  const wrap = (limit: number) => {
+    const lines: string[] = [];
+    names.forEach((name, i) => {
+      const text = i < names.length - 1 ? name + separator : name;
+      const last = lines.at(-1);
+      if (last !== undefined && measure(last + text, size) <= limit) {
+        lines[lines.length - 1] = last + text;
+      } else {
+        lines.push(text);
+      }
+    });
+    return lines;
+  };
+
+  let even = wrap(width);
+  for (let limit = width - 8; limit > 0; limit -= 8) {
+    const narrower = wrap(limit);
+    if (narrower.length > even.length) break;
+    even = narrower;
+  }
+  return even.map((line) => line.trimEnd());
+}
+
+/**
+ * Everyone's names, at the largest size that keeps them to `NAME_LINES`. Past
+ * the smallest size the list takes more lines rather than lose a name.
+ */
+function fitNames(
+  names: string[],
+  separator: string,
+  width: number,
+): { size: number; lines: string[] } {
+  const fits = TYPE.names.find((size) => {
+    const lines = nameLines(names, separator, size, width);
+    return (
+      lines.length <= NAME_LINES &&
+      lines.every((line) => measure(line, size) <= width)
+    );
+  });
+  const size = fits ?? TYPE.names.at(-1)!;
+  return { size, lines: nameLines(names, separator, size, width) };
+}
+
+/**
+ * The names under the title. One or two people are named with what each does;
+ * three or more, as a list of every name.
  */
 function people(card: Card) {
-  const words = WORDS[card.lang];
-  const shown = card.speakers.slice(0, NAMED);
-  const others = card.speakers.length - shown.length;
+  const shown = card.speakers;
   const single = shown.length === 1;
   const role = single ? TYPE.role.single : TYPE.role.several;
   const rowGap = 16;
   const columnWidth = TEXT_WIDTH - SPARKLE_SIZE - 40;
 
-  const rows: Child[] = others
-    ? [
+  const list =
+    shown.length > 2
+      ? fitNames(
+          shown.map((s) => s.name),
+          SEPARATOR[card.lang],
+          columnWidth,
+        )
+      : undefined;
+
+  const rows: Child[] = list
+    ? list.lines.map((line) =>
         el(
           "div",
           {
             style: {
-              fontSize: TYPE.name,
+              fontSize: list.size,
               fontWeight: 700,
               lineHeight: NAME_LINE,
-              ...clamp(2),
+              whiteSpace: "nowrap",
             },
           },
-          `${shown.map((s) => s.name).join(words.separator)} ${words.others(others)}`,
+          line,
         ),
-      ]
+      )
     : shown.map((speaker) =>
         el(
           "div",
@@ -749,22 +874,23 @@ function people(card: Card) {
   // What the rows take up at most, for the title to work around, and how
   // wide they run, for the stickers to keep clear of.
   const nameHeight = TYPE.name * NAME_LINE;
-  const height = others
-    ? 2 * nameHeight
+  const height = list
+    ? list.lines.length * list.size * NAME_LINE
     : single
       ? nameHeight + 2 + 2 * role * ROLE_LINE
       : 2 * (nameHeight + 2 + role * ROLE_LINE) + rowGap;
-  const width = Math.min(
-    columnWidth,
-    Math.max(
-      ...shown.flatMap((s) => [
-        widthAt(s.name, TYPE.name),
-        // A role that wraps fills the column; one that does not, its own width.
-        widthAt(s.role, role),
-      ]),
-      others ? columnWidth : 0,
-    ),
-  );
+  const width = list
+    ? Math.max(...list.lines.map((line) => measure(line, list.size)))
+    : Math.min(
+        columnWidth,
+        Math.max(
+          ...shown.flatMap((s) => [
+            widthAt(s.name, TYPE.name),
+            // A role that wraps fills the column; one that does not, its own width.
+            widthAt(s.role, role),
+          ]),
+        ),
+      );
 
   return {
     height,
@@ -780,7 +906,7 @@ function people(card: Card) {
           style: {
             display: "flex",
             flexDirection: "column",
-            gap: rowGap,
+            gap: list ? 0 : rowGap,
             width: columnWidth,
             color: INK,
           },
@@ -808,16 +934,20 @@ let fonts: Promise<Font[]> | undefined;
  */
 function loadFonts() {
   const dir = join(process.cwd(), "src/assets/fonts");
+  // Google Sans Flex stops at Bold: its Black reads too heavy on a title in
+  // Latin, so a title is Noto Sans JP Black with Google Sans Flex Bold.
   const cuts = [
-    [500, "Medium"],
-    [700, "Bold"],
-    [900, "Black"],
+    [500, "Medium", 500],
+    [700, "Bold", 700],
+    [900, "Black", 700],
   ] as const;
   fonts ??= Promise.all(
-    cuts.flatMap(([weight, name]) => [
-      readFile(join(dir, `GoogleSansFlex-${weight}.ttf`)).then(
-        (data): Font => ({ name: "Google Sans Flex", weight, data }),
-      ),
+    cuts.flatMap(([weight, name, latin]) => [
+      readFile(join(dir, `GoogleSansFlex-${latin}.ttf`)).then((data): Font => ({
+        name: "Google Sans Flex",
+        weight,
+        data,
+      })),
       readFile(join(dir, `NotoSansJP-${name}.otf`)).then((data): Font => ({
         name: "Noto Sans JP",
         weight,
@@ -847,11 +977,13 @@ export async function renderCard(
   const pastel = PASTEL[card.theme];
 
   const frames =
-    card.speakers.length >= 3
-      ? TRIO
-      : card.speakers.length === 2
-        ? PAIR
-        : SINGLE;
+    card.speakers.length >= 4
+      ? QUARTET
+      : card.speakers.length === 3
+        ? TRIO
+        : card.speakers.length === 2
+          ? PAIR
+          : SINGLE;
   const pictured = (
     await Promise.all(
       frames.map((frame, i) => framed(card.speakers[i], frame, pastel)),

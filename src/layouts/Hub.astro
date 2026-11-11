@@ -22,8 +22,8 @@ import {
  * smaller thing it actually needs — the same tokens and the same base
  * stylesheet, and nothing that assumes a tenant.
  *
- * No `og:image`: there is one card per city in `public/og/`, and none of them
- * speaks for all of them. See the README.
+ * No `og:image`: there is one card per city, made by that city's build, and
+ * none of them speaks for all of them. See the README.
  */
 
 interface Props {
@@ -97,19 +97,19 @@ const theme = "blue";
     {/* No `tenant`: the front page belongs to no city. */}
     <Analytics />
 
-    {
-      jsonLd && (
-        <script
-          type="application/ld+json"
-          is:inline
-          set:html={JSON.stringify(clean(jsonLd))}
-        />
-      )
-    }
+    {jsonLd && (
+      <script
+        type="application/ld+json"
+        is:inline
+        set:html={JSON.stringify(clean(jsonLd))}
+      />
+    )}
   </head>
 
   <body>
-    <a class="skip" href="#top">{t.meta.skipToContent}</a>
+    <a class="skip" href="#top">
+      {t.meta.skipToContent}
+    </a>
     <slot />
     {previewMode && <PreviewBar />}
     <style is:global>

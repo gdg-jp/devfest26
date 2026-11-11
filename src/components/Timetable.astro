@@ -102,154 +102,152 @@ const lastLine = (timetable?.tracks.length ?? 0) + 2;
 
 <section class="sec" id="timetable">
   <div class="wrap">
-    <p class="eyebrow" data-reveal="up">Timetable</p>
-    <h2 class="sec-h" data-reveal="up">{t.timetable.heading}</h2>
+    <p class="eyebrow" data-reveal="up">
+      Timetable
+    </p>
+    <h2 class="sec-h" data-reveal="up">
+      {t.timetable.heading}
+    </h2>
     <p class="sec-lede" data-reveal="up">
       {t.timetable.lede(trackCount, Boolean(timetable))}
     </p>
 
-    {
-      timetable && (
-        <div
-          class:list={["tt-frame", { "has-mobile": hasMobile }]}
-          data-reveal="up"
-        >
-          <div class="tt-scroll head" data-tt-head>
-            <div
-              class="tt-hd"
-              style={`grid-template-columns:${columns};min-width:${minWidth}`}
-            >
-              <div class="tt-corner" aria-hidden="true" />
+    {timetable && (
+      <div
+        class:list={["tt-frame", { "has-mobile": hasMobile }]}
+        data-reveal="up"
+      >
+        <div class="tt-scroll head" data-tt-head>
+          <div
+            class="tt-hd"
+            style={`grid-template-columns:${columns};min-width:${minWidth}`}
+          >
+            <div class="tt-corner" aria-hidden="true" />
 
-              {timetable.tracks.map((track, index) => (
-                <div
-                  class:list={["tt-head", { ink: track.data.darkInk }]}
-                  style={`--trk:${track.data.color};grid-column:${index + 2}`}
-                >
-                  <b>{track.data.label}</b>
-                  <span>{track.data.sub}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div class="tt-scroll body" data-tt-body>
-            <div
-              class="tt"
-              style={`grid-template-columns:${columns};grid-template-rows:${template};min-width:${minWidth}`}
-            >
-              {rows.map((_, index) => (
-                <div class="tt-rule" style={`grid-row:${index + 2}`} />
-              ))}
-              <div class="tt-rule last" style={`grid-row:${rows.length + 1}`} />
-
-              {timetable.boundaries.slice(0, -1).map((time, index) => (
-                <div
-                  class:list={["tt-at", { first: index === 0 }]}
-                  style={`grid-row:${index + 2}`}
-                >
-                  <span>{time}</span>
-                </div>
-              ))}
-              <div class="tt-at last" style={`grid-row:${rows.length + 1}`}>
-                <span>{timetable.boundaries.at(-1)}</span>
+            {timetable.tracks.map((track, index) => (
+              <div
+                class:list={["tt-head", { ink: track.data.darkInk }]}
+                style={`--trk:${track.data.color};grid-column:${index + 2}`}
+              >
+                <b>{track.data.label}</b>
+                <span>{track.data.sub}</span>
               </div>
-
-              {timetable.cells.map((cell) => {
-                const Tag = cell.href ? "a" : "div";
-                // A seventh speaker turns the sixth portrait into the number
-                // of everyone not drawn, rather than the pile going on past
-                // the corner there is for it.
-                const faces = cell.speakers.slice(
-                  0,
-                  cell.speakers.length > FACES ? FACES - 1 : FACES,
-                );
-                const rest = cell.speakers.length - faces.length;
-                // An odd pile stands its lone row on top, so that the row the
-                // clock ends up beside is a full one.
-                const odd = (faces.length + (rest > 0 ? 1 : 0)) % 2 === 1;
-                return (
-                  <Tag
-                    class:list={[
-                      "tt-cell",
-                      cell.kind,
-                      {
-                        "edge-start": cell.columnStart === 2,
-                        "edge-end": cell.columnEnd === lastLine,
-                      },
-                    ]}
-                    href={cell.href}
-                    style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
-                  >
-                    {isFeatured(cell.key) && (
-                      <span class="pick">{featuredLabel}</span>
-                    )}
-                    <b>{cell.label}</b>
-                    {cell.note && <span class="note">{cell.note}</span>}
-                    <div class="foot">
-                      {cell.speakers.length > 0 && (
-                        <span class="who">
-                          {cell.speakers.map((speaker) => (
-                            <span>{speaker.data.name}</span>
-                          ))}
-                        </span>
-                      )}
-                      <span class="span">
-                        {cell.start} – {cell.end}
-                      </span>
-                      {faces.length > 0 && (
-                        <span
-                          class:list={["faces", { odd }]}
-                          style={`--lap:${LAP}px`}
-                          aria-hidden="true"
-                        >
-                          {faces.map((speaker) => (
-                            <SpeakerAvatar speaker={speaker} size={FACE} />
-                          ))}
-                          {rest > 0 && (
-                            <span class="av more" style={`--av:${FACE}px`}>
-                              +{rest}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </Tag>
-                );
-              })}
-            </div>
+            ))}
           </div>
         </div>
-      )
-    }
 
-    {
-      timetable && hasMobile && (
-        <div class="tt-mobile">
-          <slot name="mobile" />
-        </div>
-      )
-    }
-
-    {
-      timetable && timetable.undated.length > 0 && (
-        <div class="tbd" data-reveal="up">
-          <b>{t.timetable.tbdHeading}</b>
-          <ul>
-            {timetable.undated.map((session) => (
-              <li>
-                <a href={session.href}>
-                  {session.entry.data.title ??
-                    session.talks[0]?.title ??
-                    session.label}
-                </a>
-                <span>{session.track.data.label}</span>
-              </li>
+        <div class="tt-scroll body" data-tt-body>
+          <div
+            class="tt"
+            style={`grid-template-columns:${columns};grid-template-rows:${template};min-width:${minWidth}`}
+          >
+            {rows.map((_, index) => (
+              <div class="tt-rule" style={`grid-row:${index + 2}`} />
             ))}
-          </ul>
+            <div class="tt-rule last" style={`grid-row:${rows.length + 1}`} />
+
+            {timetable.boundaries.slice(0, -1).map((time, index) => (
+              <div
+                class:list={["tt-at", { first: index === 0 }]}
+                style={`grid-row:${index + 2}`}
+              >
+                <span>{time}</span>
+              </div>
+            ))}
+            <div class="tt-at last" style={`grid-row:${rows.length + 1}`}>
+              <span>{timetable.boundaries.at(-1)}</span>
+            </div>
+
+            {timetable.cells.map((cell) => {
+              const Tag = cell.href ? "a" : "div";
+              // A seventh speaker turns the sixth portrait into the number
+              // of everyone not drawn, rather than the pile going on past
+              // the corner there is for it.
+              const faces = cell.speakers.slice(
+                0,
+                cell.speakers.length > FACES ? FACES - 1 : FACES,
+              );
+              const rest = cell.speakers.length - faces.length;
+              // An odd pile stands its lone row on top, so that the row the
+              // clock ends up beside is a full one.
+              const odd = (faces.length + (rest > 0 ? 1 : 0)) % 2 === 1;
+              return (
+                <Tag
+                  class:list={[
+                    "tt-cell",
+                    cell.kind,
+                    {
+                      "edge-start": cell.columnStart === 2,
+                      "edge-end": cell.columnEnd === lastLine,
+                    },
+                  ]}
+                  href={cell.href}
+                  style={`grid-row:${cell.rowStart}/${cell.rowEnd};grid-column:${cell.columnStart}/${cell.columnEnd}${cell.fill ? `;--pa:${cell.fill}` : ""}`}
+                >
+                  {isFeatured(cell.key) && (
+                    <span class="pick">{featuredLabel}</span>
+                  )}
+                  <b>{cell.label}</b>
+                  {cell.note && <span class="note">{cell.note}</span>}
+                  <div class="foot">
+                    {cell.speakers.length > 0 && (
+                      <span class="who">
+                        {cell.speakers.map((speaker) => (
+                          <span>{speaker.data.name}</span>
+                        ))}
+                      </span>
+                    )}
+                    <span class="span">
+                      {cell.start} – {cell.end}
+                    </span>
+                    {faces.length > 0 && (
+                      <span
+                        class:list={["faces", { odd }]}
+                        style={`--lap:${LAP}px`}
+                        aria-hidden="true"
+                      >
+                        {faces.map((speaker) => (
+                          <SpeakerAvatar speaker={speaker} size={FACE} />
+                        ))}
+                        {rest > 0 && (
+                          <span class="av more" style={`--av:${FACE}px`}>
+                            +{rest}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </Tag>
+              );
+            })}
+          </div>
         </div>
-      )
-    }
+      </div>
+    )}
+
+    {timetable && hasMobile && (
+      <div class="tt-mobile">
+        <slot name="mobile" />
+      </div>
+    )}
+
+    {timetable && timetable.undated.length > 0 && (
+      <div class="tbd" data-reveal="up">
+        <b>{t.timetable.tbdHeading}</b>
+        <ul>
+          {timetable.undated.map((session) => (
+            <li>
+              <a href={session.href}>
+                {session.entry.data.title ??
+                  session.talks[0]?.title ??
+                  session.label}
+              </a>
+              <span>{session.track.data.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
 
     <p class="note">{t.timetable.note}</p>
   </div>

@@ -47,12 +47,23 @@ export const photoInput = z.union([
   z.string().min(1),
 ]);
 
+/** Where a speaker's face goes in their frame: `Framing` in `./faces.ts`. */
+const framingInput = z.object({
+  faceHeight: z.number(),
+  eyeLine: z.number(),
+  across: z.number().optional(),
+  at: z.object({ x: z.number(), y: z.number(), size: z.number() }).optional(),
+  bleed: z.enum(["blur", "stretch"]).optional(),
+});
+
 export const speakerInput = z.object({
   name: z.string().min(1),
   role: z.string().default(""),
   /** Shown in place of a photo. The name's first character by default. */
   initial: z.string().max(2).optional(),
   photo: photoInput.optional(),
+  /** Placed by hand, over whatever the frame would do with the face. */
+  framing: framingInput.optional(),
 });
 
 export const cardInput = z.object({
@@ -70,7 +81,7 @@ export const cardInput = z.object({
    */
   title: z.string().min(1),
   speakers: z.array(speakerInput).min(1),
-  /** The language of the few words the card supplies itself ("ほか 2 名"). */
+  /** The language of what the card puts between names: "、" or ", ". */
   lang: z.enum(["ja", "en"]).default("ja"),
   /** The city's theme: the pastel behind a speaker with no photo. */
   theme: z.enum(["blue", "green", "yellow", "red"]).default("red"),

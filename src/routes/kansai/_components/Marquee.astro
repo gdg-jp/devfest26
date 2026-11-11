@@ -20,27 +20,25 @@ const dots = ["var(--blue)", "var(--red)", "var(--yellow)", "var(--green)"];
 ---
 
 <div class="k-marquee" aria-hidden="true">
-  {
-    rows.map((row, r) => (
-      <div
-        class:list={["k-marquee__band", `k-marquee__band--${row.tone}`]}
-        data-k-marquee={r === 0 ? "-1" : "1"}
-      >
-        <div class="k-marquee__track" data-k-marquee-track>
-          {[0, 1].map(() => (
-            <ul class="k-marquee__set">
-              {row.words.map((word, i) => (
-                <li>
-                  <span>{word}</span>
-                  <i style={`--c:${dots[(i + r) % 4]}`} />
-                </li>
-              ))}
-            </ul>
-          ))}
-        </div>
+  {rows.map((row, r) => (
+    <div
+      class:list={["k-marquee__band", `k-marquee__band--${row.tone}`]}
+      data-k-marquee={r === 0 ? "-1" : "1"}
+    >
+      <div class="k-marquee__track" data-k-marquee-track>
+        {[0, 1].map(() => (
+          <ul class="k-marquee__set">
+            {row.words.map((word, i) => (
+              <li>
+                <span>{word}</span>
+                <i style={`--c:${dots[(i + r) % 4]}`} />
+              </li>
+            ))}
+          </ul>
+        ))}
       </div>
-    ))
-  }
+    </div>
+  ))}
 </div>
 
 <style>

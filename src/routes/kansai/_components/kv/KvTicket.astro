@@ -46,20 +46,20 @@ const more = Math.max(0, total - featured.length);
         </h1>
 
         <p class="kv-d__catch">
-          {c.catchLead}{c.catchMark}{c.catchTail}
+          {c.catchLead}
+          {c.catchMark}
+          {c.catchTail}
         </p>
 
         <div class="kv-d__lineup">
           <span class="kv-d__label">{c.kvLineup}</span>
           <p>
-            {
-              featured.map((f, i) => (
-                <>
-                  <a href={f.talk.href}>{bare(f.program.speaker.data.name)}</a>
-                  {i < featured.length - 1 && <i>／</i>}
-                </>
-              ))
-            }
+            {featured.map((f, i) => (
+              <>
+                <a href={f.talk.href}>{bare(f.program.speaker.data.name)}</a>
+                {i < featured.length - 1 && <i>／</i>}
+              </>
+            ))}
             {more > 0 && <span class="kv-d__more">{c.kvMore(more)}</span>}
           </p>
         </div>
@@ -93,14 +93,18 @@ const more = Math.max(0, total - featured.length);
         data-analytics="register_click"
         data-placement="hero"
       >
-        <span class="kv-d__price"><small>¥</small>0</span>
+        <span class="kv-d__price">
+          <small>¥</small>0
+        </span>
         <span class="kv-d__seats">
           <span>{c.kvOnsite(CAPACITY.onsite)}</span>
           <span>{c.kvOnline}</span>
         </span>
         <span class="kv-d__go">
           {c.kvTicketCta}
-          <span class="kv-d__disc"><Arrow /></span>
+          <span class="kv-d__disc">
+            <Arrow />
+          </span>
         </span>
         <i class="kv-d__hole kv-d__hole--a" aria-hidden="true"></i>
         <i class="kv-d__hole kv-d__hole--b" aria-hidden="true"></i>

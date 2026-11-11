@@ -16,58 +16,54 @@ const items = [...NEWS]
   .slice(0, 3);
 ---
 
-{
-  items.length > 0 && (
-    <section
-      class="k-news k-wrap k-wrap--panel"
-      id="news"
-      aria-labelledby="k-news-h"
+{items.length > 0 && (
+  <section
+    class="k-news k-wrap k-wrap--panel"
+    id="news"
+    aria-labelledby="k-news-h"
+  >
+    <Panel
+      title={c.newsHeading}
+      id="k-news-h"
+      tone="var(--red)"
+      stickers={["plus", "period"]}
     >
-      <Panel
-        title={c.newsHeading}
-        id="k-news-h"
-        tone="var(--red)"
-        stickers={["plus", "period"]}
-      >
-        <p class="k-news__sub">{c.newsSub}</p>
-        <ul class="k-news__list" data-k-stagger>
-          {items.map((item) => {
-            const inner = (
-              <>
-                <time datetime={item.date}>
-                  {item.date.replaceAll("-", ".")}
-                </time>
-                <span class="k-news__text">{localized(item.text, lang)}</span>
-                {item.href && (
-                  <span class="k-news__go">
-                    <Arrow />
-                  </span>
-                )}
-              </>
-            );
-            return (
-              <li data-k-reveal="up">
-                {item.href ? (
-                  <a
-                    class="k-news__row"
-                    href={item.href}
-                    {...(item.href.startsWith("http")
-                      ? { target: "_blank", rel: "noopener" }
-                      : {})}
-                  >
-                    {inner}
-                  </a>
-                ) : (
-                  <div class="k-news__row">{inner}</div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </Panel>
-    </section>
-  )
-}
+      <p class="k-news__sub">{c.newsSub}</p>
+      <ul class="k-news__list" data-k-stagger>
+        {items.map((item) => {
+          const inner = (
+            <>
+              <time datetime={item.date}>{item.date.replaceAll("-", ".")}</time>
+              <span class="k-news__text">{localized(item.text, lang)}</span>
+              {item.href && (
+                <span class="k-news__go">
+                  <Arrow />
+                </span>
+              )}
+            </>
+          );
+          return (
+            <li data-k-reveal="up">
+              {item.href ? (
+                <a
+                  class="k-news__row"
+                  href={item.href}
+                  {...(item.href.startsWith("http")
+                    ? { target: "_blank", rel: "noopener" }
+                    : {})}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div class="k-news__row">{inner}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  </section>
+)}
 
 <style>
   .k-news {
