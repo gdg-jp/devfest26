@@ -35,7 +35,8 @@ export const SHOW_TIMES = false;
 /**
  * The words on the key visual that the event document does not carry. The
  * words only the other key visual candidates used are kept with them, in
- * `design/tokyo-hero/candidates/hero-extras.ts`.
+ * `design/tokyo-hero/candidates/hero-extras.ts` on the
+ * `feat/tokyo-hero-designs` branch (pull request #43), not on this one.
  */
 export const HERO = {
   by: { ja: "Google Developers 主催", en: "Hosted by Google Developers" },

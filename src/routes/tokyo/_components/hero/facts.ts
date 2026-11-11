@@ -6,7 +6,8 @@ import { HERO, OVERVIEW, localized } from "../../_content";
  * What the key visual prints, read once: the day split for setting at
  * different sizes, the venue with its walk from the station, and the words
  * from `HERO`. The fields only the other candidates read are kept with them,
- * in `design/tokyo-hero/candidates/hero-extras.ts`.
+ * in `design/tokyo-hero/candidates/hero-extras.ts` on the
+ * `feat/tokyo-hero-designs` branch (pull request #43), not on this one.
  */
 export function heroFacts(site: ResolvedTenant, lang: Language) {
   const { event } = site;
