@@ -1,0 +1,381 @@
+---
+/**
+ * Development only: a bar across the top of the screen for comparing
+ * treatments of the key visual and, on a phone, where its buttons stand.
+ * `Home` leaves it out of every build.
+ *
+ * Every hero is on the page, all but `current` hidden. A click swaps them in
+ * place — no reload — and writes the choice to the address (`?hero=c2&cta=
+ * tray`), so a reload or a shared link opens the same pair. ← and → step
+ * through the heroes. The bar folds down to a small tab.
+ */
+interface Option {
+  id: string;
+  label: string;
+  note: string;
+}
+
+interface Props {
+  heroes: Option[];
+  current: string;
+  ctas: Option[];
+  cta: string;
+}
+
+const { heroes, current, ctas, cta } = Astro.props;
+---
+
+<div class="tkh-switch" data-tkh-switch>
+  <div class="tkh-switch__panel">
+    <div class="tkh-switch__row">
+      <span class="tkh-switch__key">ヒーロー</span>
+      <div class="tkh-switch__seg" role="group" aria-label="ヒーローのパターン">
+        {heroes.map(({ id, label, note }) => (
+          <button
+            type="button"
+            data-key="hero"
+            data-value={id}
+            data-note={note}
+            aria-pressed={id === current ? "true" : "false"}
+          >
+            <b>{id.toUpperCase()}</b>
+            {label}
+          </button>
+        ))}
+      </div>
+      <select class="tkh-switch__pick" data-key="hero" aria-label="ヒーロー">
+        {heroes.map(({ id, label }) => (
+          <option value={id} selected={id === current}>
+            {`${id.toUpperCase()} ${label}`}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div class="tkh-switch__row">
+      <span class="tkh-switch__key">
+        <span class="tkh-switch__sp">スマホの</span>ボタン
+      </span>
+      <div
+        class="tkh-switch__seg"
+        role="group"
+        aria-label="スマホのボタンの置き方"
+      >
+        {ctas.map(({ id, label, note }) => (
+          <button
+            type="button"
+            data-key="cta"
+            data-value={id}
+            data-note={note}
+            aria-pressed={id === cta ? "true" : "false"}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <select class="tkh-switch__pick" data-key="cta" aria-label="ボタン">
+        {ctas.map(({ id, label }) => (
+          <option value={id} selected={id === cta}>
+            {label}
+          </option>
+        ))}
+      </select>
+    </div>
+    <p class="tkh-switch__note" aria-live="polite"></p>
+  </div>
+  <button
+    type="button"
+    class="tkh-switch__fold"
+    data-fold
+    aria-expanded="true"
+    title="たたむ / ひらく"
+  >
+    <span class="tkh-switch__fold-open">パターン</span>
+    <span class="tkh-switch__fold-close" aria-hidden="true">
+      ×
+    </span>
+  </button>
+</div>
+
+<script is:inline define:vars={{ first: { hero: current, cta } }}>
+  (function () {
+    const bar = document.querySelector("[data-tkh-switch]");
+    if (!bar) return;
+    const note = bar.querySelector(".tkh-switch__note");
+    const fold = bar.querySelector("[data-fold]");
+    const picks = Array.prototype.slice.call(
+      bar.querySelectorAll("select[data-key]"),
+    );
+    const buttons = Array.prototype.slice.call(
+      bar.querySelectorAll("button[data-key]"),
+    );
+    const valuesOf = function (key) {
+      return buttons
+        .filter(function (b) {
+          return b.dataset.key === key;
+        })
+        .map(function (b) {
+          return b.dataset.value;
+        });
+    };
+    const ids = { hero: valuesOf("hero"), cta: valuesOf("cta") };
+    const q = new URLSearchParams(location.search);
+    const state = {
+      hero: ids.hero.indexOf(q.get("hero")) >= 0 ? q.get("hero") : first.hero,
+      cta: ids.cta.indexOf(q.get("cta")) >= 0 ? q.get("cta") : first.cta,
+    };
+
+    function apply(write) {
+      document
+        .querySelectorAll("[data-tk-hero-candidate]")
+        .forEach(function (el) {
+          el.hidden = el.getAttribute("data-tk-hero-candidate") !== state.hero;
+        });
+      document.querySelectorAll(".tkh-c").forEach(function (el) {
+        ids.cta.forEach(function (id) {
+          el.classList.toggle("tkh-c--cta-" + id, id === state.cta);
+        });
+      });
+      const notes = [];
+      buttons.forEach(function (b) {
+        const on = state[b.dataset.key] === b.dataset.value;
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        if (on) notes.push(b.dataset.note);
+      });
+      note.textContent = notes.join(" ／ ");
+      picks.forEach(function (s) {
+        s.value = state[s.dataset.key];
+      });
+      if (write) {
+        const next = new URLSearchParams(location.search);
+        next.set("hero", state.hero);
+        next.set("cta", state.cta);
+        history.replaceState(null, "", "?" + next.toString() + location.hash);
+      }
+    }
+
+    buttons.forEach(function (b) {
+      b.addEventListener("click", function () {
+        state[b.dataset.key] = b.dataset.value;
+        apply(true);
+      });
+    });
+    picks.forEach(function (s) {
+      s.addEventListener("change", function () {
+        state[s.dataset.key] = s.value;
+        apply(true);
+      });
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const t = e.target;
+      if (
+        t &&
+        (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))
+      )
+        return;
+      const i = ids.hero.indexOf(state.hero);
+      const step = e.key === "ArrowRight" ? 1 : -1;
+      state.hero = ids.hero[(i + step + ids.hero.length) % ids.hero.length];
+      apply(true);
+    });
+
+    function setFolded(folded) {
+      bar.classList.toggle("is-folded", folded);
+      fold.setAttribute("aria-expanded", folded ? "false" : "true");
+      try {
+        localStorage.setItem("tkh-switch-folded", folded ? "1" : "0");
+      } catch {
+        /* storage may be blocked; the bar just opens next time */
+      }
+    }
+    fold.addEventListener("click", function () {
+      setFolded(!bar.classList.contains("is-folded"));
+    });
+    const folded = (function () {
+      try {
+        return localStorage.getItem("tkh-switch-folded") === "1";
+      } catch {
+        return false;
+      }
+    })();
+    setFolded(folded);
+    apply(false);
+  })();
+</script>
+
+<style>
+  .tkh-switch {
+    position: fixed;
+    z-index: 1000;
+    top: 10px;
+    left: 50%;
+    translate: -50% 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: calc(100vw - 16px);
+    font: 500 13px/1.2 var(--tk-f-jp);
+    color: var(--ink);
+  }
+
+  .tkh-switch__panel {
+    display: grid;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+
+  .tkh-switch__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tkh-switch__key {
+    flex: none;
+    width: 7.5em;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .tkh-switch__seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--ground);
+  }
+
+  .tkh-switch button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .tkh-switch__seg button {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    white-space: nowrap;
+  }
+
+  .tkh-switch__seg button:hover {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+
+  .tkh-switch__seg button b {
+    font-family: var(--tk-f-display);
+  }
+
+  .tkh-switch__seg button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .tkh-switch__note {
+    margin: 0;
+    padding: 2px 4px 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .tkh-switch__fold {
+    flex: none;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-weight: 700;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+
+  .tkh-switch__fold-open {
+    display: none;
+  }
+
+  .tkh-switch.is-folded .tkh-switch__panel,
+  .tkh-switch.is-folded .tkh-switch__fold-close {
+    display: none;
+  }
+
+  .tkh-switch.is-folded .tkh-switch__fold-open {
+    display: inline;
+  }
+
+  .tkh-switch.is-folded {
+    left: auto;
+    right: 10px;
+    translate: none;
+  }
+
+  /* The dropdowns are the phone's; a wide screen shows every choice. */
+  .tkh-switch__pick {
+    display: none;
+  }
+
+  /* A phone: one short row — a dropdown for each — over the organiser's
+     line, so the hero itself stays in view. */
+  @media (width < 760px) {
+    .tkh-switch {
+      top: 6px;
+      width: calc(100vw - 12px);
+      align-items: center;
+    }
+
+    .tkh-switch__panel {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      min-width: 0;
+      padding: 4px 6px;
+      border-radius: 999px;
+    }
+
+    .tkh-switch__row {
+      flex: 1;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .tkh-switch__key {
+      width: auto;
+      font-size: 11px;
+    }
+
+    .tkh-switch__sp,
+    .tkh-switch__seg,
+    .tkh-switch__note {
+      display: none;
+    }
+
+    .tkh-switch__pick {
+      display: block;
+      flex: 1;
+      min-width: 0;
+      height: 30px;
+      padding: 0 4px;
+      border: 1.5px solid var(--ink);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--ink);
+      font: 700 12px/1 var(--tk-f-jp);
+    }
+
+    .tkh-switch.is-folded {
+      width: auto;
+    }
+  }
+</style>

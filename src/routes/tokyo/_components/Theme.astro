@@ -1,0 +1,202 @@
+---
+import Panel from "./Panel.astro";
+import Icon from "./Icon.astro";
+import Level from "./Level.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { getProgram } from "../../../data/program";
+import { currentLanguage } from "../../../i18n/language";
+import {
+  CATEGORIES,
+  copy,
+  LANES,
+  localized,
+  THEME,
+  type Lane,
+} from "../_content";
+import { trackTone } from "./track";
+
+/**
+ * The theme, before the overview: Meet the Vibes and Beyond the Vibes side by
+ * side, each in its lane's pastel (the overview's and the key visual's), with
+ * who it is for — the level tag — a line, a paragraph and three "good for you
+ * if" points. The words are `THEME` in `_content.ts`.
+ *
+ * Side by side on a wide screen, one above the other on a phone.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const program = await getProgram(site.tenant);
+const MARK: Record<Lane, "sprout" | "summit"> = {
+  meet: "sprout",
+  beyond: "summit",
+};
+const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
+  const first = CATEGORIES.find((cat) => cat.lane === lane);
+  const group = program.find(({ track }) => track.id === first?.track);
+  const tone = group ? trackTone(group.track) : null;
+  return {
+    lane,
+    title: LANES[lane].title,
+    fill: tone?.pa ?? "var(--surface)",
+    ht: tone?.ht ?? "var(--ht-yellow)",
+    mark: MARK[lane],
+    ...THEME[lane],
+  };
+});
+---
+
+<section
+  class="tk-sec tk-sec--panel tk-theme"
+  id="theme"
+  aria-labelledby="tk-theme-h"
+>
+  <div class="tk-wrap tk-wrap--panel">
+    <Panel
+      title={c.themeHeading}
+      id="tk-theme-h"
+      tone="var(--tk-accent-ht)"
+      stickers={["plus", "chevron"]}
+      ja={lang === "ja"}
+    >
+      <div class="tk-theme__grid">
+        {lanes.map(({ lane, title, fill, ht, mark, lead, body, forWhom }) => (
+          <article
+            class:list={["tk-theme__card", `tk-theme__card--${lane}`]}
+            style={`--tk-theme-fill:${fill};--tk-theme-ht:${ht}`}
+            data-tk-reveal="up"
+          >
+            <span class="tk-theme__mark" aria-hidden="true">
+              <Icon name={mark} />
+            </span>
+            <Level lane={lane} stars={false} />
+            <h3 class="tk-theme__title">{title}</h3>
+            <p class="tk-theme__lead">{localized(lead, lang)}</p>
+            <p class="tk-theme__body">{localized(body, lang)}</p>
+            <div class="tk-theme__for">
+              <p>{c.themeFor}</p>
+              <ul>
+                {forWhom.map((line) => (
+                  <li>{localized(line, lang)}</li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ))}
+      </div>
+    </Panel>
+  </div>
+</section>
+
+<style>
+  .tk-theme {
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  .tk-theme__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .tk-theme__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: clamp(20px, 2.6vw, 28px);
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    background: var(--tk-theme-fill);
+  }
+
+  .tk-theme__mark {
+    position: absolute;
+    top: clamp(16px, 2vw, 22px);
+    right: clamp(16px, 2vw, 22px);
+    display: grid;
+    place-items: center;
+    width: 52px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--tk-theme-ht);
+  }
+
+  .tk-theme__mark :global(svg) {
+    width: 26px;
+    height: 26px;
+  }
+
+  .tk-theme__title {
+    margin: 4px 0 0;
+    font-family: var(--tk-f-display);
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+
+  .tk-theme__lead {
+    margin: 0;
+    font: 800 clamp(16px, 1.6vw, 18px) / 1.5 var(--tk-f-jp);
+  }
+
+  .tk-theme__body {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  .tk-theme__for {
+    align-self: stretch;
+    margin-top: auto;
+    padding: 14px 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--surface);
+  }
+
+  .tk-theme__for p {
+    margin: 0 0 6px;
+    font: 700 12px/1.4 var(--tk-f-jp);
+    color: var(--muted);
+  }
+
+  .tk-theme__for ul {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-theme__for li {
+    position: relative;
+    padding-left: 18px;
+    font: 700 14px/1.5 var(--tk-f-jp);
+  }
+
+  .tk-theme__for li::before {
+    content: "";
+    position: absolute;
+    top: 0.5em;
+    left: 2px;
+    width: 8px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--tk-theme-ht);
+  }
+
+  @media (width < 720px) {
+    .tk-theme__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
