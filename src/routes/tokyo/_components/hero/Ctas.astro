@@ -7,7 +7,7 @@ import type { HeroFacts } from "./facts";
 
 /**
  * The key visual's two buttons, in the page's own button: register in the
- * theme red, the sessions in white. Side by side, then stacked full width
+ * theme red (it opens `RegisterChoice`), the sessions in white. Side by side, then stacked full width
  * for a thumb.
  */
 interface Props {
@@ -15,17 +15,15 @@ interface Props {
   facts: HeroFacts;
 }
 
-const { site, facts } = Astro.props;
+const { facts } = Astro.props;
 const c = copy(currentLanguage());
 ---
 
 <div class="tkh-ctas">
-  <a
+  <button
+    type="button"
     class="tk-btn tk-btn--lg tkh-ctas__register"
-    href={site.links.register}
-    target="_blank"
-    rel="noopener"
-    data-analytics="register_click"
+    popovertarget="tk-register"
     data-placement="hero"
     data-tk-magnet
   >
@@ -33,7 +31,7 @@ const c = copy(currentLanguage());
     <span class="tk-btn__disc">
       <Arrow />
     </span>
-  </a>
+  </button>
   <a class="tk-btn tk-btn--lg tk-btn--light" href="#sessions" data-tk-magnet>
     {facts.text("sessions")}
     <span class="tk-btn__disc">

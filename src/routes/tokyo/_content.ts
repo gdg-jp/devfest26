@@ -125,6 +125,31 @@ export const THEME: Record<
   },
 };
 
+/**
+ * Where each half signs up. The halves register on different pages — the
+ * builders (Meet the Vibes) on Luma, the engineers (Beyond the Vibes) on
+ * connpass — so every register button on the page either belongs to one half
+ * or opens `RegisterChoice`, which asks which.
+ *
+ * Kept here rather than in the Studio's `links.register`, which is one link
+ * per language: these are one link per audience, in both languages.
+ */
+export const REGISTER: Record<
+  Lane,
+  { href: string; via: string; audience: Localized }
+> = {
+  meet: {
+    href: "https://luma.com/6jx9xjnf",
+    via: "Luma",
+    audience: { ja: "Builder 向け", en: "For builders" },
+  },
+  beyond: {
+    href: "https://gdg-tokyo.connpass.com/event/405628/",
+    via: "connpass",
+    audience: { ja: "エンジニア向け", en: "For engineers" },
+  },
+};
+
 /** The theme's two halves, which the four categories split between. */
 export const LANES: Record<Lane, { title: string; sub: Localized }> = {
   meet: {
@@ -348,6 +373,7 @@ export const COPY = {
     },
     themeHeading: "テーマ",
     themeFor: "こんな方におすすめ",
+    themeSessions: "このテーマのセッション",
     overviewHeading: "開催概要",
     overviewDate: "日時",
     overviewVenue: "会場",
@@ -358,6 +384,10 @@ export const COPY = {
     next: "次へ",
     register: "無料で参加登録",
     registerShort: "参加登録",
+    registerChoose: "どちらで参加しますか？",
+    registerChooseLede:
+      "テーマごとに申し込みページが分かれています。あなたに近いほうを選んでください。",
+    registerVia: (service: string) => `${service} で申し込む`,
     newsHeading: "News",
     newsSub: "お知らせ",
     featuredBadge: "注目",
@@ -407,6 +437,7 @@ export const COPY = {
     },
     themeHeading: "Theme",
     themeFor: "Good for you if you",
+    themeSessions: "Sessions on this theme",
     overviewHeading: "Overview",
     overviewDate: "When",
     overviewVenue: "Where",
@@ -417,6 +448,10 @@ export const COPY = {
     next: "Next",
     register: "Register for free",
     registerShort: "Register",
+    registerChoose: "How are you joining us?",
+    registerChooseLede:
+      "Each half of the theme signs up on its own page. Pick the one closer to you.",
+    registerVia: (service: string) => `Sign up on ${service}`,
     newsHeading: "News",
     newsSub: "Latest",
     featuredBadge: "Pick",
