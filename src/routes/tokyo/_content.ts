@@ -42,11 +42,14 @@ export const HERO = {
   by: { ja: "Google Developers 主催", en: "Hosted by Google Developers" },
   /**
    * What the day is, in GDG Tokyo's own words (their announcement on X,
-   * 2026-11-01). `|` is where the line may break: each side stays whole.
+   * 2026-11-01), without its "Google の": the line above already says
+   * Google hosts it. `|` is where the line may break: each side stays whole.
+   * `{meet:…}` and `{beyond:…}` are the words marked in that half's colour —
+   * making things is Meet's, running them Beyond's.
    */
   lead: {
-    ja: "Google の最先端 AI と|「つくる・動かす」を極める 1 日",
-    en: "A day to master building and running things|with Google's latest AI",
+    ja: "最先端 AI と|「{meet:つくる}・{beyond:動かす}」を極める 1 日",
+    en: "A day to master {meet:building} and {beyond:running} things|with the latest AI",
   },
   organizedBy: { ja: "Organized by", en: "Organized by" },
   sessions: { ja: "セッションを見る", en: "See the sessions" },

@@ -2,6 +2,7 @@
 import Shell from "../_layout/Shell.astro";
 import HeroSplit, {
   type SplitCta,
+  type SplitMark,
   type SplitVariant,
 } from "./hero/HeroSplit.astro";
 import HeroSwitch from "./hero/HeroSwitch.astro";
@@ -71,6 +72,12 @@ const HEROES: {
     note: "Beyond の面を黒に。イベント名は白いチケットに",
     variant: "night",
   },
+  {
+    id: "c4",
+    label: "白いチケット",
+    note: "境目は細い線のまま。主催から会場までを 1 枚の白いチケットに",
+    variant: "ticket",
+  },
 ];
 const CTAS: { id: SplitCta; label: string; note: string }[] = [
   {
@@ -90,7 +97,45 @@ const CTAS: { id: SplitCta; label: string; note: string }[] = [
   },
 ];
 const HERO = "c";
+const MARKS: { id: SplitMark; label: string; note: string }[] = [
+  {
+    id: "pen",
+    label: "2 色ペン（現状）",
+    note: "「つくる」はピンク、「動かす」は緑の蛍光ペン",
+  },
+  {
+    id: "yellow",
+    label: "黄色ペン",
+    note: "2 語とも黄色の蛍光ペン（「徒歩約 1 分」と同じ）",
+  },
+  {
+    id: "under",
+    label: "色の下線",
+    note: "文字は白地のまま、ピンク・緑の太い下線を文字の下に",
+  },
+  {
+    id: "ink",
+    label: "黒地に色文字",
+    note: "黒い角丸の上に、ピンク・緑の文字",
+  },
+  {
+    id: "ink-yellow",
+    label: "黒地に黄色",
+    note: "黒い角丸の上に、2 語とも黄色の文字",
+  },
+  {
+    id: "band",
+    label: "黒い帯（表紙風）",
+    note: "connpass の表紙のように、一文ごと傾いた黒い帯に白抜き。後ろに黄色の帯",
+  },
+  {
+    id: "band-color",
+    label: "黒い帯＋色文字",
+    note: "黒い帯（表紙風）で、「つくる」はピンク、「動かす」は緑の文字",
+  },
+];
 const CTA: SplitCta = "field";
+const MARK: SplitMark = "pen";
 const shipped = HEROES.find(({ id }) => id === HERO) ?? HEROES[0];
 ---
 
@@ -100,13 +145,20 @@ const shipped = HEROES.find(({ id }) => id === HERO) ?? HEROES[0];
       <>
         {HEROES.map(({ id, variant }) => (
           <div data-tk-hero-candidate={id} hidden={id !== HERO}>
-            <HeroSplit site={site} variant={variant} cta={CTA} />
+            <HeroSplit site={site} variant={variant} cta={CTA} mark={MARK} />
           </div>
         ))}
-        <HeroSwitch heroes={HEROES} current={HERO} ctas={CTAS} cta={CTA} />
+        <HeroSwitch
+          heroes={HEROES}
+          current={HERO}
+          ctas={CTAS}
+          cta={CTA}
+          marks={MARKS}
+          mark={MARK}
+        />
       </>
     ) : (
-      <HeroSplit site={site} variant={shipped.variant} cta={CTA} />
+      <HeroSplit site={site} variant={shipped.variant} cta={CTA} mark={MARK} />
     )}
   </div>
   <Theme site={site} />

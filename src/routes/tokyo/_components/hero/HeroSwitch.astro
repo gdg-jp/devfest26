@@ -6,7 +6,9 @@
  *
  * Every hero is on the page, all but `current` hidden. A click swaps them in
  * place — no reload — and writes the choice to the address (`?hero=c2&cta=
- * tray`), so a reload or a shared link opens the same pair. ← and → step
+ * tray&mark=yellow`), so a reload or a shared link opens the same set. The
+ * button placement and the verbs' mark are classes on every hero
+ * (`tkh-c--cta-*`, `tkh-c--mark-*`), so they carry over as the hero changes. ← and → step
  * through the heroes. The bar folds down to a small tab.
  */
 interface Option {
@@ -20,9 +22,11 @@ interface Props {
   current: string;
   ctas: Option[];
   cta: string;
+  marks: Option[];
+  mark: string;
 }
 
-const { heroes, current, ctas, cta } = Astro.props;
+const { heroes, current, ctas, cta, marks, mark } = Astro.props;
 ---
 
 <div class="tkh-switch" data-tkh-switch>
@@ -80,6 +84,31 @@ const { heroes, current, ctas, cta } = Astro.props;
         ))}
       </select>
     </div>
+    <div class="tkh-switch__row">
+      <span class="tkh-switch__key">
+        <span class="tkh-switch__sp">強調の</span>色
+      </span>
+      <div class="tkh-switch__seg" role="group" aria-label="強調の色">
+        {marks.map(({ id, label, note }) => (
+          <button
+            type="button"
+            data-key="mark"
+            data-value={id}
+            data-note={note}
+            aria-pressed={id === mark ? "true" : "false"}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <select class="tkh-switch__pick" data-key="mark" aria-label="強調の色">
+        {marks.map(({ id, label }) => (
+          <option value={id} selected={id === mark}>
+            {label}
+          </option>
+        ))}
+      </select>
+    </div>
     <p class="tkh-switch__note" aria-live="polite"></p>
   </div>
   <button
@@ -96,7 +125,7 @@ const { heroes, current, ctas, cta } = Astro.props;
   </button>
 </div>
 
-<script is:inline define:vars={{ first: { hero: current, cta } }}>
+<script is:inline define:vars={{ first: { hero: current, cta, mark } }}>
   (function () {
     const bar = document.querySelector("[data-tkh-switch]");
     if (!bar) return;
@@ -117,12 +146,14 @@ const { heroes, current, ctas, cta } = Astro.props;
           return b.dataset.value;
         });
     };
-    const ids = { hero: valuesOf("hero"), cta: valuesOf("cta") };
+    const keys = ["hero", "cta", "mark"];
+    const ids = {};
+    const state = {};
     const q = new URLSearchParams(location.search);
-    const state = {
-      hero: ids.hero.indexOf(q.get("hero")) >= 0 ? q.get("hero") : first.hero,
-      cta: ids.cta.indexOf(q.get("cta")) >= 0 ? q.get("cta") : first.cta,
-    };
+    keys.forEach(function (key) {
+      ids[key] = valuesOf(key);
+      state[key] = ids[key].indexOf(q.get(key)) >= 0 ? q.get(key) : first[key];
+    });
 
     function apply(write) {
       document
@@ -131,8 +162,10 @@ const { heroes, current, ctas, cta } = Astro.props;
           el.hidden = el.getAttribute("data-tk-hero-candidate") !== state.hero;
         });
       document.querySelectorAll(".tkh-c").forEach(function (el) {
-        ids.cta.forEach(function (id) {
-          el.classList.toggle("tkh-c--cta-" + id, id === state.cta);
+        ["cta", "mark"].forEach(function (key) {
+          ids[key].forEach(function (id) {
+            el.classList.toggle("tkh-c--" + key + "-" + id, id === state[key]);
+          });
         });
       });
       const notes = [];
@@ -147,8 +180,9 @@ const { heroes, current, ctas, cta } = Astro.props;
       });
       if (write) {
         const next = new URLSearchParams(location.search);
-        next.set("hero", state.hero);
-        next.set("cta", state.cta);
+        keys.forEach(function (key) {
+          next.set(key, state[key]);
+        });
         history.replaceState(null, "", "?" + next.toString() + location.hash);
       }
     }
