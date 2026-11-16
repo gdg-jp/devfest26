@@ -50,7 +50,7 @@ const HEROES: {
 }[] = [
   {
     id: "c",
-    label: "現状",
+    label: "細い線",
     note: "赤と緑の境目は細い線だけ",
     variant: "split",
   },
@@ -74,7 +74,7 @@ const HEROES: {
   },
   {
     id: "c4",
-    label: "白いチケット",
+    label: "白いチケット（現状）",
     note: "境目は細い線のまま。主催から会場までを 1 枚の白いチケットに",
     variant: "ticket",
   },
@@ -96,11 +96,11 @@ const CTAS: { id: SplitCta; label: string; note: string }[] = [
     note: "ボタンの下だけ、境目と同じ傾きで切った黒い帯にする",
   },
 ];
-const HERO = "c";
+const HERO = "c4";
 const MARKS: { id: SplitMark; label: string; note: string }[] = [
   {
     id: "pen",
-    label: "2 色ペン（現状）",
+    label: "2 色ペン",
     note: "「つくる」はピンク、「動かす」は緑の蛍光ペン",
   },
   {
@@ -130,12 +130,12 @@ const MARKS: { id: SplitMark; label: string; note: string }[] = [
   },
   {
     id: "band-color",
-    label: "黒い帯＋色文字",
+    label: "黒い帯＋色文字（現状）",
     note: "黒い帯（表紙風）で、「つくる」はピンク、「動かす」は緑の文字",
   },
 ];
 const CTA: SplitCta = "field";
-const MARK: SplitMark = "pen";
+const MARK: SplitMark = "band-color";
 const shipped = HEROES.find(({ id }) => id === HERO) ?? HEROES[0];
 ---
 
