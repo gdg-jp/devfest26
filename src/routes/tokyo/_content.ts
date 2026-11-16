@@ -51,7 +51,6 @@ export const HERO = {
     ja: "最先端 AI と|「{meet:つくる}・{beyond:動かす}」を極める 1 日",
     en: "A day to master {meet:building} and {beyond:running} things|with the latest AI",
   },
-  organizedBy: { ja: "Organized by", en: "Organized by" },
   sessions: { ja: "セッションを見る", en: "See the sessions" },
   /** `Level`: who each half of the theme is for, on its tag. */
   meetLevel: { ja: "初心者向け", en: "For beginners" },
