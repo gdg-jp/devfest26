@@ -388,7 +388,7 @@ export const COPY = {
     registerShort: "参加登録",
     registerChoose: "どちらで参加しますか？",
     registerChooseLede:
-      "テーマごとに申し込みページが分かれています。あなたに近いほうを選んでください。",
+      "参加登録ページが2つあります。お好きなほうを選んでください。",
     registerVia: (service: string) => `${service} で申し込む`,
     newsHeading: "News",
     newsSub: "お知らせ",
@@ -452,7 +452,7 @@ export const COPY = {
     registerShort: "Register",
     registerChoose: "How are you joining us?",
     registerChooseLede:
-      "Each half of the theme signs up on its own page. Pick the one closer to you.",
+      "There are two registration pages. Pick whichever you like.",
     registerVia: (service: string) => `Sign up on ${service}`,
     newsHeading: "News",
     newsSub: "Latest",
