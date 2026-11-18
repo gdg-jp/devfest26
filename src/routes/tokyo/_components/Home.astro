@@ -12,17 +12,20 @@ import Overview from "./Overview.astro";
 import News from "./News.astro";
 import PreEvent from "./PreEvent.astro";
 import Sessions from "./Sessions.astro";
+import Timetable from "./Timetable.astro";
 import Speakers from "./Speakers.astro";
 import Sponsors from "./Sponsors.astro";
 import Faq from "./Faq.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { homeData } from "../_data";
+import { SHOW_SESSIONS } from "../_content";
 
 /**
  * Tokyo's home page, laid out as Kansai's: the key visual, the headliners,
- * then the programme from the top down — by theme rather than by time, since
- * Tokyo's day is not settled yet (`Sessions`, where Kansai has its timetable). The register button stays in the header,
- * which pins to the top of the screen, all the way down.
+ * then the programme from the top down — the day by time (`Timetable`), then
+ * the same sessions by theme (`Sessions`, left off while `SHOW_SESSIONS` is
+ * `false`: the timetable already lists them). The register button stays in the
+ * header, which pins to the top of the screen, all the way down.
  *
  * The key visual is `hero/HeroSplit.astro` (candidate C), drawn on the same
  * graph paper as the rest of the page. The other three candidates, as
@@ -166,7 +169,8 @@ const shipped = HEROES.find(({ id }) => id === HERO) ?? HEROES[0];
   <Featured featured={featured} />
   <News />
   <PreEvent tenant={site.tenant} />
-  <Sessions site={site} />
+  <Timetable site={site} />
+  {SHOW_SESSIONS && <Sessions site={site} />}
   <Speakers speakers={speakers} />
   <Sponsors />
   <Faq site={site} />
