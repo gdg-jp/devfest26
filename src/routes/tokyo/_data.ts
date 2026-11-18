@@ -48,10 +48,8 @@ export async function homeData(tenant: string) {
   // Sessions a featured speaker is on — badged on the timetable.
   const featuredSessions = sessions
     .filter((session) =>
-      session.talks.some((talk) =>
-        talk.speakers.some((speaker) =>
-          featuredSlugs.has(speaker.data.slug ?? speaker.id),
-        ),
+      session.speakers.some((speaker) =>
+        featuredSlugs.has(speaker.data.slug ?? speaker.id),
       ),
     )
     .map((session) => session.slug);
