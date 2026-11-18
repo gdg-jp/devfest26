@@ -6,7 +6,13 @@ import Icon from "../Icon.astro";
 import type { ResolvedTenant } from "../../../../tenants";
 import { getProgram } from "../../../../data/program";
 import { currentLanguage } from "../../../../i18n/language";
-import { CATEGORIES, LANES, localized, type Lane } from "../../_content";
+import {
+  CATEGORIES,
+  LANES,
+  localized,
+  trackLink,
+  type Lane,
+} from "../../_content";
 import { trackTone } from "../track";
 import { heroFacts } from "./facts";
 
@@ -331,7 +337,7 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
               <li>
                 <Tag
                   class="tkh-c__cat"
-                  href={linked ? `#tk-sessions-${id}` : undefined}
+                  href={linked ? trackLink(id) : undefined}
                   style={`--tkh-c-cat:${tone.ht}`}
                 >
                   <span class="tkh-c__icon">

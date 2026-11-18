@@ -9,17 +9,17 @@ import { CATEGORIES, copy } from "../_content";
 import { trackTone } from "./track";
 
 /**
- * Tokyo's programme, theme by theme, in place of Kansai's timetable: the day
- * is not settled yet, so the sessions are grouped by what they are about
- * rather than placed on a grid of times. One folder for the section, as the
- * overview and the speakers have, and inside it a heading per theme (track)
- * in the track's colour, with its sessions as cards. No times are shown here —
- * they would read as a schedule.
+ * Tokyo's programme, theme by theme, under the timetable: the same sessions
+ * grouped by what they are about rather than placed on a grid of times. One
+ * folder for the section, as the overview and the speakers have, and inside it
+ * a heading per theme (track) in the track's colour, with its sessions as
+ * cards. No times are shown here — the timetable above has them.
+ *
+ * Off the home page while `SHOW_SESSIONS` is `false` (`_content.ts`): the
+ * timetable lists the same sessions. Kept, so turning it back on is one line.
  *
  * Each heading carries its half's level tag, as the theme's cards do: the
  * theme's category cards jump here, and the tag says where you have landed.
- *
- * When the timetable is final, Kansai's `Timetable` can take this place again.
  */
 interface Props {
   site: ResolvedTenant;

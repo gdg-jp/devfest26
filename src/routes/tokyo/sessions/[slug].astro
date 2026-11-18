@@ -26,7 +26,14 @@ import { getTimetable } from "../../../data/timetable";
 import { messages } from "../../../i18n";
 import { currentLanguage } from "../../../i18n/language";
 import { sessionCardImage } from "../../../lib/sessionCard";
-import { copy, FEATURED, localized, SHOW_TIMES } from "../_content";
+import {
+  copy,
+  FEATURED,
+  localized,
+  SESSIONS_LINK,
+  SHOW_SESSIONS,
+  SHOW_TIMES,
+} from "../_content";
 
 /**
  * One session, in the design Tokyo shares with Kansai: the slot and its
@@ -175,7 +182,10 @@ const jsonLd = title
   description={description}
   jsonLd={jsonLd}
   ogImage={ogImage}
-  back={{ href: `${home}#sessions`, label: c.backToSessions }}
+  back={{
+    href: `${home}${SESSIONS_LINK}`,
+    label: SHOW_SESSIONS ? c.backToSessions : c.backToTimetable,
+  }}
   placement="session"
 >
   <section class="tk-sec tk-sec--panel" aria-labelledby="tk-sh-title">
@@ -388,8 +398,8 @@ const jsonLd = title
           </>
         )}
 
-        <a class="tk-link tk-day__all" href={`${home}#sessions`}>
-          {c.allSessions}
+        <a class="tk-link tk-day__all" href={`${home}${SESSIONS_LINK}`}>
+          {SHOW_SESSIONS ? c.allSessions : c.allTimetable}
           <Arrow />
         </a>
       </Panel>
