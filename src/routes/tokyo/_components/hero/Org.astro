@@ -3,8 +3,9 @@ import gdgLogo from "../../../../assets/brand/gdg.svg?url";
 import type { HeroFacts } from "./facts";
 
 /**
- * The organiser, in the screen's top-left corner, as on Kansai's key visual:
- * the GDG mark beside "Organized by" over the chapter's name.
+ * The organiser, in the screen's top-left corner: the GDG mark beside the
+ * chapter's name, the name centred on the mark. Kansai's key visual puts
+ * "Organized by" over the name; Tokyo leaves it out.
  */
 interface Props {
   facts: HeroFacts;
@@ -15,10 +16,7 @@ const { facts } = Astro.props;
 
 <p class="tkh-org">
   <img src={gdgLogo} alt="" width="100" height="100" />
-  <span>
-    <small>{facts.text("organizedBy")}</small>
-    {facts.host}
-  </span>
+  <span>{facts.host}</span>
 </p>
 
 <style>
@@ -38,16 +36,7 @@ const { facts } = Astro.props;
     letter-spacing: -0.01em;
   }
 
-  .tkh-org span {
-    display: grid;
-  }
-
-  .tkh-org small {
-    font-size: 12px;
-    letter-spacing: 0;
-  }
-
-  /* As tall as the two lines beside it. */
+  /* As tall as it was beside "Organized by" over the name. */
   .tkh-org img {
     width: auto;
     height: calc(12px * 1.2 + 1.2em);

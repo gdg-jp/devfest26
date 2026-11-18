@@ -37,8 +37,10 @@ import { heroFacts } from "./facts";
  * scattered round its name — still links to their sessions. Both kinds, the
  * name, the day and the place are on the first screen.
  */
-export type SplitVariant = "split" | "tape" | "giant" | "night";
+export type SplitVariant = "split" | "tape" | "giant" | "night" | "ticket";
 export type SplitCta = "field" | "tray" | "ink";
+export type SplitMark =
+  "pen" | "yellow" | "under" | "ink" | "ink-yellow" | "band" | "band-color";
 
 /**
  * `variant` is how the cut is drawn, while the treatments are compared in
@@ -49,18 +51,28 @@ export type SplitCta = "field" | "tray" | "ink";
  * - `giant`: MEET and BEYOND as huge pale letters, each in its own half.
  * - `night`: Beyond's half in ink — the day and the night, the first step
  *   and what lies past it.
+ * - `ticket`: `split`'s hairline, with the event — from who hosts it to
+ *   where it is — on one white ticket laid over the cut.
  *
  * `cta` is where the buttons stand on a phone (`?cta=`): on Beyond's colour
  * as on a wide screen (`field`), on a tray of the page's own paper (`tray`),
  * or on a band of ink cut on the same slant as the seam (`ink`).
+ *
+ * `mark` is how the lead's two verbs are marked (`?mark=`): a highlighter in
+ * each half's colour (`pen`), or in yellow (`yellow`); an underline in each
+ * half's colour (`under`); or set on ink, in each half's colour (`ink`) or
+ * in yellow (`ink-yellow`). Or the whole line is set on a tilted black band
+ * with a yellow one offset behind it, as on the connpass cover — the verbs
+ * white like the rest (`band`) or in their halves' colours (`band-color`).
  */
 interface Props {
   site: ResolvedTenant;
   variant?: SplitVariant;
   cta?: SplitCta;
+  mark?: SplitMark;
 }
 
-const { site, variant = "split", cta = "field" } = Astro.props;
+const { site, variant = "split", cta = "field", mark = "pen" } = Astro.props;
 const titleId = variant === "split" ? "tkh-c-title" : `tkh-c-title-${variant}`;
 const lang = currentLanguage();
 const f = heroFacts(site, lang);
@@ -92,6 +104,29 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
 });
 const [meet, beyond] = lanes;
 
+// The lead, a piece per side of its break, each piece in runs of words —
+// a run marked `{meet:…}` or `{beyond:…}` drawn in that half's colour.
+const markTone = Object.fromEntries(
+  lanes.map(({ lane, categories }) => [
+    lane,
+    categories[0]?.tone.ht ?? "var(--ht-yellow)",
+  ]),
+) as Record<Lane, string>;
+const lead = f
+  .text("lead")
+  .split("|")
+  .map((piece) =>
+    piece
+      .split(/(\{(?:meet|beyond):[^}]+\})/)
+      .filter(Boolean)
+      .map((run) => {
+        const marked = run.match(/^\{(meet|beyond):([^}]+)\}$/);
+        return marked
+          ? { text: marked[2], tone: markTone[marked[1] as Lane] }
+          : { text: run, tone: undefined };
+      }),
+  );
+
 // The cut, in percent of the width at the top and at the foot.
 const CUT = { top: 54, foot: 46 };
 
@@ -109,7 +144,12 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
 ---
 
 <section
-  class:list={["tkh-c", `tkh-c--${variant}`, `tkh-c--cta-${cta}`]}
+  class:list={[
+    "tkh-c",
+    `tkh-c--${variant}`,
+    `tkh-c--cta-${cta}`,
+    `tkh-c--mark-${mark}`,
+  ]}
   aria-labelledby={titleId}
   style={`--tkh-c-meet:${meet.fill};--tkh-c-beyond:${beyondFill}`}
 >
@@ -198,12 +238,19 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
       <Wordmark label="" split />
     </h1>
     <p class="tkh-c__lead">
-      {f
-        .text("lead")
-        .split("|")
-        .map((part) => (
-          <span>{part}</span>
-        ))}
+      {lead.map((runs) => (
+        <span>
+          {runs.map(({ text, tone }) =>
+            tone ? (
+              <mark class="tkh-c__mark" style={`--tkh-c-half:${tone}`}>
+                {text}
+              </mark>
+            ) : (
+              text
+            ),
+          )}
+        </span>
+      ))}
     </p>
     <dl class="tkh-c__facts">
       <div>
@@ -462,15 +509,95 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
   }
 
   /* What the day is, in GDG Tokyo's words, between the name and the card.
-     Each half of the line stays whole when it has to break. */
+     Each half of the line stays whole when it has to break. A step louder
+     than the facts under it, and the two verbs — make, run — marked in the
+     colours of the halves they belong to, with a highlighter stroke rather
+     than anything boxed, so the line stays one line of text. */
   .tkh-c__lead {
-    margin: 0;
-    font: 700 clamp(15px, 1.45vw, 20px) / 1.5 var(--tk-f-jp);
+    margin: 2px 0 0;
+    font: 800 clamp(17px, 1.9vw, 26px) / 1.5 var(--tk-f-jp);
     letter-spacing: 0.02em;
   }
 
-  .tkh-c__lead span {
+  .tkh-c__lead > span {
     display: inline-block;
+  }
+
+  /* The verbs' mark. `--tkh-c-half` is the colour of the half the word
+     belongs to; each `mark` treatment decides what to do with it. */
+  .tkh-c__mark {
+    --tkh-c-mark: var(--tkh-c-half);
+    padding-inline: 0.08em;
+    color: inherit;
+    background: linear-gradient(
+      transparent 56%,
+      var(--tkh-c-mark) 56%,
+      var(--tkh-c-mark) 92%,
+      transparent 92%
+    );
+  }
+
+  /* One highlighter for both, in the page's own marker yellow. */
+  .tkh-c--mark-yellow .tkh-c__mark {
+    --tkh-c-mark: var(--ht-yellow);
+  }
+
+  /* The letters left on white, the colour a thick line under them. */
+  .tkh-c--mark-under .tkh-c__mark {
+    background: none;
+    text-decoration: underline;
+    text-decoration-color: var(--tkh-c-half);
+    text-decoration-thickness: 0.2em;
+    text-underline-offset: 0.2em;
+    text-decoration-skip-ink: none;
+  }
+
+  /* Set on ink: the most contrast, the colour kept in the letters. */
+  .tkh-c--mark-ink .tkh-c__mark,
+  .tkh-c--mark-ink-yellow .tkh-c__mark {
+    margin-inline: 0.12em;
+    padding: 0.02em 0.34em 0.06em;
+    border-radius: 0.3em;
+    background: var(--ink);
+    color: var(--tkh-c-half);
+  }
+
+  .tkh-c--mark-ink-yellow .tkh-c__mark {
+    color: var(--ht-yellow);
+  }
+
+  /* The connpass cover's band: the whole line in white on ink, tilted a
+     little, a yellow band offset down and to the left behind it. */
+  .tkh-c--mark-band .tkh-c__lead,
+  .tkh-c--mark-band-color .tkh-c__lead {
+    margin: 2px 0 clamp(4px, 0.8vh, 8px);
+    padding: 0.16em 0.8em 0.22em;
+    background: var(--ink);
+    color: var(--surface);
+    box-shadow: -0.32em 0.32em 0 var(--ht-yellow);
+    rotate: -2deg;
+  }
+
+  .tkh-c--mark-band .tkh-c__mark,
+  .tkh-c--mark-band-color .tkh-c__mark {
+    padding-inline: 0;
+    background: none;
+    color: inherit;
+  }
+
+  .tkh-c--mark-band-color .tkh-c__mark {
+    color: var(--tkh-c-half);
+  }
+
+  /* On a phone, a size down and closer in, so the band keeps to one line
+     inside the ticket too (C4's is the narrowest place it sits). */
+  @media (width < 760px) {
+    .tkh-c--mark-band .tkh-c__lead,
+    .tkh-c--mark-band-color .tkh-c__lead {
+      padding-inline: 0.5em;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
   }
 
   /* What is in each half, under its name. */
@@ -609,6 +736,16 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
     stroke-width: 4px;
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
+  }
+
+  /* The wave hangs over the space under the name rather than taking any,
+     where Beyond's dimension line is a row of its own (the set's gap and
+     its height). Side by side, Meet keeps that much room under its name
+     too, so both halves' lines and buttons start at the same height. */
+  @media (width >= 760px) {
+    .tkh-c__name--meet .tkh-c__set {
+      padding-bottom: calc(0.16em + 0.18em);
+    }
   }
 
   /* ---- Beyond: a dimension line under the Vibes -------------------- */
@@ -1115,7 +1252,7 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
   /* The lead and the halves' lines a size down on a phone. */
   @media (width < 760px) {
     .tkh-c__lead {
-      font-size: 13px;
+      font-size: 15px;
       line-height: 1.45;
     }
 
@@ -1205,10 +1342,12 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
   }
 
   /* Night has the same ticket: the name runs across the cut, and half of it
-     would be black on black. */
+     would be black on black. Ticket is the hairline with nothing else
+     changed but this. */
   @media (width >= 760px) {
     .tkh-c--tape .tkh-c__head,
-    .tkh-c--night .tkh-c__head {
+    .tkh-c--night .tkh-c__head,
+    .tkh-c--ticket .tkh-c__head {
       align-self: center;
       padding: clamp(18px, 2.8vh, 30px) clamp(32px, 3.4vw, 56px)
         clamp(16px, 2.4vh, 24px);
@@ -1218,7 +1357,8 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
     }
 
     .tkh-c--tape .tkh-c__facts,
-    .tkh-c--night .tkh-c__facts {
+    .tkh-c--night .tkh-c__facts,
+    .tkh-c--ticket .tkh-c__facts {
       align-self: stretch;
       margin-top: clamp(4px, 1vh, 10px);
       padding: clamp(12px, 1.8vh, 18px) 0 0;
@@ -1419,6 +1559,39 @@ const beyondFill = variant === "night" ? "var(--ink)" : beyond.fill;
   @media (width < 760px) {
     .tkh-c--night .tkh-c__facts::before {
       background: var(--tkh-c-lines-dark), var(--tkh-c-beyond);
+    }
+  }
+
+  /* ==== variant: ticket ================================================
+     On a phone too the event is one ticket, the name inside its edges
+     rather than out into the gutters, and the day and the place under a
+     dashed line as on a wide screen. The seam and Beyond's green still hang
+     from the middle of the day and the place, behind the ticket — which is
+     why the ticket has no entrance here: while it played, the head would
+     be a stacking context, and the green would paint over its white. */
+
+  @media (width < 760px) {
+    .tkh-c--ticket .tkh-c__head {
+      padding: 14px 14px 12px;
+      border: var(--tk-line) solid var(--ink);
+      border-radius: var(--tk-r-lg);
+      background: var(--surface);
+      animation: none;
+    }
+
+    .tkh-c--ticket .tkh-c__title {
+      --tkh-c-title-w: 100%;
+      margin-inline: 0;
+    }
+
+    .tkh-c--ticket .tkh-c__facts {
+      align-self: stretch;
+      margin-top: 4px;
+      padding: 10px 0 0;
+      border: 0;
+      border-top: var(--tk-line) dashed var(--ink);
+      border-radius: 0;
+      background: none;
     }
   }
 

@@ -42,13 +42,15 @@ export const HERO = {
   by: { ja: "Google Developers 主催", en: "Hosted by Google Developers" },
   /**
    * What the day is, in GDG Tokyo's own words (their announcement on X,
-   * 2026-11-01). `|` is where the line may break: each side stays whole.
+   * 2026-11-01), without its "Google の": the line above already says
+   * Google hosts it. `|` is where the line may break: each side stays whole.
+   * `{meet:…}` and `{beyond:…}` are the words marked in that half's colour —
+   * making things is Meet's, running them Beyond's.
    */
   lead: {
-    ja: "Google の最先端 AI と|「つくる・動かす」を極める 1 日",
-    en: "A day to master building and running things|with Google's latest AI",
+    ja: "最先端 AI と|「{meet:つくる}・{beyond:動かす}」を極める 1 日",
+    en: "A day to master {meet:building} and {beyond:running} things|with the latest AI",
   },
-  organizedBy: { ja: "Organized by", en: "Organized by" },
   sessions: { ja: "セッションを見る", en: "See the sessions" },
   /** `Level`: who each half of the theme is for, on its tag. */
   meetLevel: { ja: "初心者向け", en: "For beginners" },
@@ -122,6 +124,31 @@ export const THEME: Record<
         en: "Want your team to ship faster",
       },
     ],
+  },
+};
+
+/**
+ * Where each half signs up. The halves register on different pages — the
+ * builders (Meet the Vibes) on Luma, the engineers (Beyond the Vibes) on
+ * connpass — so every register button on the page either belongs to one half
+ * or opens `RegisterChoice`, which asks which.
+ *
+ * Kept here rather than in the Studio's `links.register`, which is one link
+ * per language: these are one link per audience, in both languages.
+ */
+export const REGISTER: Record<
+  Lane,
+  { href: string; via: string; audience: Localized }
+> = {
+  meet: {
+    href: "https://luma.com/6jx9xjnf",
+    via: "Luma",
+    audience: { ja: "Builder 向け", en: "For builders" },
+  },
+  beyond: {
+    href: "https://gdg-tokyo.connpass.com/event/405628/",
+    via: "connpass",
+    audience: { ja: "エンジニア向け", en: "For engineers" },
   },
 };
 
@@ -348,6 +375,7 @@ export const COPY = {
     },
     themeHeading: "テーマ",
     themeFor: "こんな方におすすめ",
+    themeSessions: "このテーマのセッション",
     overviewHeading: "開催概要",
     overviewDate: "日時",
     overviewVenue: "会場",
@@ -358,6 +386,10 @@ export const COPY = {
     next: "次へ",
     register: "無料で参加登録",
     registerShort: "参加登録",
+    registerChoose: "どちらで参加しますか？",
+    registerChooseLede:
+      "テーマごとに申し込みページが分かれています。あなたに近いほうを選んでください。",
+    registerVia: (service: string) => `${service} で申し込む`,
     newsHeading: "News",
     newsSub: "お知らせ",
     featuredBadge: "注目",
@@ -407,6 +439,7 @@ export const COPY = {
     },
     themeHeading: "Theme",
     themeFor: "Good for you if you",
+    themeSessions: "Sessions on this theme",
     overviewHeading: "Overview",
     overviewDate: "When",
     overviewVenue: "Where",
@@ -417,6 +450,10 @@ export const COPY = {
     next: "Next",
     register: "Register for free",
     registerShort: "Register",
+    registerChoose: "How are you joining us?",
+    registerChooseLede:
+      "Each half of the theme signs up on its own page. Pick the one closer to you.",
+    registerVia: (service: string) => `Sign up on ${service}`,
     newsHeading: "News",
     newsSub: "Latest",
     featuredBadge: "Pick",

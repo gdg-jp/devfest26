@@ -1,5 +1,7 @@
 import type { Track } from "../../../data/tracks";
 import { trackPastel } from "../../../data/tracks";
+import type { ProgramTrack } from "../../../data/program";
+import { CATEGORIES, type Lane } from "../_content";
 import type { StickerName } from "./stickers";
 
 /**
@@ -43,6 +45,17 @@ export function trackTone(track: Track) {
     pa: onTheme(trackPastel(track)),
     stickers: tone.stickers,
   };
+}
+
+/**
+ * A half of the theme's colours: its first category's track's, as the theme,
+ * the key visual and the register choice all draw it. `null` while that
+ * track is missing from the programme.
+ */
+export function laneTone(program: readonly ProgramTrack[], lane: Lane) {
+  const first = CATEGORIES.find((category) => category.lane === lane);
+  const group = program.find(({ track }) => track.id === first?.track);
+  return group ? trackTone(group.track) : null;
 }
 
 /** `13:05` → 785. */
