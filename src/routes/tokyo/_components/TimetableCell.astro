@@ -36,13 +36,7 @@ const title = slot.day
       return slot.signUp ? text.replace(SIGN_UP_SUFFIX, "") : text;
     })();
 
-const speakers = [
-  ...new Map(
-    (session?.talks ?? [])
-      .flatMap((talk) => talk.speakers)
-      .map((speaker) => [speaker.id, speaker]),
-  ).values(),
-];
+const speakers = session?.speakers ?? [];
 
 const kind =
   slot.span === "side"

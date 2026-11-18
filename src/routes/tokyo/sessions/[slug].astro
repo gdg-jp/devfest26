@@ -91,28 +91,41 @@ const start = session.start;
 const end = endOf(session);
 const length = start && end ? minutes(end) - minutes(start) : undefined;
 
-const everyone = [
-  ...new Map(
-    talks
-      .flatMap((talk) => talk.speakers)
-      .map((speaker) => [speaker.id, speaker]),
-  ).values(),
-];
+// The session owner included: someone who runs the slot without giving one of
+// its talks is on no talk, and only `session.speakers` has them.
+const everyone = session.speakers;
+const owners = new Set(session.owners.map((speaker) => speaker.id));
 const ring = ["var(--red)", "var(--yellow)", "var(--green)"];
 const cast = await Promise.all(
   everyone.map(async (speaker, i) => ({
     speaker,
     href: speakerHref(speaker),
     ring: ring[i % ring.length],
+    owner: owners.has(speaker.id),
     hook: FEATURED.find((f) => f.slug === slugOf(speaker)),
     Bio: speaker.body?.trim() ? (await render(speaker)).Content : undefined,
   })),
 );
 const featured = cast.some((person) => person.hook);
+const ringOf = new Map(cast.map((person) => [person.speaker.id, person.ring]));
 
-// Talks of their own only exist where a city splits a slot; Tokyo does not,
-// but the Studio could, and they would otherwise have no way in.
-const ownTalks = talks.filter((talk) => talk.standalone);
+// A slot split into talks gets a panel of its own under About, each talk with
+// its title, who gives it and its abstract. A session without talks of its
+// own is its one talk, and About already says everything there is.
+const ownTalks = await Promise.all(
+  talks
+    .filter((talk) => talk.standalone)
+    .map(async (talk) => ({
+      talk,
+      Abstract: talk.entry.body?.trim()
+        ? (await render(talk.entry)).Content
+        : undefined,
+    })),
+);
+// Talks that all claim one start — the slot's, as the Studio tends to leave
+// them — say nothing about the order, so they show no time at all.
+const talkTimes =
+  SHOW_TIMES && new Set(ownTalks.map(({ talk }) => talk.start)).size > 1;
 
 const sessions = program.flatMap((group) => group.sessions);
 const alongside =
@@ -242,6 +255,7 @@ const jsonLd = title
                     />
                   </span>
                   <span class="tk-sh__id">
+                    {person.owner && <em class="tk-owner">{c.sessionOwner}</em>}
                     <b>{bare(person.speaker.data.name)}</b>
                     <small>{person.speaker.data.role}</small>
                   </span>
@@ -254,7 +268,7 @@ const jsonLd = title
     </div>
   </section>
 
-  {(abstract || ownTalks.length > 0) && (
+  {abstract && (
     <section class="tk-sec tk-sec--panel" aria-labelledby="tk-about-h">
       <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
         <Panel
@@ -264,23 +278,64 @@ const jsonLd = title
           stickers={["quoteOpen", "quoteClose"]}
         >
           <p class="tk-sub">{c.aboutSub}</p>
-          {abstract && (
-            <div class="tk-prose tk-about">
-              <Content />
-            </div>
-          )}
-          {ownTalks.length > 0 && (
-            <ol class="tk-talks">
-              {ownTalks.map((talk) => (
-                <li>
-                  <a class="tk-link" href={talk.href}>
-                    {SHOW_TIMES && talk.start && <time>{talk.start}</time>}
-                    {talk.title ?? c.titleTba}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          )}
+          <div class="tk-prose tk-about">
+            <Content />
+          </div>
+        </Panel>
+      </div>
+    </section>
+  )}
+
+  {ownTalks.length > 0 && (
+    <section class="tk-sec tk-sec--panel" aria-labelledby="tk-talks-h">
+      <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
+        <Panel
+          title={ownTalks.length > 1 ? "Talks" : "Talk"}
+          id="tk-talks-h"
+          tone={tone.pa}
+          stickers={["ellipsis", "arrow"]}
+        >
+          <p class="tk-sub">{c.talksSub}</p>
+          <ol class="tk-talks">
+            {ownTalks.map(({ talk, Abstract }, i) => (
+              <li class="tk-talk" id={`talk-${talk.slug}`}>
+                <p class="tk-talk__meta">
+                  <span class="tk-talk__no">{c.talkNo(i + 1)}</span>
+                  {talkTimes && talk.start && (
+                    <time class="tk-talk__time">{talk.start}</time>
+                  )}
+                </p>
+                <h3 class:list={["tk-talk__title", { "is-tba": !talk.title }]}>
+                  {talk.title ?? c.titleTba}
+                </h3>
+                <ul class="tk-talk__cast">
+                  {talk.speakers.map((speaker) => (
+                    <li>
+                      <a class="tk-talk__person" href={speakerHref(speaker)}>
+                        <span
+                          class="tk-talk__ring"
+                          style={`--ring:${ringOf.get(speaker.id) ?? ring[0]}`}
+                        >
+                          <Portrait
+                            speaker={speaker}
+                            size={36}
+                            class="tk-talk__av"
+                            tone={ringOf.get(speaker.id) ?? ring[0]}
+                          />
+                        </span>
+                        <b>{bare(speaker.data.name)}</b>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                {Abstract && (
+                  <div class="tk-prose tk-talk__text">
+                    <Abstract />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
         </Panel>
       </div>
     </section>
@@ -296,7 +351,7 @@ const jsonLd = title
       >
         <p class="tk-sub">{c.speakersSub}</p>
         <div class="tk-bios">
-          {cast.map(({ speaker, href, ring, hook, Bio }) => (
+          {cast.map(({ speaker, href, ring, owner, hook, Bio }) => (
             <article class="tk-bio">
               <a
                 class="tk-bio__face"
@@ -316,6 +371,7 @@ const jsonLd = title
                 {hook && (
                   <p class="tk-bio__hook">{localized(hook.hook, lang)}</p>
                 )}
+                {owner && <em class="tk-owner">{c.sessionOwner}</em>}
                 <h3 class="tk-bio__name">
                   <a href={href}>{bare(speaker.data.name)}</a>
                 </h3>
@@ -575,18 +631,141 @@ const jsonLd = title
     font-size: 16.5px;
   }
 
+  /* ---- talks --------------------------------------------------------- */
+
   .tk-talks {
     display: grid;
-    gap: 8px;
-    margin: 20px 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .tk-talks time {
+  .tk-talk {
+    display: grid;
+    justify-items: start;
+    gap: 12px;
+    padding-block: clamp(20px, 3vw, 28px);
+    scroll-margin-top: 120px;
+  }
+
+  .tk-talk:first-child {
+    padding-top: 0;
+  }
+
+  .tk-talk:last-child {
+    padding-bottom: 0;
+  }
+
+  .tk-talk + .tk-talk {
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  .tk-talk__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin: 0;
+  }
+
+  .tk-talk__no,
+  .tk-talk__time {
+    padding: 3px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
     font-family: var(--f-mono);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .tk-talk__no {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .tk-talk__title {
+    margin: 0;
+    font-family: var(--tk-f-jp);
+    font-weight: 700;
+    font-size: clamp(20px, 2.8vw, 26px);
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .tk-talk__title.is-tba {
     color: var(--muted);
+  }
+
+  .tk-talk__cast {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-talk__person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .tk-talk__person b {
+    font-family: var(--tk-f-display);
+    font-size: 15px;
+  }
+
+  .tk-talk__person:hover b {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .tk-talk__ring {
+    flex: none;
+    width: 40px;
+    aspect-ratio: 1;
+    padding: 2px;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--ring);
+  }
+
+  .tk-talk__ring :global(.tk-talk__av) {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 14px;
+  }
+
+  .tk-talk__text {
+    margin-top: 4px;
+    font-size: 15.5px;
+  }
+
+  /* ---- session owner ------------------------------------------------- */
+
+  .tk-owner {
+    justify-self: start;
+    width: fit-content;
+    padding: 1px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--ht-yellow);
+    color: var(--ink);
+    font-family: var(--tk-f-display);
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
   }
 
   /* ---- speakers ------------------------------------------------------ */
