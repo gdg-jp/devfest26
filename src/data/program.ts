@@ -66,6 +66,21 @@ export interface ProgramSession {
   end: string | undefined;
   /** Never empty. Exactly one entry for a city that does not use talks. */
   talks: ProgramTalk[];
+  /**
+   * Everyone on the slot, nobody twice: the session's own speakers in the
+   * order the Studio lists them, then whoever its talks add. Never empty.
+   *
+   * Read this rather than collecting `talks[].speakers`: a session split into
+   * talks can still name people of its own — the session owner who runs the
+   * slot without giving one of its talks — and they are on no talk at all.
+   */
+  speakers: Speaker[];
+  /**
+   * The session's own speakers who give none of its talks: whoever runs the
+   * slot. Empty for a session with no talks of its own, where its speakers
+   * *are* its one talk's.
+   */
+  owners: Speaker[];
 }
 
 export interface ProgramTrack {
@@ -373,6 +388,14 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       return undefined;
     }
 
+    // Resolved whether or not the session has talks: beside its talks, a
+    // session's own speakers are whoever runs the slot, and they belong on its
+    // page as much as the people giving the talks.
+    const sessionSpeakers = resolveSpeakers(
+      session.data.speakers ?? [],
+      `Session "${session.id}"`,
+    );
+
     const talks: ProgramTalk[] = [];
 
     if (own.length) {
@@ -396,10 +419,6 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
         });
       }
     } else {
-      const sessionSpeakers = resolveSpeakers(
-        session.data.speakers ?? [],
-        `Session "${session.id}"`,
-      );
       if (sessionSpeakers.length > 0) {
         talks.push({
           slug,
@@ -415,6 +434,18 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
 
     if (talks.length === 0) return undefined;
 
+    const onTalks = talks.flatMap((talk) => talk.speakers);
+    const speakers = [
+      ...new Map(
+        [...sessionSpeakers, ...onTalks].map((speaker) => [
+          speaker.id,
+          speaker,
+        ]),
+      ).values(),
+    ];
+    const giving = new Set(onTalks.map((speaker) => speaker.id));
+    const owners = sessionSpeakers.filter((speaker) => !giving.has(speaker.id));
+
     return {
       entry: session,
       track,
@@ -425,6 +456,8 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
       start: session.data.start,
       end: session.data.end,
       talks,
+      speakers,
+      owners,
     };
   };
 
@@ -542,14 +575,33 @@ export async function getAppearances(
 ): Promise<Map<string, Appearance[]>> {
   const sessions = await getProgramSessions(tenant);
   const byId = new Map<string, Appearance[]>();
+  const add = (speaker: Speaker, appearance: Appearance) => {
+    const found = byId.get(speaker.id);
+    if (found) found.push(appearance);
+    else byId.set(speaker.id, [appearance]);
+  };
 
-  for (const session of sessions)
+  for (const session of sessions) {
     for (const talk of session.talks)
-      for (const speaker of talk.speakers) {
-        const found = byId.get(speaker.id);
-        if (found) found.push({ session, talk });
-        else byId.set(speaker.id, [{ session, talk }]);
-      }
+      for (const speaker of talk.speakers) add(speaker, { session, talk });
+
+    // A session owner gives none of the talks, so what they appear in is the
+    // session itself — the same stand-in a session without talks uses for its
+    // one talk. Without it they would get no speaker page, and the session
+    // page would link to nothing.
+    if (session.owners.length) {
+      const asTalk: ProgramTalk = {
+        slug: session.slug,
+        href: session.href,
+        standalone: false,
+        title: session.entry.data.title,
+        start: session.start,
+        speakers: session.owners,
+        entry: session.entry,
+      };
+      for (const owner of session.owners) add(owner, { session, talk: asTalk });
+    }
+  }
 
   return byId;
 }

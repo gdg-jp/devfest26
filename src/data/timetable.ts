@@ -373,17 +373,12 @@ function columnRuns(
 }
 
 /**
- * Who is on, in the order the session lists them.
+ * Who is on, in the order the session lists them — its owner included.
  *
- * Deduplicated by entry rather than by name: one person on two talks in the
- * same slot is one person, and two people who happen to share a name are two.
+ * Deduplicated by entry rather than by name (see `ProgramSession.speakers`):
+ * one person on two talks in the same slot is one person, and two people who
+ * happen to share a name are two.
  */
 function speakersOf(session: ProgramSession): Speaker[] {
-  const found = new Map<string, Speaker>();
-  for (const talk of session.talks) {
-    for (const speaker of talk.speakers) {
-      if (!found.has(speaker.id)) found.set(speaker.id, speaker);
-    }
-  }
-  return [...found.values()];
+  return session.speakers;
 }

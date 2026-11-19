@@ -13,7 +13,9 @@ import {
 import { copy, navigation } from "../_content";
 
 /**
- * A floating bar that is always one tap from registering.
+ * A floating bar that is always one tap from registering — from
+ * `RegisterChoice`, that is, which asks which half of the theme you are
+ * signing up for, since each has its own page.
  *
  * The anchors resolve on the home page only, so from anywhere else they go
  * home first. `data-topbar` and `data-spy` are the hooks the shared nav script
@@ -75,19 +77,17 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       >
         {switchTo.toUpperCase()}
       </a>
-      <a
+      <button
+        type="button"
         class="tk-btn tk-btn--sm tk-header__cta"
-        href={site.links.register}
-        target="_blank"
-        rel="noopener"
-        data-analytics="register_click"
+        popovertarget="tk-register"
         data-placement="topbar"
       >
         {c.registerShort}
         <span class="tk-btn__disc">
           <Arrow />
         </span>
-      </a>
+      </button>
       <button
         type="button"
         class="tk-header__menu"
@@ -121,19 +121,17 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     </ol>
   </nav>
   <div class="tk-menu__foot" data-tk-menu-item>
-    <a
+    <button
+      type="button"
       class="tk-btn tk-btn--light"
-      href={site.links.register}
-      target="_blank"
-      rel="noopener"
-      data-analytics="register_click"
+      popovertarget="tk-register"
       data-placement="menu"
     >
       {c.register}
       <span class="tk-btn__disc">
         <Arrow />
       </span>
-    </a>
+    </button>
     <a class="tk-menu__lang" href={switchHref} hreflang={switchTo}>
       {switchLabel}
     </a>

@@ -1,21 +1,25 @@
 ---
 import Panel from "./Panel.astro";
 import SessionCard from "./SessionCard.astro";
+import Level from "./Level.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { getProgram } from "../../../data/program";
 import { currentLanguage } from "../../../i18n/language";
-import { copy } from "../_content";
+import { CATEGORIES, copy } from "../_content";
 import { trackTone } from "./track";
 
 /**
- * Tokyo's programme, theme by theme, in place of Kansai's timetable: the day
- * is not settled yet, so the sessions are grouped by what they are about
- * rather than placed on a grid of times. One folder for the section, as the
- * overview and the speakers have, and inside it a heading per theme (track)
- * in the track's colour, with its sessions as cards. No times are shown here —
- * they would read as a schedule.
+ * Tokyo's programme, theme by theme, under the timetable: the same sessions
+ * grouped by what they are about rather than placed on a grid of times. One
+ * folder for the section, as the overview and the speakers have, and inside it
+ * a heading per theme (track) in the track's colour, with its sessions as
+ * cards. No times are shown here — the timetable above has them.
  *
- * When the timetable is final, Kansai's `Timetable` can take this place again.
+ * Off the home page while `SHOW_SESSIONS` is `false` (`_content.ts`): the
+ * timetable lists the same sessions. Kept, so turning it back on is one line.
+ *
+ * Each heading carries its half's level tag, as the theme's cards do: the
+ * theme's category cards jump here, and the tag says where you have landed.
  */
 interface Props {
   site: ResolvedTenant;
@@ -47,12 +51,16 @@ const groups = (await getProgram(site.tenant)).filter(
         <div class="tk-sessions__groups">
           {groups.map(({ track, sessions }) => {
             const tone = trackTone(track);
+            const lane = CATEGORIES.find(
+              (category) => category.track === track.id,
+            )?.lane;
             return (
               <div class="tk-sessions__group" style={`--tk-group:${tone.ht}`}>
                 <div class="tk-sessions__head">
                   <h3 class="tk-sessions__track" id={`tk-sessions-${track.id}`}>
                     {track.data.label}
                   </h3>
+                  {lane && <Level lane={lane} />}
                   {track.data.sub && (
                     <p class="tk-sessions__sub">{track.data.sub}</p>
                   )}
@@ -106,6 +114,7 @@ const groups = (await getProgram(site.tenant)).filter(
 
   .tk-sessions__track {
     margin: 0;
+    scroll-margin-top: 16px;
     padding: 6px 18px;
     border: var(--tk-line) solid var(--ink);
     border-radius: 999px;

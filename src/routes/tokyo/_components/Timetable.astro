@@ -1,0 +1,311 @@
+---
+import Panel from "./Panel.astro";
+import TimetableCell from "./TimetableCell.astro";
+import type { ResolvedTenant } from "../../../tenants";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, timetableTrackId, TRACK_CODES } from "../_content";
+import { tokyoTimetable, type TimetableSlot } from "../_timetable";
+import { trackTone } from "./track";
+
+/**
+ * The day at a glance, as GDG Tokyo's timetable on connpass draws it: the
+ * four tracks side by side, the opening, keynotes and closing across all of
+ * them, and the demo floor in a strip on the right (`_timetable.ts`).
+ *
+ * Wide screens get the grid. A phone gets the same slots as one list, a time
+ * at a time: everything that starts at 13:40, then everything at 14:40. A slot
+ * that spans several rows is listed once, where it starts.
+ */
+interface Props {
+  site: ResolvedTenant;
+}
+
+const { site } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+const table = await tokyoTimetable(site.tenant);
+
+/** The track's colours, for a slot that sits in one. */
+const toneOf = (slot: TimetableSlot) => {
+  if (slot.span === "track" && slot.session) {
+    const tone = trackTone(slot.session.track);
+    return `--fill:${tone.pa};--trk:${tone.solid};--trk-ink:${tone.ink}`;
+  }
+  if (slot.day?.accent) return "--fill:var(--ht-yellow)";
+  return "";
+};
+
+/** Phone order: a time at a time, across before down. */
+const SPAN_ORDER = { all: 0, track: 1, side: 2 };
+const byStart: [string, TimetableSlot[]][] = [];
+for (const slot of [...(table?.slots ?? [])].sort(
+  (a, b) =>
+    a.start.localeCompare(b.start) ||
+    SPAN_ORDER[a.span] - SPAN_ORDER[b.span] ||
+    (a.column ?? 0) - (b.column ?? 0),
+)) {
+  const last = byStart.at(-1);
+  if (last && last[0] === slot.start) last[1].push(slot);
+  else byStart.push([slot.start, [slot]]);
+}
+
+/**
+ * Each track's first session, which carries the track's anchor in the phone's
+ * list — where the grid's headings, the anchors on a wide screen, are hidden.
+ */
+const firstOfTrack = new Map<string, string>();
+for (const [, slots] of byStart) {
+  for (const slot of slots) {
+    const track = slot.span === "track" ? slot.session?.track.id : undefined;
+    if (track && !firstOfTrack.has(track)) firstOfTrack.set(track, slot.key);
+  }
+}
+const phoneAnchor = (slot: TimetableSlot) => {
+  const track = slot.session?.track.id;
+  return track && firstOfTrack.get(track) === slot.key
+    ? `${timetableTrackId(track)}-sp`
+    : undefined;
+};
+
+/** A time in the gutter wherever something in the columns starts. */
+const ticks = (table?.lines ?? []).filter(({ time }) =>
+  table?.slots.some((slot) => slot.span !== "side" && slot.start === time),
+);
+
+const columnOf = (slot: TimetableSlot, tracks: number) =>
+  slot.span === "track"
+    ? `${(slot.column ?? 0) + 2}`
+    : slot.span === "all"
+      ? `2/${tracks + 2}`
+      : `${tracks + 2}`;
+---
+
+{table && (
+  <section
+    class="tk-sec tk-sec--panel tk-tt"
+    id="timetable"
+    aria-labelledby="tk-tt-h"
+  >
+    <div class="tk-wrap tk-wrap--panel tk-tt__stack">
+      <Panel
+        title={c.timetableHeading}
+        id="tk-tt-h"
+        tone="var(--ht-green)"
+        stickers={["colon", "equals"]}
+        ja={lang === "ja"}
+      >
+        <p class="tk-tt__date">{c.timetableDate}</p>
+
+        {/* ---- wide: the whole grid ------------------------------------ */}
+        <div
+          class="tk-tt__grid"
+          style={`--tracks:${table.tracks.length};grid-template-rows:${table.rows.join(" ")}`}
+        >
+          {table.tracks.map((track, i) => {
+            const tone = trackTone(track);
+            return (
+              <div
+                class="tk-tt__head"
+                id={timetableTrackId(track.id)}
+                style={`grid-row:${table.headRow};grid-column:${i + 2};--trk:${tone.solid};--trk-ink:${tone.ink}`}
+              >
+                <small>{TRACK_CODES[track.id]?.name}</small>
+                <b>{track.data.label}</b>
+              </div>
+            );
+          })}
+
+          {ticks.map(({ time, line }) => (
+            <time class="tk-tt__tick" style={`grid-row:${line}`}>
+              {time}
+            </time>
+          ))}
+
+          {table.slots.map((slot) => (
+            <div
+              class="tk-tt__cell"
+              style={`grid-row:${slot.rowStart}/${slot.rowEnd};grid-column:${columnOf(slot, table.tracks.length)};${toneOf(slot)}`}
+            >
+              <TimetableCell item={slot} />
+            </div>
+          ))}
+        </div>
+
+        {/* ---- phone: a time at a time --------------------------------- */}
+        <ol class="tk-tt__list">
+          {byStart.map(([time, slots]) => (
+            <li class="tk-tt__at">
+              <time class="tk-tt__at-time">{time}</time>
+              <ul class="tk-tt__at-slots">
+                {slots.map((slot) => (
+                  <li id={phoneAnchor(slot)} style={toneOf(slot)}>
+                    <TimetableCell item={slot} phone />
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </Panel>
+      <p class="tk-tt__note">{c.timetableNote}</p>
+    </div>
+  </section>
+)}
+
+<script>
+  /*
+    A track's anchor is its heading in the grid, which a phone does not draw:
+    a jump there would go nowhere. Send it to the same track's first card in
+    the phone's list instead (`<id>-sp`). Only for these anchors, and only when
+    the heading is not on screen — a wide screen keeps the plain jump.
+  */
+  const PREFIX = "#tk-tt-";
+
+  const phoneTarget = (hash: string) => {
+    const id = decodeURIComponent(hash.slice(1));
+    const head = document.getElementById(id);
+    if (head?.getClientRects().length) return null;
+    return document.getElementById(`${id}-sp`);
+  };
+
+  document.addEventListener("click", (event) => {
+    const link = (event.target as Element | null)?.closest?.(
+      `a[href^="${PREFIX}"]`,
+    );
+    const hash = link?.getAttribute("href");
+    const target = hash && phoneTarget(hash);
+    if (!hash || !target) return;
+    event.preventDefault();
+    history.pushState(null, "", hash);
+    target.scrollIntoView({ block: "start" });
+  });
+
+  if (location.hash.startsWith(PREFIX)) {
+    phoneTarget(location.hash)?.scrollIntoView({ block: "start" });
+  }
+</script>
+
+<style>
+  .tk-tt {
+    scroll-margin-top: var(--tk-header-h);
+  }
+
+  .tk-tt__stack {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tk-tt__date {
+    margin: 0 0 18px;
+    font-family: var(--f-mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: right;
+  }
+
+  /* ---- grid (wide) --------------------------------------------------- */
+
+  .tk-tt__grid {
+    display: grid;
+    grid-template-columns: 52px repeat(var(--tracks), minmax(0, 1fr)) 46px;
+    gap: 8px 10px;
+  }
+
+  .tk-tt__head {
+    display: grid;
+    align-content: center;
+    padding: 8px 14px;
+    margin-top: 6px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-sm);
+    background: var(--trk);
+    color: var(--trk-ink);
+    line-height: 1.3;
+  }
+
+  .tk-tt__head small {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .tk-tt__head b {
+    font-family: var(--tk-f-display);
+    font-size: 16px;
+  }
+
+  .tk-tt__tick {
+    grid-column: 1;
+    padding-top: 6px;
+    border-top: 1.5px solid var(--tk-hair);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .tk-tt__cell {
+    display: grid;
+    min-width: 0;
+  }
+
+  /* ---- list (phone) -------------------------------------------------- */
+
+  .tk-tt__list {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-tt__at {
+    display: grid;
+    gap: 8px;
+    padding: 14px 0;
+    border-top: 1.5px solid var(--tk-hair);
+  }
+
+  .tk-tt__at:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .tk-tt__at-time {
+    font-family: var(--f-mono);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .tk-tt__at-slots {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* The demo strip reads across on a phone. */
+  .tk-tt__at-slots :global(.tk-ts--side) {
+    writing-mode: horizontal-tb;
+    justify-content: flex-start;
+    padding: 10px 14px;
+  }
+
+  .tk-tt__note {
+    margin: 0 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  @media (width < 900px) {
+    .tk-tt__grid {
+      display: none;
+    }
+
+    .tk-tt__list {
+      display: block;
+    }
+  }
+</style>

@@ -1,5 +1,6 @@
 ---
 import Panel from "./Panel.astro";
+import Arrow from "./Arrow.astro";
 import Icon from "./Icon.astro";
 import Level from "./Level.astro";
 import type { ResolvedTenant } from "../../../tenants";
@@ -10,10 +11,12 @@ import {
   copy,
   LANES,
   localized,
+  REGISTER,
   THEME,
   type Lane,
+  trackLink,
 } from "../_content";
-import { trackTone } from "./track";
+import { laneTone, trackTone } from "./track";
 
 /**
  * The theme, before the overview: Meet the Vibes and Beyond the Vibes side by
@@ -21,7 +24,19 @@ import { trackTone } from "./track";
  * who it is for — the level tag — a line, a paragraph and three "good for you
  * if" points. The words are `THEME` in `_content.ts`.
  *
- * Side by side on a wide screen, one above the other on a phone.
+ * Under them, the half's categories, so a reader who has just found their
+ * half goes straight on to its sessions: each a card that drops down to its
+ * own folder in `Sessions` further down the page (a category with no
+ * sessions yet is drawn, but goes nowhere).
+ *
+ * And last, the half's own register button: the two halves sign up on
+ * different pages (`REGISTER`), so the button under each one goes straight
+ * to its own, with no choice to make.
+ *
+ * The two cards share their rows (a subgrid), so the "good for you" boxes
+ * and the category cards line up across the way whatever the paragraphs
+ * above them run to. Side by side on a wide screen, one above the other on a
+ * phone.
  */
 interface Props {
   site: ResolvedTenant;
@@ -36,19 +51,36 @@ const MARK: Record<Lane, "sprout" | "summit"> = {
   meet: "sprout",
   beyond: "summit",
 };
+const categories = CATEGORIES.flatMap((category) => {
+  const group = program.find(({ track }) => track.id === category.track);
+  if (!group) return [];
+  return [
+    {
+      ...category,
+      track: group.track,
+      tone: trackTone(group.track),
+      // A category with no sessions yet has no folder below to go to.
+      Card: group.sessions.length > 0 ? ("a" as const) : ("div" as const),
+    },
+  ];
+});
 const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
-  const first = CATEGORIES.find((cat) => cat.lane === lane);
-  const group = program.find(({ track }) => track.id === first?.track);
-  const tone = group ? trackTone(group.track) : null;
+  const own = categories.filter((category) => category.lane === lane);
+  const tone = laneTone(program, lane);
   return {
     lane,
     title: LANES[lane].title,
     fill: tone?.pa ?? "var(--surface)",
     ht: tone?.ht ?? "var(--ht-yellow)",
+    register: REGISTER[lane],
     mark: MARK[lane],
+    categories: own,
     ...THEME[lane],
   };
 });
+// Tag, name, line, paragraph, "good for you", the sessions' label, a row per
+// category (as many as the longer half has), and the register button.
+const rows = 7 + Math.max(0, ...lanes.map((lane) => lane.categories.length));
 ---
 
 <section
@@ -64,30 +96,91 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
       stickers={["plus", "chevron"]}
       ja={lang === "ja"}
     >
-      <div class="tk-theme__grid">
-        {lanes.map(({ lane, title, fill, ht, mark, lead, body, forWhom }) => (
-          <article
-            class:list={["tk-theme__card", `tk-theme__card--${lane}`]}
-            style={`--tk-theme-fill:${fill};--tk-theme-ht:${ht}`}
-            data-tk-reveal="up"
-          >
-            <span class="tk-theme__mark" aria-hidden="true">
-              <Icon name={mark} />
-            </span>
-            <Level lane={lane} stars={false} />
-            <h3 class="tk-theme__title">{title}</h3>
-            <p class="tk-theme__lead">{localized(lead, lang)}</p>
-            <p class="tk-theme__body">{localized(body, lang)}</p>
-            <div class="tk-theme__for">
-              <p>{c.themeFor}</p>
-              <ul>
-                {forWhom.map((line) => (
-                  <li>{localized(line, lang)}</li>
-                ))}
-              </ul>
-            </div>
-          </article>
-        ))}
+      <div class="tk-theme__grid" style={`--tk-theme-rows:${rows}`}>
+        {lanes.map(
+          ({
+            lane,
+            title,
+            fill,
+            ht,
+            mark,
+            lead,
+            body,
+            forWhom,
+            categories,
+            register,
+          }) => (
+            <article
+              class:list={["tk-theme__card", `tk-theme__card--${lane}`]}
+              style={`--tk-theme-fill:${fill};--tk-theme-ht:${ht}`}
+              aria-labelledby={`tk-theme-${lane}`}
+              data-tk-reveal="up"
+            >
+              <span class="tk-theme__mark" aria-hidden="true">
+                <Icon name={mark} />
+              </span>
+              <Level lane={lane} stars={false} />
+              <h3 class="tk-theme__title" id={`tk-theme-${lane}`}>
+                {title}
+              </h3>
+              <p class="tk-theme__lead">{localized(lead, lang)}</p>
+              <p class="tk-theme__body">{localized(body, lang)}</p>
+              <div class="tk-theme__for">
+                <p>{c.themeFor}</p>
+                <ul>
+                  {forWhom.map((line) => (
+                    <li>{localized(line, lang)}</li>
+                  ))}
+                </ul>
+              </div>
+              {categories.length > 0 && (
+                <>
+                  <p class="tk-theme__go">{c.themeSessions}</p>
+                  {categories.map(({ track, tone, icon, Card }) => (
+                    <Card
+                      class="tk-cat"
+                      href={Card === "a" ? trackLink(track.id) : undefined}
+                      style={`--tk-cat:${tone.ht}`}
+                    >
+                      <span class="tk-cat__icon">
+                        <Icon name={icon} />
+                      </span>
+                      <span class="tk-cat__text">
+                        <span class="tk-cat__name">{track.data.label}</span>
+                        {track.data.sub && (
+                          <span class="tk-cat__sub">{track.data.sub}</span>
+                        )}
+                      </span>
+                      {Card === "a" && (
+                        <span class="tk-cat__disc" aria-hidden="true">
+                          <Arrow />
+                        </span>
+                      )}
+                    </Card>
+                  ))}
+                </>
+              )}
+              <a
+                class="tk-btn tk-theme__register"
+                href={register.href}
+                target="_blank"
+                rel="noopener"
+                data-analytics="register_click"
+                data-placement={`theme-${lane}`}
+              >
+                <span class="tk-theme__register-text">
+                  {c.register}
+                  <small>
+                    {localized(register.audience, lang)} · {register.via}
+                  </small>
+                </span>
+                <span class="tk-btn__disc">
+                  <Icon name="external" />
+                </span>
+              </a>
+            </article>
+          ),
+        )}
       </div>
     </Panel>
   </div>
@@ -104,11 +197,16 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
     gap: 16px;
   }
 
+  /* Each card takes all its rows from the grid, so the two cards' rows are
+     shared: the paragraph row is as tall as the longer paragraph, and what
+     comes after it starts at the same height on both sides. */
   .tk-theme__card {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-row: span var(--tk-theme-rows);
+    grid-template-rows: subgrid;
+    align-content: start;
+    justify-items: start;
     gap: 10px;
     padding: clamp(20px, 2.6vw, 28px);
     border: var(--tk-line) solid var(--ink);
@@ -154,8 +252,7 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
   }
 
   .tk-theme__for {
-    align-self: stretch;
-    margin-top: auto;
+    justify-self: stretch;
     padding: 14px 16px;
     border: var(--tk-line) solid var(--ink);
     border-radius: var(--tk-r-md);
@@ -194,9 +291,145 @@ const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
     background: var(--tk-theme-ht);
   }
 
+  /* ---- on to the sessions ---- */
+
+  /* "Sessions on this theme", with a downward stroke from the box above:
+     the step from "is this me?" to "then go here". */
+  .tk-theme__go {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 0;
+    padding-inline: 4px;
+    font: 800 14px/1.4 var(--tk-f-jp);
+  }
+
+  .tk-theme__go::before {
+    content: "";
+    width: 18px;
+    height: var(--tk-line);
+    border-radius: 2px;
+    background: var(--ink);
+  }
+
+  .tk-cat {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    justify-self: stretch;
+    gap: 14px;
+    padding: 12px 14px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-md);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      translate 0.3s var(--tk-ease),
+      box-shadow 0.3s var(--tk-ease);
+  }
+
+  a.tk-cat:hover {
+    translate: 0 -2px;
+    box-shadow: 0 4px 0 var(--ink);
+  }
+
+  .tk-cat__icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 14px;
+    background: var(--tk-cat);
+    transition: rotate 0.4s var(--tk-ease-back);
+  }
+
+  .tk-cat__icon :global(svg) {
+    width: 22px;
+  }
+
+  a.tk-cat:hover .tk-cat__icon {
+    rotate: -8deg;
+  }
+
+  .tk-cat__text {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tk-cat__name {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(18px, 2vw, 22px);
+    line-height: 1.2;
+    /* Break at the spaces only: "AI を / "体験する"", never inside a word. */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .tk-cat__sub {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* The sessions are further down this page, so the arrow points down. */
+  .tk-cat__disc {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    aspect-ratio: 1;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+    rotate: 90deg;
+    transition:
+      translate 0.3s var(--tk-ease-back),
+      background 0.2s;
+  }
+
+  .tk-cat__disc :global(svg) {
+    width: 14px;
+  }
+
+  a.tk-cat:hover .tk-cat__disc {
+    translate: 0 3px;
+    background: var(--tk-cat);
+  }
+
+  /* The half's own register button, in the card's last row whichever half
+     has fewer categories, so the two buttons line up across the way. */
+  .tk-theme__register {
+    grid-row: -2 / -1;
+    justify-self: stretch;
+    justify-content: space-between;
+    margin-top: 10px;
+    white-space: normal;
+  }
+
+  .tk-theme__register-text {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tk-theme__register-text small {
+    font: 700 12px/1.3 var(--tk-f-jp);
+    opacity: 0.75;
+  }
+
   @media (width < 720px) {
     .tk-theme__grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tk-cat,
+    .tk-cat__icon,
+    .tk-cat__disc {
+      transition: none;
     }
   }
 </style>

@@ -1,0 +1,326 @@
+---
+import Portrait from "./Portrait.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, localized } from "../_content";
+import type { TimetableSlot } from "../_timetable";
+import { bare } from "./track";
+
+/**
+ * What one slot of the timetable says, drawn the same on the grid and in the
+ * phone's list: a session as a card you can press, the keynotes and the
+ * closing as cards of their own, the doors and the after-party as plain rows.
+ *
+ * The colours come from the element around it (`--fill`, `--trk`), which
+ * `Timetable` sets from the slot's track.
+ */
+interface Props {
+  item: TimetableSlot;
+  /** In the phone's list: the track is named, since there are no columns. */
+  phone?: boolean;
+}
+
+const { item: slot, phone = false } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+
+/** The Studio's title, without the "(事前登録必須)" the tag already says. */
+const SIGN_UP_SUFFIX =
+  /\s*[（(](事前登録必須|Additional registration required)[)）]\s*$/;
+
+const session = slot.session;
+const title = slot.day
+  ? localized(slot.day.title, lang)
+  : (() => {
+      const text =
+        session?.entry.data.title ?? session?.talks[0]?.title ?? c.titleTba;
+      return slot.signUp ? text.replace(SIGN_UP_SUFFIX, "") : text;
+    })();
+
+const speakers = session?.speakers ?? [];
+
+const kind =
+  slot.span === "side"
+    ? "side"
+    : session
+      ? "session"
+      : slot.day?.kicker || slot.day?.accent
+        ? "card"
+        : "plain";
+
+const trackName =
+  phone && slot.span === "track" && session
+    ? session.track.data.label
+    : undefined;
+const kicker =
+  slot.day?.kicker ??
+  (session && slot.span === "track" ? slot.code : undefined);
+const Tag = kind === "session" && session ? "a" : "div";
+---
+
+<Tag
+  class:list={["tk-ts", `tk-ts--${kind}`]}
+  href={Tag === "a" ? session?.href : undefined}
+>
+  {kind === "side" ? (
+    <>
+      <b class="tk-ts__title">{title}</b>
+      <time class="tk-ts__time">
+        {slot.start} – {slot.end}
+      </time>
+    </>
+  ) : kind === "plain" ? (
+    <>
+      {phone && (
+        <time class="tk-ts__time">
+          {slot.start} – {slot.end}
+        </time>
+      )}
+      <b class="tk-ts__title">{title}</b>
+      {slot.day?.flag && (
+        <span class="tk-ts__flag">{localized(slot.day.flag, lang)}</span>
+      )}
+      {!phone && (
+        <time class="tk-ts__time tk-ts__time--end">
+          {slot.start} – {slot.end}
+        </time>
+      )}
+    </>
+  ) : (
+    <>
+      <span class="tk-ts__chips">
+        {kicker && <span class="tk-ts__code">{kicker}</span>}
+        {trackName && <span class="tk-ts__track">{trackName}</span>}
+        <time class="tk-ts__time">
+          {slot.start} – {slot.end}
+        </time>
+        {slot.english && <span class="tk-ts__en">{c.timetableEnglish}</span>}
+      </span>
+      <span class="tk-ts__title">{title}</span>
+      {speakers.length > 0 && (
+        <span class="tk-ts__who">
+          {speakers.map((speaker) => (
+            <span class="tk-ts__person">
+              <Portrait speaker={speaker} size={22} class="tk-ts__av" />
+              {bare(speaker.data.name)}
+            </span>
+          ))}
+        </span>
+      )}
+      {slot.signUp && (
+        <span class="tk-ts__signup">
+          <b>{c.timetableSignUp}</b>
+          {c.timetableSignUpNote}
+        </span>
+      )}
+    </>
+  )}
+</Tag>
+
+<style>
+  .tk-ts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    padding: 12px 14px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-sm);
+    background: var(--fill, var(--surface));
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  a.tk-ts {
+    transition:
+      transform 0.35s var(--tk-ease),
+      box-shadow 0.35s var(--tk-ease);
+  }
+
+  a.tk-ts:hover,
+  a.tk-ts:focus-visible {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  a.tk-ts:focus-visible {
+    outline: 3px solid var(--tk-accent-deep);
+    outline-offset: 3px;
+  }
+
+  /* ---- the doors, the after-party: a row, not a card ------------------- */
+
+  .tk-ts--plain {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 10px 16px;
+    border-style: dashed;
+    border-width: 1.5px;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+  }
+
+  .tk-ts--plain .tk-ts__title {
+    font-size: 15px;
+  }
+
+  .tk-ts__time--end {
+    margin-left: auto;
+  }
+
+  .tk-ts__flag {
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: var(--red);
+    color: var(--surface);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  /* ---- the demo strip -------------------------------------------------- */
+
+  .tk-ts--side {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 6px;
+    background: var(--pa-green);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  .tk-ts--side .tk-ts__title {
+    font-size: 15px;
+    letter-spacing: 0.08em;
+  }
+
+  .tk-ts--side .tk-ts__time {
+    border: none;
+    padding: 0;
+    background: none;
+    font-size: 11px;
+  }
+
+  /* ---- a card ---------------------------------------------------------- */
+
+  .tk-ts__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 6px;
+  }
+
+  .tk-ts__code {
+    padding: 1px 9px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--trk, var(--ink));
+    color: var(--trk-ink, var(--surface));
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tk-ts--card .tk-ts__code {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  .tk-ts__track {
+    padding: 1px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--trk);
+    color: var(--trk-ink);
+    font-family: var(--tk-f-display);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tk-ts__time {
+    padding: 1px 8px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .tk-ts__en {
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.7;
+  }
+
+  .tk-ts__title {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .tk-ts--card .tk-ts__title {
+    font-size: 17px;
+  }
+
+  .tk-ts__who {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: auto;
+  }
+
+  .tk-ts__person {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .tk-ts__person :global(.tk-ts__av) {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    object-fit: cover;
+    background: var(--surface);
+    font-size: 10px;
+  }
+
+  .tk-ts__signup {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .tk-ts__signup b {
+    color: var(--tk-accent-deep, var(--red));
+    font-size: 12.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.tk-ts {
+      transition: none;
+    }
+  }
+</style>

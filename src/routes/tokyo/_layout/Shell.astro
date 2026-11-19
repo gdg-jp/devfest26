@@ -3,6 +3,7 @@ import Base from "../../../layouts/Base.astro";
 import Sprite from "../../../components/Sprite.astro";
 import Header from "../_components/Header.astro";
 import Footer from "../_components/Footer.astro";
+import RegisterChoice from "../_components/RegisterChoice.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import type { CardImage } from "../../../lib/sessionCard";
 
@@ -63,6 +64,7 @@ const {
     <slot />
   </main>
   <Footer site={site} />
+  <RegisterChoice site={site} />
   <slot name="after" />
 </Base>
 

@@ -36,13 +36,7 @@ const {
 const c = copy(currentLanguage());
 const { track, entry } = session;
 const tone = trackTone(track);
-const speakers = [
-  ...new Map(
-    session.talks
-      .flatMap((talk) => talk.speakers)
-      .map((speaker) => [speaker.id, speaker]),
-  ).values(),
-];
+const speakers = session.speakers;
 const time = [session.start, session.start && end].filter(Boolean).join(" – ");
 ---
 

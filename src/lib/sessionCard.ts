@@ -32,14 +32,9 @@ const DESIGN_VERSION = 12;
 /** The pattern a city's directory adds to have session cards. */
 const route = (tenant: string) => `/${tenant}/og/sessions/[slug].png`;
 
-/** Everyone on the slot, in running order, nobody twice. */
-export const sessionSpeakers = (session: ProgramSession): Speaker[] => [
-  ...new Map(
-    session.talks
-      .flatMap((talk) => talk.speakers)
-      .map((speaker) => [speaker.id, speaker]),
-  ).values(),
-];
+/** Everyone on the slot — the session owner included — nobody twice. */
+export const sessionSpeakers = (session: ProgramSession): Speaker[] =>
+  session.speakers;
 
 function photoOf(speaker: Speaker): PhotoInput | undefined {
   const { photo } = speaker.data;
