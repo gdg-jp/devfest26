@@ -68,7 +68,12 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
               <time class="tk-overview__big" datetime={event.isoDate}>
                 {date}
               </time>
-              <span>{event.hours}</span>
+              <span class="tk-overview__hours">
+                <span>{event.hours}</span>
+                <span class="tk-overview__note">
+                  {localized(OVERVIEW.reception, lang)}
+                </span>
+              </span>
             </dd>
           </div>
           <div class="tk-overview__fact" data-tk-reveal="up">
@@ -173,6 +178,13 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     font-size: clamp(20px, 2.4vw, 26px);
     line-height: 1.25;
     letter-spacing: -0.01em;
+  }
+
+  .tk-overview__hours {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 6px;
   }
 
   .tk-overview__venue {
