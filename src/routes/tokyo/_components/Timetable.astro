@@ -35,10 +35,13 @@ const c = copy(lang);
 
 const table = await tokyoTimetable(site.tenant);
 
+/** The tracks in the Studio's colours, as connpass draws them (`trackTone`). */
+const AS_SET = { asSet: true };
+
 /** The track's colours, for a slot that sits in one. */
 const toneOf = (slot: TimetableSlot) => {
   if (slot.span === "track" && slot.session) {
-    const tone = trackTone(slot.session.track);
+    const tone = trackTone(slot.session.track, AS_SET);
     return `--fill:${tone.pa};--trk:${tone.solid};--trk-ink:${tone.ink}`;
   }
   if (slot.day?.accent) return "--fill:var(--ht-yellow)";
@@ -52,7 +55,7 @@ const toneOf = (slot: TimetableSlot) => {
  */
 const lanes = (table?.tracks ?? []).map((track, column) => ({
   track,
-  tone: trackTone(track),
+  tone: trackTone(track, AS_SET),
   lane: CATEGORIES.find((category) => category.track === track.id)?.lane,
   steps: (table?.slots ?? [])
     .filter(
@@ -100,7 +103,7 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
           style={`--tracks:${table.tracks.length};grid-template-rows:${table.rows.join(" ")}`}
         >
           {table.tracks.map((track, i) => {
-            const tone = trackTone(track);
+            const tone = trackTone(track, AS_SET);
             return (
               <div
                 class="tk-tt__head"
@@ -197,6 +200,7 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
                       slot.span === "track" ? "is-own" : "is-all",
                     ]}
                     style={toneOf(slot)}
+                    data-start={slot.start}
                   >
                     <time class="tk-tt__step-time">{slot.start}</time>
                     <div class="tk-tt__step-body">
@@ -255,27 +259,73 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
         t.tabIndex = on ? 0 : -1;
       }
       for (const lane of lanes) lane.hidden = lane.dataset.track !== track;
-      if (focus) tab.focus();
+      // A focused tab is not scrolled to: the tabs are pinned, and the
+      // browser would scroll to where they sit in the page instead.
+      if (focus) tab.focus({ preventScroll: true });
       return true;
     };
 
+    const stepsOf = (lane: HTMLElement | undefined) => [
+      ...(lane?.querySelectorAll<HTMLElement>(".tk-tt__step") ?? []),
+    ];
+
+    /*
+      Switching tracks keeps the time you were reading. The tracks share
+      their slots (13:40, 14:40…), so the first step showing under the tabs
+      is noted — its time and where it sits on screen — and after the switch
+      the new track's step at that time is put in the same place. A track with
+      nothing starting then (a long workshop) lines up what is still running,
+      and the time asked for is kept: passing through that track and on to
+      another, untouched, still lands on it.
+      Above the list, where the tabs are not yet pinned, nothing moves.
+    */
+    let kept: { step: HTMLElement; at: string } | undefined;
+
     const pick = (track: string | undefined, focus = false) => {
+      const from = lanes.find((lane) => !lane.hidden);
+      const line = tabList.getBoundingClientRect().bottom;
+      const pinned =
+        root.getBoundingClientRect().top <
+        tabList.getBoundingClientRect().top - 1;
+      const anchor = pinned
+        ? stepsOf(from).find(
+            (step) => step.getBoundingClientRect().bottom > line,
+          )
+        : undefined;
+      const at =
+        anchor && kept?.step === anchor
+          ? kept.at
+          : (anchor?.dataset.start ?? "");
+      const was = anchor?.getBoundingClientRect().top ?? 0;
+
       if (!show(track, focus)) return;
       history.replaceState(null, "", `#${PREFIX}${track}`);
-      // A new track starts at its beginning, not somewhere in its afternoon:
-      // when the list was read past, go back up to the tabs.
-      const top = root.getBoundingClientRect().top;
-      const stuck = tabList.getBoundingClientRect().top;
-      if (top < stuck - 1) {
-        const lane = lanes.find((l) => l.dataset.track === track);
-        lane?.scrollIntoView({ block: "start" });
-      }
+      if (!anchor) return;
+
+      const steps = stepsOf(lanes.find((lane) => !lane.hidden));
+      const target =
+        steps.findLast((step) => (step.dataset.start ?? "") <= at) ?? steps[0];
+      if (!target) return;
+      kept = { step: target, at };
+      window.scrollBy({
+        top: target.getBoundingClientRect().top - was,
+        behavior: "instant",
+      });
     };
 
+    const tabOf = (event: Event) =>
+      (event.target as Element).closest<HTMLButtonElement>("[role=tab]");
+
+    // A press would focus the tab, and focusing scrolls the page before the
+    // click is seen, so the place being read is lost. A tap leaves focus
+    // where it was, so no focus ring is drawn either; the arrow keys, which
+    // move focus along the tabs, still draw it.
+    tabList.addEventListener("mousedown", (event) => {
+      if (tabOf(event)) event.preventDefault();
+    });
+
     tabList.addEventListener("click", (event) => {
-      const tab = (event.target as Element).closest<HTMLButtonElement>(
-        "[role=tab]",
-      );
+      const tab = tabOf(event);
       if (tab) pick(tab.dataset.track);
     });
 

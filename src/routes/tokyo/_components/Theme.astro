@@ -123,7 +123,9 @@ const rows = 7 + Math.max(0, ...lanes.map((lane) => lane.categories.length));
               <h3 class="tk-theme__title" id={`tk-theme-${lane}`}>
                 {title}
               </h3>
-              <p class="tk-theme__lead">{localized(lead, lang)}</p>
+              <div class="tk-theme__lead-box">
+                <p class="tk-theme__lead">{localized(lead, lang)}</p>
+              </div>
               <p class="tk-theme__body">{localized(body, lang)}</p>
               <div class="tk-theme__for">
                 <p>{c.themeFor}</p>
@@ -212,7 +214,6 @@ const rows = 7 + Math.max(0, ...lanes.map((lane) => lane.categories.length));
     border: var(--tk-line) solid var(--ink);
     border-radius: var(--tk-r-lg);
     background: var(--tk-theme-fill);
-    container-type: inline-size;
   }
 
   .tk-theme__mark {
@@ -242,8 +243,15 @@ const rows = 7 + Math.max(0, ...lanes.map((lane) => lane.categories.length));
   }
 
   /* The lead is one line, whatever the card's width: the type shrinks a
-     little (to the card, `cqi`) before it would wrap. 16.4em is the longer
-     lead, "AI と気軽に、まずはつくってみる。", with room to spare. */
+     little (to the box's width, `cqi`) before it would wrap. 16.4em is the
+     longer lead, "AI と気軽に、まずはつくってみる。", with room to spare.
+     The box, not the card, is the container: a container's grid cannot
+     share its parent's rows (subgrid), which place the register button. */
+  .tk-theme__lead-box {
+    justify-self: stretch;
+    container-type: inline-size;
+  }
+
   .tk-theme__lead {
     margin: 0;
     font: 800 min(clamp(16px, 1.6vw, 18px), 100cqi / 16.4) / 1.5 var(--tk-f-jp);
