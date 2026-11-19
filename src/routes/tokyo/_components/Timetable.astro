@@ -1,9 +1,16 @@
 ---
 import Panel from "./Panel.astro";
+import Level from "./Level.astro";
 import TimetableCell from "./TimetableCell.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
-import { copy, timetableTrackId, TRACK_CODES } from "../_content";
+import {
+  CATEGORIES,
+  copy,
+  localized,
+  timetableTrackId,
+  TRACK_CODES,
+} from "../_content";
 import { tokyoTimetable, type TimetableSlot } from "../_timetable";
 import { trackTone } from "./track";
 
@@ -12,9 +19,11 @@ import { trackTone } from "./track";
  * four tracks side by side, the opening, keynotes and closing across all of
  * them, and the demo floor in a strip on the right (`_timetable.ts`).
  *
- * Wide screens get the grid. A phone gets the same slots as one list, a time
- * at a time: everything that starts at 13:40, then everything at 14:40. A slot
- * that spans several rows is listed once, where it starts.
+ * Wide screens get the grid. A phone, too narrow for four columns, reads it a
+ * track at a time: each track has a theme and runs through the day as one
+ * story, so a tab per track shows that track's sessions top to bottom, with
+ * what everyone attends (the keynotes, the closing) in its place between them.
+ * Without the script every track is listed, one after another.
  */
 interface Props {
   site: ResolvedTenant;
@@ -36,37 +45,24 @@ const toneOf = (slot: TimetableSlot) => {
   return "";
 };
 
-/** Phone order: a time at a time, across before down. */
-const SPAN_ORDER = { all: 0, track: 1, side: 2 };
-const byStart: [string, TimetableSlot[]][] = [];
-for (const slot of [...(table?.slots ?? [])].sort(
-  (a, b) =>
-    a.start.localeCompare(b.start) ||
-    SPAN_ORDER[a.span] - SPAN_ORDER[b.span] ||
-    (a.column ?? 0) - (b.column ?? 0),
-)) {
-  const last = byStart.at(-1);
-  if (last && last[0] === slot.start) last[1].push(slot);
-  else byStart.push([slot.start, [slot]]);
-}
-
 /**
- * Each track's first session, which carries the track's anchor in the phone's
- * list — where the grid's headings, the anchors on a wide screen, are hidden.
+ * Phone: each track's own day — its sessions and what runs across every
+ * track, in time order. The demo floor runs beside all of them all day, so it
+ * is said once above the lists rather than in every one.
  */
-const firstOfTrack = new Map<string, string>();
-for (const [, slots] of byStart) {
-  for (const slot of slots) {
-    const track = slot.span === "track" ? slot.session?.track.id : undefined;
-    if (track && !firstOfTrack.has(track)) firstOfTrack.set(track, slot.key);
-  }
-}
-const phoneAnchor = (slot: TimetableSlot) => {
-  const track = slot.session?.track.id;
-  return track && firstOfTrack.get(track) === slot.key
-    ? `${timetableTrackId(track)}-sp`
-    : undefined;
-};
+const lanes = (table?.tracks ?? []).map((track, column) => ({
+  track,
+  tone: trackTone(track),
+  lane: CATEGORIES.find((category) => category.track === track.id)?.lane,
+  steps: (table?.slots ?? [])
+    .filter(
+      (slot) =>
+        slot.span === "all" ||
+        (slot.span === "track" && slot.column === column),
+    )
+    .sort((x, y) => x.start.localeCompare(y.start)),
+}));
+const sides = (table?.slots ?? []).filter((slot) => slot.span === "side");
 
 /** A time in the gutter wherever something in the columns starts. */
 const ticks = (table?.lines ?? []).filter(({ time }) =>
@@ -96,6 +92,7 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
         ja={lang === "ja"}
       >
         <p class="tk-tt__date">{c.timetableDate}</p>
+        <p class="tk-tt__lead">{c.timetableLead}</p>
 
         {/* ---- wide: the whole grid ------------------------------------ */}
         <div
@@ -132,21 +129,90 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
           ))}
         </div>
 
-        {/* ---- phone: a time at a time --------------------------------- */}
-        <ol class="tk-tt__list">
-          {byStart.map(([time, slots]) => (
-            <li class="tk-tt__at">
-              <time class="tk-tt__at-time">{time}</time>
-              <ul class="tk-tt__at-slots">
-                {slots.map((slot) => (
-                  <li id={phoneAnchor(slot)} style={toneOf(slot)}>
-                    <TimetableCell item={slot} phone />
+        {/* ---- phone: a track at a time -------------------------------- */}
+        <div
+          class="tk-tt__phone"
+          style={`--tracks:${lanes.length}`}
+          data-tk-tt-tabs
+        >
+          <div
+            class="tk-tt__tabs"
+            role="tablist"
+            aria-label={c.timetableTracks}
+            hidden
+          >
+            {lanes.map(({ track, tone }, i) => (
+              <button
+                type="button"
+                class="tk-tt__tab"
+                role="tab"
+                id={`tk-tt-tab-${track.id}`}
+                aria-controls={`tk-tt-lane-${track.id}`}
+                aria-selected={i === 0 ? "true" : "false"}
+                tabindex={i === 0 ? 0 : -1}
+                data-track={track.id}
+                style={`--trk:${tone.solid};--trk-pa:${tone.pa}`}
+              >
+                <small>{TRACK_CODES[track.id]?.name}</small>
+                <b>{track.data.label}</b>
+              </button>
+            ))}
+          </div>
+
+          {sides.map((slot) => (
+            <p class="tk-tt__side">
+              <span class="tk-tt__side-tag">{c.timetableAllDay}</span>
+              <b>{slot.day && localized(slot.day.title, lang)}</b>
+              <time>
+                {slot.start} – {slot.end}
+              </time>
+            </p>
+          ))}
+
+          {lanes.map(({ track, tone, lane, steps }) => (
+            <section
+              class="tk-tt__lane"
+              id={`tk-tt-lane-${track.id}`}
+              aria-labelledby={`tk-tt-lane-h-${track.id}`}
+              data-track={track.id}
+              style={`--trk:${tone.solid};--trk-ink:${tone.ink};--trk-pa:${tone.pa}`}
+            >
+              <header class="tk-tt__lane-head">
+                <span class="tk-tt__lane-code">
+                  {TRACK_CODES[track.id]?.name}
+                </span>
+                <h3 class="tk-tt__lane-title" id={`tk-tt-lane-h-${track.id}`}>
+                  {track.data.label}
+                </h3>
+                {track.data.sub && (
+                  <p class="tk-tt__lane-sub">{track.data.sub}</p>
+                )}
+                {lane && <Level lane={lane} />}
+              </header>
+              <ol class="tk-tt__flow">
+                {steps.map((slot) => (
+                  <li
+                    class:list={[
+                      "tk-tt__step",
+                      slot.span === "track" ? "is-own" : "is-all",
+                    ]}
+                    style={toneOf(slot)}
+                  >
+                    <time class="tk-tt__step-time">{slot.start}</time>
+                    <div class="tk-tt__step-body">
+                      {slot.span === "all" && (
+                        <span class="tk-tt__step-all">
+                          {c.timetableAllTracks}
+                        </span>
+                      )}
+                      <TimetableCell item={slot} phone />
+                    </div>
                   </li>
                 ))}
-              </ul>
-            </li>
+              </ol>
+            </section>
           ))}
-        </ol>
+        </div>
       </Panel>
       <p class="tk-tt__note">{c.timetableNote}</p>
     </div>
@@ -155,34 +221,98 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
 
 <script>
   /*
-    A track's anchor is its heading in the grid, which a phone does not draw:
-    a jump there would go nowhere. Send it to the same track's first card in
-    the phone's list instead (`<id>-sp`). Only for these anchors, and only when
-    the heading is not on screen — a wide screen keeps the plain jump.
+    The phone's tabs, one per track. Every track's list is on the page; the
+    script shows one at a time, and without it they stay one after another.
+
+    A track's anchor (`#tk-tt-<id>`, its heading in the wide grid) opens its
+    tab, so a link to a track lands on it on a phone too. Picking a tab writes
+    the anchor back, so a shared link opens on the same track.
   */
-  const PREFIX = "#tk-tt-";
+  const PREFIX = "tk-tt-";
 
-  const phoneTarget = (hash: string) => {
-    const id = decodeURIComponent(hash.slice(1));
-    const head = document.getElementById(id);
-    if (head?.getClientRects().length) return null;
-    return document.getElementById(`${id}-sp`);
-  };
+  for (const root of document.querySelectorAll<HTMLElement>(
+    "[data-tk-tt-tabs]",
+  )) {
+    const tabList = root.querySelector<HTMLElement>("[role=tablist]");
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>("[role=tab]")];
+    const lanes = [...root.querySelectorAll<HTMLElement>(".tk-tt__lane")];
+    if (!tabList || tabs.length === 0) continue;
 
-  document.addEventListener("click", (event) => {
-    const link = (event.target as Element | null)?.closest?.(
-      `a[href^="${PREFIX}"]`,
-    );
-    const hash = link?.getAttribute("href");
-    const target = hash && phoneTarget(hash);
-    if (!hash || !target) return;
-    event.preventDefault();
-    history.pushState(null, "", hash);
-    target.scrollIntoView({ block: "start" });
-  });
+    root.classList.add("is-tabbed");
+    tabList.hidden = false;
+    for (const lane of lanes) {
+      lane.setAttribute("role", "tabpanel");
+      lane.setAttribute("aria-labelledby", `tk-tt-tab-${lane.dataset.track}`);
+      lane.tabIndex = 0;
+    }
 
-  if (location.hash.startsWith(PREFIX)) {
-    phoneTarget(location.hash)?.scrollIntoView({ block: "start" });
+    const show = (track: string | undefined, focus = false) => {
+      const tab = tabs.find((t) => t.dataset.track === track);
+      if (!tab) return false;
+      for (const t of tabs) {
+        const on = t === tab;
+        t.setAttribute("aria-selected", String(on));
+        t.tabIndex = on ? 0 : -1;
+      }
+      for (const lane of lanes) lane.hidden = lane.dataset.track !== track;
+      if (focus) tab.focus();
+      return true;
+    };
+
+    const pick = (track: string | undefined, focus = false) => {
+      if (!show(track, focus)) return;
+      history.replaceState(null, "", `#${PREFIX}${track}`);
+      // A new track starts at its beginning, not somewhere in its afternoon:
+      // when the list was read past, go back up to the tabs.
+      const top = root.getBoundingClientRect().top;
+      const stuck = tabList.getBoundingClientRect().top;
+      if (top < stuck - 1) {
+        const lane = lanes.find((l) => l.dataset.track === track);
+        lane?.scrollIntoView({ block: "start" });
+      }
+    };
+
+    tabList.addEventListener("click", (event) => {
+      const tab = (event.target as Element).closest<HTMLButtonElement>(
+        "[role=tab]",
+      );
+      if (tab) pick(tab.dataset.track);
+    });
+
+    tabList.addEventListener("keydown", (event) => {
+      const at = tabs.findIndex(
+        (t) => t.getAttribute("aria-selected") === "true",
+      );
+      const last = tabs.length - 1;
+      const to =
+        event.key === "ArrowRight"
+          ? (at + 1) % tabs.length
+          : event.key === "ArrowLeft"
+            ? (at + last) % tabs.length
+            : event.key === "Home"
+              ? 0
+              : event.key === "End"
+                ? last
+                : -1;
+      if (to < 0) return;
+      event.preventDefault();
+      pick(tabs[to].dataset.track, true);
+    });
+
+    const fromHash = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (!id.startsWith(PREFIX) || !show(id.slice(PREFIX.length))) {
+        return false;
+      }
+      // On a phone the grid's heading is not drawn: go to the track instead.
+      if (!document.getElementById(id)?.getClientRects().length) {
+        root.scrollIntoView({ block: "start" });
+      }
+      return true;
+    };
+
+    if (!fromHash()) show(tabs[0].dataset.track);
+    window.addEventListener("hashchange", fromHash);
   }
 </script>
 
@@ -251,46 +381,248 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
     min-width: 0;
   }
 
-  /* ---- list (phone) -------------------------------------------------- */
+  /* ---- a track at a time (phone) ------------------------------------- */
 
-  .tk-tt__list {
+  .tk-tt__phone {
     display: none;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    scroll-margin-top: var(--tk-header-h);
   }
 
-  .tk-tt__at {
+  .tk-tt__lead {
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* The tabs stay under the header while a track is read. */
+  .tk-tt__tabs {
+    position: sticky;
+    top: var(--tk-header-h);
+    z-index: 2;
     display: grid;
-    gap: 8px;
-    padding: 14px 0;
-    border-top: 1.5px solid var(--tk-hair);
+    grid-template-columns: repeat(var(--tracks), minmax(0, 1fr));
+    gap: 6px;
+    margin: 0 -8px 16px;
+    padding: 10px 8px;
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--tk-hair);
   }
 
-  .tk-tt__at:first-child {
-    border-top: none;
-    padding-top: 0;
+  .tk-tt__tabs[hidden] {
+    display: none;
   }
 
-  .tk-tt__at-time {
+  /* Each tab carries its track's colour as a band along the top; the open
+     one is filled with the track's pastel and lifted, the ink kept dark so
+     the yellow track reads as well as the others. */
+  .tk-tt__tab {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    min-width: 0;
+    padding: 9px 7px 8px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-sm);
+    background: var(--surface);
+    box-shadow: inset 0 5px 0 var(--trk);
+    color: var(--ink);
+    font: inherit;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background 0.25s var(--tk-ease),
+      color 0.25s var(--tk-ease),
+      transform 0.25s var(--tk-ease),
+      box-shadow 0.25s var(--tk-ease);
+  }
+
+  .tk-tt__tab small {
     font-family: var(--f-mono);
-    font-size: 15px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Break at the label's spaces (`AIが` / `"動く"`), not inside a word. */
+  .tk-tt__tab b {
+    font-family: var(--tk-f-display);
+    font-size: 12px;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .tk-tt__tab[aria-selected="true"] {
+    background: var(--trk-pa);
+    transform: translate(-2px, -2px);
+    box-shadow:
+      inset 0 5px 0 var(--trk),
+      3px 3px 0 var(--ink);
+  }
+
+  .tk-tt__tab:focus-visible {
+    outline: 3px solid var(--tk-accent-deep);
+    outline-offset: 2px;
+  }
+
+  .tk-tt__side {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin: 0 0 18px;
+    padding: 9px 14px;
+    border: 1.5px dashed var(--ink);
+    border-radius: var(--tk-r-sm);
+    background: var(--pa-green);
+    font-size: 13px;
+  }
+
+  .tk-tt__side-tag {
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.7;
+  }
+
+  .tk-tt__side b {
+    font-family: var(--tk-f-display);
+  }
+
+  .tk-tt__side time {
+    font-family: var(--f-mono);
+    font-size: 12px;
     font-weight: 700;
   }
 
-  .tk-tt__at-slots {
+  .tk-tt__lane {
+    scroll-margin-top: calc(var(--tk-header-h) + 80px);
+  }
+
+  .tk-tt__lane + .tk-tt__lane {
+    margin-top: 36px;
+  }
+
+  .is-tabbed .tk-tt__lane + .tk-tt__lane {
+    margin-top: 0;
+  }
+
+  .tk-tt__lane:focus-visible {
+    outline: 3px solid var(--tk-accent-deep);
+    outline-offset: 4px;
+    border-radius: var(--tk-r-sm);
+  }
+
+  /* The track's theme, before its day. */
+  .tk-tt__lane-head {
     display: grid;
-    gap: 8px;
+    justify-items: start;
+    gap: 6px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-sm);
+    background: var(--trk-pa);
+  }
+
+  .tk-tt__lane-code {
+    padding: 1px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--trk);
+    color: var(--trk-ink);
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tk-tt__lane-title {
+    margin: 0;
+    font-family: var(--tk-f-display);
+    font-size: 22px;
+    line-height: 1.3;
+  }
+
+  .tk-tt__lane-sub {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  /*
+    The day as a line down the left: a time, and a stop on the line, for
+    everything in it. The track's own sessions are stops filled in its
+    colour; what everyone attends, hollow ones.
+  */
+  .tk-tt__flow {
+    position: relative;
+    display: grid;
+    gap: 12px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* The demo strip reads across on a phone. */
-  .tk-tt__at-slots :global(.tk-ts--side) {
-    writing-mode: horizontal-tb;
-    justify-content: flex-start;
-    padding: 10px 14px;
+  .tk-tt__flow::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: 51px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--trk);
+  }
+
+  .tk-tt__step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .tk-tt__step::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 46px;
+    width: 13px;
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    border: 2.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  .tk-tt__step.is-own::before {
+    background: var(--trk);
+  }
+
+  .tk-tt__step-time {
+    padding-top: 2px;
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .tk-tt__step-body {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .tk-tt__step-all {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--muted);
   }
 
   .tk-tt__note {
@@ -304,8 +636,14 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
       display: none;
     }
 
-    .tk-tt__list {
+    .tk-tt__phone {
       display: block;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tk-tt__tab {
+      transition: none;
     }
   }
 </style>

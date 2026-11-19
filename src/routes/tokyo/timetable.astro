@@ -1,0 +1,29 @@
+---
+import Detail from "./_layout/Detail.astro";
+import Timetable from "./_components/Timetable.astro";
+import { missingCity, ownCity } from "../../lib/cityRoutes";
+import { tenantHome } from "../../lib/url";
+import { currentLanguage } from "../../i18n/language";
+import { copy } from "./_content";
+
+/**
+ * The day by time, on a page of its own (`TIMETABLE_PATH`): the home page
+ * lists the sessions theme by theme and links here. In the frame the session
+ * and speaker pages have — the way back home on top, the register button to
+ * close.
+ */
+const site = await ownCity(Astro.url);
+if (!site) return missingCity(Astro.url);
+
+const c = copy(currentLanguage());
+---
+
+<Detail
+  site={site}
+  title={c.timetableHeading}
+  description={c.timetableLead}
+  back={{ href: tenantHome(site.tenant), label: c.backHome }}
+  placement="timetable"
+>
+  <Timetable site={site} />
+</Detail>

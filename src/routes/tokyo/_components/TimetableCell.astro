@@ -7,7 +7,7 @@ import { bare } from "./track";
 
 /**
  * What one slot of the timetable says, drawn the same on the grid and in the
- * phone's list: a session as a card you can press, the keynotes and the
+ * phone's track lists: a session as a card you can press, the keynotes and the
  * closing as cards of their own, the doors and the after-party as plain rows.
  *
  * The colours come from the element around it (`--fill`, `--trk`), which
@@ -15,7 +15,7 @@ import { bare } from "./track";
  */
 interface Props {
   item: TimetableSlot;
-  /** In the phone's list: the track is named, since there are no columns. */
+  /** In a phone's track list: a plain row starts with its time. */
   phone?: boolean;
 }
 
@@ -47,10 +47,6 @@ const kind =
         ? "card"
         : "plain";
 
-const trackName =
-  phone && slot.span === "track" && session
-    ? session.track.data.label
-    : undefined;
 const kicker =
   slot.day?.kicker ??
   (session && slot.span === "track" ? slot.code : undefined);
@@ -89,7 +85,6 @@ const Tag = kind === "session" && session ? "a" : "div";
     <>
       <span class="tk-ts__chips">
         {kicker && <span class="tk-ts__code">{kicker}</span>}
-        {trackName && <span class="tk-ts__track">{trackName}</span>}
         <time class="tk-ts__time">
           {slot.start} – {slot.end}
         </time>
@@ -227,18 +222,6 @@ const Tag = kind === "session" && session ? "a" : "div";
   .tk-ts--card .tk-ts__code {
     background: var(--ink);
     color: var(--surface);
-  }
-
-  .tk-ts__track {
-    padding: 1px 10px;
-    border: 1.5px solid var(--ink);
-    border-radius: 999px;
-    background: var(--trk);
-    color: var(--trk-ink);
-    font-family: var(--tk-f-display);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.6;
   }
 
   .tk-ts__time {
