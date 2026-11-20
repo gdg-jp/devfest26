@@ -43,7 +43,7 @@
     "@sanity/client": "^8.11.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/visual-editing": "^6.2.0",
-    "astro": "^7.4.2",
+    "astro": "^7.4.7",
     "budoux": "^0.10.0",
     "motion": "^14.6.0",
     "openid-client": "^6.8.8",
