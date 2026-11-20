@@ -14,6 +14,7 @@ import type { StickerName } from "./stickers";
  * than to a guess.
  */
 const BY_COLOR: Record<string, { ht: string; stickers: StickerName[] }> = {
+  "var(--blue)": { ht: "var(--ht-blue)", stickers: ["scallop", "multiply"] },
   "var(--green)": { ht: "var(--ht-green)", stickers: ["colon", "equals"] },
   "var(--yellow)": { ht: "var(--ht-yellow)", stickers: ["slash", "chevron"] },
   "var(--red)": { ht: "var(--ht-red)", stickers: ["plus", "period"] },
@@ -35,14 +36,21 @@ const OFF_THEME: Record<string, string> = {
 export const onTheme = <T extends string | undefined>(color: T): T =>
   (color && (OFF_THEME[color] ?? color)) as T;
 
-export function trackTone(track: Track) {
-  const solid = onTheme(track.data.color);
+/**
+ * A track's colours. With `asSet`, the colour the Studio gives it, blue
+ * included — the timetable draws the tracks as GDG Tokyo's own timetable on
+ * connpass does, where "AI で つくる" is blue. Everywhere else, on theme.
+ */
+export function trackTone(track: Track, { asSet = false } = {}) {
+  const paint = <T extends string | undefined>(color: T) =>
+    asSet ? color : onTheme(color);
+  const solid = paint(track.data.color);
   const tone = BY_COLOR[solid] ?? BY_COLOR["var(--yellow)"];
   return {
     solid,
     ink: track.data.darkInk ? "var(--ink)" : "var(--surface)",
     ht: tone.ht,
-    pa: onTheme(trackPastel(track)),
+    pa: paint(trackPastel(track)),
     stickers: tone.stickers,
   };
 }
