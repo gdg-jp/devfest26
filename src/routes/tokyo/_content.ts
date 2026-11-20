@@ -60,9 +60,10 @@ export const trackLink = (trackId: string) =>
  * - `span: "all"` — across every track: the doors, the keynotes, the closing.
  * - `span: "side"` — beside the tracks, all day: the demo floor.
  *
- * The two keynotes are here because the Studio has no session for them yet.
- * When one is added there (on the General Sessions track), take its row out
- * of this list: both would claim the same minutes, and the build stops on it.
+ * Keynote 2 is here because the Studio has no session for it yet (Keynote 1
+ * is in the Studio now, on its Keynote track). When it is added there, take
+ * its row out of this list: both would claim the same minutes, and the build
+ * stops on it.
  */
 export interface DayItem {
   start: string;
@@ -83,13 +84,6 @@ export const DAY: readonly DayItem[] = [
     end: "12:00",
     span: "all",
     title: { ja: "受付開始", en: "Doors open" },
-  },
-  {
-    start: "12:20",
-    end: "12:50",
-    span: "all",
-    kicker: "Keynote 1",
-    title: { ja: "Googler", en: "Googler" },
   },
   {
     start: "12:50",
@@ -145,6 +139,7 @@ export const TRACK_CODES: Readonly<
 export const SESSION_TAGS: Readonly<
   Record<string, { english?: boolean; signUp?: boolean }>
 > = {
+  "keynote-google": { english: true },
   "supercharging-ai-agents": { english: true },
   "beyond-vibe-coding-hands-on": { english: true, signUp: true },
   "ws-design-sprint": { signUp: true },
@@ -193,6 +188,8 @@ export const OVERVIEW = {
   /** The line under the venue: where from, then how far — the bigger words. */
   station: { ja: "東京駅から", en: "From Tokyo Station" },
   walk: { ja: "徒歩約 1 分", en: "1-min walk" },
+  /** Said small, just right of the hours. */
+  reception: { ja: "（受付開始は11:30～）", en: "(Doors open 11:30)" },
   fee: { ja: "無料・入退場自由", en: "Free · come and go freely" },
   feeNote: {
     ja: "懇親会は有料です",
