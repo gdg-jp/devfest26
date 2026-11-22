@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import sharp from "sharp";
 import { previewMode } from "../preview/mode";
-import { OG_CARD_PENDING, ogCardFile } from "./og";
+import { OG_CARD_PENDING, ogCardFile, ogCardSize } from "./og";
 
 /**
  * Makes each city's Open Graph card as part of the build that makes its pages.
@@ -46,12 +46,13 @@ import { OG_CARD_PENDING, ogCardFile } from "./og";
  * command line per card, the way it was run by hand before this existed.
  */
 
-const WIDTH = 1200;
-const HEIGHT = 630;
 // Chrome's window includes furniture, so shoot a larger frame and crop the
 // card out of the top-left corner. Sizing the window exactly gives a viewport
 // a little smaller than the window and clips the card.
-const FRAME = [WIDTH + 200, HEIGHT + 270];
+const frame = ({ width, height }: { width: number; height: number }) => [
+  width + 200,
+  height + 270,
+];
 
 const run = promisify(execFile);
 
@@ -116,7 +117,12 @@ export const ogCards: AstroIntegration = {
             .digest("hex");
           const name = ogCardFile(hash.slice(0, 10));
 
-          const png = await shoot(chrome, `${server.origin}/${page}`, scratch);
+          const png = await shoot(
+            chrome,
+            `${server.origin}/${page}`,
+            scratch,
+            ogCardSize(posix.basename(city)),
+          );
           await writeFile(join(root, city, name), png);
           await rm(join(root, page), { recursive: true, force: true });
           await fill(join(root, city), name);
@@ -169,6 +175,7 @@ async function shoot(
   chrome: string,
   url: string,
   scratch: string,
+  size: { width: number; height: number },
 ): Promise<Buffer> {
   const raw = join(scratch, "shot.png");
   await rm(raw, { force: true });
@@ -181,7 +188,7 @@ async function shoot(
       "--no-sandbox",
       "--hide-scrollbars",
       "--force-device-scale-factor=1",
-      `--window-size=${FRAME.join(",")}`,
+      `--window-size=${frame(size).join(",")}`,
       // Long enough for Google Fonts to arrive: the card uses Google Sans
       // and Noto Sans JP, and a screenshot taken first is set in fallbacks.
       "--virtual-time-budget=8000",
@@ -195,7 +202,7 @@ async function shoot(
   if (!existsSync(raw)) throw new Error(`Chrome wrote no screenshot of ${url}`);
 
   return sharp(await readFile(raw))
-    .extract({ left: 0, top: 0, width: WIDTH, height: HEIGHT })
+    .extract({ left: 0, top: 0, ...size })
     .png({ compressionLevel: 9 })
     .toBuffer();
 }
