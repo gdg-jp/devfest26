@@ -17,7 +17,7 @@ import "../../styles/base.css";
 
 /**
  * Tokyo's Open Graph card: the key visual (`_components/hero/HeroSplit.astro`,
- * as shipped — the white ticket over the cut) redrawn at 1200 × 630.
+ * as shipped — the white ticket over the cut) redrawn at 16 : 9, 1600 × 900.
  *
  * Here because a city's own `og-preview` is what `src/routes/[tenant]/` steps
  * aside for, the way any route of a city's own is: the shared card is the
@@ -210,10 +210,13 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
 </html>
 
 <style>
+  /* Laid out at 1200 × 675 and zoomed to the 1600 × 900 of `ogCardSize`, so
+     every size below is the one it had at 1200 × 630. */
   .card {
     position: relative;
     width: 1200px;
-    height: 630px;
+    height: 675px;
+    zoom: calc(4 / 3);
     overflow: hidden;
     color: var(--ink);
     font-family: var(--tk-f-display);
@@ -275,37 +278,37 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
   }
 
   .badge--meet-level {
-    top: 118px;
+    top: 128px;
     left: 64px;
     rotate: -8deg;
   }
 
   .badge--meet-0 {
-    top: 290px;
+    top: 312px;
     left: 92px;
     rotate: 10deg;
   }
 
   .badge--meet-1 {
-    top: 470px;
+    top: 506px;
     left: 54px;
     rotate: -6deg;
   }
 
   .badge--beyond-level {
-    top: 96px;
+    top: 106px;
     right: 62px;
     rotate: 8deg;
   }
 
   .badge--beyond-0 {
-    top: 290px;
+    top: 312px;
     right: 92px;
     rotate: -10deg;
   }
 
   .badge--beyond-1 {
-    top: 470px;
+    top: 506px;
     right: 54px;
     rotate: 6deg;
   }
@@ -337,7 +340,7 @@ const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9}
 
   .stack {
     position: absolute;
-    inset: 78px 0 auto;
+    inset: 96px 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;

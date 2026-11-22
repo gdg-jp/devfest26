@@ -2,7 +2,12 @@
 import "../styles/tokens.css";
 import "../styles/base.css";
 import { themeColor } from "../data/themes";
-import { makesOgCards, OG_CARD_PENDING, ogCardFile } from "../lib/og";
+import {
+  makesOgCards,
+  OG_CARD_PENDING,
+  ogCardFile,
+  ogCardSize,
+} from "../lib/og";
 import { previewMode } from "../preview/mode";
 import { clean } from "../preview/stega";
 import PreviewBar from "../preview/Bar.astro";
@@ -83,6 +88,10 @@ const ogImage = !Astro.site
         ).href
       : undefined;
 const ogImageAlt = Astro.props.ogImage?.alt ?? siteName;
+// A session's card is always 1200 × 630; the city's depends on the city.
+const ogImageSize = Astro.props.ogImage
+  ? { width: 1200, height: 630 }
+  : ogCardSize(site.tenant);
 
 const eventSchema = clean({
   "@context": "https://schema.org",
@@ -163,8 +172,8 @@ const eventSchema = clean({
     <meta property="og:locale" content={t.meta.ogLocale} />
     {canonical && <meta property="og:url" content={canonical} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
-    {ogImage && <meta property="og:image:width" content="1200" />}
-    {ogImage && <meta property="og:image:height" content="630" />}
+    {ogImage && <meta property="og:image:width" content={ogImageSize.width} />}
+    {ogImage && <meta property="og:image:height" content={ogImageSize.height} />}
     {ogImage && <meta property="og:image:type" content="image/png" />}
     {ogImage && <meta property="og:image:alt" content={clean(ogImageAlt)} />}
     <meta name="twitter:card" content="summary_large_image" />
