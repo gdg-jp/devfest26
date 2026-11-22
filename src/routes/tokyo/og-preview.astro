@@ -4,7 +4,7 @@ import Wordmark from "./_components/Wordmark.astro";
 import Icon from "./_components/Icon.astro";
 import gdgLogo from "../../assets/brand/gdg.svg?url";
 import { heroFacts } from "./_components/hero/facts";
-import { trackTone } from "./_components/track";
+import { laneTone, trackTone } from "./_components/track";
 import { CATEGORIES, LANES, type Lane } from "./_content";
 import { getProgram } from "../../data/program";
 import { missingCity, ownCity } from "../../lib/cityRoutes";
@@ -47,9 +47,12 @@ const f = heroFacts(site, lang);
 
 const program = await getProgram(site.tenant);
 const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
+  // Each half's icons in that half's colour, as the hero draws them: "AIが
+  // 動く" keeps Beyond's green though the Studio paints its track yellow.
+  const own = laneTone(program, lane);
   const categories = CATEGORIES.filter((c) => c.lane === lane).flatMap((c) => {
     const group = program.find(({ track }) => track.id === c.track);
-    return group ? [{ icon: c.icon, tone: trackTone(group.track) }] : [];
+    return group ? [{ icon: c.icon, tone: own ?? trackTone(group.track) }] : [];
   });
   const [head, ...rest] = LANES[lane].title.split(" ");
   return {
