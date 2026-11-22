@@ -42,3 +42,14 @@ export const OG_CARD_PENDING = "__OG_CARD__";
 
 /** The card's file name inside its city's directory. */
 export const ogCardFile = (hash: string) => `og.${hash}.png`;
+
+/**
+ * The city card's size in pixels. The shared card, and every session card, is
+ * the 1.91 : 1 that X, Facebook and LinkedIn ask for; Tokyo's is 16 : 9 — try
+ * it out, see PR #56. Those three crop a 16 : 9 card to about 1.91 : 1, so
+ * its top and bottom ~3.5 % may not show there.
+ */
+export const ogCardSize = (tenant: string) =>
+  tenant === "tokyo"
+    ? { width: 1600, height: 900 }
+    : { width: 1200, height: 630 };

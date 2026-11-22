@@ -1,0 +1,552 @@
+---
+import Sprite from "../../components/Sprite.astro";
+import Wordmark from "./_components/Wordmark.astro";
+import Icon from "./_components/Icon.astro";
+import gdgLogo from "../../assets/brand/gdg.svg?url";
+import { heroFacts } from "./_components/hero/facts";
+import { trackTone } from "./_components/track";
+import { CATEGORIES, LANES, type Lane } from "./_content";
+import { getProgram } from "../../data/program";
+import { missingCity, ownCity } from "../../lib/cityRoutes";
+import { makesOgCards } from "../../lib/og";
+import { messages } from "../../i18n";
+import { currentLanguage } from "../../i18n/language";
+import "../../styles/tokens.css";
+// base.css carries the reset and the rule that hides the inline sprite.
+import "../../styles/base.css";
+
+/**
+ * Tokyo's Open Graph card: the key visual (`_components/hero/HeroSplit.astro`,
+ * as shipped — the white ticket over the cut) redrawn at 16 : 9, 1600 × 900.
+ *
+ * Here because a city's own `og-preview` is what `src/routes/[tenant]/` steps
+ * aside for, the way any route of a city's own is: the shared card is the
+ * brand's red one, and Tokyo's pages have long since stopped looking like it.
+ * The build treats it exactly as it treats the shared one — screenshots it,
+ * deletes it, names the PNG for what this HTML says — see `src/lib/ogCards.ts`.
+ *
+ * Its own markup rather than the hero itself: the hero is sized off the
+ * viewport (`vw`, `vh`, `svh`) and the screenshot's window is not the card's
+ * size, so it is set here in fixed pixels from the same parts — the facts, the
+ * lanes' colours and icons, the wordmark, the lead with its two verbs marked.
+ *
+ * Built only where it will be photographed, or worked on in `astro dev` at
+ * `/tokyo/og-preview`. Elsewhere it answers 204, which a static build writes
+ * no file for (see `missingCity` in `src/lib/cityRoutes.ts`).
+ */
+if (!import.meta.env.DEV && !makesOgCards) {
+  return new Response(null, { status: 204 });
+}
+
+const site = await ownCity(Astro.url);
+if (!site) return missingCity(Astro.url);
+
+const lang = currentLanguage();
+const t = messages(lang);
+const f = heroFacts(site, lang);
+
+const program = await getProgram(site.tenant);
+const lanes = (Object.keys(LANES) as Lane[]).map((lane) => {
+  const categories = CATEGORIES.filter((c) => c.lane === lane).flatMap((c) => {
+    const group = program.find(({ track }) => track.id === c.track);
+    return group ? [{ icon: c.icon, tone: trackTone(group.track) }] : [];
+  });
+  const [head, ...rest] = LANES[lane].title.split(" ");
+  return {
+    lane,
+    head,
+    rest: rest.join(" "),
+    fill: categories[0]?.tone.pa ?? "var(--surface)",
+    ht: categories[0]?.tone.ht ?? "var(--ht-yellow)",
+    categories,
+  };
+});
+const [meet, beyond] = lanes;
+const tone = { meet: meet.ht, beyond: beyond.ht } as Record<Lane, string>;
+// Japanese runs the lead's two pieces together; English needs the space.
+const spaced = lang !== "ja";
+
+// The lead as the hero sets it: `|` where it may break, `{meet:…}` and
+// `{beyond:…}` the verbs drawn in their halves' colours.
+const lead = f
+  .text("lead")
+  .split("|")
+  .map((piece) =>
+    piece
+      .split(/(\{(?:meet|beyond):[^}]+\})/)
+      .filter(Boolean)
+      .map((run) => {
+        const marked = run.match(/^\{(meet|beyond):([^}]+)\}$/);
+        return marked
+          ? { text: marked[2], tone: tone[marked[1] as Lane] }
+          : { text: run, tone: undefined };
+      }),
+  );
+
+// The cut, in percent of the width at the top and at the foot — the hero's.
+const CUT = { top: 54, foot: 46 };
+
+// Meet's underline: the hero's hand-drawn wave.
+const WAVE = `M2 10 ${Array.from({ length: 9 }, (_, i) => `q13 ${i % 2 ? 9 : -9} 26 0`).join(" ")}`;
+---
+
+<!doctype html>
+<html lang={t.meta.htmlLang} data-theme={site.theme} data-city={site.tenant}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{site.fullTitle ?? site.title} — OG</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+JP:wght@500;700;800&display=swap"
+    />
+  </head>
+
+  <body>
+    <Sprite />
+
+    <div
+      class="card"
+      style={`--og-meet:${meet.fill};--og-beyond:${beyond.fill}`}
+    >
+      <svg
+        class="ground"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <polygon
+          class="ground__meet"
+          points={`0,0 ${CUT.top},0 ${CUT.foot},100 0,100`}
+        ></polygon>
+        <polygon
+          class="ground__beyond"
+          points={`${CUT.top},0 100,0 100,100 ${CUT.foot},100`}
+        ></polygon>
+        <line x1={CUT.top} y1="0" x2={CUT.foot} y2="100"></line>
+      </svg>
+      <div class="lines" aria-hidden="true"></div>
+
+      {lanes.map(({ lane, ht, categories }) => (
+        <>
+          <span
+            class:list={["badge", "badge--level", `badge--${lane}-level`]}
+            style={`--og-cat:${ht}`}
+          >
+            <Icon name={lane === "meet" ? "sprout" : "summit"} />
+          </span>
+          {categories.map(({ icon, tone }, i) => (
+            <span
+              class:list={["badge", `badge--${lane}-${i}`]}
+              style={`--og-cat:${tone.ht}`}
+            >
+              <Icon name={icon} />
+            </span>
+          ))}
+        </>
+      ))}
+
+      <p class="org">
+        <img src={gdgLogo} alt="" width="100" height="100" />
+        <span>{f.host}</span>
+      </p>
+
+      <div class="stack">
+        <div class="ticket">
+          <p class="by">{f.text("by")}</p>
+          <Wordmark class="mark" label="" split />
+          <p class="lead">
+            {lead.map((runs, i) => (
+              <span>
+                {i > 0 && spaced ? " " : ""}
+                {runs.map(({ text, tone }) =>
+                  tone ? <b style={`color:${tone}`}>{text}</b> : text,
+                )}
+              </span>
+            ))}
+          </p>
+          <div class="facts">
+            <p class="when">
+              <span class="ymd">
+                {f.year}.{f.month}.{f.day}
+              </span>
+              <span class="dow">({f.dow})</span>
+              <span class="hours">
+                {f.start}–{f.end}
+              </span>
+            </p>
+            <p class="where">
+              <span class="walk">
+                <Icon name="train" />
+                {f.station}
+                <b>{f.walk}</b>
+              </span>
+              <span class="venue">{f.venue}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="lanes">
+          <p class="name name--meet">
+            <span>{meet.head}</span>
+            <span class="rest">
+              {meet.rest}
+              <svg class="wave" viewBox="0 0 240 20" preserveAspectRatio="none">
+                <path d={WAVE}></path>
+              </svg>
+            </span>
+          </p>
+          <p class="name name--beyond">
+            <span>{beyond.head}</span>
+            <span class="rest">{beyond.rest}</span>
+            <span class="dim"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<style>
+  /* Laid out at 1200 × 675 and zoomed to the 1600 × 900 of `ogCardSize`, so
+     every size below is the one it had at 1200 × 630. */
+  .card {
+    position: relative;
+    width: 1200px;
+    height: 675px;
+    zoom: calc(4 / 3);
+    overflow: hidden;
+    color: var(--ink);
+    font-family: var(--tk-f-display);
+    font-feature-settings: "palt" 1;
+  }
+
+  /* ---- the ground: the two pastels, cut on the hero's slant ---------- */
+
+  .ground,
+  .lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ground__meet {
+    fill: var(--og-meet);
+  }
+
+  .ground__beyond {
+    fill: var(--og-beyond);
+  }
+
+  .ground line {
+    stroke: var(--ink);
+    stroke-width: 2.5px;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .lines {
+    --og-grid: color-mix(in srgb, var(--ink) 8%, transparent);
+    background:
+      linear-gradient(var(--og-grid) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, var(--og-grid) 1px, transparent 1px) 0 0 / 32px
+        32px;
+  }
+
+  /* ---- the margins: each half's level, then its two categories ------- */
+
+  .badge {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 78px;
+    aspect-ratio: 1;
+    border: 2.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--og-cat);
+  }
+
+  .badge :global(svg) {
+    width: 48%;
+    height: 48%;
+  }
+
+  .badge--level {
+    width: 98px;
+  }
+
+  .badge--meet-level {
+    top: 128px;
+    left: 64px;
+    rotate: -8deg;
+  }
+
+  .badge--meet-0 {
+    top: 312px;
+    left: 92px;
+    rotate: 10deg;
+  }
+
+  .badge--meet-1 {
+    top: 506px;
+    left: 54px;
+    rotate: -6deg;
+  }
+
+  .badge--beyond-level {
+    top: 106px;
+    right: 62px;
+    rotate: 8deg;
+  }
+
+  .badge--beyond-0 {
+    top: 312px;
+    right: 92px;
+    rotate: -10deg;
+  }
+
+  .badge--beyond-1 {
+    top: 506px;
+    right: 54px;
+    rotate: 6deg;
+  }
+
+  /* ---- the organiser, top left --------------------------------------- */
+
+  .org {
+    position: absolute;
+    top: 28px;
+    left: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .org img {
+    width: auto;
+    height: 40px;
+  }
+
+  /* ---- the ticket over the cut, the halves' names under it -----------
+     One column from the top, so a lead that takes two lines (English)
+     pushes the names down rather than running into them. */
+
+  .stack {
+    position: absolute;
+    inset: 96px 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  /* ---- the ticket: the event, laid over the cut ---------------------- */
+
+  .ticket {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    width: 820px;
+    padding: 20px 40px 18px;
+    border: 2.5px solid var(--ink);
+    border-radius: 44px;
+    background: var(--surface);
+    text-align: center;
+  }
+
+  .by {
+    margin: 0;
+    font: 500 19px / 1 var(--tk-f-display);
+  }
+
+  .ticket :global(.mark) {
+    width: 540px;
+  }
+
+  /* The connpass cover's band, as the hero's `band-color` mark draws it. */
+  .lead {
+    margin: 2px 0 8px;
+    padding: 0.16em 0.8em 0.22em;
+    background: var(--ink);
+    color: var(--surface);
+    box-shadow: -0.32em 0.32em 0 var(--ht-yellow);
+    rotate: -2deg;
+    max-width: 700px;
+    font: 800 27px / 1.5 var(--tk-f-jp);
+    letter-spacing: 0.02em;
+  }
+
+  /* Each piece stays whole; where the line has to break is between them. */
+  .lead > span {
+    display: inline-block;
+    white-space: pre;
+  }
+
+  .lead b {
+    font-weight: inherit;
+  }
+
+  .facts {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    align-self: stretch;
+    padding-top: 14px;
+    border-top: 2.5px dashed var(--ink);
+  }
+
+  .facts p {
+    margin: 0;
+  }
+
+  .when {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .ymd {
+    font-size: 42px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .dow {
+    margin-left: -4px;
+    font-family: var(--tk-f-jp);
+    font-size: 18px;
+  }
+
+  .hours {
+    font-size: 22px;
+  }
+
+  .where {
+    display: grid;
+    justify-items: start;
+    padding-left: 20px;
+    border-left: 2.5px solid var(--ink);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .walk {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 700 17px / 1.4 var(--tk-f-jp);
+  }
+
+  .walk :global(svg) {
+    width: 21px;
+    height: 21px;
+  }
+
+  .walk b {
+    font-size: 1.15em;
+    background: linear-gradient(
+      transparent 58%,
+      var(--ht-yellow) 58% 92%,
+      transparent 92%
+    );
+  }
+
+  .venue {
+    font: 500 14px / 1.4 var(--tk-f-jp);
+  }
+
+  /* ---- the two halves' names, facing across the seam ----------------- */
+
+  .lanes {
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 120px;
+  }
+
+  .name {
+    display: grid;
+    width: fit-content;
+    row-gap: 0.12em;
+    margin: 0;
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+
+  .name--meet {
+    justify-self: end;
+    justify-items: end;
+    text-align: right;
+  }
+
+  .name--beyond {
+    justify-self: start;
+    justify-items: start;
+  }
+
+  .rest {
+    position: relative;
+    color: var(--surface);
+    -webkit-text-stroke: 2.5px var(--ink);
+  }
+
+  .wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.22em;
+    width: 100%;
+    height: 0.18em;
+    overflow: visible;
+  }
+
+  .wave path {
+    fill: none;
+    stroke: var(--tk-accent);
+    stroke-width: 4px;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* Beyond's dimension line: ticks at both ends, the dot partway along. */
+  .dim {
+    position: relative;
+    justify-self: stretch;
+    height: 0.18em;
+    border-inline: 2.5px solid var(--ink);
+  }
+
+  .dim::before {
+    content: "";
+    position: absolute;
+    inset: 50% 0 auto;
+    height: 2.5px;
+    margin-top: -1.25px;
+    background: var(--ink);
+  }
+
+  .dim::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 86%;
+    width: 0.14em;
+    aspect-ratio: 1;
+    border: 2.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--ht-green);
+    translate: -50% -50%;
+  }
+</style>
