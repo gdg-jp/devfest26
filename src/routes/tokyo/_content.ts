@@ -23,34 +23,28 @@ export const localized = (text: Localized, lang: Language) => text[lang];
 /**
  * Whether session times are printed anywhere on Tokyo's pages. On since the
  * timetable went up on connpass (2026-11): the session pages print the same
- * times the home page's `Timetable` draws. Turn it off again only together
- * with taking the timetable off the home page.
+ * times the timetable page (`timetable.astro`) draws. Turn it off again only
+ * together with taking that page down.
  */
 export const SHOW_TIMES = true;
 
 /**
- * Whether the home page draws the sessions section (`Sessions`, the
- * programme theme by theme) under the timetable. Off since the timetable went
- * up: the two listed the same sessions twice. Everything that pointed at it —
- * the header, the key visual's button and categories, the theme's category
- * cards, a session page's way back — goes to the timetable instead
- * (`SESSIONS_LINK`). Set it to `true` to bring the section and its links back.
+ * The timetable's own page, under the city: `/tokyo/timetable`. The home page
+ * lists the sessions theme by theme (`Sessions`) and links here for the day
+ * by time — the grid is too wide to sit in the middle of the home page, and a
+ * phone reads it a track at a time.
  */
-export const SHOW_SESSIONS = false;
-
-/** Where "the sessions" are on the home page: their section, or the timetable. */
-export const SESSIONS_LINK = SHOW_SESSIONS ? "#sessions" : "#timetable";
+export const TIMETABLE_PATH = "/timetable";
 
 /**
- * The timetable's anchor for a track: its heading in the grid, just above the
- * track's first session. On a phone, where the grid is not drawn, `Timetable`
- * sends the jump to the track's first card in the list (`<id>-sp`) instead.
+ * The timetable's anchor for a track. On a wide screen it is the track's
+ * heading in the grid; on a phone, where the grid is not drawn, it opens that
+ * track's tab instead (`Timetable`).
  */
 export const timetableTrackId = (trackId: string) => `tk-tt-${trackId}`;
 
-/** Where one track's sessions are: its heading in the section, or in the timetable. */
-export const trackLink = (trackId: string) =>
-  SHOW_SESSIONS ? `#tk-sessions-${trackId}` : `#${timetableTrackId(trackId)}`;
+/** Where one track's sessions are on the home page: its heading in `Sessions`. */
+export const trackLink = (trackId: string) => `#tk-sessions-${trackId}`;
 
 /**
  * What runs alongside the sessions, as GDG Tokyo's timetable on connpass has
@@ -169,7 +163,6 @@ export const HERO = {
     en: "A day to master {meet:building} and {beyond:running} things|with the latest AI",
   },
   sessions: { ja: "セッションを見る", en: "See the sessions" },
-  timetable: { ja: "タイムテーブルを見る", en: "See the timetable" },
   /** `Level`: who each half of the theme is for, on its tag. */
   meetLevel: { ja: "初心者向け", en: "For beginners" },
   beyondLevel: { ja: "中・上級者向け", en: "Intermediate & up" },
@@ -435,17 +428,17 @@ export const SOCIAL = {
 /* -------------------------------------------------------------------------- */
 
 export interface NavItem {
+  /** `#overview` — a section of the home page — or `/timetable`, a page of the city's own. */
   href: string;
   label: string;
 }
 
 /**
- * The header's links and the menu's, as Kansai has them — sessions,
- * speakers, FAQ in the bar; every section, the timetable included, in the
- * menu. The bar holds four: a fifth wraps the labels at 1000px. Worked out here rather
- * than read from the city's config, so a section that is not on the page yet
- * (no news, no FAQ) has no link to it either. Until there is a FAQ, the bar's
- * third link goes to the code of conduct in its place.
+ * The header's links and the menu's, as Kansai has them — overview, sessions,
+ * the timetable and speakers in the bar; every section, and the timetable's
+ * page, in the menu. The bar holds four: a fifth wraps the labels at 1000px.
+ * Worked out here rather than read from the city's config, so a section that
+ * is not on the page yet (no news, no FAQ) has no link to it either.
  */
 export function navigation(lang: Language): {
   bar: NavItem[];
@@ -453,17 +446,13 @@ export function navigation(lang: Language): {
 } {
   const n = COPY[lang].nav;
   const hasFaq = FAQ.length > 0;
-  const faqOrCoc = hasFaq
-    ? { href: "#faq", label: n.faq }
-    : { href: "#coc", label: n.coc };
+  const timetable = { href: TIMETABLE_PATH, label: n.timetable };
   return {
     bar: [
       { href: "#overview", label: n.overview },
-      SHOW_SESSIONS
-        ? { href: "#sessions", label: n.sessions }
-        : { href: "#timetable", label: n.timetable },
+      { href: "#sessions", label: n.sessions },
+      timetable,
       { href: "#speakers", label: n.speakers },
-      faqOrCoc,
     ],
     menu: [
       { href: "#overview", label: n.overview },
@@ -471,8 +460,8 @@ export function navigation(lang: Language): {
       ...(FEATURED.length > 0
         ? [{ href: "#featured", label: n.featured }]
         : []),
-      { href: "#timetable", label: n.timetable },
-      ...(SHOW_SESSIONS ? [{ href: "#sessions", label: n.sessions }] : []),
+      { href: "#sessions", label: n.sessions },
+      timetable,
       { href: "#speakers", label: n.speakers },
       { href: "#sponsors", label: n.sponsors },
       ...(hasFaq ? [{ href: "#faq", label: n.faq }] : []),
@@ -526,6 +515,11 @@ export const COPY = {
     timetableEnglish: "English Session",
     timetableSignUp: "事前登録必須",
     timetableSignUpNote: "connpass とは別に、Luma での登録が必要です",
+    timetableLead:
+      "4 つのトラックは、それぞれテーマに沿って 1 日の流れが組まれています。",
+    timetableTracks: "トラックを選ぶ",
+    timetableAllTracks: "共通セッション",
+    timetableAllDay: "終日",
     partnersHeading: "共催・協力団体",
     preEventHeading: "Pre-event",
     preEventCta: "詳細・申し込み",
@@ -540,7 +534,8 @@ export const COPY = {
     close: "閉じる",
     footerFollow: "最新情報",
     backToSessions: "セッション一覧",
-    backToTimetable: "タイムテーブル",
+    backHome: "トップ",
+    timetableShort: "タイムテーブル",
     backToSpeakers: "スピーカー一覧",
     titleTba: "タイトル調整中",
     minutes: (n: number) => `${n} 分`,
@@ -601,6 +596,11 @@ export const COPY = {
     timetableEnglish: "English Session",
     timetableSignUp: "Sign-up required",
     timetableSignUpNote: "Sign up on Luma as well as connpass",
+    timetableLead:
+      "Each of the four tracks runs through the day around a theme of its own.",
+    timetableTracks: "Choose a track",
+    timetableAllTracks: "General session",
+    timetableAllDay: "All day",
     partnersHeading: "Co-hosts & partners",
     preEventHeading: "Pre-event",
     preEventCta: "Details & sign-up",
@@ -615,7 +615,8 @@ export const COPY = {
     close: "Close",
     footerFollow: "Follow",
     backToSessions: "All sessions",
-    backToTimetable: "Timetable",
+    backHome: "Home",
+    timetableShort: "Timetable",
     backToSpeakers: "All speakers",
     titleTba: "Title to be announced",
     minutes: (n: number) => `${n} min`,

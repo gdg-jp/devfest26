@@ -2,7 +2,7 @@
 import Arrow from "../Arrow.astro";
 import type { ResolvedTenant } from "../../../../tenants";
 import { currentLanguage } from "../../../../i18n/language";
-import { copy, SESSIONS_LINK, SHOW_SESSIONS } from "../../_content";
+import { copy } from "../../_content";
 import type { HeroFacts } from "./facts";
 
 /**
@@ -32,12 +32,8 @@ const c = copy(currentLanguage());
       <Arrow />
     </span>
   </button>
-  <a
-    class="tk-btn tk-btn--lg tk-btn--light"
-    href={SESSIONS_LINK}
-    data-tk-magnet
-  >
-    {facts.text(SHOW_SESSIONS ? "sessions" : "timetable")}
+  <a class="tk-btn tk-btn--lg tk-btn--light" href="#sessions" data-tk-magnet>
+    {facts.text("sessions")}
     <span class="tk-btn__disc">
       <Arrow class="tkh-ctas__down" />
     </span>

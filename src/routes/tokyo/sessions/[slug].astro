@@ -13,7 +13,7 @@ import {
   ownCity,
   sessionProps,
 } from "../../../lib/cityRoutes";
-import { tenantHome } from "../../../lib/url";
+import { tenantHome, tenantPath } from "../../../lib/url";
 import {
   getProgram,
   getProgramSessions,
@@ -30,9 +30,8 @@ import {
   copy,
   FEATURED,
   localized,
-  SESSIONS_LINK,
-  SHOW_SESSIONS,
   SHOW_TIMES,
+  TIMETABLE_PATH,
 } from "../_content";
 
 /**
@@ -196,8 +195,8 @@ const jsonLd = title
   jsonLd={jsonLd}
   ogImage={ogImage}
   back={{
-    href: `${home}${SESSIONS_LINK}`,
-    label: SHOW_SESSIONS ? c.backToSessions : c.backToTimetable,
+    href: `${home}#sessions`,
+    label: c.backToSessions,
   }}
   placement="session"
 >
@@ -454,8 +453,11 @@ const jsonLd = title
           </>
         )}
 
-        <a class="tk-link tk-day__all" href={`${home}${SESSIONS_LINK}`}>
-          {SHOW_SESSIONS ? c.allSessions : c.allTimetable}
+        <a
+          class="tk-link tk-day__all"
+          href={tenantPath(site.tenant, TIMETABLE_PATH)}
+        >
+          {c.allTimetable}
           <Arrow />
         </a>
       </Panel>

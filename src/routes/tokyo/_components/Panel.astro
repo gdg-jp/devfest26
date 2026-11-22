@@ -8,6 +8,10 @@
  * whatever size the card and its tab end up; the tab sits in the notch,
  * its border doubling as the notch's edge. Without the script the body falls back to a plain
  * bordered box.
+ *
+ * A section can put a button on the shelf too (`slot="action"`), at its
+ * right end: a way on from the section that stays in sight at its top. On a
+ * phone the shelf is too short for both, so the stickers make way for it.
  */
 import { STICKERS, type StickerName } from "./stickers";
 
@@ -33,6 +37,7 @@ const {
   class: className,
 } = Astro.props;
 const Tab = tag;
+const action = Astro.slots.has("action");
 ---
 
 <div
@@ -53,7 +58,7 @@ const Tab = tag;
     {title}
   </Tab>
 
-  <div class="tk-panel__shelf" aria-hidden="true">
+  <div class:list={["tk-panel__shelf", { "tk-panel__shelf--action": action }]}>
     {stickers.map((name) => {
       const s = STICKERS[name];
       return (
@@ -61,11 +66,17 @@ const Tab = tag;
           class="tk-panel__sticker"
           viewBox={`0 0 ${s.width} ${s.height}`}
           style={`width:calc(${s.width} * var(--tk-sticker-u))`}
+          aria-hidden="true"
         >
           <g transform={s.transform} set:html={s.shapes} />
         </svg>
       );
     })}
+    {action && (
+      <div class="tk-panel__action">
+        <slot name="action" />
+      </div>
+    )}
   </div>
 
   <div class="tk-panel__body">
@@ -138,6 +149,16 @@ const Tab = tag;
     overflow: hidden;
   }
 
+  /* A button on the shelf would be clipped mid-hover by the overflow. */
+  .tk-panel__shelf--action {
+    overflow: visible;
+  }
+
+  .tk-panel__action {
+    display: flex;
+    flex: none;
+  }
+
   .tk-panel__sticker {
     flex: none;
     height: auto;
@@ -166,6 +187,16 @@ const Tab = tag;
     .tk-panel {
       --tk-panel-r: var(--tk-r-md);
       --tk-sticker-u: 0.085px;
+    }
+  }
+
+  @media (width < 720px) {
+    .tk-panel__shelf--action .tk-panel__sticker {
+      display: none;
+    }
+
+    .tk-panel__shelf--action {
+      padding-inline: 8px 10px;
     }
   }
 </style>
