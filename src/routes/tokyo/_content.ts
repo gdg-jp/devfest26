@@ -21,12 +21,123 @@ export const localized = (text: Localized, lang: Language) => text[lang];
 /* -------------------------------------------------------------------------- */
 
 /**
- * Whether session times are printed anywhere on Tokyo's pages. Off while the
- * timetable is not settled: the sessions carry times in the Studio, but they
- * are provisional, and a time on a card reads as a promise. Turn it on when
- * the day is final (and put Kansai's `Timetable` back on the home page).
+ * Whether session times are printed anywhere on Tokyo's pages. On since the
+ * timetable went up on connpass (2026-11): the session pages print the same
+ * times the timetable page (`timetable.astro`) draws. Turn it off again only
+ * together with taking that page down.
  */
-export const SHOW_TIMES = false;
+export const SHOW_TIMES = true;
+
+/**
+ * The timetable's own page, under the city: `/tokyo/timetable`. The home page
+ * lists the sessions theme by theme (`Sessions`) and links here for the day
+ * by time — the grid is too wide to sit in the middle of the home page, and a
+ * phone reads it a track at a time.
+ */
+export const TIMETABLE_PATH = "/timetable";
+
+/**
+ * The timetable's anchor for a track. On a wide screen it is the track's
+ * heading in the grid; on a phone, where the grid is not drawn, it opens that
+ * track's tab instead (`Timetable`).
+ */
+export const timetableTrackId = (trackId: string) => `tk-tt-${trackId}`;
+
+/** Where one track's sessions are on the home page: its heading in `Sessions`. */
+export const trackLink = (trackId: string) => `#tk-sessions-${trackId}`;
+
+/**
+ * What runs alongside the sessions, as GDG Tokyo's timetable on connpass has
+ * it (`timetable-v2.png`). The sessions themselves come from the Studio and
+ * place themselves by their own times; this is only what is not a session.
+ *
+ * - `span: "all"` — across every track: the doors, the keynotes, the closing.
+ * - `span: "side"` — beside the tracks, all day: the demo floor.
+ *
+ * Keynote 2 is here because the Studio has no session for it yet (Keynote 1
+ * is in the Studio now, on its Keynote track). When it is added there, take
+ * its row out of this list: both would claim the same minutes, and the build
+ * stops on it.
+ */
+export interface DayItem {
+  start: string;
+  end: string;
+  span: "all" | "side";
+  /** A short tag above the title, e.g. "Keynote 1". */
+  kicker?: string;
+  title: Localized;
+  /** A warning-coloured tag, e.g. paid and needs its own sign-up. */
+  flag?: Localized;
+  /** Drawn in the accent colour rather than as a plain row. */
+  accent?: boolean;
+}
+
+export const DAY: readonly DayItem[] = [
+  {
+    start: "11:30",
+    end: "12:00",
+    span: "all",
+    title: { ja: "受付開始", en: "Doors open" },
+  },
+  {
+    start: "12:50",
+    end: "13:20",
+    span: "all",
+    kicker: "Keynote 2",
+    title: {
+      ja: "Community Panel Discussion",
+      en: "Community Panel Discussion",
+    },
+  },
+  {
+    start: "17:25",
+    end: "18:00",
+    span: "all",
+    accent: true,
+    title: { ja: "大 LT 会 & クロージング", en: "Lightning talks & closing" },
+  },
+  {
+    start: "18:30",
+    end: "20:00",
+    span: "all",
+    title: { ja: "懇親会", en: "After-party" },
+    flag: { ja: "有料・事前登録必要", en: "Paid · sign-up required" },
+  },
+  {
+    start: "11:30",
+    end: "17:25",
+    span: "side",
+    title: { ja: "DEMO 展示 & ラウンジ企画", en: "Demos & lounge" },
+  },
+];
+
+/**
+ * The timetable's columns, as connpass names them: the heading's kicker
+ * (`Track A`) and the code its sessions are numbered with (`A-1`, `A-2`… in
+ * time order). A track left out here (General Sessions) has no column: its
+ * sessions run across all of them.
+ */
+export const TRACK_CODES: Readonly<
+  Record<string, { code: string; name: string }>
+> = {
+  "b4cc0eef-4f68-47b3-a5f6-14501199ceff": { code: "A", name: "Track A" },
+  "341a35f5-8299-4582-9ca2-3c19a0dfc9ad": { code: "B", name: "Track B" },
+  "6b6d670c-8d68-4074-8084-98cd72c593e3": { code: "C", name: "Track C" },
+  "0d305acb-ca74-47cc-b74d-057a92eda6a7": { code: "H", name: "Hands-on" },
+};
+
+/**
+ * Tags the timetable puts on a session, by its slug. The Studio has no field
+ * for either, so they are kept here, as connpass prints them.
+ */
+export const SESSION_TAGS: Readonly<
+  Record<string, { english?: boolean; signUp?: boolean }>
+> = {
+  "keynote-google": { english: true },
+  "supercharging-ai-agents": { english: true },
+  "beyond-vibe-coding-hands-on": { english: true, signUp: true },
+  "ws-design-sprint": { signUp: true },
+};
 
 /* -------------------------------------------------------------------------- */
 /* Key visual                                                                 */
@@ -42,13 +153,15 @@ export const HERO = {
   by: { ja: "Google Developers 主催", en: "Hosted by Google Developers" },
   /**
    * What the day is, in GDG Tokyo's own words (their announcement on X,
-   * 2026-11-01). `|` is where the line may break: each side stays whole.
+   * 2026-11-01), without its "Google の": the line above already says
+   * Google hosts it. `|` is where the line may break: each side stays whole.
+   * `{meet:…}` and `{beyond:…}` are the words marked in that half's colour —
+   * making things is Meet's, running them Beyond's.
    */
   lead: {
-    ja: "Google の最先端 AI と|「つくる・動かす」を極める 1 日",
-    en: "A day to master building and running things|with Google's latest AI",
+    ja: "最先端 AI と|「{meet:つくる}・{beyond:動かす}」を極める 1 日",
+    en: "A day to master {meet:building} and {beyond:running} things|with the latest AI",
   },
-  organizedBy: { ja: "Organized by", en: "Organized by" },
   sessions: { ja: "セッションを見る", en: "See the sessions" },
   /** `Level`: who each half of the theme is for, on its tag. */
   meetLevel: { ja: "初心者向け", en: "For beginners" },
@@ -68,6 +181,8 @@ export const OVERVIEW = {
   /** The line under the venue: where from, then how far — the bigger words. */
   station: { ja: "東京駅から", en: "From Tokyo Station" },
   walk: { ja: "徒歩約 1 分", en: "1-min walk" },
+  /** Said small, just right of the hours. */
+  reception: { ja: "（受付開始は11:30～）", en: "(Doors open 11:30)" },
   fee: { ja: "無料・入退場自由", en: "Free · come and go freely" },
   feeNote: {
     ja: "懇親会は有料です",
@@ -122,6 +237,31 @@ export const THEME: Record<
         en: "Want your team to ship faster",
       },
     ],
+  },
+};
+
+/**
+ * Where each half signs up. The halves register on different pages — the
+ * builders (Meet the Vibes) on Luma, the engineers (Beyond the Vibes) on
+ * connpass — so every register button on the page either belongs to one half
+ * or opens `RegisterChoice`, which asks which.
+ *
+ * Kept here rather than in the Studio's `links.register`, which is one link
+ * per language: these are one link per audience, in both languages.
+ */
+export const REGISTER: Record<
+  Lane,
+  { href: string; via: string; audience: Localized }
+> = {
+  meet: {
+    href: "https://luma.com/6jx9xjnf",
+    via: "Luma",
+    audience: { ja: "Builder 向け", en: "For builders" },
+  },
+  beyond: {
+    href: "https://gdg-tokyo.connpass.com/event/405628/",
+    via: "connpass",
+    audience: { ja: "エンジニア向け", en: "For engineers" },
   },
 };
 
@@ -288,16 +428,17 @@ export const SOCIAL = {
 /* -------------------------------------------------------------------------- */
 
 export interface NavItem {
+  /** `#overview` — a section of the home page — or `/timetable`, a page of the city's own. */
   href: string;
   label: string;
 }
 
 /**
- * The header's links and the menu's, as Kansai has them — sessions (where
- * Kansai has its timetable), speakers, FAQ in the bar; every section in the menu. Worked out here rather
- * than read from the city's config, so a section that is not on the page yet
- * (no news, no FAQ) has no link to it either. Until there is a FAQ, the bar's
- * third link goes to the code of conduct in its place.
+ * The header's links and the menu's, as Kansai has them — overview, sessions,
+ * the timetable and speakers in the bar; every section, and the timetable's
+ * page, in the menu. The bar holds four: a fifth wraps the labels at 1000px.
+ * Worked out here rather than read from the city's config, so a section that
+ * is not on the page yet (no news, no FAQ) has no link to it either.
  */
 export function navigation(lang: Language): {
   bar: NavItem[];
@@ -305,15 +446,13 @@ export function navigation(lang: Language): {
 } {
   const n = COPY[lang].nav;
   const hasFaq = FAQ.length > 0;
-  const faqOrCoc = hasFaq
-    ? { href: "#faq", label: n.faq }
-    : { href: "#coc", label: n.coc };
+  const timetable = { href: TIMETABLE_PATH, label: n.timetable };
   return {
     bar: [
       { href: "#overview", label: n.overview },
       { href: "#sessions", label: n.sessions },
+      timetable,
       { href: "#speakers", label: n.speakers },
-      faqOrCoc,
     ],
     menu: [
       { href: "#overview", label: n.overview },
@@ -322,6 +461,7 @@ export function navigation(lang: Language): {
         ? [{ href: "#featured", label: n.featured }]
         : []),
       { href: "#sessions", label: n.sessions },
+      timetable,
       { href: "#speakers", label: n.speakers },
       { href: "#sponsors", label: n.sponsors },
       ...(hasFaq ? [{ href: "#faq", label: n.faq }] : []),
@@ -340,6 +480,7 @@ export const COPY = {
       overview: "開催概要",
       news: "お知らせ",
       featured: "注目スピーカー",
+      timetable: "タイムテーブル",
       sessions: "セッション",
       speakers: "スピーカー",
       sponsors: "スポンサー",
@@ -348,6 +489,7 @@ export const COPY = {
     },
     themeHeading: "テーマ",
     themeFor: "こんな方におすすめ",
+    themeSessions: "このテーマのセッション",
     overviewHeading: "開催概要",
     overviewDate: "日時",
     overviewVenue: "会場",
@@ -358,12 +500,26 @@ export const COPY = {
     next: "次へ",
     register: "無料で参加登録",
     registerShort: "参加登録",
+    registerChoose: "どちらで参加しますか？",
+    registerChooseLede:
+      "参加登録ページが2つあります。お好きなほうを選んでください。",
+    registerVia: (service: string) => `${service} で申し込む`,
     newsHeading: "News",
     newsSub: "お知らせ",
     featuredBadge: "注目",
     sessionsHeading: "セッション",
-    sessionsNote:
-      "※ タイムテーブルは確定後に掲載します。セッション内容、登壇形式は変更となる場合があります。",
+    sessionsNote: "※ セッション内容、登壇形式は変更となる場合があります。",
+    timetableHeading: "タイムテーブル",
+    timetableNote: "※ セッションの配置や時間は今後変更となる場合があります。",
+    timetableDate: "11.29 SUN",
+    timetableEnglish: "English Session",
+    timetableSignUp: "事前登録必須",
+    timetableSignUpNote: "connpass とは別に、Luma での登録が必要です",
+    timetableLead:
+      "4 つのトラックは、それぞれテーマに沿って 1 日の流れが組まれています。",
+    timetableTracks: "トラックを選ぶ",
+    timetableAllTracks: "共通セッション",
+    timetableAllDay: "終日",
     partnersHeading: "共催・協力団体",
     preEventHeading: "Pre-event",
     preEventCta: "詳細・申し込み",
@@ -378,10 +534,15 @@ export const COPY = {
     close: "閉じる",
     footerFollow: "最新情報",
     backToSessions: "セッション一覧",
+    backHome: "トップ",
+    timetableShort: "タイムテーブル",
     backToSpeakers: "スピーカー一覧",
     titleTba: "タイトル調整中",
     minutes: (n: number) => `${n} 分`,
     aboutSub: "セッション概要",
+    talksSub: "このセッションのトーク",
+    talkNo: (n: number) => `Talk ${n}`,
+    sessionOwner: "Session Owner",
     speakersSub: "登壇者",
     profile: "プロフィールを見る",
     sameTimeSub: "同じ時間帯のセッション",
@@ -390,6 +551,7 @@ export const COPY = {
     nextSession: "次のセッション",
     trackSub: (track: string) => `${track} の前後`,
     allSessions: "セッション一覧を見る",
+    allTimetable: "タイムテーブルを見る",
     appearancesSub: "登壇するセッション",
     moreSpeakersSub: "ほかのスピーカー",
     allSpeakers: "すべてのスピーカー",
@@ -399,6 +561,7 @@ export const COPY = {
       overview: "Overview",
       news: "News",
       featured: "Featured",
+      timetable: "Timetable",
       sessions: "Sessions",
       speakers: "Speakers",
       sponsors: "Sponsors",
@@ -407,6 +570,7 @@ export const COPY = {
     },
     themeHeading: "Theme",
     themeFor: "Good for you if you",
+    themeSessions: "Sessions on this theme",
     overviewHeading: "Overview",
     overviewDate: "When",
     overviewVenue: "Where",
@@ -417,12 +581,26 @@ export const COPY = {
     next: "Next",
     register: "Register for free",
     registerShort: "Register",
+    registerChoose: "How are you joining us?",
+    registerChooseLede:
+      "There are two registration pages. Pick whichever you like.",
+    registerVia: (service: string) => `Sign up on ${service}`,
     newsHeading: "News",
     newsSub: "Latest",
     featuredBadge: "Pick",
     sessionsHeading: "Sessions",
-    sessionsNote:
-      "The timetable will be published once it is final. Sessions and formats may change.",
+    sessionsNote: "Sessions and formats may change.",
+    timetableHeading: "Timetable",
+    timetableNote: "Where and when sessions run may still change.",
+    timetableDate: "11.29 SUN",
+    timetableEnglish: "English Session",
+    timetableSignUp: "Sign-up required",
+    timetableSignUpNote: "Sign up on Luma as well as connpass",
+    timetableLead:
+      "Each of the four tracks runs through the day around a theme of its own.",
+    timetableTracks: "Choose a track",
+    timetableAllTracks: "General session",
+    timetableAllDay: "All day",
     partnersHeading: "Co-hosts & partners",
     preEventHeading: "Pre-event",
     preEventCta: "Details & sign-up",
@@ -437,10 +615,15 @@ export const COPY = {
     close: "Close",
     footerFollow: "Follow",
     backToSessions: "All sessions",
+    backHome: "Home",
+    timetableShort: "Timetable",
     backToSpeakers: "All speakers",
     titleTba: "Title to be announced",
     minutes: (n: number) => `${n} min`,
     aboutSub: "About the session",
+    talksSub: "Talks in this session",
+    talkNo: (n: number) => `Talk ${n}`,
+    sessionOwner: "Session Owner",
     speakersSub: "On stage",
     profile: "View profile",
     sameTimeSub: "Running at the same time",
@@ -449,6 +632,7 @@ export const COPY = {
     nextSession: "Next",
     trackSub: (track: string) => `Before and after on ${track}`,
     allSessions: "See all sessions",
+    allTimetable: "See the timetable",
     appearancesSub: "On the programme",
     moreSpeakersSub: "More speakers",
     allSpeakers: "All speakers",

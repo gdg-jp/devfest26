@@ -211,7 +211,7 @@ export function initMenu() {
     setOpen(toggle.getAttribute("aria-expanded") !== "true"),
   );
   menu.addEventListener("click", (event) => {
-    if ((event.target as Element).closest("a")) setOpen(false);
+    if ((event.target as Element).closest("a, [popovertarget]")) setOpen(false);
   });
   addEventListener("keydown", (event) => {
     if (

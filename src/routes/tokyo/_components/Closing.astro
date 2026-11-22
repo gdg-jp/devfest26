@@ -1,14 +1,15 @@
 ---
-import Arrow from "./Arrow.astro";
+import RegisterOptions from "./RegisterOptions.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
 import { messages } from "../../../i18n";
-import { copy } from "../_content";
+import { localized, OVERVIEW } from "../_content";
 
 /**
  * The foot of a session or speaker page. Someone who has read this far into
  * one talk is as close to registering as anyone on the site, so the page ends
- * on the one button rather than on the footer.
+ * on the two places to sign up — one per half of the theme — rather than on
+ * the footer.
  */
 interface Props {
   site: ResolvedTenant;
@@ -18,7 +19,6 @@ interface Props {
 
 const { site, placement } = Astro.props;
 const lang = currentLanguage();
-const c = copy(lang);
 const t = messages(lang);
 const { event } = site;
 const date = event.isoDate.replaceAll("-", ".");
@@ -46,21 +46,10 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
         <span>{t.register.headingLine2(event.monthDay, event.venue.city)}</span>
       </h2>
       <div class="tk-closing__end">
-        <a
-          class="tk-btn tk-btn--light tk-btn--lg"
-          href={site.links.register}
-          target="_blank"
-          rel="noopener"
-          data-analytics="register_click"
-          data-placement={placement}
-          data-tk-magnet
-        >
-          {c.register}
-          <span class="tk-btn__disc">
-            <Arrow />
-          </span>
-        </a>
-        <p class="tk-closing__note">{t.register.note(event.fee)}</p>
+        <RegisterOptions site={site} placement={placement} />
+        <p class="tk-closing__note">
+          {localized(OVERVIEW.fee, lang)} ※ {localized(OVERVIEW.feeNote, lang)}
+        </p>
       </div>
     </div>
   </div>
@@ -125,10 +114,8 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
   }
 
   .tk-closing__end {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 14px 24px;
+    display: grid;
+    gap: 14px;
   }
 
   .tk-closing__note {
@@ -136,12 +123,5 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
     font-size: 14px;
     font-weight: 700;
     color: var(--tk-on-dark-muted);
-  }
-
-  @media (width < 520px) {
-    .tk-closing__end :global(.tk-btn) {
-      width: 100%;
-      justify-content: space-between;
-    }
   }
 </style>

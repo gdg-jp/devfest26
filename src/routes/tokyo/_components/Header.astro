@@ -2,7 +2,7 @@
 import Wordmark from "./Wordmark.astro";
 import Arrow from "./Arrow.astro";
 import type { ResolvedTenant } from "../../../tenants";
-import { isHome, tenantHome } from "../../../lib/url";
+import { isHome, tenantHome, tenantPath } from "../../../lib/url";
 import { clean } from "../../../preview/stega";
 import {
   alternatePath,
@@ -13,12 +13,16 @@ import {
 import { copy, navigation } from "../_content";
 
 /**
- * A floating bar that is always one tap from registering.
+ * A floating bar that is always one tap from registering — from
+ * `RegisterChoice`, that is, which asks which half of the theme you are
+ * signing up for, since each has its own page.
  *
  * The anchors resolve on the home page only, so from anywhere else they go
- * home first. `data-topbar` and `data-spy` are the hooks the shared nav script
- * already reads — it publishes the bar's height and lights the section in
- * view — so this bar needs no script of its own for either.
+ * home first. A link to a page of the city's own (the timetable) is marked as
+ * the current page while you are on it. `data-topbar` and `data-spy` are the
+ * hooks the shared nav script already reads — it publishes the bar's height
+ * and lights the section in view — so this bar needs no script of its own for
+ * either.
  */
 interface Props {
   site: ResolvedTenant;
@@ -33,6 +37,18 @@ const nav = navigation(lang);
 const home = tenantHome(site.tenant);
 const prefix = isHome(Astro.url, site.tenant) ? "" : home;
 const siteName = clean(site.fullTitle ?? site.title);
+
+/** A section's anchor (`#overview`) or a page of the city's (`/timetable`). */
+const here = Astro.url.pathname.replace(/\/$/, "");
+const link = (href: string) => {
+  if (!href.startsWith("/")) {
+    return { href: `${prefix}${href}`, spy: href.slice(1) };
+  }
+  const page = tenantPath(site.tenant, href);
+  const current = here === page.replace(/\/$/, "");
+  return { href: page, current: current ? ("page" as const) : undefined };
+};
+const bar = nav.bar.map((item) => ({ label: item.label, ...link(item.href) }));
 
 const switchTo = currentAlternateLanguage();
 const switchHref = alternatePath(Astro.url.pathname);
@@ -55,10 +71,10 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
 
     <nav class="tk-header__nav" aria-label="Main">
       <ul>
-        {nav.bar.map((item) => (
+        {bar.map(({ label, href, spy, current }) => (
           <li>
-            <a href={`${prefix}${item.href}`} data-spy={item.href.slice(1)}>
-              {item.label}
+            <a href={href} data-spy={spy} aria-current={current}>
+              {label}
             </a>
           </li>
         ))}
@@ -75,19 +91,17 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       >
         {switchTo.toUpperCase()}
       </a>
-      <a
+      <button
+        type="button"
         class="tk-btn tk-btn--sm tk-header__cta"
-        href={site.links.register}
-        target="_blank"
-        rel="noopener"
-        data-analytics="register_click"
+        popovertarget="tk-register"
         data-placement="topbar"
       >
         {c.registerShort}
         <span class="tk-btn__disc">
           <Arrow />
         </span>
-      </a>
+      </button>
       <button
         type="button"
         class="tk-header__menu"
@@ -112,7 +126,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     <ol>
       {nav.menu.map((item, i) => (
         <li data-tk-menu-item>
-          <a href={`${prefix}${item.href}`} data-tk-menu-link>
+          <a href={link(item.href).href} data-tk-menu-link>
             <span class="tk-menu__no">{String(i + 1).padStart(2, "0")}</span>
             {item.label}
           </a>
@@ -121,19 +135,17 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     </ol>
   </nav>
   <div class="tk-menu__foot" data-tk-menu-item>
-    <a
+    <button
+      type="button"
       class="tk-btn tk-btn--light"
-      href={site.links.register}
-      target="_blank"
-      rel="noopener"
-      data-analytics="register_click"
+      popovertarget="tk-register"
       data-placement="menu"
     >
       {c.register}
       <span class="tk-btn__disc">
         <Arrow />
       </span>
-    </a>
+    </button>
     <a class="tk-menu__lang" href={switchHref} hreflang={switchTo}>
       {switchLabel}
     </a>
@@ -239,7 +251,8 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
     background: var(--ground);
   }
 
-  .tk-header__nav a:global(.is-current) {
+  .tk-header__nav a:global(.is-current),
+  .tk-header__nav a[aria-current="page"] {
     background: var(--ink);
     color: var(--surface);
   }
