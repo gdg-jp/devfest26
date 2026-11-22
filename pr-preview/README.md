@@ -39,7 +39,7 @@ URL は `https://pr-<番号>-devfest26-site.<サブドメイン>.workers.dev` �
 - **`build.yml` の `build` ジョブが作ったファイルだけ**です。このジョブはビルドせず、Sanity も読みません。`build` には `SANITY_READ_TOKEN` が渡っていないので、下書きは 1 バイトも入りません。
 - **ビルドに失敗した言語・開催地は抜けたまま**配信されます。コメントの表で ❌ になり、どれが抜けているか分かります。
 - **Google Analytics のタグは入りません。** プルリクエストのビルドには `NO_ANALYTICS` が付き、サイト全体の測定 ID も、Studio にある開催地ごとの測定 ID も出力されません（`src/lib/analytics.ts`）。ID の形式チェックはこれまでどおり行います。
-- canonical / OG の絶対 URL は本番の `SITE_URL` を指したままです。`workers.dev` の Preview URL には Cloudflare が `X-Robots-Tag: noindex` を付けます。
+- canonical / hreflang / OG / JSON-LD の絶対 URL は、アップロード前にそのプレビューの URL（`pr-<番号>-devfest26-site.<サブドメイン>.workers.dev`）へ書き換えます。サブドメインは Cloudflare API で調べるので、読めなかったときは本番の `SITE_URL` のまま配信し、警告を出します。`workers.dev` の Preview URL には Cloudflare が `X-Robots-Tag: noindex` を付けます。
 - `/kansai` は `/kansai/` へリダイレクトされます。GitHub Pages と同じ動きです。
 
 ## プレビューが作られないプルリクエスト
