@@ -172,8 +172,12 @@ const eventSchema = clean({
     <meta property="og:locale" content={t.meta.ogLocale} />
     {canonical && <meta property="og:url" content={canonical} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
-    {ogImage && <meta property="og:image:width" content={ogImageSize.width} />}
-    {ogImage && <meta property="og:image:height" content={ogImageSize.height} />}
+    {ogImage && (
+      <meta property="og:image:width" content={String(ogImageSize.width)} />
+    )}
+    {ogImage && (
+      <meta property="og:image:height" content={String(ogImageSize.height)} />
+    )}
     {ogImage && <meta property="og:image:type" content="image/png" />}
     {ogImage && <meta property="og:image:alt" content={clean(ogImageAlt)} />}
     <meta name="twitter:card" content="summary_large_image" />
