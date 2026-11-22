@@ -16,7 +16,7 @@ import { trackTone } from "./track";
  * the overview and the speakers have, and inside it a heading per theme
  * (track) in the track's colour, with its sessions as cards. No times are
  * shown here — the timetable has them, on a page of its own, which the button
- * under the folder opens.
+ * at the folder's top right opens.
  *
  * Each heading carries its half's level tag, as the theme's cards do: the
  * theme's category cards jump here, and the tag says where you have landed.
@@ -48,6 +48,20 @@ const groups = (await getProgram(site.tenant)).filter(
         stickers={["colon", "equals"]}
         ja={lang === "ja"}
       >
+        <a
+          slot="action"
+          class="tk-btn tk-btn--sm tk-btn--light tk-sessions__timetable"
+          href={tenantPath(site.tenant, TIMETABLE_PATH)}
+          aria-label={c.allTimetable}
+        >
+          <span class="tk-sessions__timetable-long">{c.allTimetable}</span>
+          <span class="tk-sessions__timetable-short" aria-hidden="true">
+            {c.timetableShort}
+          </span>
+          <span class="tk-btn__disc">
+            <Arrow />
+          </span>
+        </a>
         <div class="tk-sessions__groups">
           {groups.map(({ track, sessions }) => {
             const tone = trackTone(track);
@@ -77,19 +91,7 @@ const groups = (await getProgram(site.tenant)).filter(
           })}
         </div>
       </Panel>
-      <div class="tk-sessions__foot">
-        <p class="tk-sessions__note">{c.sessionsNote}</p>
-        <a
-          class="tk-btn tk-btn--light tk-sessions__timetable"
-          href={tenantPath(site.tenant, TIMETABLE_PATH)}
-          data-tk-magnet
-        >
-          {c.allTimetable}
-          <span class="tk-btn__disc">
-            <Arrow />
-          </span>
-        </a>
-      </div>
+      <p class="tk-sessions__note">{c.sessionsNote}</p>
     </div>
   </section>
 )}
@@ -155,12 +157,29 @@ const groups = (await getProgram(site.tenant)).filter(
     display: grid;
   }
 
-  .tk-sessions__foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px 24px;
+  /* On the folder's shelf, top right: in sight as soon as the section is.
+     A phone's shelf is short, so the label is too. */
+  .tk-sessions__timetable-short {
+    display: none;
+  }
+
+  @media (width < 520px) {
+    .tk-sessions__timetable-long {
+      display: none;
+    }
+
+    .tk-sessions__timetable-short {
+      display: inline;
+    }
+  }
+
+  /* The narrowest phones: a little smaller, so it clears the tab. */
+  @media (width < 360px) {
+    .tk-btn.tk-sessions__timetable {
+      padding-left: 12px;
+      font-size: 13px;
+      gap: 8px;
+    }
   }
 
   .tk-sessions__note {
