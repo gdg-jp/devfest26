@@ -5,6 +5,7 @@
 # trusted with a real pull request. See `pr-preview/README.md`.
 #
 #   bash scripts/pr-preview.sh assemble <site-dir> <artifacts-dir>
+#   bash scripts/pr-preview.sh rebase <site-dir> <from-origin> <to-origin>
 #   bash scripts/pr-preview.sh body > comment.md
 #   bash scripts/pr-preview.sh comment [--update-only] < comment.md
 #
@@ -104,6 +105,30 @@ assemble() {
   fi
 }
 
+# The pages' absolute URLs — canonical, hreflang, og:url, og:image, JSON-LD —
+# are written by `build` against `SITE_URL`, production's origin, because the
+# same build job serves `publish`. In the Preview that sends a link card to
+# production: an `og:image` there is a card this pull request may not have
+# published yet, so it 404s, and the card's link opens the live site rather
+# than the change. Every text file that names the production origin is pointed
+# at the Preview's instead. Links between pages are relative and need nothing.
+#
+# Literal, not a regular expression: an origin is full of dots.
+rebase() {
+  local site="$1" from="${2%/}" to="${3%/}" files=()
+  if [ -z "$from" ] || [ -z "$to" ]; then
+    echo "::error::rebase needs both origins (from: '$from', to: '$to')"
+    return 1
+  fi
+  mapfile -t files < <(grep -rlIF -- "$from" "$site" || true)
+  if [ "${#files[@]}" -eq 0 ]; then
+    echo "::warning::no page names $from; is SITE_URL set for the build?"
+    return 0
+  fi
+  FROM="$from" TO="$to" perl -pi -e 's/\Q$ENV{FROM}\E/$ENV{TO}/g' "${files[@]}"
+  echo "$from → $to in ${#files[@]} files"
+}
+
 # The comment: the URL, and a table with a link to every page the run was
 # asked for, so a review can go straight to the city a pull request is about.
 #
@@ -187,10 +212,11 @@ command="${1:-}"
 shift || true
 case "$command" in
   assemble) assemble "$@" ;;
+  rebase) rebase "$@" ;;
   body) body "$@" ;;
   comment) comment "$@" ;;
   *)
-    echo "usage: $0 assemble <site-dir> <artifacts-dir> | body | comment [--update-only]" >&2
+    echo "usage: $0 assemble <site-dir> <artifacts-dir> | rebase <site-dir> <from-origin> <to-origin> | body | comment [--update-only]" >&2
     exit 2
     ;;
 esac

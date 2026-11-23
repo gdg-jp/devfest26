@@ -508,6 +508,37 @@ jobs:
           BUILDS_JSON: ${{ needs.discover.outputs.builds }}
         run: bash scripts/pr-preview.sh assemble dist/pr-preview artifacts
 
+      # The pages were built against production's origin — `build` is the same
+      # job for `publish` — so their link cards would show production's OG
+      # image and open production. Pointed at this Preview's own URL instead,
+      # which has to be known before the upload: the alias is
+      # `pr-<number>-<worker>.<account subdomain>.workers.dev`, and only the
+      # subdomain needs asking for. The upload step checks the guess against
+      # the URL wrangler reports. See `rebase` in `scripts/pr-preview.sh`.
+      - name: Point absolute URLs at the Preview
+        id: origin
+        if: steps.credentials.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          # Not fatal either way: without the subdomain the Preview still goes
+          # up, with production's URLs in it as before, and says so.
+          subdomain="$(curl -fsS \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
+            | jq -r '.result.subdomain // empty' || true)"
+          if [ -z "$subdomain" ]; then
+            echo "::warning::Could not read the account's workers.dev subdomain, so this Preview's OG images and canonical URLs still point at production. See pr-preview/README.md."
+            exit 0
+          fi
+          # The Worker's name, from the file `wrangler preview` reads it from.
+          worker="$(grep -oP '^\s*"name":\s*"\K[^"]+' pr-preview/wrangler.jsonc)"
+          url="https://pr-$PR_NUMBER-$worker.$subdomain.workers.dev"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          bash scripts/pr-preview.sh rebase dist/pr-preview "$SITE_URL" "$url"
+
       # One Preview per pull request, `pr-<number>`, re-deployed by every push
       # to it. The very first one also creates the Worker, with the settings
       # in `pr-preview/wrangler.jsonc`.
@@ -520,6 +551,7 @@ jobs:
           # wrangler appends a line of JSON per command here. Read instead of
           # `--json` on stdout, which `pnpm exec` prints lines of its own into.
           WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.jsonl
+          EXPECTED_URL: ${{ steps.origin.outputs.url }}
         run: |
           set -euo pipefail
           pnpm exec wrangler preview \
@@ -538,6 +570,11 @@ jobs:
           if [ -z "$url" ]; then
             echo "::error::wrangler uploaded the Preview but reported no URL for it. Check that Preview URLs are on for the Worker in the Cloudflare dashboard."
             exit 1
+          fi
+          # Not fatal: the Preview is up and still worth reviewing; only its
+          # link cards point somewhere else.
+          if [ -n "$EXPECTED_URL" ] && [ "${url%/}" != "${EXPECTED_URL%/}" ]; then
+            echo "::warning::The Preview is at $url, but its pages were pointed at $EXPECTED_URL. OG images and canonical URLs on it are wrong; fix the guess in the 'Point absolute URLs at the Preview' step."
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "deployment_url=$(first_url deployment_urls)" >> "$GITHUB_OUTPUT"
