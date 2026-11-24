@@ -20,9 +20,12 @@ const t = messages(currentLanguage());
 const { event } = site;
 const year = new Date().getFullYear();
 
-// Same as the topbar: these are anchors into the home page, so a detail page
-// has to send them there rather than to a section it does not have.
+// Same as the topbar: an anchor is into the home page, so a detail page has to
+// send it there rather than to a section it does not have. Anything else in the
+// Studio's footer links — Luma, connpass — is a URL of its own, and prefixing
+// it would make `/tokyo/https://…`.
 const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
+const link = (href: string) => (href.startsWith("#") ? prefix + href : href);
 
 // Decorative use does not waive the photographer's credit.
 const credits = await photoCredits(site.tenant);
@@ -46,7 +49,7 @@ const switchLabel = LANGUAGE_NAMES[switchTo];
       <div>
         <nav class="foot-nav" aria-label={t.footer.navAria}>
           {site.footerNav.map((item) => (
-            <a href={prefix + item.href}>{item.label}</a>
+            <a href={link(item.href)}>{item.label}</a>
           ))}
         </nav>
         <div class="tags">
