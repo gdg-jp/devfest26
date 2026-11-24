@@ -42,7 +42,7 @@ const remote =
 ---
 
 {photo ? (
-  isRemotePhoto(photo) && remote ? (
+  remote ? (
     <img
       class={className}
       src={remote.src}
@@ -52,7 +52,7 @@ const remote =
       loading={loading}
       decoding="async"
     />
-  ) : (
+  ) : isRemotePhoto(photo) ? null : (
     <Image
       class={className}
       src={photo}
