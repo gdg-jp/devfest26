@@ -105,10 +105,11 @@ export const TOKYO_ORGANIZERS: OrganizerSection[] = [
           width: 220,
         },
       },
-      {
-        // Logo to come. Until then the card shows the name alone.
-        name: "DroidKaigi",
-      },
+      // DroidKaigi is held back for now. To bring it back, restore:
+      // {
+      //   // Logo to come. Until then the card shows the name alone.
+      //   name: "DroidKaigi",
+      // },
     ],
   },
   {

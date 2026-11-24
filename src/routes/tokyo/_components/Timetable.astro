@@ -190,7 +190,7 @@ const columnOf = (slot: TimetableSlot, tracks: number) =>
                 {track.data.sub && (
                   <p class="tk-tt__lane-sub">{track.data.sub}</p>
                 )}
-                {lane && <Level lane={lane} />}
+                {lane && <Level lane={lane} stars={false} />}
               </header>
               <ol class="tk-tt__flow">
                 {steps.map((slot) => (
