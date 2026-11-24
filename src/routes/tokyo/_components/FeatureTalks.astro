@@ -168,7 +168,7 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
     object-fit: cover;
     /* A portrait's face sits in its upper half; a frame wider than the
        square photo keeps that rather than the chest. */
-    object-position: 50% 22%;
+    object-position: 50% 30%;
     font-size: 64px;
     transition: transform 0.8s var(--tk-ease);
   }
@@ -301,8 +301,11 @@ const bare = (name: string) => name.replace(/\s*氏$/, "");
       grid-template-columns: 1fr;
     }
 
+    /* Square, as the photos are: a panel's frame is cut into four, and any
+       wider each quarter crops into a face (some speakers' pictures are
+       already a tight crop of one). Square shows every photo whole. */
     .tk-ft__photos {
-      aspect-ratio: 3 / 2;
+      aspect-ratio: 1;
       border-right: 0;
       border-bottom: var(--tk-line) solid var(--ink);
     }
