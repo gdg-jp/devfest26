@@ -1,5 +1,6 @@
 import type { ImageMetadata } from "astro";
 import googleLogo from "../../assets/tokyo/googlelogo.png";
+import jaguerLogo from "../../assets/tokyo/jaguer.svg?url";
 
 export interface SocialLink {
   type: "x" | "instagram" | "linkedin" | "connpass";
@@ -28,7 +29,7 @@ export interface OrganizerItem {
 }
 
 export interface OrganizerSection {
-  category: "organizer" | "co-organizer" | "sponsor";
+  category: "organizer" | "co-organizer" | "partner" | "sponsor";
   title: string;
   items: OrganizerItem[];
 }
@@ -88,6 +89,25 @@ export const TOKYO_ORGANIZERS: OrganizerSection[] = [
           },
         ],
         description: `Google Developer Groups on Campus (GDGoC) プログラムは、Google のテクノロジーに関心のある学生のためのコミュニティです。学生がテクノロジーの力で身近なコミュニティにおける問題を解決することを目的としています。IT 業界に興味のあるすべての大学・大学院生が参加可能で、世界中の学生との交流やさまざまな活動、ワークショップを通じて、学生の開発能力とリーダーシップ力の向上を支援しています。GDGoC は、113カ国以上、1,500以上の拠点から世界中の学生が参加しているグローバルなプログラムです。`,
+      },
+    ],
+  },
+  {
+    category: "partner",
+    title: "協力",
+    items: [
+      {
+        name: "Jagu'e'r",
+        logo: {
+          image: jaguerLogo,
+          alt: "Jagu'e'r",
+          url: "https://jaguer.jp/",
+          width: 220,
+        },
+      },
+      {
+        // Logo to come. Until then the card shows the name alone.
+        name: "DroidKaigi",
       },
     ],
   },
