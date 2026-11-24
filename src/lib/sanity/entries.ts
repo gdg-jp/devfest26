@@ -33,7 +33,9 @@ export function speakerEntry(doc: Doc): SanityEntry {
     data: {
       tenant: doc.tenant,
       name: doc.name,
-      role: doc.role,
+      // Role is required in the Studio, but a speaker can still be published
+      // with it blank; one empty field should not take the whole build down.
+      role: doc.role ?? "",
       initial: doc.initial ?? undefined,
       slug: doc.slug ?? undefined,
       photo: doc.photo

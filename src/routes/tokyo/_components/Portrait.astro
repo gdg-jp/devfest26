@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import { isRemotePhoto } from "../../../lib/photo";
+import { speakerPhotoUrl } from "../../../lib/sanity/image";
 
 /**
  * A speaker's photo at whatever size a section wants it, from either source:
@@ -28,20 +29,30 @@ const {
 const { photo, initial, name } = speaker.data;
 const loading = eager ? "eager" : "lazy";
 const px = Math.round(size * 2);
+
+// A Sanity photo's `src` is cut at the small avatars' size, which a large
+// frame blows up into a blur. Cut it again, at this frame's size, from the
+// image it came from — the crop still follows the organiser's hotspot.
+const remote =
+  photo && isRemotePhoto(photo)
+    ? photo.source
+      ? { src: speakerPhotoUrl(photo.source, px), width: px, height: px }
+      : photo
+    : undefined;
 ---
 
 {photo ? (
-  isRemotePhoto(photo) ? (
+  remote ? (
     <img
       class={className}
-      src={photo.src}
+      src={remote.src}
       alt=""
-      width={photo.width}
-      height={photo.height}
+      width={remote.width}
+      height={remote.height}
       loading={loading}
       decoding="async"
     />
-  ) : (
+  ) : isRemotePhoto(photo) ? null : (
     <Image
       class={className}
       src={photo}

@@ -58,7 +58,10 @@ const categories = CATEGORIES.flatMap((category) => {
     {
       ...category,
       track: group.track,
-      tone: trackTone(group.track),
+      // In its half's colour, as the hero and the OG card draw the icons:
+      // "AIが 動く" keeps Beyond's green though the Studio paints its track
+      // yellow.
+      tone: laneTone(program, category.lane) ?? trackTone(group.track),
       // A category with no sessions yet has no folder below to go to.
       Card: group.sessions.length > 0 ? ("a" as const) : ("div" as const),
     },
@@ -331,7 +334,7 @@ const rows = 7 + Math.max(0, ...lanes.map((lane) => lane.categories.length));
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     justify-self: stretch;
-    gap: 14px;
+    gap: 12px;
     padding: 12px 14px;
     border: var(--tk-line) solid var(--ink);
     border-radius: var(--tk-r-md);
@@ -375,14 +378,20 @@ const rows = 7 + Math.max(0, ...lanes.map((lane) => lane.categories.length));
   .tk-cat__name {
     font-family: var(--tk-f-display);
     font-weight: 700;
-    font-size: clamp(18px, 2vw, 22px);
+    /* Capped so the longest name, AI を "体験する", stays on one line in the
+       narrowest card a wide screen gives it: two lines there made its row,
+       and "AIが 動く" beside it, taller than the other two. */
+    font-size: clamp(18px, 2vw, 21px);
     line-height: 1.2;
     /* Break at the spaces only: "AI を / "体験する"", never inside a word. */
     word-break: keep-all;
     overflow-wrap: anywhere;
   }
 
+  /* Room for two lines whether the line takes one or two, so the four cards
+     are the same height on a phone too, where no shared row lines them up. */
   .tk-cat__sub {
+    min-height: 3em;
     font-size: 12px;
     line-height: 1.5;
     color: var(--muted);

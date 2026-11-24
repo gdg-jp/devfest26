@@ -54,10 +54,9 @@ export const trackLink = (trackId: string) => `#tk-sessions-${trackId}`;
  * - `span: "all"` — across every track: the doors, the keynotes, the closing.
  * - `span: "side"` — beside the tracks, all day: the demo floor.
  *
- * Keynote 2 is here because the Studio has no session for it yet (Keynote 1
- * is in the Studio now, on its Keynote track). When it is added there, take
- * its row out of this list: both would claim the same minutes, and the build
- * stops on it.
+ * The keynotes and the lightning talks are Studio sessions, not rows here. A
+ * row for something the Studio also has would claim the same minutes, and the
+ * build stops on it.
  */
 export interface DayItem {
   start: string;
@@ -80,21 +79,11 @@ export const DAY: readonly DayItem[] = [
     title: { ja: "受付開始", en: "Doors open" },
   },
   {
-    start: "12:50",
-    end: "13:20",
-    span: "all",
-    kicker: "Keynote 2",
-    title: {
-      ja: "Community Panel Discussion",
-      en: "Community Panel Discussion",
-    },
-  },
-  {
-    start: "17:25",
+    start: "17:55",
     end: "18:00",
     span: "all",
     accent: true,
-    title: { ja: "大 LT 会 & クロージング", en: "Lightning talks & closing" },
+    title: { ja: "クロージング", en: "Closing" },
   },
   {
     start: "18:30",
@@ -362,7 +351,7 @@ export interface Faq {
  * Tokyo's theme is not crossing disciplines, so the non-engineers' answer
  * points to Meet the Vibes instead. Tokyo has no booths, so the students'
  * answer is about consent instead; it
- * has no "can't make it" question, and adds one on support in English.
+ * has no "can't make it" question, and adds one on language support.
  */
 export const FAQ: readonly Faq[] = [
   {
@@ -391,13 +380,12 @@ export const FAQ: readonly Faq[] = [
   },
   {
     q: {
-      ja: "英語のサポートはありますか？",
-      en: "Is there support in English?",
+      ja: "言語サポートはありますか？",
+      en: "Is there language support?",
     },
     a: {
-      // TODO: 仮の文章。サポートの範囲（通訳・字幕・スタッフ対応など）が決まりしだい差し替える
-      ja: "はい。英語でのサポートを用意しています。内容は決まりしだいこのページでお知らせします。",
-      en: "Yes, there is support in English. Details will be posted on this page as they are settled.",
+      ja: "Gemini を用いたライブ翻訳 (日 → 英 & 英 → 日) を実施予定です。翻訳されたテキストがスクリーンに表示されます。",
+      en: "We plan to run live translation with Gemini (Japanese → English and English → Japanese). The translated text will be shown on screen.",
     },
   },
   {
@@ -496,6 +484,8 @@ export const COPY = {
     overviewFee: "参加費",
     overviewMap: "Google マップで会場を見る",
     featuredHeading: "注目のスピーカー",
+    featureTalksHeading: "Feature Talks",
+    featureTalksMore: "セッション詳細",
     prev: "前へ",
     next: "次へ",
     register: "無料で参加登録",
@@ -577,6 +567,8 @@ export const COPY = {
     overviewFee: "Admission",
     overviewMap: "See the venue on Google Maps",
     featuredHeading: "Featured speakers",
+    featureTalksHeading: "Feature Talks",
+    featureTalksMore: "Session details",
     prev: "Previous",
     next: "Next",
     register: "Register for free",

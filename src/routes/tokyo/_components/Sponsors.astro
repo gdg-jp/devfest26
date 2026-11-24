@@ -16,12 +16,17 @@ import {
  * section did; only the drawing is new. The section answers to `#organizers`
  * and `#partners` as well, which other pages may still link to.
  *
- * The communities come first and the sponsors last, at the organisers'
- * request, and the organisers' heading is set in English here ("Host") —
- * the data keeps its own titles for the other pages that read it.
+ * The sections run in the data's order: the communities first and the
+ * sponsors last, at the organisers' request, with the supporting partners
+ * (協力) between. The host and co-hosts are introduced in words; partners and
+ * sponsors are shown by their marks. The organisers' heading is set in
+ * English here ("Host") — the data keeps its own titles for the other pages
+ * that read it.
  */
-const sponsors = TOKYO_ORGANIZERS.filter((s) => s.category === "sponsor");
-const groups = TOKYO_ORGANIZERS.filter((s) => s.category !== "sponsor");
+const BY_MARK: ReadonlySet<OrganizerSection["category"]> = new Set([
+  "partner",
+  "sponsor",
+]);
 
 const TITLES: Partial<Record<OrganizerSection["category"], string>> = {
   organizer: "Host",
@@ -57,7 +62,7 @@ const logoWidth = (item: OrganizerItem) => item.logo?.width ?? 220;
       tone="var(--tk-accent-ht)"
       stickers={["scallop", "multiply"]}
     >
-      {groups.map((section, i) => (
+      {TOKYO_ORGANIZERS.map((section, i) => (
         <>
           <h3
             class:list={[
@@ -68,103 +73,98 @@ const logoWidth = (item: OrganizerItem) => item.logo?.width ?? 220;
           >
             {titleOf(section)}
           </h3>
-          <ul class="tk-partners" data-tk-stagger>
-            {section.items.map((item) => (
-              <li
-                class="tk-partners__card"
-                style={`--rail:${nextRail()}`}
-                data-tk-reveal="up"
-              >
-                <div class="tk-partners__head">
-                  <span class="tk-partners__name">{item.name}</span>
-                  {item.socials && item.socials.length > 0 && (
+          {BY_MARK.has(section.category) ? (
+            <ul class="tk-spons" data-tk-stagger>
+              {section.items.map((item) => {
+                const href = item.logo?.url ?? item.xUrl;
+                const mark = item.logo ? (
+                  typeof item.logo.image === "string" ? (
+                    <img
+                      src={item.logo.image}
+                      alt={item.logo.alt}
+                      width={logoWidth(item)}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <Image
+                      src={item.logo.image}
+                      alt={item.logo.alt}
+                      width={logoWidth(item)}
+                      loading="lazy"
+                    />
+                  )
+                ) : null;
+                const inner = (
+                  <>
+                    {mark}
+                    <span class="tk-spons__name">{item.name}</span>
+                  </>
+                );
+                return (
+                  <li data-tk-reveal="pop">
+                    {href ? (
+                      <a
+                        class="tk-spons__card"
+                        href={href}
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        {inner}
+                      </a>
+                    ) : (
+                      <div class="tk-spons__card">{inner}</div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <ul class="tk-partners" data-tk-stagger>
+              {section.items.map((item) => (
+                <li
+                  class="tk-partners__card"
+                  style={`--rail:${nextRail()}`}
+                  data-tk-reveal="up"
+                >
+                  <div class="tk-partners__head">
+                    <span class="tk-partners__name">{item.name}</span>
+                    {item.socials && item.socials.length > 0 && (
+                      <span class="tk-partners__socials">
+                        {item.socials.map((social) => (
+                          <a
+                            href={social.url}
+                            target="_blank"
+                            rel="noopener"
+                            aria-label={social.label}
+                            title={social.label}
+                          >
+                            {SOCIAL_LABEL[social.type] ?? social.type} ↗
+                          </a>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <div class="tk-partners__body">
+                      {item.description.split("\n\n").map((block) => (
+                        <p>{block}</p>
+                      ))}
+                    </div>
+                  )}
+                  {item.links && item.links.length > 0 && (
                     <span class="tk-partners__socials">
-                      {item.socials.map((social) => (
-                        <a
-                          href={social.url}
-                          target="_blank"
-                          rel="noopener"
-                          aria-label={social.label}
-                          title={social.label}
-                        >
-                          {SOCIAL_LABEL[social.type] ?? social.type} ↗
+                      {item.links.map((link) => (
+                        <a href={link.url} target="_blank" rel="noopener">
+                          {link.label} ↗
                         </a>
                       ))}
                     </span>
                   )}
-                </div>
-                {item.description && (
-                  <div class="tk-partners__body">
-                    {item.description.split("\n\n").map((block) => (
-                      <p>{block}</p>
-                    ))}
-                  </div>
-                )}
-                {item.links && item.links.length > 0 && (
-                  <span class="tk-partners__socials">
-                    {item.links.map((link) => (
-                      <a href={link.url} target="_blank" rel="noopener">
-                        {link.label} ↗
-                      </a>
-                    ))}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
-      ))}
-
-      {sponsors.map((section) => (
-        <>
-          <h3 class="tk-partners__h" data-tk-reveal="up">
-            {titleOf(section)}
-          </h3>
-          <ul class="tk-spons" data-tk-stagger>
-            {section.items.map((item) => {
-              const href = item.logo?.url ?? item.xUrl;
-              const mark = item.logo ? (
-                typeof item.logo.image === "string" ? (
-                  <img
-                    src={item.logo.image}
-                    alt={item.logo.alt}
-                    width={logoWidth(item)}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <Image
-                    src={item.logo.image}
-                    alt={item.logo.alt}
-                    width={logoWidth(item)}
-                    loading="lazy"
-                  />
-                )
-              ) : null;
-              const inner = (
-                <>
-                  {mark}
-                  <span class="tk-spons__name">{item.name}</span>
-                </>
-              );
-              return (
-                <li data-tk-reveal="pop">
-                  {href ? (
-                    <a
-                      class="tk-spons__card"
-                      href={href}
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      {inner}
-                    </a>
-                  ) : (
-                    <div class="tk-spons__card">{inner}</div>
-                  )}
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          )}
         </>
       ))}
     </Panel>
