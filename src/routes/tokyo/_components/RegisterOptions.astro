@@ -67,7 +67,7 @@ const options = (Object.keys(LANES) as Lane[]).map((lane) => {
         </span>
         <span class="tk-reg__audience">{localized(audience, lang)}</span>
         <span class="tk-reg__title">{title}</span>
-        <Level lane={lane} />
+        <Level lane={lane} stars={false} />
         <span class="tk-reg__lead">{lead}</span>
         <span class="tk-reg__via">
           {c.registerVia(via)}

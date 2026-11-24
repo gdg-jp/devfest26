@@ -74,7 +74,7 @@ const groups = (await getProgram(site.tenant)).filter(
                   <h3 class="tk-sessions__track" id={`tk-sessions-${track.id}`}>
                     {track.data.label}
                   </h3>
-                  {lane && <Level lane={lane} />}
+                  {lane && <Level lane={lane} stars={false} />}
                   {track.data.sub && (
                     <p class="tk-sessions__sub">{track.data.sub}</p>
                   )}
