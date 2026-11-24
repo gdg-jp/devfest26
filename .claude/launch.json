@@ -78,16 +78,6 @@
         "4321"
       ],
       "port": 4321
-    },
-    {
-      "name": "feature-talks-mock",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "C:/Users/ichi_/AppData/Local/Temp/claude/167a0313803d7f0f/327b9c17-c787-46a6-bc78-f2d524203e44/scratchpad/serve.mjs",
-        "C:/Users/ichi_/AppData/Local/Temp/claude/167a0313803d7f0f/327b9c17-c787-46a6-bc78-f2d524203e44/scratchpad/mock",
-        "4330"
-      ],
-      "port": 4330
     }
   ]
 }
