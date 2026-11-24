@@ -69,6 +69,7 @@ export const TOKYO_SPEAKER_SOCIALS: Record<string, SpeakerSocial[]> = {
   mario: [x("vloomy_mario")],
   mayahjp: [x("mayahjp")],
   munetoshi: [x("mntsh")],
+  myakura: [x("myakura")],
   naoya: [x("Getty708")],
   ohtaman: [x("ohtaman")],
   ryunen344: [x("RyuNen344")],

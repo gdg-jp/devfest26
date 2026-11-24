@@ -3,7 +3,7 @@ import Panel from "./Panel.astro";
 import Icon from "./Icon.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
-import { copy, localized, OVERVIEW } from "../_content";
+import { AFTER_PARTY_URL, copy, localized, OVERVIEW } from "../_content";
 
 /**
  * When, where and how much. The facts are marked by icons rather than
@@ -109,8 +109,19 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
               <span class="tk-overview__big">
                 {localized(OVERVIEW.fee, lang)}
               </span>
-              <span class="tk-overview__note">
-                ※ {localized(OVERVIEW.feeNote, lang)}
+              <span class="tk-overview__fee">
+                <span class="tk-overview__note">
+                  ※ {localized(OVERVIEW.feeNote, lang)}
+                </span>
+                <a
+                  class="tk-overview__party"
+                  href={AFTER_PARTY_URL}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {localized(OVERVIEW.afterParty, lang)}
+                  <Icon name="external" />
+                </a>
               </span>
             </dd>
           </div>
@@ -185,6 +196,35 @@ const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponen
     flex-wrap: wrap;
     align-items: baseline;
     column-gap: 6px;
+  }
+
+  .tk-overview__fee {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+  }
+
+  /* The after-party's sign-up: a small aside to its note, not a button. */
+  .tk-overview__party {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--tk-hair);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .tk-overview__party:hover {
+    text-decoration-color: var(--ink);
+  }
+
+  .tk-overview__party :global(svg) {
+    width: 11px;
+    margin-left: 3px;
+    vertical-align: -1px;
   }
 
   .tk-overview__venue {
