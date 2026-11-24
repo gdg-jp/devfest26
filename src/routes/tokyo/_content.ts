@@ -54,8 +54,9 @@ export const trackLink = (trackId: string) => `#tk-sessions-${trackId}`;
  * - `span: "all"` — across every track: the doors, the keynotes, the closing.
  * - `span: "side"` — beside the tracks, all day: the demo floor.
  *
- * The keynotes are Studio sessions, not rows here. A row for something the
- * Studio also has would claim the same minutes, and the build stops on it.
+ * The keynotes and the lightning talks are Studio sessions, not rows here. A
+ * row for something the Studio also has would claim the same minutes, and the
+ * build stops on it.
  */
 export interface DayItem {
   start: string;
@@ -78,11 +79,11 @@ export const DAY: readonly DayItem[] = [
     title: { ja: "受付開始", en: "Doors open" },
   },
   {
-    start: "17:25",
+    start: "17:55",
     end: "18:00",
     span: "all",
     accent: true,
-    title: { ja: "大 LT 会 & クロージング", en: "Lightning talks & closing" },
+    title: { ja: "クロージング", en: "Closing" },
   },
   {
     start: "18:30",
