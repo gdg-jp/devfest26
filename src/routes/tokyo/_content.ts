@@ -177,7 +177,12 @@ export const OVERVIEW = {
     ja: "懇親会は有料です",
     en: "The after-party is paid",
   },
+  /** Said small, just right of `feeNote`: where to sign up for the after-party. */
+  afterParty: { ja: "懇親会の申し込み", en: "After-party sign-up" },
 } satisfies Record<string, Localized>;
+
+/** The after-party's own sign-up page, separate from the event's. */
+export const AFTER_PARTY_URL = "https://luma.com/if5ialm8";
 
 export type Lane = "meet" | "beyond";
 
