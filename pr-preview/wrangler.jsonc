@@ -18,9 +18,10 @@
   "assets": {
     "directory": "../dist/pr-preview",
     // What GitHub Pages does: `/kansai` redirects to `/kansai/` and serves its
-    // `index.html`. The draft preview drops the slash instead, because it
-    // renders `trailingSlash: "never"` routes; this one serves the static
-    // build, and should behave the way production will with it.
+    // `index.html` — the form every link in the static build is written in.
+    // The draft preview drops the slash instead, because it renders
+    // `trailingSlash: "never"` routes; this one serves the static build, and
+    // should behave the way production will with it.
     "html_handling": "auto-trailing-slash"
   },
 
