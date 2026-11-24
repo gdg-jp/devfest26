@@ -1,9 +1,10 @@
 ---
 import RegisterOptions from "./RegisterOptions.astro";
+import Icon from "./Icon.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
 import { messages } from "../../../i18n";
-import { localized, OVERVIEW } from "../_content";
+import { AFTER_PARTY_URL, localized, OVERVIEW } from "../_content";
 
 /**
  * The foot of a session or speaker page. Someone who has read this far into
@@ -48,7 +49,19 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
       <div class="tk-closing__end">
         <RegisterOptions site={site} placement={placement} />
         <p class="tk-closing__note">
-          {localized(OVERVIEW.fee, lang)} ※ {localized(OVERVIEW.feeNote, lang)}
+          <span>
+            {localized(OVERVIEW.fee, lang)} ※{" "}
+            {localized(OVERVIEW.feeNote, lang)}
+          </span>
+          <a
+            class="tk-closing__party"
+            href={AFTER_PARTY_URL}
+            target="_blank"
+            rel="noopener"
+          >
+            {localized(OVERVIEW.afterParty, lang)}
+            <Icon name="external" />
+          </a>
         </p>
       </div>
     </div>
@@ -119,9 +132,39 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
   }
 
   .tk-closing__note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
     margin: 0;
     font-size: 14px;
     font-weight: 700;
     color: var(--tk-on-dark-muted);
+  }
+
+  /* The after-party's sign-up: a small aside to its note, not a button. */
+  .tk-closing__party {
+    font-size: 13px;
+    color: var(--surface);
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--tk-on-dark-muted);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .tk-closing__party:hover {
+    text-decoration-color: var(--surface);
+  }
+
+  .tk-closing__party:focus-visible {
+    outline: 3px solid var(--ht-yellow);
+    outline-offset: 2px;
+  }
+
+  .tk-closing__party :global(svg) {
+    width: 12px;
+    margin-left: 3px;
+    vertical-align: -1px;
   }
 </style>

@@ -36,6 +36,9 @@ export const SHOW_TIMES = true;
  */
 export const TIMETABLE_PATH = "/timetable";
 
+/** The after-party's own sign-up page, separate from the event's. */
+export const AFTER_PARTY_URL = "https://luma.com/if5ialm8";
+
 /**
  * The timetable's anchor for a track. On a wide screen it is the track's
  * heading in the grid; on a phone, where the grid is not drawn, it opens that
@@ -67,6 +70,8 @@ export interface DayItem {
   title: Localized;
   /** A warning-coloured tag, e.g. paid and needs its own sign-up. */
   flag?: Localized;
+  /** A small link just right of `flag`, e.g. where to sign up. */
+  link?: { label: Localized; href: string };
   /** Drawn in the accent colour rather than as a plain row. */
   accent?: boolean;
 }
@@ -91,6 +96,10 @@ export const DAY: readonly DayItem[] = [
     span: "all",
     title: { ja: "懇親会", en: "After-party" },
     flag: { ja: "有料・事前登録必要", en: "Paid · sign-up required" },
+    link: {
+      label: { ja: "申し込み", en: "Sign up" },
+      href: AFTER_PARTY_URL,
+    },
   },
   {
     start: "11:30",
@@ -180,9 +189,6 @@ export const OVERVIEW = {
   /** Said small, just right of `feeNote`: where to sign up for the after-party. */
   afterParty: { ja: "懇親会の申し込み", en: "After-party sign-up" },
 } satisfies Record<string, Localized>;
-
-/** The after-party's own sign-up page, separate from the event's. */
-export const AFTER_PARTY_URL = "https://luma.com/if5ialm8";
 
 export type Lane = "meet" | "beyond";
 
