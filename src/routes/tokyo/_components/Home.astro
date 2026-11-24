@@ -7,6 +7,7 @@ import HeroSplit, {
 } from "./hero/HeroSplit.astro";
 import HeroSwitch from "./hero/HeroSwitch.astro";
 import Featured from "./Featured.astro";
+import FeatureTalks from "./FeatureTalks.astro";
 import Theme from "./Theme.astro";
 import Overview from "./Overview.astro";
 import News from "./News.astro";
@@ -40,7 +41,7 @@ interface Props {
 }
 
 const { site } = Astro.props;
-const { featured, speakers } = await homeData(site.tenant);
+const { featured, keynotes, speakers } = await homeData(site.tenant);
 
 const HEROES: {
   id: string;
@@ -162,6 +163,7 @@ const shipped = HEROES.find(({ id }) => id === HERO) ?? HEROES[0];
     )}
   </div>
   <Theme site={site} />
+  <FeatureTalks keynotes={keynotes} />
   <Overview site={site} />
   <Featured featured={featured} />
   <News />

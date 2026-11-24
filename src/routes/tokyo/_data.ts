@@ -1,6 +1,7 @@
 import {
   getProgramSessions,
   getProgramSpeakers,
+  type ProgramSession,
   type SpeakerProgram,
 } from "../../data/program";
 import { getTracks } from "../../data/tracks";
@@ -17,6 +18,41 @@ export interface FeaturedSpeaker extends Featured {
   program: SpeakerProgram;
   /** The first talk they give, which is the one a card names. */
   talk: { title: string | undefined; href: string; start: string | undefined };
+}
+
+export interface Keynote {
+  session: ProgramSession;
+  /** "Keynote 1", from the bracket the Studio title opens with. */
+  kicker: string;
+  /** The Studio title with that bracket taken off. */
+  title: string;
+}
+
+/**
+ * The Studio has no field that says a session is a keynote; its title does,
+ * as connpass prints it: "[Keynote 1] Keynote from Google". Read from there,
+ * in the day's order, so a keynote added or renamed in the Studio shows up
+ * without a list here to keep in step.
+ */
+const KEYNOTE_TITLE = /^\s*\[(Keynote\s*\d*)\]\s*/i;
+
+function keynotesOf(sessions: ProgramSession[]): Keynote[] {
+  return sessions
+    .flatMap((session) => {
+      const title = session.entry.data.title;
+      const match = title?.match(KEYNOTE_TITLE);
+      if (!title || !match) return [];
+      return [
+        {
+          session,
+          kicker: match[1].replace(/\s+/g, " "),
+          title: title.slice(match[0].length),
+        },
+      ];
+    })
+    .sort((a, b) =>
+      (a.session.start ?? "").localeCompare(b.session.start ?? ""),
+    );
 }
 
 export async function homeData(tenant: string) {
@@ -58,6 +94,7 @@ export async function homeData(tenant: string) {
     sessions,
     speakers,
     featured,
+    keynotes: keynotesOf(sessions),
     featuredSessions,
     counts: {
       sessions: sessions.length,

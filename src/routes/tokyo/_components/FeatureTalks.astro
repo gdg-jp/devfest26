@@ -1,0 +1,301 @@
+---
+import Portrait from "./Portrait.astro";
+import Arrow from "./Arrow.astro";
+import Panel from "./Panel.astro";
+import { currentLanguage } from "../../../i18n/language";
+import { copy, SESSION_TAGS } from "../_content";
+import type { Keynote } from "../_data";
+
+/**
+ * The keynotes, straight after the theme: one card each, in the day's order.
+ *
+ * Neither is the headliner. Every card is drawn the same — the same size,
+ * colour and type, its speakers' photos filling the same frame on the left
+ * — so the only thing that tells them apart is the order they run in. A
+ * panel's frame is split between its speakers; a talk by one person fills it.
+ *
+ * Which sessions are keynotes is read from their Studio titles (`_data.ts`).
+ * Left off the page while there are none.
+ */
+interface Props {
+  keynotes: Keynote[];
+}
+
+const { keynotes } = Astro.props;
+const lang = currentLanguage();
+const c = copy(lang);
+const bare = (name: string) => name.replace(/\s*氏$/, "");
+---
+
+{keynotes.length > 0 && (
+  <section
+    class="tk-sec tk-sec--panel tk-ft"
+    id="feature-talks"
+    aria-labelledby="tk-ft-h"
+  >
+    <div class="tk-wrap tk-wrap--panel">
+      <Panel
+        title={c.featureTalksHeading}
+        id="tk-ft-h"
+        tone="var(--ht-yellow)"
+        stickers={["slash", "period"]}
+      >
+        <ul class="tk-ft__list" data-tk-reveal="rise">
+          {keynotes.map(({ session, kicker, title }) => {
+            const people = session.speakers;
+            const english = SESSION_TAGS[session.slug]?.english;
+            return (
+              <li>
+                <a class="tk-ft__card" href={session.href}>
+                  <span
+                    class="tk-ft__photos"
+                    style={`--n:${Math.max(1, people.length)}`}
+                    data-count={people.length > 1 ? "many" : "one"}
+                  >
+                    {people.map((speaker) => (
+                      <span class="tk-ft__photo">
+                        <Portrait
+                          speaker={speaker}
+                          size={people.length > 1 ? 240 : 480}
+                          class="tk-ft__img"
+                        />
+                      </span>
+                    ))}
+                  </span>
+                  <span class="tk-ft__body">
+                    <span class="tk-ft__kicker">{kicker}</span>
+                    <span class="tk-ft__meta">
+                      {session.start && (
+                        <span class="tk-ft__time">
+                          {session.start}
+                          {session.end && ` – ${session.end}`}
+                        </span>
+                      )}
+                      {english && (
+                        <span class="tk-ft__tag">{c.timetableEnglish}</span>
+                      )}
+                    </span>
+                    <span class="tk-ft__title">{title}</span>
+                    <span class="tk-ft__people">
+                      {people.map((speaker) => (
+                        <span class="tk-ft__person">
+                          <span class="tk-ft__name">
+                            {bare(speaker.data.name)}
+                          </span>
+                          {speaker.data.role && (
+                            <span class="tk-ft__role">{speaker.data.role}</span>
+                          )}
+                        </span>
+                      ))}
+                    </span>
+                    <span class="tk-ft__more">
+                      {c.featureTalksMore}
+                      <Arrow />
+                    </span>
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
+    </div>
+  </section>
+)}
+
+<style>
+  /* Every card as tall as the tallest, so a panel's longer line-up does not
+     make it the bigger one. */
+  .tk-ft__list {
+    display: grid;
+    grid-auto-rows: 1fr;
+    gap: clamp(14px, 2vw, 20px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-ft__list > li {
+    display: grid;
+  }
+
+  /* ---- card --------------------------------------------------------- */
+
+  .tk-ft__card {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    border: var(--tk-line) solid var(--ink);
+    border-radius: var(--tk-r-lg);
+    overflow: hidden;
+    background: var(--ht-yellow);
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* ---- photos ------------------------------------------------------- */
+
+  /* One speaker fills the frame; several share it two to a row, an odd
+     last one across the row. */
+  .tk-ft__photos {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-rows: 1fr;
+    gap: var(--tk-line);
+    min-height: 320px;
+    border-right: var(--tk-line) solid var(--ink);
+    background: var(--ink);
+    overflow: hidden;
+  }
+
+  .tk-ft__photos[data-count="many"] {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tk-ft__photos[data-count="many"] .tk-ft__photo:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .tk-ft__photo {
+    position: relative;
+    display: block;
+    min-height: 0;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .tk-ft__photo :global(.tk-ft__img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-size: 64px;
+    transition: transform 0.8s var(--tk-ease);
+  }
+
+  .tk-ft__card:hover :global(.tk-ft__img),
+  .tk-ft__card:focus-visible :global(.tk-ft__img) {
+    transform: scale(1.04);
+  }
+
+  /* ---- text --------------------------------------------------------- */
+
+  .tk-ft__body {
+    display: grid;
+    align-content: center;
+    gap: 10px;
+    padding: clamp(22px, 3.4vw, 40px);
+    background: var(--surface);
+  }
+
+  .tk-ft__kicker {
+    justify-self: start;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--ht-yellow);
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .tk-ft__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tk-ft__time {
+    font-family: var(--f-mono);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  .tk-ft__tag {
+    padding: 1px 10px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  .tk-ft__title {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: clamp(28px, 4.2vw, 44px);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  .tk-ft__people {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px 20px;
+    margin-top: 6px;
+  }
+
+  .tk-ft__person {
+    display: grid;
+    gap: 1px;
+  }
+
+  .tk-ft__name {
+    font-family: var(--tk-f-display);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .tk-ft__role {
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .tk-ft__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-self: start;
+    margin-top: 8px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-weight: 700;
+    font-size: 14px;
+    transition: gap 0.3s var(--tk-ease);
+  }
+
+  .tk-ft__more :global(svg) {
+    width: 16px;
+  }
+
+  .tk-ft__card:hover .tk-ft__more,
+  .tk-ft__card:focus-visible .tk-ft__more {
+    gap: 14px;
+  }
+
+  @media (width < 720px) {
+    .tk-ft__card {
+      grid-template-columns: 1fr;
+    }
+
+    .tk-ft__photos {
+      min-height: 0;
+      aspect-ratio: 4 / 3;
+      border-right: 0;
+      border-bottom: var(--tk-line) solid var(--ink);
+    }
+  }
+</style>

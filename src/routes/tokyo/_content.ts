@@ -54,10 +54,8 @@ export const trackLink = (trackId: string) => `#tk-sessions-${trackId}`;
  * - `span: "all"` — across every track: the doors, the keynotes, the closing.
  * - `span: "side"` — beside the tracks, all day: the demo floor.
  *
- * Keynote 2 is here because the Studio has no session for it yet (Keynote 1
- * is in the Studio now, on its Keynote track). When it is added there, take
- * its row out of this list: both would claim the same minutes, and the build
- * stops on it.
+ * The keynotes are Studio sessions, not rows here. A row for something the
+ * Studio also has would claim the same minutes, and the build stops on it.
  */
 export interface DayItem {
   start: string;
@@ -78,16 +76,6 @@ export const DAY: readonly DayItem[] = [
     end: "12:00",
     span: "all",
     title: { ja: "受付開始", en: "Doors open" },
-  },
-  {
-    start: "12:50",
-    end: "13:20",
-    span: "all",
-    kicker: "Keynote 2",
-    title: {
-      ja: "Community Panel Discussion",
-      en: "Community Panel Discussion",
-    },
   },
   {
     start: "17:25",
@@ -496,6 +484,8 @@ export const COPY = {
     overviewFee: "参加費",
     overviewMap: "Google マップで会場を見る",
     featuredHeading: "注目のスピーカー",
+    featureTalksHeading: "Feature Talks",
+    featureTalksMore: "セッション詳細",
     prev: "前へ",
     next: "次へ",
     register: "無料で参加登録",
@@ -577,6 +567,8 @@ export const COPY = {
     overviewFee: "Admission",
     overviewMap: "See the venue on Google Maps",
     featuredHeading: "Featured speakers",
+    featureTalksHeading: "Feature Talks",
+    featureTalksMore: "Session details",
     prev: "Previous",
     next: "Next",
     register: "Register for free",
