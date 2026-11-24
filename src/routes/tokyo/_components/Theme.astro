@@ -58,7 +58,10 @@ const categories = CATEGORIES.flatMap((category) => {
     {
       ...category,
       track: group.track,
-      tone: trackTone(group.track),
+      // In its half's colour, as the hero and the OG card draw the icons:
+      // "AIが 動く" keeps Beyond's green though the Studio paints its track
+      // yellow.
+      tone: laneTone(program, category.lane) ?? trackTone(group.track),
       // A category with no sessions yet has no folder below to go to.
       Card: group.sessions.length > 0 ? ("a" as const) : ("div" as const),
     },
