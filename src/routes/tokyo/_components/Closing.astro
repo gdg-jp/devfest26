@@ -50,7 +50,8 @@ const day = (lang === "ja" ? event.dayOfWeekEn : event.dayOfWeek).toUpperCase();
         <RegisterOptions site={site} placement={placement} />
         <p class="tk-closing__note">
           <span>
-            {localized(OVERVIEW.fee, lang)} ※ {localized(OVERVIEW.feeNote, lang)}
+            {localized(OVERVIEW.fee, lang)} ※{" "}
+            {localized(OVERVIEW.feeNote, lang)}
           </span>
           <a
             class="tk-closing__party"
