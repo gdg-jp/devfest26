@@ -603,7 +603,10 @@ async function getIssuer(env: Env): Promise<oidc.Configuration> {
         new URL(env.IDP_ISSUER),
         env.IDP_CLIENT_ID as string,
         env.IDP_CLIENT_SECRET as string,
-        undefined,
+        // Accounts registers its apps for client_secret_basic, and since
+        // Better Auth 1.7 it refuses any other method at the token endpoint.
+        // openid-client defaults to client_secret_post, so say it here.
+        oidc.ClientSecretBasic(env.IDP_CLIENT_SECRET as string),
         { timeout: 10 },
       )
       .catch((error) => {
