@@ -1,5 +1,6 @@
 ---
 import Portrait from "./Portrait.astro";
+import Icon from "./Icon.astro";
 import { currentLanguage } from "../../../i18n/language";
 import { copy, localized } from "../_content";
 import type { TimetableSlot } from "../_timetable";
@@ -74,6 +75,17 @@ const Tag = kind === "session" && session ? "a" : "div";
       <b class="tk-ts__title">{title}</b>
       {slot.day?.flag && (
         <span class="tk-ts__flag">{localized(slot.day.flag, lang)}</span>
+      )}
+      {slot.day?.link && (
+        <a
+          class="tk-ts__link"
+          href={slot.day.link.href}
+          target="_blank"
+          rel="noopener"
+        >
+          {localized(slot.day.link.label, lang)}
+          <Icon name="external" />
+        </a>
       )}
       {!phone && (
         <time class="tk-ts__time tk-ts__time--end">
@@ -171,6 +183,33 @@ const Tag = kind === "session" && session ? "a" : "div";
     font-size: 12px;
     font-weight: 700;
     line-height: 1.6;
+  }
+
+  /* The after-party's sign-up: a small aside to its flag, not a button. */
+  .tk-ts__link {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--tk-hair);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .tk-ts__link:hover {
+    text-decoration-color: var(--ink);
+  }
+
+  .tk-ts__link:focus-visible {
+    outline: 3px solid var(--tk-accent-deep);
+    outline-offset: 2px;
+  }
+
+  .tk-ts__link :global(svg) {
+    width: 11px;
+    margin-left: 3px;
+    vertical-align: -1px;
   }
 
   /* ---- the demo strip -------------------------------------------------- */
