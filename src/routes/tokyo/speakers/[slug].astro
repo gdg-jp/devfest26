@@ -20,6 +20,7 @@ import {
   type SpeakerProgram,
 } from "../../../data/program";
 import { getTimetable } from "../../../data/timetable";
+import { socialUrl, speakerSocials } from "../../../data/tokyo/speakerSocials";
 import { messages } from "../../../i18n";
 import { currentLanguage } from "../../../i18n/language";
 import { copy, FEATURED, localized, SHOW_TIMES } from "../_content";
@@ -63,6 +64,7 @@ const home = tenantHome(site.tenant);
 const { name, role } = speaker.data;
 const profile = speaker.body?.trim();
 const pick = FEATURED.find((f) => f.slug === slug);
+const socials = speakerSocials(slug);
 
 const TONES = {
   green: { solid: "var(--green)", ht: "var(--ht-green)" },
@@ -120,6 +122,7 @@ const jsonLd = {
   name,
   jobTitle: role,
   ...(url ? { url } : {}),
+  ...(socials.length > 0 ? { sameAs: socials.map(socialUrl) } : {}),
   performerIn: appearances
     .filter(({ talk }) => talk.title)
     .map(({ talk }) => ({ "@type": "Event", name: talk.title })),
@@ -184,6 +187,33 @@ const jsonLd = {
                 </li>
               ))}
             </ul>
+            {socials.length > 0 && (
+              <ul class="tk-sp__socials">
+                {socials.map((social) => (
+                  <li>
+                    <a
+                      class="tk-sp__social"
+                      href={socialUrl(social)}
+                      target="_blank"
+                      rel="noopener noreferrer me"
+                      aria-label={`X: @${social.handle}`}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path
+                          fill="currentColor"
+                          d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.67l7.73-8.84L1.25 2.25h6.83l4.71 6.23Zm-1.16 17.52h1.83L7.08 4.13H5.12Z"
+                        />
+                      </svg>
+                      <span>@{social.handle}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -377,6 +407,46 @@ const jsonLd = {
   .tk-sp__slot:focus-visible {
     transform: translate(-2px, -2px);
     box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .tk-sp__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tk-sp__social {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px 5px 10px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-decoration: none;
+    transition:
+      transform 0.35s var(--tk-ease),
+      box-shadow 0.35s var(--tk-ease);
+  }
+
+  .tk-sp__social svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+
+  .tk-sp__social:hover,
+  .tk-sp__social:focus-visible {
+    transform: translate(-2px, -2px);
+    box-shadow: 3px 3px 0 var(--muted);
   }
 
   .tk-sp__bio {
