@@ -2,7 +2,7 @@
 import Wordmark from "./Wordmark.astro";
 import Logo from "../../../components/Logo.astro";
 import type { ResolvedTenant } from "../../../tenants";
-import { isHome, tenantHome } from "../../../lib/url";
+import { isHome, tenantHome, tenantPath } from "../../../lib/url";
 import { photoCredits } from "../../../lib/photos";
 import {
   alternatePath,
@@ -21,6 +21,10 @@ const lang = currentLanguage();
 const c = copy(lang);
 const nav = navigation(lang);
 const prefix = isHome(Astro.url, site.tenant) ? "" : tenantHome(site.tenant);
+// An anchor (`#sessions`) is on the home page; a path (the timetable) is a
+// page of the city's own, as the header has it.
+const link = (href: string) =>
+  href.startsWith("/") ? tenantPath(site.tenant, href) : `${prefix}${href}`;
 const credits = await photoCredits(site.tenant);
 const year = new Date().getFullYear();
 
@@ -51,7 +55,7 @@ const follow = [
         <ul class="tk-footer__nav">
           {nav.menu.map((item) => (
             <li>
-              <a href={`${prefix}${item.href}`}>{item.label}</a>
+              <a href={link(item.href)}>{item.label}</a>
             </li>
           ))}
         </ul>
