@@ -398,6 +398,25 @@ jobs:
 
           find site -mindepth 1 -maxdepth 3 -name index.html | sort
 
+      # `site` is the publish branch now, so the script comes from a checkout
+      # of its own: this commit's, and only that one file of it. Plain Node,
+      # nothing to install.
+      - name: Check out the sitemap script
+        uses: actions/checkout@v7
+        with:
+          path: tools
+          sparse-checkout: scripts/sitemap.mjs
+          sparse-checkout-cone-mode: false
+
+      # After the graft, so it lists the whole published site — the cities this
+      # deploy left as they were as well as the ones it replaced — and from the
+      # pages' own canonical URLs. See `scripts/sitemap.mjs`. A sitemap is not
+      # worth holding the pages back for: if this fails, the push goes ahead
+      # with the previous one and the run says so.
+      - name: Write the sitemap
+        continue-on-error: true
+        run: node tools/scripts/sitemap.mjs site
+
       - name: Push
         working-directory: site
         run: |
@@ -507,6 +526,14 @@ jobs:
         env:
           BUILDS_JSON: ${{ needs.discover.outputs.builds }}
         run: bash scripts/pr-preview.sh assemble dist/pr-preview artifacts
+
+      # The sitemap `publish` would write for these pages, so a pull request
+      # shows it too — written against production's origin like the pages, and
+      # pointed at the Preview with them by the next step.
+      - name: Write the sitemap
+        if: steps.credentials.outputs.ready == 'true'
+        continue-on-error: true
+        run: node scripts/sitemap.mjs dist/pr-preview
 
       # The pages were built against production's origin — `build` is the same
       # job for `publish` — so their link cards would show production's OG

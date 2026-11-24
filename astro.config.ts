@@ -3,6 +3,7 @@ import cloudflare from "@astrojs/cloudflare";
 import type { AstroIntegration } from "astro";
 import { fileURLToPath } from "node:url";
 import { previewMode } from "./src/preview/mode";
+import { trailingSlash } from "./src/lib/pagePath";
 import { LANGUAGES, langPrefix, langPrefixOf } from "./src/i18n/language";
 import { routeTable, type RouteFile } from "./src/lib/routeTable";
 import { offBrandColors } from "./src/lib/brandColors";
@@ -215,7 +216,13 @@ const routes: AstroIntegration = {
 export default defineConfig({
   site,
   integrations: [routes, ogCards],
-  trailingSlash: "never",
+  /**
+   * `"always"` on the published site, whose host serves `/kansai/` and
+   * redirects `/kansai` to it; `"never"` in the draft preview, whose gate does
+   * the opposite. Decided in `src/lib/pagePath.ts`, which every URL the site
+   * writes for a page goes through, so the two cannot drift apart.
+   */
+  trailingSlash,
   /**
    * Two routes rendering the same path is always a mistake here, never a
    * choice: the shared city routes step aside for a city's own pages rather

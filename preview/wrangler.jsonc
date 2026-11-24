@@ -19,8 +19,9 @@
   // output went.
   "assets": {
     "binding": "ASSETS",
-    // `astro.config.ts` sets `trailingSlash: "never"`, so `/kansai/` is not a
-    // second URL for the same page — it is redirected to `/kansai`.
+    // The preview renders `trailingSlash: "never"` routes (the published site
+    // is `"always"`; see `src/lib/pagePath.ts`), so `/kansai/` is not a second
+    // URL for the same page — it is redirected to `/kansai`.
     "html_handling": "drop-trailing-slash",
     /*
       The whole point of the first rule. Without it Cloudflare answers asset

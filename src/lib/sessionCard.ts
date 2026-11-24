@@ -5,7 +5,7 @@ import { PLACEMENTS } from "./og/placements";
 import { isRemotePhoto } from "./photo";
 import { dataset, projectId } from "./sanity/env";
 import { hasCityRoute } from "./cityRoutes";
-import { tenantPath } from "./url";
+import { tenantFile } from "./url";
 import { messages } from "../i18n";
 import { currentLanguage } from "../i18n/language";
 import { previewMode } from "../preview/mode";
@@ -119,7 +119,7 @@ export async function sessionCardImage(
   const separator = messages(currentLanguage()).common.nameSeparator;
   const names = card.speakers.map((s) => s.name).join(separator);
   return {
-    path: `${tenantPath(site.tenant, `/og/sessions/${session.slug}.png`)}?v=${await fingerprint(card)}`,
+    path: `${tenantFile(site.tenant, `/og/sessions/${session.slug}.png`)}?v=${await fingerprint(card)}`,
     alt: names ? `${card.title}｜${names}` : card.title,
   };
 }

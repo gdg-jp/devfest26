@@ -27,10 +27,11 @@
  * Kept dependency-free, like `src/preview/mode.ts`, so it can be read from
  * `astro.config.ts`, from the preview Worker, and from
  * `scripts/discover-targets.mjs` — which runs this file on a bare checkout with
- * no `node_modules` behind it, and is why the two value imports below carry
- * their `.ts` extensions.
+ * no `node_modules` behind it, and is why the value imports below carry their
+ * `.ts` extensions.
  */
 import type { Language } from "./index";
+import { pagePath } from "../lib/pagePath.ts";
 import { previewMode } from "../preview/mode.ts";
 import { requestLanguage } from "../preview/requestLanguage.ts";
 
@@ -136,6 +137,7 @@ export function alternatePath(pathname: string): string {
 
   const withoutPrefix =
     from === "" ? pathname : pathname.slice(from.length) || "/";
-  const combined = withoutPrefix === "/" ? to : `${to}${withoutPrefix}`;
-  return combined || "/";
+  // Back through `pagePath`, so `/` becomes `/en/` and not `/en` — the one
+  // case the swap alone would write in the wrong form. See `src/lib/pagePath.ts`.
+  return pagePath(`${to}${withoutPrefix}`);
 }
