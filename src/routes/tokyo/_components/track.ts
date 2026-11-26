@@ -32,25 +32,47 @@ const OFF_THEME: Record<string, string> = {
   "var(--pa-blue)": "var(--pa-red)",
 };
 
+const TRACK_B = "341a35f5-8299-4582-9ca2-3c19a0dfc9ad";
+
+/**
+ * Tracks drawn in a colour of their own whatever the Studio gives them, by
+ * track id — one set for the pages, one for the timetable. "AI が 動く"
+ * (Track B) is yellow on connpass's timetable, so the timetable draws it
+ * yellow; on the pages it is drawn in its half's green, beside "AI と 書く"
+ * (Track A), as Meet's two tracks share red. Both are pinned here so that
+ * repainting the track in the Studio changes neither.
+ */
+const REPAINT: Readonly<Record<string, string>> = {
+  [TRACK_B]: "var(--green)",
+};
+const REPAINT_AS_SET: Readonly<Record<string, string>> = {
+  [TRACK_B]: "var(--yellow)",
+};
+
 /** A track colour as Tokyo draws it. */
 export const onTheme = <T extends string | undefined>(color: T): T =>
   (color && (OFF_THEME[color] ?? color)) as T;
 
 /**
  * A track's colours. With `asSet`, the colour the Studio gives it, blue
- * included — the timetable draws the tracks as GDG Tokyo's own timetable on
- * connpass does, where "AI で つくる" is blue. Everywhere else, on theme.
+ * included, with `REPAINT_AS_SET` applied — the timetable draws the tracks as
+ * GDG Tokyo's own timetable on connpass does, where "AI で つくる" is blue.
+ * Everywhere else, on theme and with `REPAINT` applied.
  */
 export function trackTone(track: Track, { asSet = false } = {}) {
   const paint = <T extends string | undefined>(color: T) =>
     asSet ? color : onTheme(color);
-  const solid = paint(track.data.color);
+  const repainted = (asSet ? REPAINT_AS_SET : REPAINT)[track.id];
+  const drawn = repainted
+    ? { ...track, data: { ...track.data, color: repainted } }
+    : track;
+  const solid = paint(drawn.data.color);
   const tone = BY_COLOR[solid] ?? BY_COLOR["var(--yellow)"];
   return {
     solid,
     ink: track.data.darkInk ? "var(--ink)" : "var(--surface)",
     ht: tone.ht,
-    pa: paint(trackPastel(track)),
+    pa: paint(trackPastel(drawn)),
     stickers: tone.stickers,
   };
 }

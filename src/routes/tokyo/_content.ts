@@ -74,14 +74,21 @@ export interface DayItem {
   link?: { label: Localized; href: string };
   /** Drawn in the accent colour rather than as a plain row. */
   accent?: boolean;
+  /**
+   * The end time to show, when it is later than `end`. The row still takes
+   * only `start`–`end` in the grid, so it can say "until 16:30" without
+   * running across the sessions in between.
+   */
+  until?: string;
 }
 
 export const DAY: readonly DayItem[] = [
   {
     start: "11:30",
     end: "12:00",
+    until: "16:30",
     span: "all",
-    title: { ja: "受付開始", en: "Doors open" },
+    title: { ja: "受付", en: "Reception" },
   },
   {
     start: "17:55",
@@ -180,7 +187,7 @@ export const OVERVIEW = {
   station: { ja: "東京駅から", en: "From Tokyo Station" },
   walk: { ja: "徒歩約 1 分", en: "1-min walk" },
   /** Said small, just right of the hours. */
-  reception: { ja: "（受付開始は11:30～）", en: "(Doors open 11:30)" },
+  reception: { ja: "（受付は11:30～16:30）", en: "(Reception 11:30–16:30)" },
   fee: { ja: "無料・入退場自由", en: "Free · come and go freely" },
   feeNote: {
     ja: "懇親会は有料です",
@@ -401,12 +408,12 @@ export const FAQ: readonly Faq[] = [
   },
   {
     q: {
-      ja: "申し込みの締め切りはいつですか？",
-      en: "When does registration close?",
+      ja: "受付・申し込みの締め切りはいつですか？",
+      en: "When do reception and registration close?",
     },
     a: {
-      ja: "当日 11 月 29 日 18:00 までです。ただし各枠とも先着順のため、定員に達した時点で締め切ります。",
-      en: "At 18:00 on November 29, unless a ticket type fills up first — all are first come, first served.",
+      ja: "当日 11 月 29 日 16:30 まで受付をしています。ただし各枠とも先着順のため、定員に達した時点で締め切ります。",
+      en: "Both stay open until 16:30 on November 29, unless a ticket type fills up first — all are first come, first served.",
     },
   },
 ];

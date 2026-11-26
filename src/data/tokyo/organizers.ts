@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import droidkaigiLogo from "../../assets/tokyo/droidkaigi.png";
 import googleLogo from "../../assets/tokyo/googlelogo.png";
 import jaguerLogo from "../../assets/tokyo/jaguer.svg?url";
 
@@ -105,11 +106,15 @@ export const TOKYO_ORGANIZERS: OrganizerSection[] = [
           width: 220,
         },
       },
-      // DroidKaigi is held back for now. To bring it back, restore:
-      // {
-      //   // Logo to come. Until then the card shows the name alone.
-      //   name: "DroidKaigi",
-      // },
+      {
+        name: "DroidKaigi",
+        logo: {
+          image: droidkaigiLogo,
+          alt: "DroidKaigi",
+          url: "https://droidkaigi.jp/",
+          width: 220,
+        },
+      },
     ],
   },
   {

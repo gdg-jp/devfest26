@@ -5,7 +5,7 @@ import Panel from "../_components/Panel.astro";
 import Portrait from "../_components/Portrait.astro";
 import SessionCard from "../_components/SessionCard.astro";
 import Arrow from "../_components/Arrow.astro";
-import { bare, minutes, onTheme, trackTone } from "../_components/track";
+import { bare, minutes, trackTone } from "../_components/track";
 import { buildableCities } from "../../../tenants";
 import {
   missingCity,
@@ -182,7 +182,7 @@ const jsonLd = {
                   <a
                     class="tk-sp__slot"
                     href={session.href}
-                    style={`--trk:${onTheme(session.track.data.color)};--trk-ink:${session.track.data.darkInk ? "var(--ink)" : "var(--surface)"}`}
+                    style={`--trk:${trackTone(session.track).solid};--trk-ink:${trackTone(session.track).ink}`}
                   >
                     <b>{session.track.data.label}</b>
                     {SHOW_TIMES && session.start && (
