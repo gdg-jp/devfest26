@@ -65,6 +65,7 @@ export function trackEntry(doc: Doc): SanityEntry {
       textColor: doc.textColor,
       darkInk: doc.darkInk ?? undefined,
       pending: doc.pending ?? undefined,
+      speakersOptional: doc.speakersOptional ?? undefined,
       cardLabel: doc.cardLabel ?? undefined,
     },
     html: "",

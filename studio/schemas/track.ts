@@ -67,6 +67,13 @@ export const track = defineType({
       type: "boolean",
     }),
     defineField({
+      name: "speakersOptional",
+      title: "Speakers Optional",
+      description:
+        "展示など、登壇者のいないセッションを置くトラック。オンにすると、このトラックのセッションは Speakers が空でもページに載ります。",
+      type: "boolean",
+    }),
+    defineField({
       name: "cardLabel",
       title: "Card Label",
       description:

@@ -68,7 +68,8 @@ export interface ProgramSession {
   talks: ProgramTalk[];
   /**
    * Everyone on the slot, nobody twice: the session's own speakers in the
-   * order the Studio lists them, then whoever its talks add. Never empty.
+   * order the Studio lists them, then whoever its talks add. Empty only on a
+   * track whose sessions need nobody (`speakersOptional`): a demo.
    *
    * Read this rather than collecting `talks[].speakers`: a session split into
    * talks can still name people of its own — the session owner who runs the
@@ -378,8 +379,13 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
     // Speakers on the session are what a one-talk-per-slot city writes; talks
     // are what a many-talk city writes. Neither means nobody is on stage,
     // which is worth failing the build over rather than publishing a card with
-    // an empty speaker block.
-    if (own.length === 0 && !session.data.speakers?.length) {
+    // an empty speaker block. A track that says its sessions need nobody — a
+    // demo floor — is the one exception, and its pages leave the block out.
+    if (
+      own.length === 0 &&
+      !session.data.speakers?.length &&
+      !track.data.speakersOptional
+    ) {
       reject(
         "programme",
         `Session "${session.id}" names no speakers and has no talks. ` +
@@ -419,7 +425,11 @@ export async function getProgram(tenant: string): Promise<ProgramTrack[]> {
         });
       }
     } else {
-      if (sessionSpeakers.length > 0) {
+      // Nobody named, on a track that allows it, is a talk with nobody on it.
+      // Somebody named who all failed to resolve (the preview only) is not.
+      const nobodyNeeded =
+        !session.data.speakers?.length && track.data.speakersOptional;
+      if (sessionSpeakers.length > 0 || nobodyNeeded) {
         talks.push({
           slug,
           href,

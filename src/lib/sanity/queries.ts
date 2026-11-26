@@ -70,7 +70,7 @@ export const SPEAKERS = `*[_type == "speaker" && ${SCOPE}]{
 }`;
 
 export const TRACKS = `*[_type == "track" && ${SCOPE}]{
-  _id, order, ${t("label")}, ${t("sub")}, color, textColor, darkInk, pending, ${t("cardLabel")},
+  _id, order, ${t("label")}, ${t("sub")}, color, textColor, darkInk, pending, speakersOptional, ${t("cardLabel")},
   ${TENANT}
 }`;
 
