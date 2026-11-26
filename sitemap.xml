@@ -86,9 +86,11 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/code-quality/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/community-panel-discussion/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/development-of-flutter-android/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/devfest-hackathon-devfest-tokyo/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/engineering/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/event-op/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/gas-in-ai-era/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/gemma-4-tokyo/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/greeting-from-google-devrel/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/gws/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/keynote-google/</loc></url>
@@ -103,6 +105,7 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/haren/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/hiroko-nitta/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/jun-sakata/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/juyeong-ji-tokyo/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/kanto-kotegawa/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/kazumasa-iwao/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/kazunori-sato/</loc></url>
@@ -228,9 +231,11 @@
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/code-quality/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/community-panel-discussion/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/development-of-flutter-android/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/sessions/devfest-hackathon-devfest-tokyo/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/engineering/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/event-op/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/gas-in-ai-era/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/sessions/gemma-4-tokyo/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/greeting-from-google-devrel/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/gws/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/keynote-google/</loc></url>
@@ -245,6 +250,7 @@
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/haren/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/hiroko-nitta/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/jun-sakata/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/juyeong-ji-tokyo/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/kanto-kotegawa/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/kazumasa-iwao/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/kazunori-sato/</loc></url>
