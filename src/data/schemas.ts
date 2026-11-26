@@ -139,6 +139,10 @@ export const tracks = z.object({
   /** Not yet a real track — rendered dashed and outlined, and left out of
       the "n トラック" count in the timetable. */
   pending: z.boolean().optional(),
+  /** Its sessions may name nobody: a demo floor, where what is on show is
+      the thing, not who gives it. Off, a session with no speakers and no
+      talks is a half-written entry, and the build stops on it. */
+  speakersOptional: z.boolean().optional(),
   /** Printed above each card in place of the session number. A holding pen
       has no running order to show, so it labels its cards some other way. */
   cardLabel: z.string().optional(),

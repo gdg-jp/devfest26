@@ -155,7 +155,9 @@ const names = everyone
   .join(t.common.nameSeparator);
 const description = abstract
   ? abstract.replace(/\s+/g, " ").slice(0, 110)
-  : t.detail.metaFallback(title ?? label, names);
+  : names
+    ? t.detail.metaFallback(title ?? label, names)
+    : (title ?? label);
 
 const url = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
@@ -174,11 +176,15 @@ const jsonLd = title
         : {}),
       ...(end ? { endDate: jstTimestamp(site.event.isoDate, end) } : {}),
       location: { "@type": "Place", name: site.event.venue.name },
-      performer: everyone.map((speaker) => ({
-        "@type": "Person",
-        name: speaker.data.name,
-        jobTitle: speaker.data.role,
-      })),
+      ...(everyone.length
+        ? {
+            performer: everyone.map((speaker) => ({
+              "@type": "Person",
+              name: speaker.data.name,
+              jobTitle: speaker.data.role,
+            })),
+          }
+        : {}),
       superEvent: {
         "@type": "Event",
         name: site.fullTitle ?? site.title,
@@ -240,28 +246,32 @@ const jsonLd = title
             {track.data.sub}
           </p>
 
-          <ul class="tk-sh__cast">
-            {cast.map((person) => (
-              <li>
-                <a class="tk-sh__person" href={person.href}>
-                  <span class="tk-sh__ring" style={`--ring:${person.ring}`}>
-                    <Portrait
-                      speaker={person.speaker}
-                      size={64}
-                      class="tk-sh__av"
-                      tone={person.ring}
-                      eager
-                    />
-                  </span>
-                  <span class="tk-sh__id">
-                    {person.owner && <em class="tk-owner">{c.sessionOwner}</em>}
-                    <b>{bare(person.speaker.data.name)}</b>
-                    <small>{person.speaker.data.role}</small>
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          {cast.length > 0 && (
+            <ul class="tk-sh__cast">
+              {cast.map((person) => (
+                <li>
+                  <a class="tk-sh__person" href={person.href}>
+                    <span class="tk-sh__ring" style={`--ring:${person.ring}`}>
+                      <Portrait
+                        speaker={person.speaker}
+                        size={64}
+                        class="tk-sh__av"
+                        tone={person.ring}
+                        eager
+                      />
+                    </span>
+                    <span class="tk-sh__id">
+                      {person.owner && (
+                        <em class="tk-owner">{c.sessionOwner}</em>
+                      )}
+                      <b>{bare(person.speaker.data.name)}</b>
+                      <small>{person.speaker.data.role}</small>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Panel>
     </div>
@@ -340,57 +350,59 @@ const jsonLd = title
     </section>
   )}
 
-  <section class="tk-sec tk-sec--panel" aria-labelledby="tk-cast-h">
-    <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
-      <Panel
-        title={everyone.length > 1 ? "Speakers" : "Speaker"}
-        id="tk-cast-h"
-        tone={castTone}
-        stickers={["scallop", "multiply"]}
-      >
-        <p class="tk-sub">{c.speakersSub}</p>
-        <div class="tk-bios">
-          {cast.map(({ speaker, href, ring, owner, hook, Bio }) => (
-            <article class="tk-bio">
-              <a
-                class="tk-bio__face"
-                href={href}
-                style={`--ring:${ring}`}
-                tabindex="-1"
-                aria-hidden="true"
-              >
-                <Portrait
-                  speaker={speaker}
-                  size={132}
-                  class="tk-bio__img"
-                  tone={ring}
-                />
-              </a>
-              <div class="tk-bio__body">
-                {hook && (
-                  <p class="tk-bio__hook">{localized(hook.hook, lang)}</p>
-                )}
-                {owner && <em class="tk-owner">{c.sessionOwner}</em>}
-                <h3 class="tk-bio__name">
-                  <a href={href}>{bare(speaker.data.name)}</a>
-                </h3>
-                <p class="tk-bio__role">{speaker.data.role}</p>
-                {Bio && (
-                  <div class="tk-prose tk-bio__text">
-                    <Bio />
-                  </div>
-                )}
-                <a class="tk-link tk-bio__more" href={href}>
-                  {c.profile}
-                  <Arrow />
+  {cast.length > 0 && (
+    <section class="tk-sec tk-sec--panel" aria-labelledby="tk-cast-h">
+      <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">
+        <Panel
+          title={everyone.length > 1 ? "Speakers" : "Speaker"}
+          id="tk-cast-h"
+          tone={castTone}
+          stickers={["scallop", "multiply"]}
+        >
+          <p class="tk-sub">{c.speakersSub}</p>
+          <div class="tk-bios">
+            {cast.map(({ speaker, href, ring, owner, hook, Bio }) => (
+              <article class="tk-bio">
+                <a
+                  class="tk-bio__face"
+                  href={href}
+                  style={`--ring:${ring}`}
+                  tabindex="-1"
+                  aria-hidden="true"
+                >
+                  <Portrait
+                    speaker={speaker}
+                    size={132}
+                    class="tk-bio__img"
+                    tone={ring}
+                  />
                 </a>
-              </div>
-            </article>
-          ))}
-        </div>
-      </Panel>
-    </div>
-  </section>
+                <div class="tk-bio__body">
+                  {hook && (
+                    <p class="tk-bio__hook">{localized(hook.hook, lang)}</p>
+                  )}
+                  {owner && <em class="tk-owner">{c.sessionOwner}</em>}
+                  <h3 class="tk-bio__name">
+                    <a href={href}>{bare(speaker.data.name)}</a>
+                  </h3>
+                  <p class="tk-bio__role">{speaker.data.role}</p>
+                  {Bio && (
+                    <div class="tk-prose tk-bio__text">
+                      <Bio />
+                    </div>
+                  )}
+                  <a class="tk-link tk-bio__more" href={href}>
+                    {c.profile}
+                    <Arrow />
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Panel>
+      </div>
+    </section>
+  )}
 
   <section class="tk-sec tk-sec--panel" aria-labelledby="tk-day-h">
     <div class="tk-wrap tk-wrap--panel" data-tk-reveal="up">

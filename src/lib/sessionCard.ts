@@ -62,6 +62,9 @@ export function sessionCard(
 ): CardInput | undefined {
   const title = session.entry.data.title;
   if (!title) return undefined;
+  // The card is built around the faces. A demo with nobody on it has none,
+  // and its page shares the site's own card instead.
+  if (sessionSpeakers(session).length === 0) return undefined;
 
   return {
     id: session.slug,
