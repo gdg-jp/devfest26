@@ -180,7 +180,7 @@ export const OVERVIEW = {
   station: { ja: "東京駅から", en: "From Tokyo Station" },
   walk: { ja: "徒歩約 1 分", en: "1-min walk" },
   /** Said small, just right of the hours. */
-  reception: { ja: "（受付開始は11:30～）", en: "(Doors open 11:30)" },
+  reception: { ja: "（受付は11:30～16:30）", en: "(Reception 11:30–16:30)" },
   fee: { ja: "無料・入退場自由", en: "Free · come and go freely" },
   feeNote: {
     ja: "懇親会は有料です",
