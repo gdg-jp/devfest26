@@ -74,14 +74,21 @@ export interface DayItem {
   link?: { label: Localized; href: string };
   /** Drawn in the accent colour rather than as a plain row. */
   accent?: boolean;
+  /**
+   * The end time to show, when it is later than `end`. The row still takes
+   * only `start`–`end` in the grid, so it can say "until 16:30" without
+   * running across the sessions in between.
+   */
+  until?: string;
 }
 
 export const DAY: readonly DayItem[] = [
   {
     start: "11:30",
     end: "12:00",
+    until: "16:30",
     span: "all",
-    title: { ja: "受付開始", en: "Doors open" },
+    title: { ja: "受付", en: "Reception" },
   },
   {
     start: "17:55",

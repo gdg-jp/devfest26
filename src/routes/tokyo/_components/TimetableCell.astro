@@ -39,6 +39,9 @@ const title = slot.day
 
 const speakers = session?.speakers ?? [];
 
+/** What the row says it runs until, which may be past where it ends. */
+const end = slot.day?.until ?? slot.end;
+
 const kind =
   slot.span === "side"
     ? "side"
@@ -62,14 +65,14 @@ const Tag = kind === "session" && session ? "a" : "div";
     <>
       <b class="tk-ts__title">{title}</b>
       <time class="tk-ts__time">
-        {slot.start} – {slot.end}
+        {slot.start} – {end}
       </time>
     </>
   ) : kind === "plain" ? (
     <>
       {phone && (
         <time class="tk-ts__time">
-          {slot.start} – {slot.end}
+          {slot.start} – {end}
         </time>
       )}
       <b class="tk-ts__title">{title}</b>
@@ -89,7 +92,7 @@ const Tag = kind === "session" && session ? "a" : "div";
       )}
       {!phone && (
         <time class="tk-ts__time tk-ts__time--end">
-          {slot.start} – {slot.end}
+          {slot.start} – {end}
         </time>
       )}
     </>
@@ -98,7 +101,7 @@ const Tag = kind === "session" && session ? "a" : "div";
       <span class="tk-ts__chips">
         {kicker && <span class="tk-ts__code">{kicker}</span>}
         <time class="tk-ts__time">
-          {slot.start} – {slot.end}
+          {slot.start} – {end}
         </time>
         {slot.english && <span class="tk-ts__en">{c.timetableEnglish}</span>}
       </span>
