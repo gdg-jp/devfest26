@@ -32,6 +32,16 @@ const OFF_THEME: Record<string, string> = {
   "var(--pa-blue)": "var(--pa-red)",
 };
 
+/**
+ * Tracks drawn in another colour than the Studio gives them, by track id,
+ * everywhere but the timetable. "AI が 動く" (Track B) is yellow in the
+ * Studio and on connpass's timetable, but on the pages it is drawn in its
+ * half's green, beside "AI と 書く" (Track A), as Meet's two tracks share red.
+ */
+const REPAINT: Readonly<Record<string, string>> = {
+  "341a35f5-8299-4582-9ca2-3c19a0dfc9ad": "var(--green)",
+};
+
 /** A track colour as Tokyo draws it. */
 export const onTheme = <T extends string | undefined>(color: T): T =>
   (color && (OFF_THEME[color] ?? color)) as T;
@@ -39,18 +49,23 @@ export const onTheme = <T extends string | undefined>(color: T): T =>
 /**
  * A track's colours. With `asSet`, the colour the Studio gives it, blue
  * included — the timetable draws the tracks as GDG Tokyo's own timetable on
- * connpass does, where "AI で つくる" is blue. Everywhere else, on theme.
+ * connpass does, where "AI で つくる" is blue. Everywhere else, on theme and
+ * with `REPAINT` applied.
  */
 export function trackTone(track: Track, { asSet = false } = {}) {
   const paint = <T extends string | undefined>(color: T) =>
     asSet ? color : onTheme(color);
-  const solid = paint(track.data.color);
+  const repainted = asSet ? undefined : REPAINT[track.id];
+  const drawn = repainted
+    ? { ...track, data: { ...track.data, color: repainted } }
+    : track;
+  const solid = paint(drawn.data.color);
   const tone = BY_COLOR[solid] ?? BY_COLOR["var(--yellow)"];
   return {
     solid,
     ink: track.data.darkInk ? "var(--ink)" : "var(--surface)",
     ht: tone.ht,
-    pa: paint(trackPastel(track)),
+    pa: paint(trackPastel(drawn)),
     stickers: tone.stickers,
   };
 }
