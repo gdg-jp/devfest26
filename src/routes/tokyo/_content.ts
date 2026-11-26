@@ -405,8 +405,8 @@ export const FAQ: readonly Faq[] = [
       en: "When does registration close?",
     },
     a: {
-      ja: "当日 11 月 29 日 18:00 までです。ただし各枠とも先着順のため、定員に達した時点で締め切ります。",
-      en: "At 18:00 on November 29, unless a ticket type fills up first — all are first come, first served.",
+      ja: "当日 11 月 29 日 16:30 までです。ただし各枠とも先着順のため、定員に達した時点で締め切ります。",
+      en: "At 16:30 on November 29, unless a ticket type fills up first — all are first come, first served.",
     },
   },
 ];
