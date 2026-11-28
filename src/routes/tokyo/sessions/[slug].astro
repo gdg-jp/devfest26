@@ -26,7 +26,9 @@ import { getTimetable } from "../../../data/timetable";
 import { messages } from "../../../i18n";
 import { currentLanguage } from "../../../i18n/language";
 import { sessionCardImage } from "../../../lib/sessionCard";
+import { googleCalendarUrl } from "../../../lib/googleCalendar";
 import {
+  CALENDAR_EVENT_NAME,
   copy,
   FEATURED,
   localized,
@@ -163,6 +165,20 @@ const url = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
 
+// Only a session with a time can go in a calendar; one still waiting for its
+// title goes in under the slot's label.
+const calendarUrl =
+  SHOW_TIMES && start
+    ? googleCalendarUrl({
+        title: `${title ?? label} - ${CALENDAR_EVENT_NAME}`,
+        isoDate: site.event.isoDate,
+        start,
+        end,
+        details: url,
+        location: site.event.venue.name,
+      })
+    : undefined;
+
 // A slot with no announced title is not yet a thing search engines should be
 // told about.
 const jsonLd = title
@@ -245,6 +261,21 @@ const jsonLd = title
           <p class="tk-sh__room" style={`--trk:${tone.solid}`}>
             {track.data.sub}
           </p>
+
+          {calendarUrl && (
+            <a
+              class="tk-sh__cal"
+              href={calendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                <rect x="3" y="4.5" width="14" height="12.5" rx="2" />
+                <path d="M3 8.5h14M7 2.5v4M13 2.5v4M10 10.5v4M8 12.5h4" />
+              </svg>
+              {c.addToCalendar}
+            </a>
+          )}
 
           {cast.length > 0 && (
             <ul class="tk-sh__cast">
@@ -570,6 +601,41 @@ const jsonLd = title
     border-radius: 50%;
     border: 1.5px solid var(--ink);
     background: var(--trk);
+  }
+
+  .tk-sh__cal {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--tk-f-display);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-decoration: none;
+    transition:
+      transform 0.3s var(--tk-ease-back),
+      background-color 0.2s;
+  }
+
+  .tk-sh__cal svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .tk-sh__cal:hover,
+  .tk-sh__cal:focus-visible {
+    background: var(--ht-yellow);
+    transform: translateY(-2px);
   }
 
   .tk-sh__cast {
