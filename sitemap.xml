@@ -83,6 +83,7 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/ai-olap-oltp/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/beyond-it-works/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/beyond-vibe-coding-hands-on/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/closing-1129/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/code-quality/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/community-panel-discussion/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/development-of-flutter-android/</loc></url>
@@ -100,11 +101,12 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/sessions/ws-design-sprint/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/adamrocker/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/asei-sugiyama/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ayano/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ayarin/</loc></url>
-  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/david-landup/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/eiji-kitamura/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/haren/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/hiroko-nitta/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ibuki/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ichi/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/itakosu/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/jun-sakata/</loc></url>
@@ -126,9 +128,13 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/munetoshi/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/myakura/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/na0/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/naga/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/naoya/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/no-name/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ohtaman/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/priya/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/rei-morita/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ryan-yuen/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/ryunen344/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/saku-01/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/sakura-y/</loc></url>
@@ -137,12 +143,14 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/shoji-matsukawa/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/shotaro-ishihara/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/sinmetal-2/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/su/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/takahirom/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/takuo-suzuki/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/tsho/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/vaaaaanquish/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/yanzm-2/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/yoichiro-tanaka-2/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/yuki/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/speakers/yukio-andoh-2/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/talks/agent-swarm-development-with-antigravity/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/talks/android-apps-and-ai/</loc></url>
@@ -150,6 +158,11 @@
   <url><loc>https://df26.gdgs.jp/en/tokyo/talks/enhancing-ai-expression-with-remote-compose/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/talks/flutter-ai-3d-game/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/talks/loopengineering/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/talks/lt-gdgoc-osaka/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/talks/lt-hackathon/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/talks/lt-khine/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/talks/lt-ryan/</loc></url>
+  <url><loc>https://df26.gdgs.jp/en/tokyo/talks/lt-web/</loc></url>
   <url><loc>https://df26.gdgs.jp/en/tokyo/timetable/</loc></url>
   <url><loc>https://df26.gdgs.jp/kansai/</loc></url>
   <url><loc>https://df26.gdgs.jp/kansai/sessions/aditya-joshi/</loc></url>
@@ -232,6 +245,7 @@
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/ai-olap-oltp/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/beyond-it-works/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/beyond-vibe-coding-hands-on/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/sessions/closing-1129/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/code-quality/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/community-panel-discussion/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/development-of-flutter-android/</loc></url>
@@ -249,11 +263,12 @@
   <url><loc>https://df26.gdgs.jp/tokyo/sessions/ws-design-sprint/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/adamrocker/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/asei-sugiyama/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/ayano/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/ayarin/</loc></url>
-  <url><loc>https://df26.gdgs.jp/tokyo/speakers/david-landup/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/eiji-kitamura/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/haren/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/hiroko-nitta/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/ibuki/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/ichi/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/itakosu/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/jun-sakata/</loc></url>
@@ -275,9 +290,13 @@
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/munetoshi/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/myakura/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/na0/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/naga/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/naoya/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/no-name/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/ohtaman/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/priya/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/rei-morita/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/ryan-yuen/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/ryunen344/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/saku-01/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/sakura-y/</loc></url>
@@ -286,12 +305,14 @@
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/shoji-matsukawa/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/shotaro-ishihara/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/sinmetal-2/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/su/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/takahirom/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/takuo-suzuki/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/tsho/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/vaaaaanquish/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/yanzm-2/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/yoichiro-tanaka-2/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/speakers/yuki/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/speakers/yukio-andoh-2/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/talks/agent-swarm-development-with-antigravity/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/talks/android-apps-and-ai/</loc></url>
@@ -299,5 +320,10 @@
   <url><loc>https://df26.gdgs.jp/tokyo/talks/enhancing-ai-expression-with-remote-compose/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/talks/flutter-ai-3d-game/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/talks/loopengineering/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/talks/lt-gdgoc-osaka/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/talks/lt-hackathon/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/talks/lt-khine/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/talks/lt-ryan/</loc></url>
+  <url><loc>https://df26.gdgs.jp/tokyo/talks/lt-web/</loc></url>
   <url><loc>https://df26.gdgs.jp/tokyo/timetable/</loc></url>
 </urlset>
