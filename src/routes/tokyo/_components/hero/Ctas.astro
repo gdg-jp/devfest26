@@ -1,37 +1,35 @@
 ---
 import Arrow from "../Arrow.astro";
 import type { ResolvedTenant } from "../../../../tenants";
-import { currentLanguage } from "../../../../i18n/language";
-import { copy } from "../../_content";
+import { tenantPath } from "../../../../lib/url";
+import { TIMETABLE_PATH } from "../../_content";
 import type { HeroFacts } from "./facts";
 
 /**
- * The key visual's two buttons, in the page's own button: register in the
- * theme red (it opens `RegisterChoice`), the sessions in white. Side by side, then stacked full width
- * for a thumb.
+ * The key visual's two buttons, in the page's own button: the timetable's own
+ * page in the theme red, the sessions in white. Registering is the header's
+ * job, which stays on screen all the way down. Side by side, then stacked
+ * full width for a thumb.
  */
 interface Props {
   site: ResolvedTenant;
   facts: HeroFacts;
 }
 
-const { facts } = Astro.props;
-const c = copy(currentLanguage());
+const { site, facts } = Astro.props;
 ---
 
 <div class="tkh-ctas">
-  <button
-    type="button"
-    class="tk-btn tk-btn--lg tkh-ctas__register"
-    popovertarget="tk-register"
-    data-placement="hero"
+  <a
+    class="tk-btn tk-btn--lg tkh-ctas__timetable"
+    href={tenantPath(site.tenant, TIMETABLE_PATH)}
     data-tk-magnet
   >
-    {c.register}
+    {facts.text("timetable")}
     <span class="tk-btn__disc">
       <Arrow />
     </span>
-  </button>
+  </a>
   <a class="tk-btn tk-btn--lg tk-btn--light" href="#sessions" data-tk-magnet>
     {facts.text("sessions")}
     <span class="tk-btn__disc">
@@ -48,7 +46,7 @@ const c = copy(currentLanguage());
     gap: 12px;
   }
 
-  .tkh-ctas .tkh-ctas__register {
+  .tkh-ctas .tkh-ctas__timetable {
     --tk-btn-bg: var(--tk-accent);
     --tk-btn-fg: var(--tk-accent-on);
     --tk-btn-flood: var(--ink);
