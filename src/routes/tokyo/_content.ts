@@ -29,6 +29,12 @@ export const localized = (text: Localized, lang: Language) => text[lang];
 export const SHOW_TIMES = true;
 
 /**
+ * The name a session carries into a visitor's calendar, after its own title:
+ * "{title} - GDG DevFest Tokyo 2026".
+ */
+export const CALENDAR_EVENT_NAME = "GDG DevFest Tokyo 2026";
+
+/**
  * The timetable's own page, under the city: `/tokyo/timetable`. The home page
  * lists the sessions theme by theme (`Sessions`) and links here for the day
  * by time — the grid is too wide to sit in the middle of the home page, and a
@@ -561,6 +567,22 @@ export const COPY = {
     trackSub: (track: string) => `${track} の前後`,
     allSessions: "セッション一覧を見る",
     allTimetable: "タイムテーブルを見る",
+    addToCalendar: "Google カレンダーに追加",
+    calendar: {
+      session: "セッション",
+      event: "イベント",
+      when: "日時",
+      track: "トラック",
+      speakers: "登壇者",
+      about: "概要",
+      page: "詳細",
+      venue: "会場",
+      address: "住所",
+      format: "開催形式",
+      fee: "参加費",
+      site: "公式サイト",
+      timetable: "タイムテーブル",
+    },
     appearancesSub: "登壇するセッション",
     moreSpeakersSub: "ほかのスピーカー",
     allSpeakers: "すべてのスピーカー",
@@ -644,6 +666,22 @@ export const COPY = {
     trackSub: (track: string) => `Before and after on ${track}`,
     allSessions: "See all sessions",
     allTimetable: "See the timetable",
+    addToCalendar: "Add to Google Calendar",
+    calendar: {
+      session: "Session",
+      event: "Event",
+      when: "When",
+      track: "Track",
+      speakers: "Speakers",
+      about: "About",
+      page: "Details",
+      venue: "Venue",
+      address: "Address",
+      format: "Format",
+      fee: "Admission",
+      site: "Website",
+      timetable: "Timetable",
+    },
     appearancesSub: "On the programme",
     moreSpeakersSub: "More speakers",
     allSpeakers: "All speakers",

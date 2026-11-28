@@ -26,7 +26,10 @@ import { getTimetable } from "../../../data/timetable";
 import { messages } from "../../../i18n";
 import { currentLanguage } from "../../../i18n/language";
 import { sessionCardImage } from "../../../lib/sessionCard";
+import { googleCalendarUrl } from "../../../lib/googleCalendar";
+import { venueAddress } from "../_venue";
 import {
+  CALENDAR_EVENT_NAME,
   copy,
   FEATURED,
   localized,
@@ -163,6 +166,66 @@ const url = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
 
+// Only a session with a time can go in a calendar; one still waiting for its
+// title goes in under the slot's label. The description carries what a
+// calendar entry is opened for later — when and where, who is on stage, and
+// the way back to this page and the event — as plain text, which every
+// calendar app shows the same.
+const absolute = (path: string) => new URL(path, Astro.site ?? Astro.url).href;
+const calendarUrl = (() => {
+  if (!SHOW_TIMES || !start) return undefined;
+  const k = c.calendar;
+  const { event } = site;
+  const day =
+    lang === "ja"
+      ? `${event.dateLabel}（${event.dayOfWeek}）`
+      : `${event.dayOfWeek}, ${event.dateLabel}`;
+  const address = venueAddress(event.venue);
+  const summary = abstract?.replace(/\s+/g, " ");
+  const line = (label: string, value: string | undefined) =>
+    value ? [`${label}: ${value}`] : [];
+
+  const details = [
+    `■ ${k.session}`,
+    title ?? label,
+    ...line(k.when, `${day} ${start}${end ? `–${end}` : ""}`),
+    ...line(k.track, `${track.data.label}（${track.data.sub}）`),
+    ...(everyone.length
+      ? [
+          `${k.speakers}:`,
+          ...everyone.map(
+            ({ data }) =>
+              `・${bare(data.name)}${data.role ? `（${data.role}）` : ""}`,
+          ),
+        ]
+      : []),
+    ...line(
+      k.about,
+      summary && summary.length > 200 ? `${summary.slice(0, 200)}…` : summary,
+    ),
+    ...line(k.page, absolute(Astro.url.pathname)),
+    "",
+    `■ ${k.event}`,
+    CALENDAR_EVENT_NAME,
+    ...line(k.when, `${day} ${event.hours}`),
+    ...line(k.venue, event.venue.name),
+    ...line(k.address, address),
+    ...line(k.format, event.format),
+    ...line(k.fee, event.fee),
+    ...line(k.site, absolute(home)),
+    ...line(k.timetable, absolute(tenantPath(site.tenant, TIMETABLE_PATH))),
+  ].join("\n");
+
+  return googleCalendarUrl({
+    title: `${title ?? label} - ${CALENDAR_EVENT_NAME}`,
+    isoDate: event.isoDate,
+    start,
+    end,
+    details,
+    location: address ? `${event.venue.name}, ${address}` : event.venue.name,
+  });
+})();
+
 // A slot with no announced title is not yet a thing search engines should be
 // told about.
 const jsonLd = title
@@ -271,6 +334,23 @@ const jsonLd = title
                 </li>
               ))}
             </ul>
+          )}
+
+          {calendarUrl && (
+            <div class="tk-sh__actions">
+              <a
+                class="tk-sh__cal"
+                href={calendarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                  <rect x="3" y="4.5" width="14" height="12.5" rx="2" />
+                  <path d="M3 8.5h14M7 2.5v4M13 2.5v4M10 10.5v4M8 12.5h4" />
+                </svg>
+                {c.addToCalendar}
+              </a>
+            </div>
           )}
         </div>
       </Panel>
@@ -570,6 +650,56 @@ const jsonLd = title
     border-radius: 50%;
     border: 1.5px solid var(--ink);
     background: var(--trk);
+  }
+
+  .tk-sh__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: clamp(16px, 2.4vw, 22px);
+    border-top: 1.5px dashed var(--tk-hair);
+  }
+
+  .tk-sh__cal {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border: var(--tk-line) solid var(--ink);
+    border-radius: 999px;
+    background: var(--pa-yellow);
+    color: var(--ink);
+    box-shadow: 0 3px 0 var(--ink);
+    font-family: var(--tk-f-display);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-decoration: none;
+    transition:
+      transform 0.3s var(--tk-ease-back),
+      box-shadow 0.3s var(--tk-ease-back),
+      background-color 0.2s;
+  }
+
+  .tk-sh__cal svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .tk-sh__cal:hover,
+  .tk-sh__cal:focus-visible {
+    background: var(--ht-yellow);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--ink);
+  }
+
+  .tk-sh__cal:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink);
   }
 
   .tk-sh__cast {

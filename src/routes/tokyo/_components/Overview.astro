@@ -4,6 +4,7 @@ import Icon from "./Icon.astro";
 import type { ResolvedTenant } from "../../../tenants";
 import { currentLanguage } from "../../../i18n/language";
 import { AFTER_PARTY_URL, copy, localized, OVERVIEW } from "../_content";
+import { venueAddress } from "../_venue";
 
 /**
  * When, where and how much. The facts are marked by icons rather than
@@ -25,19 +26,7 @@ const date =
   lang === "ja"
     ? `${event.dateLabel}（${event.dayOfWeek}）`
     : `${event.dayOfWeek}, ${event.dateLabel}`;
-// The Studio's locality and street can share a district ("千代田区丸の内" +
-// "丸の内２丁目…"); each part joins on where the last one left off.
-const address = [venue.addressLocality, venue.streetAddress].reduce<string>(
-  (joined, part) => {
-    if (!part) return joined;
-    const overlap = [...Array(Math.min(joined.length, part.length)).keys()]
-      .map((i) => i + 1)
-      .filter((n) => joined.endsWith(part.slice(0, n)))
-      .pop();
-    return joined + part.slice(overlap ?? 0);
-  },
-  venue.addressRegion ?? "",
-);
+const address = venueAddress(venue);
 const place = venue.name.replace(/\s*[(（].*[)）]\s*$/, "");
 const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
   address ? `${place} ${address}` : place,
